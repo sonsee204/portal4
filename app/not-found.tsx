@@ -1,15 +1,15 @@
 import Link from 'next/link';
+import { Button } from '@/components/atoms/Button';
 
 export default function NotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-      <h1 className="text-4xl font-bold text-gray-900">404</h1>
-      <p className="mt-2 text-gray-600">Trang bạn tìm không tồn tại.</p>
-      <Link
-        href="/"
-        className="mt-6 rounded-lg bg-gray-900 px-6 py-2 text-white hover:bg-gray-800"
-      >
-        Về trang chủ
+      <h1 className="neon-text text-6xl font-bold text-white">404</h1>
+      <p className="mt-4 text-lg text-slate-400">
+        Trang bạn tìm không tồn tại.
+      </p>
+      <Link href="/" className="mt-6">
+        <Button>Về Dashboard</Button>
       </Link>
     </div>
   );

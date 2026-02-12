@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ApolloProvider } from '@/lib/apollo/provider';
+import { IoniconsInit } from '@/components/IoniconsInit';
 import { siteConfig } from '@/config/site';
 import './globals.css';
 
@@ -18,7 +19,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className="min-h-screen bg-white font-sans text-gray-900 antialiased">
+      <body className="min-h-screen font-sans antialiased">
+        <IoniconsInit />
         <ApolloProvider>{children}</ApolloProvider>
       </body>
     </html>

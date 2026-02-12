@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Button } from '@/components/atoms/Button';
 
 export default function Error({
   error,
@@ -15,14 +16,11 @@ export default function Error({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-      <h1 className="text-xl font-bold text-gray-900">Đã xảy ra lỗi</h1>
-      <p className="mt-2 text-center text-gray-600">Vui lòng thử lại sau.</p>
-      <button
-        className="mt-6 rounded-lg bg-gray-900 px-6 py-2 text-white hover:bg-gray-800"
-        onClick={reset}
-      >
+      <h1 className="text-xl font-bold text-white">Đã xảy ra lỗi</h1>
+      <p className="mt-2 text-center text-slate-400">Vui lòng thử lại sau.</p>
+      <Button className="mt-6" onClick={reset}>
         Thử lại
-      </button>
+      </Button>
     </div>
   );
 }
