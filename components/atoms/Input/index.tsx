@@ -6,13 +6,14 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;
+  label?: string;
   leftIcon?: string;
   rightIcon?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, leftIcon, rightIcon, ...props }, ref) => {
-    return (
+  ({ className, error, label, leftIcon, rightIcon, ...props }, ref) => {
+    const input = (
       <div className="relative">
         {leftIcon && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
@@ -42,6 +43,19 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
+
+    if (label) {
+      return (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            {label}
+          </label>
+          {input}
+        </div>
+      );
+    }
+
+    return input;
   }
 );
 

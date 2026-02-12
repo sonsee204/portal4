@@ -8,12 +8,11 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 /* Column Definition                                                   */
 /* ------------------------------------------------------------------ */
 
-export interface DataTableColumn<T> {
+export interface DataTableColumn {
   key: string;
-  header: string;
+  label: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
-  render: (row: T, index: number) => React.ReactNode;
 }
 
 /* ------------------------------------------------------------------ */
@@ -21,8 +20,10 @@ export interface DataTableColumn<T> {
 /* ------------------------------------------------------------------ */
 
 export interface DataTableProps<T> {
-  columns: DataTableColumn<T>[];
+  columns: DataTableColumn[];
   data: T[];
+  /** Render custom row. If omitted, falls back to auto-rendering keys */
+  renderRow: (row: T, index: number) => React.ReactNode;
   /** Currently sorted column key */
   sortKey?: string;
   sortDir?: 'asc' | 'desc';
@@ -39,6 +40,7 @@ export interface DataTableProps<T> {
 export function DataTable<T>({
   columns,
   data,
+  renderRow,
   sortKey,
   sortDir,
   onSort,
@@ -47,12 +49,7 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   return (
-    <div
-      className={cn(
-        'glass-panel border-surface-border overflow-hidden rounded-xl border',
-        className
-      )}
-    >
+    <div className={cn('overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
           <thead className="bg-white/5">
@@ -61,7 +58,7 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   className={cn(
-                    'px-6 py-4 text-xs font-semibold tracking-wider text-slate-400 uppercase',
+                    'px-4 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right'
                   )}
@@ -72,7 +69,7 @@ export function DataTable<T>({
                       className="inline-flex items-center gap-1 transition-colors hover:text-white"
                       onClick={() => onSort?.(col.key)}
                     >
-                      {col.header}
+                      {col.label}
                       <IonIcon
                         name={
                           sortKey === col.key
@@ -85,33 +82,13 @@ export function DataTable<T>({
                       />
                     </button>
                   ) : (
-                    col.header
+                    col.label
                   )}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-surface-border divide-y">
-            {data.map((row, i) => (
-              <tr
-                key={i}
-                className="group transition-colors hover:bg-white/[0.03]"
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={cn(
-                      'px-6 py-4',
-                      col.align === 'center' && 'text-center',
-                      col.align === 'right' && 'text-right'
-                    )}
-                  >
-                    {col.render(row, i)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
+          <tbody>{data.map((row, i) => renderRow(row, i))}</tbody>
         </table>
       </div>
 

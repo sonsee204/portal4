@@ -3,14 +3,38 @@ import { Button } from '@/components/atoms/Button';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-      <h1 className="neon-text text-6xl font-bold text-white">404</h1>
-      <p className="mt-4 text-lg text-slate-400">
-        Trang bạn tìm không tồn tại.
-      </p>
-      <Link href="/" className="mt-6">
-        <Button>Về Dashboard</Button>
-      </Link>
+    <div className="bg-bg-dark relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      {/* Gradient blobs */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="bg-primary/20 absolute -top-32 -left-32 h-80 w-80 rounded-full blur-[100px]" />
+        <div className="absolute -right-32 -bottom-32 h-80 w-80 rounded-full bg-red-500/10 blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 text-center">
+        {/* Large 404 */}
+        <h1 className="neon-text text-[120px] leading-none font-extrabold text-white md:text-[180px]">
+          404
+        </h1>
+
+        <h2 className="mt-4 text-xl font-bold text-white md:text-2xl">
+          Trang không tồn tại
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+          Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. Hãy kiểm
+          tra lại URL hoặc quay về trang chủ.
+        </p>
+
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <Link href="/">
+            <Button iconLeft="home-outline">Về Dashboard</Button>
+          </Link>
+          <Link href="/support">
+            <Button variant="ghost" iconLeft="chatbubble-outline">
+              Liên hệ hỗ trợ
+            </Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

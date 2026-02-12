@@ -5,11 +5,12 @@ import { cn } from '@/lib/utils';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: boolean;
+  label?: string;
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, ...props }, ref) => {
-    return (
+  ({ className, error, label, ...props }, ref) => {
+    const textarea = (
       <textarea
         ref={ref}
         className={cn(
@@ -25,6 +26,19 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {...props}
       />
     );
+
+    if (label) {
+      return (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            {label}
+          </label>
+          {textarea}
+        </div>
+      );
+    }
+
+    return textarea;
   }
 );
 

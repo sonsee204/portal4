@@ -5,8 +5,9 @@ import { cn } from '@/lib/utils';
 export interface PageHeaderProps {
   title: string;
   description?: string;
-  /** Render action buttons on the right side */
+  /** Render action buttons on the right side (via `actions` prop or `children`) */
   actions?: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -14,8 +15,11 @@ export function PageHeader({
   title,
   description,
   actions,
+  children,
   className,
 }: PageHeaderProps) {
+  const actionsContent = actions ?? children;
+
   return (
     <div
       className={cn(
@@ -29,7 +33,9 @@ export function PageHeader({
           <p className="mt-1 text-sm text-slate-400">{description}</p>
         )}
       </div>
-      {actions && <div className="flex gap-3">{actions}</div>}
+      {actionsContent && (
+        <div className="flex flex-wrap gap-3">{actionsContent}</div>
+      )}
     </div>
   );
 }

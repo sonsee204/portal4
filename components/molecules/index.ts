@@ -7,3 +7,7 @@ export { Breadcrumb } from './Breadcrumb';
 export { NotificationBell } from './NotificationBell';
 export { EmptyState } from './EmptyState';
 export { TabGroup } from './TabGroup';
+export { FilterChips } from './FilterChips';
+export { TimelineItem } from './TimelineItem';
+export { Modal } from './Modal';
+export { Stepper } from './Stepper';

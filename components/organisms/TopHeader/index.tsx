@@ -13,10 +13,12 @@ import { useUIStore } from '@/stores/ui';
 
 export interface TopHeaderProps {
   breadcrumbs?: BreadcrumbItem[];
+  /** Optional slot for page-level actions (e.g. "Save Changes" button) */
+  actions?: React.ReactNode;
   className?: string;
 }
 
-export function TopHeader({ breadcrumbs, className }: TopHeaderProps) {
+export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
   const { setMobileNavOpen } = useUIStore();
 
   return (
@@ -41,6 +43,7 @@ export function TopHeader({ breadcrumbs, className }: TopHeaderProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
+        {actions}
         <SearchInput
           placeholder="Search..."
           wrapperClassName="hidden md:block w-64"

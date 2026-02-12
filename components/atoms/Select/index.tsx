@@ -4,13 +4,20 @@ import { forwardRef, type SelectHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: boolean;
+  label?: string;
+  options?: SelectOption[];
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, error, children, ...props }, ref) => {
-    return (
+  ({ className, error, label, options, children, ...props }, ref) => {
+    const select = (
       <div className="relative">
         <select
           ref={ref}
@@ -25,13 +32,32 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           )}
           {...props}
         >
-          {children}
+          {options
+            ? options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))
+            : children}
         </select>
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
           <IonIcon name="chevron-down-outline" size="sm" />
         </div>
       </div>
     );
+
+    if (label) {
+      return (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            {label}
+          </label>
+          {select}
+        </div>
+      );
+    }
+
+    return select;
   }
 );
 
