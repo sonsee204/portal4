@@ -54,11 +54,11 @@ export type ButtonSize = keyof typeof buttonSizes;
 /* ------------------------------------------------------------------ */
 
 export const iconSizes = {
-  xs: 'text-sm',
-  sm: 'text-base',
-  md: 'text-xl',
-  lg: 'text-3xl',
-  xl: 'text-4xl',
+  xs: 'h-3.5 w-3.5',
+  sm: 'h-4 w-4',
+  md: 'h-5 w-5',
+  lg: 'h-7 w-7',
+  xl: 'h-9 w-9',
 } as const;
 
 export type IconSize = keyof typeof iconSizes;

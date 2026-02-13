@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "codegen": "graphql-codegen --config codegen.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal"
   },
   "dependencies": {
     "@apollo/client": "^4.1.4",
@@ -16,7 +17,6 @@
     "framer-motion": "^12.34.0",
     "graphql": "^16.12.0",
     "graphql-tag": "^2.12.6",
-    "ionicons": "^8.0.13",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -34,6 +34,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "ionicons": "^8.0.13",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",

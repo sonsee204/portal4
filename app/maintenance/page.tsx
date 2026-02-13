@@ -33,7 +33,7 @@ export default function MaintenancePage() {
       <div className="relative z-10 mx-auto max-w-lg px-6 text-center">
         {/* Icon */}
         <div className="bg-primary/20 text-primary mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full">
-          <IonIcon name="construct-outline" className="text-5xl" />
+          <IonIcon name="construct-outline" className="!h-12 !w-12" />
         </div>
 
         <h1 className="text-3xl font-bold text-white md:text-4xl">
