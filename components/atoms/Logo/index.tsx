@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 export interface LogoProps {
@@ -13,13 +14,16 @@ export interface LogoProps {
 function LogoMark({ className }: { className?: string }) {
   return (
     <div
-      className={cn(
-        'bg-primary neon-glow flex h-9 w-9 items-center justify-center rounded-lg font-bold text-white',
-        className
-      )}
+      className={cn('flex h-9 w-9 items-center justify-center', className)}
       aria-hidden
     >
-      H
+      <Image
+        src="/logo.svg"
+        alt="HITRI Logo"
+        width={36}
+        height={36}
+        className="h-full w-full object-contain"
+      />
     </div>
   );
 }
@@ -34,7 +38,7 @@ export function Logo({ variant = 'full', className, href = '/' }: LogoProps) {
             HITRI <span className="text-primary">TECH</span>
           </h1>
           <p className="text-primary/70 text-[10px] font-medium tracking-widest">
-            PORTAL v2.0
+            PORTAL v0.1
           </p>
         </div>
       )}
