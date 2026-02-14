@@ -68,23 +68,28 @@ export default function EcosystemPage() {
 
           {/* System Health Log */}
           <GlassPanel card>
-            <h3 className="mb-4 text-sm font-bold text-white">
+            <h3 className="mb-4 text-lg font-semibold text-white">
               System Health Log
             </h3>
-            {healthLogs.map((log, i) => (
-              <TimelineItem
-                key={i}
-                icon={log.icon}
-                iconColor={log.iconColor}
-                title={log.title}
-                time={log.time}
-                isLast={i === healthLogs.length - 1}
-              />
-            ))}
+            <div className="space-y-6">
+              {healthLogs.map((log, i) => (
+                <TimelineItem
+                  key={i}
+                  icon={log.icon}
+                  iconColor={log.iconColor}
+                  title={log.title}
+                  time={log.time}
+                  isLast={i === healthLogs.length - 1}
+                />
+              ))}
+            </div>
+            <button className="border-primary/20 text-primary hover:border-primary/50 mt-6 w-full rounded-lg border py-2 text-sm font-medium transition-colors hover:text-purple-400">
+              View Full Logs
+            </button>
           </GlassPanel>
 
           {/* Pro tip */}
-          <GlassPanel card className="border-primary/30 bg-primary/5">
+          <GlassPanel card className="border-primary/30 bg-primary/5 !p-5">
             <div className="flex gap-3">
               <IonIcon name="bulb-outline" className="text-primary shrink-0" />
               <div>

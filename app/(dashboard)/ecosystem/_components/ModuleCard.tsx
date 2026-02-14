@@ -19,28 +19,44 @@ export function ModuleCard({
   module: SportModule;
   onToggle: (sport: string) => void;
 }) {
+  const statusColor = {
+    online: 'bg-emerald-500',
+    maintenance: 'bg-orange-500',
+    offline: 'bg-red-500',
+  }[module.status];
+
   return (
-    <GlassPanel card className="flex flex-col gap-4">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/20 text-primary flex h-12 w-12 items-center justify-center rounded-xl">
-            <IonIcon name={module.icon} size="md" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white">{module.label}</h4>
-            <Badge variant={statusVariant[module.status]} className="mt-1">
-              {module.status}
-            </Badge>
-          </div>
+    <GlassPanel card className="relative flex flex-col">
+      {/* Status dot - absolute top-right */}
+      <div className="absolute top-6 right-6">
+        <div
+          className={`h-3 w-3 rounded-full ${statusColor} shadow-[0_0_10px_currentColor] ${module.enabled ? 'animate-pulse' : ''}`}
+        />
+      </div>
+
+      {/* Icon */}
+      <div className="bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+        <IonIcon name={module.icon} size="lg" />
+      </div>
+
+      {/* Title + Status */}
+      <h3 className="mb-1 text-lg font-semibold text-white">{module.label}</h3>
+      <Badge variant={statusVariant[module.status]} className="mb-6 w-fit">
+        {module.status}
+      </Badge>
+
+      {/* Footer: Active users + Toggle */}
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="mb-1 text-xs tracking-wider text-slate-400 uppercase">
+            Active Users
+          </p>
+          <p className="text-2xl font-bold text-white">{module.activeUsers}</p>
         </div>
         <Toggle
           checked={module.enabled}
           onChange={() => onToggle(module.sport)}
         />
-      </div>
-      <div className="border-surface-border flex items-center justify-between border-t pt-3 text-xs text-slate-400">
-        <span>Active Users</span>
-        <span className="font-bold text-white">{module.activeUsers}</span>
       </div>
     </GlassPanel>
   );

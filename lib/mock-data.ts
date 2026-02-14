@@ -7,7 +7,7 @@ import type {
   PortalUser, Transaction, Tournament, BracketMatch,
   SportModule, Booking, CalendarBooking, Report,
   SupportTicket, ChatMessage, MatchmakingLog, Banner,
-  AuditLog, Permission, ApiKey,
+  AuditLog, Permission, ApiKey, Notification,
 } from '@/types/portal';
 
 /* ------------------------------------------------------------------ */
@@ -51,20 +51,60 @@ export const mockTournaments: Tournament[] = [
 export const mockBracketMatches: BracketMatch[][] = [
   // Round of 16
   [
-    { _id: 'm1', matchNumber: 1, status: 'finished', players: [{ name: 'Nguyễn A', score: 21, winner: true }, { name: 'Trần B', score: 15 }] },
-    { _id: 'm2', matchNumber: 2, status: 'finished', players: [{ name: 'Lê C', score: 18 }, { name: 'Phạm D', score: 21, winner: true }] },
-    { _id: 'm3', matchNumber: 3, status: 'live', players: [{ name: 'Hoàng E', score: 14 }, { name: 'Vũ F', score: 12 }] },
-    { _id: 'm4', matchNumber: 4, status: 'scheduled', players: [{ name: 'Đỗ G' }, { name: 'Bùi H' }], time: '15:00' },
+    {
+      _id: 'm1', matchNumber: 12, status: 'live', players: [
+        { name: 'D. Medvedev', avatar: 'https://i.pravatar.cc/48?u=medvedev', score: 1 },
+        { name: 'C. Alcaraz', avatar: 'https://i.pravatar.cc/48?u=alcaraz', score: 2, winner: true },
+      ]
+    },
+    {
+      _id: 'm2', matchNumber: 13, status: 'finished', players: [
+        { name: 'S. Tsitsipas', avatar: 'https://i.pravatar.cc/48?u=tsitsipas', score: 0 },
+        { name: 'N. Djokovic', avatar: 'https://i.pravatar.cc/48?u=djokovic', score: 3, winner: true },
+      ]
+    },
+    {
+      _id: 'm3', matchNumber: 14, status: 'scheduled', players: [
+        { name: 'TBD' },
+        { name: 'J. Sinner', avatar: 'https://i.pravatar.cc/48?u=sinner' },
+      ], time: 'Scheduled'
+    },
+    {
+      _id: 'm4', matchNumber: 15, status: 'finished', players: [
+        { name: 'A. Zverev', avatar: 'https://i.pravatar.cc/48?u=zverev', score: 2, winner: true },
+        { name: 'H. Rune', avatar: 'https://i.pravatar.cc/48?u=rune', score: 1 },
+      ]
+    },
   ],
   // Quarter-finals
   [
-    { _id: 'm5', matchNumber: 5, status: 'scheduled', players: [{ name: 'Nguyễn A' }, { name: 'Phạm D' }], time: '16:00' },
-    { _id: 'm6', matchNumber: 6, status: 'upcoming', players: [{ name: 'TBD' }, { name: 'TBD' }] },
+    {
+      _id: 'm5', matchNumber: 24, status: 'scheduled', players: [
+        { name: 'C. Alcaraz', avatar: 'https://i.pravatar.cc/48?u=alcaraz' },
+        { name: 'N. Djokovic', avatar: 'https://i.pravatar.cc/48?u=djokovic' },
+      ], time: 'TODAY 18:00'
+    },
+    {
+      _id: 'm6', matchNumber: 25, status: 'upcoming', players: [
+        { name: 'TBD' },
+        { name: 'A. Zverev', avatar: 'https://i.pravatar.cc/48?u=zverev' },
+      ]
+    },
   ],
   // Semi-finals
-  [{ _id: 'm7', matchNumber: 7, status: 'upcoming', players: [{ name: 'TBD' }, { name: 'TBD' }] }],
+  [{
+    _id: 'm7', matchNumber: 30, status: 'upcoming', players: [
+      { name: 'Winner QF1' },
+      { name: 'Winner QF2' },
+    ], time: 'DEC 14'
+  }],
   // Final
-  [{ _id: 'm8', matchNumber: 8, status: 'upcoming', players: [{ name: 'TBD' }, { name: 'TBD' }] }],
+  [{
+    _id: 'm8', matchNumber: 32, status: 'upcoming', players: [
+      { name: 'TBD' },
+      { name: 'TBD' },
+    ], time: 'Dec 16, 2023 • 20:00'
+  }],
 ];
 
 /* ------------------------------------------------------------------ */
@@ -201,4 +241,16 @@ export const mockRecentActivity = [
   { icon: 'person-add-outline', iconColor: 'text-primary bg-primary/20 border-primary/30', title: 'New User registered via Web', time: '2 phút trước' },
   { icon: 'trophy-outline', iconColor: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30', title: 'Alpha Cup tournament started', time: '15 phút trước' },
   { icon: 'warning-outline', iconColor: 'text-red-400 bg-red-500/20 border-red-500/30', title: 'Server Load alert (Region EU)', time: '1 giờ trước' },
+];
+
+/* ------------------------------------------------------------------ */
+/* Notifications                                                       */
+/* ------------------------------------------------------------------ */
+
+export const mockNotifications: Notification[] = [
+  { _id: 'n1', type: 'success', title: 'Giải đấu bắt đầu', message: 'Giải Cầu Lông HITRI Open 2024 đã chính thức khởi tranh', icon: 'trophy-outline', timestamp: '2 phút trước', read: false, actionUrl: '/tournaments/t3' },
+  { _id: 'n2', type: 'info', title: 'Cập nhật lịch thi đấu', message: 'Trận đấu của bạn đã được chuyển sang sân số 3', icon: 'calendar-outline', timestamp: '15 phút trước', read: false },
+  { _id: 'n3', type: 'success', title: 'Thanh toán thành công', message: 'Bạn đã đặt sân thành công. Mã đặt sân: #BK-1234', icon: 'checkmark-circle-outline', timestamp: '1 giờ trước', read: false },
+  { _id: 'n4', type: 'warning', title: 'Sắp đến hạn thanh toán', message: 'Đơn đặt sân #BK-5678 sẽ hết hạn trong 2 giờ nữa', icon: 'time-outline', timestamp: '3 giờ trước', read: true },
+  { _id: 'n5', type: 'info', title: 'Kết quả trận đấu', message: 'Trận đấu vòng bảng của bạn đã kết thúc với tỷ số 21-19', icon: 'tennisball-outline', timestamp: '1 ngày trước', read: true },
 ];

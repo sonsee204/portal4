@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Pagination } from '@/components/organisms/Pagination';
@@ -35,6 +37,7 @@ const roleVariant: Record<
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
+  const router = useRouter();
 
   return (
     <>
@@ -72,11 +75,16 @@ export default function UsersPage() {
               className="border-surface-border hover:bg-surface-hover border-b transition-colors"
             >
               <td className="px-4 py-3">
-                <UserCell
-                  name={u.name}
-                  subtitle={u.email}
-                  status={u.online ? 'online' : undefined}
-                />
+                <Link
+                  href={`/users/${u._id}`}
+                  className="block cursor-pointer hover:opacity-90"
+                >
+                  <UserCell
+                    name={u.name}
+                    subtitle={u.email}
+                    status={u.online ? 'online' : undefined}
+                  />
+                </Link>
               </td>
               <td className="px-4 py-3">
                 <Badge variant={roleVariant[u.role]}>{u.role}</Badge>
@@ -95,6 +103,7 @@ export default function UsersPage() {
                     icon="eye-outline"
                     size="sm"
                     tooltip="Xem chi tiết"
+                    onClick={() => router.push(`/users/${u._id}`)}
                   />
                   <IconButton
                     icon="create-outline"

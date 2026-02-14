@@ -1,27 +1,54 @@
 'use client';
 
+import { useState } from 'react';
 import { IconButton } from '@/components/atoms/IconButton';
+import { NotificationDropdown } from '@/components/molecules/NotificationDropdown';
+import { mockNotifications } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
+import type { Notification } from '@/types/portal';
 
 export interface NotificationBellProps {
   count?: number;
   className?: string;
-  onClick?: () => void;
 }
 
-export function NotificationBell({
-  count = 0,
-  className,
-  onClick,
-}: NotificationBellProps) {
+export function NotificationBell({ count, className }: NotificationBellProps) {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(mockNotifications);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  const displayCount = count ?? unreadCount;
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read when clicked
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === notification._id ? { ...n, read: true } : n))
+    );
+  };
+
   return (
-    <IconButton
-      icon="notifications-outline"
-      iconSize="md"
-      badge={count > 0}
-      onClick={onClick}
-      aria-label={`Notifications${count > 0 ? ` (${count} new)` : ''}`}
-      className={cn(className)}
-    />
+    <div className={cn('relative', className)}>
+      <IconButton
+        icon="notifications-outline"
+        iconSize="md"
+        badge={displayCount > 0}
+        onClick={() => setOpen(!open)}
+        aria-label={`Notifications${displayCount > 0 ? ` (${displayCount} new)` : ''}`}
+        className={cn(open && 'bg-surface-hover')}
+      />
+
+      <NotificationDropdown
+        open={open}
+        onClose={() => setOpen(false)}
+        notifications={notifications}
+        onMarkAllRead={handleMarkAllRead}
+        onNotificationClick={handleNotificationClick}
+      />
+    </div>
   );
 }

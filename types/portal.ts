@@ -226,3 +226,20 @@ export interface ApiKey {
   status: 'active' | 'test';
   createdAt: string;
 }
+
+/* ------------------------------------------------------------------ */
+/* Notifications                                                       */
+/* ------------------------------------------------------------------ */
+
+export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
+export interface Notification {
+  _id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  icon?: string;
+  timestamp: string;
+  read: boolean;
+  actionUrl?: string;
+}

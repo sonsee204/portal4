@@ -13,7 +13,7 @@ export function GlassPanel({ children, className, card }: GlassPanelProps) {
   return (
     <div
       className={cn(
-        card ? 'glass-card' : 'glass-panel',
+        card ? 'glass-card p-6' : 'glass-panel',
         'rounded-xl',
         className
       )}
