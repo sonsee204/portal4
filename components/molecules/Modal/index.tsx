@@ -62,10 +62,10 @@ export function Modal({
         {/* Header */}
         {title && (
           <div className="border-surface-border flex items-center justify-between border-b px-6 py-4">
-            <h2 className="text-lg font-bold text-white">{title}</h2>
+            <h2 className="text-lg font-bold text-heading">{title}</h2>
             <button
               onClick={onClose}
-              className="hover:bg-surface-hover rounded-lg p-1 text-slate-400 transition-colors hover:text-white"
+              className="hover:bg-surface-hover rounded-lg p-1 text-muted transition-colors hover:text-heading"
             >
               <IonIcon name="close-outline" size="md" />
             </button>

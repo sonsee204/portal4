@@ -36,11 +36,11 @@ export function TimelineItem({
         {!isLast && <div className="bg-surface-border mt-1 w-px flex-1" />}
       </div>
       <div className={cn('pb-4', isLast && 'pb-0')}>
-        <p className="text-sm text-white">{title}</p>
+        <p className="text-sm text-heading">{title}</p>
         {description && (
-          <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+          <p className="mt-0.5 text-xs text-faint">{description}</p>
         )}
-        <p className="mt-0.5 text-xs text-slate-500">{time}</p>
+        <p className="mt-0.5 text-xs text-faint">{time}</p>
       </div>
     </div>
   );

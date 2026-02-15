@@ -12,7 +12,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { IconButton } from '@/components/atoms/IconButton';
 import { mockTransactions } from '@/lib/mock-data';
-import type { TransactionStatus } from '@/types/portal';
+import type { TransactionStatus } from '@/types/mock';
 
 const statusVariant: Record<
   TransactionStatus,
@@ -107,7 +107,7 @@ export default function FinancePage() {
                 key={t._id}
                 className="border-surface-border hover:bg-surface-hover border-b transition-colors"
               >
-                <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                <td className="px-4 py-3 font-mono text-xs text-muted">
                   {t._id}
                 </td>
                 <td className="px-4 py-3">
@@ -128,9 +128,9 @@ export default function FinancePage() {
                     ₫
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-muted">
                   <div>{t.date}</div>
-                  <div className="text-slate-500">{t.time}</div>
+                  <div className="text-faint">{t.time}</div>
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={statusVariant[t.status]}>{t.status}</Badge>

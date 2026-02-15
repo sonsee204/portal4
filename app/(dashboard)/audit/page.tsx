@@ -1,52 +1,110 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
-import { DataTable } from '@/components/organisms/DataTable';
 import { Pagination } from '@/components/organisms/Pagination';
-import { FilterChips } from '@/components/molecules/FilterChips';
-import { Badge } from '@/components/atoms/Badge';
-import { Button } from '@/components/atoms/Button';
-import { Checkbox } from '@/components/atoms/Checkbox';
-import { IconButton } from '@/components/atoms/IconButton';
-import { mockAuditLogs } from '@/lib/mock-data';
-import type { AuditAction, AuditStatus } from '@/types/portal';
+import { QueryState } from '@/components/molecules/QueryState';
+import { AUDIT_GET_LOGS, AUDIT_GET_STATS } from '@/graphql/queries/audit';
+import type {
+  AuditLog,
+  AuditLogList,
+  AuditStats,
+  AuditCategory,
+  AuditStatus,
+} from '@/types';
+import { AuditStatsCards } from './_components/AuditStatsCards';
+import { AuditFilters } from './_components/AuditFilters';
+import { AuditTable } from './_components/AuditTable';
+import { AuditDetailDrawer } from './_components/AuditDetailDrawer';
+import { AuditExportButton } from './_components/AuditExportButton';
 
-const actionVariant: Record<
-  AuditAction,
-  'danger' | 'info' | 'warning' | 'success' | 'neutral'
-> = {
-  lock_account: 'danger',
-  auto_scale: 'info',
-  delete_group: 'danger',
-  update_profile: 'success',
-  api_key_gen: 'warning',
-  login: 'neutral',
-  config_change: 'info',
-};
-
-const statusVariant: Record<AuditStatus, 'success' | 'danger'> = {
-  success: 'success',
-  failed: 'danger',
-};
-
-const eventFilters = [
-  { label: 'Tất cả', value: 'all', count: 5 },
-  { label: 'Lỗi', value: 'failed', count: 1 },
-  { label: 'Bảo mật', value: 'security', count: 2 },
-];
+const PAGE_SIZE = 20;
 
 export default function AuditPage() {
-  const [filter, setFilter] = useState('all');
+  // Filter state
+  const [category, setCategory] = useState<AuditCategory | undefined>();
+  const [status, setStatus] = useState<AuditStatus | undefined>();
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  const filtered = mockAuditLogs.filter((l) => {
-    if (filter === 'all') return true;
-    if (filter === 'failed') return l.status === 'failed';
-    if (filter === 'security')
-      return ['lock_account', 'api_key_gen', 'login'].includes(l.action);
-    return true;
+  // Detail drawer
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+
+  // Build filter variables
+  const filterVariables = useMemo(() => {
+    const filter: Record<string, unknown> = {};
+    if (category) filter.category = category;
+    if (status) filter.status = status;
+    if (search.trim()) filter.search = search.trim();
+    return {
+      filter: Object.keys(filter).length > 0 ? filter : undefined,
+      pagination: { page, limit: PAGE_SIZE },
+    };
+  }, [category, status, search, page]);
+
+  // Queries
+  const {
+    data: logsData,
+    loading: logsLoading,
+    error: logsError,
+    refetch: refetchLogs,
+  } = useQuery<{ auditLogs: AuditLogList }>(AUDIT_GET_LOGS, {
+    variables: filterVariables,
+    fetchPolicy: 'cache-and-network',
   });
+
+  const {
+    data: statsData,
+    loading: statsLoading,
+    refetch: refetchStats,
+  } = useQuery<{ auditStats: AuditStats }>(AUDIT_GET_STATS, {
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const logs = logsData?.auditLogs?.logs ?? [];
+  const totalItems = logsData?.auditLogs?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const stats = statsData?.auditStats;
+
+  // Build category counts from stats
+  const totalByCategory = useMemo(() => {
+    if (!stats?.byCategory) return undefined;
+    const map: Record<string, number> = {};
+    for (const item of stats.byCategory) {
+      map[item.category] = item.count;
+    }
+    return map;
+  }, [stats]);
+
+  // Handlers
+  const handleCategoryChange = useCallback((val: AuditCategory | undefined) => {
+    setCategory(val);
+    setPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((val: AuditStatus | undefined) => {
+    setStatus(val);
+    setPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((val: string) => {
+    setSearch(val);
+    setPage(1);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    refetchLogs();
+    refetchStats();
+  }, [refetchLogs, refetchStats]);
+
+  const handleViewDetail = useCallback((log: AuditLog) => {
+    setSelectedLog(log);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedLog(null);
+  }, []);
 
   return (
     <>
@@ -55,84 +113,62 @@ export default function AuditPage() {
         description="Theo dõi mọi hoạt động admin trong hệ thống."
       >
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" iconLeft="download-outline">
-            Export CSV
-          </Button>
-          <Button variant="ghost" size="sm" iconLeft="refresh-outline">
-            Làm mới
-          </Button>
+          <AuditExportButton logs={logs} disabled={logsLoading} />
         </div>
       </PageHeader>
 
-      <FilterChips
-        chips={eventFilters}
-        active={filter}
-        onChange={setFilter}
-        className="mt-6"
-      />
+      {/* Stats cards */}
+      <div className="mt-6">
+        <AuditStatsCards stats={stats} loading={statsLoading} />
+      </div>
 
-      <div className="mt-4">
-        <DataTable
-          columns={[
-            { key: 'check', label: '' },
-            { key: 'admin', label: 'Admin' },
-            { key: 'action', label: 'Hành động' },
-            { key: 'target', label: 'Đối tượng' },
-            { key: 'ip', label: 'IP' },
-            { key: 'timestamp', label: 'Thời gian', sortable: true },
-            { key: 'status', label: 'Trạng thái' },
-            { key: 'actions', label: '' },
-          ]}
-          data={filtered}
-          renderRow={(log) => (
-            <tr
-              key={log._id}
-              className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-            >
-              <td className="px-4 py-3">
-                <Checkbox />
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary/20 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold">
-                    {log.adminInitials}
-                  </div>
-                  <span className="text-sm text-white">{log.adminName}</span>
-                </div>
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant={actionVariant[log.action] ?? 'neutral'}>
-                  {log.actionLabel}
-                </Badge>
-              </td>
-              <td className="px-4 py-3 font-mono text-xs text-slate-400">
-                {log.target}
-              </td>
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                {log.ip}
-              </td>
-              <td className="px-4 py-3 font-mono text-xs text-slate-400">
-                {log.timestamp}
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant={statusVariant[log.status]}>{log.status}</Badge>
-              </td>
-              <td className="px-4 py-3">
-                <IconButton icon="eye-outline" size="sm" tooltip="Chi tiết" />
-              </td>
-            </tr>
-          )}
+      {/* Filters */}
+      <div className="mt-6">
+        <AuditFilters
+          category={category}
+          status={status}
+          search={search}
+          onCategoryChange={handleCategoryChange}
+          onStatusChange={handleStatusChange}
+          onSearchChange={handleSearchChange}
+          onRefresh={handleRefresh}
+          loading={logsLoading}
+          totalByCategory={totalByCategory}
         />
       </div>
 
-      <Pagination
-        currentPage={page}
-        totalPages={8}
-        totalItems={75}
-        pageSize={10}
-        onPageChange={setPage}
-        className="mt-4"
-      />
+      {/* Table */}
+      <div className="mt-4">
+        <QueryState
+          loading={logsLoading}
+          error={logsError}
+          empty={!logsLoading && logs.length === 0}
+          onRetry={handleRefresh}
+          emptyMessage="Chưa có audit log nào"
+          emptyIcon="document-text-outline"
+        >
+          <AuditTable
+            logs={logs}
+            loading={logsLoading}
+            onViewDetail={handleViewDetail}
+          />
+        </QueryState>
+      </div>
+
+      {/* Pagination */}
+      {totalItems > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          className="mt-4"
+        />
+      )}
+
+      {/* Detail drawer */}
+      <AuditDetailDrawer log={selectedLog} onClose={handleCloseDetail} />
     </>
   );
 }

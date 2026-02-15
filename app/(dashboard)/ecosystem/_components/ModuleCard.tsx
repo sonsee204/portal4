@@ -4,7 +4,7 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import { Toggle } from '@/components/atoms/Toggle';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { SportModule } from '@/types/portal';
+import type { SportModule } from '@/types/mock';
 
 const statusVariant: Record<string, 'success' | 'warning' | 'danger'> = {
   online: 'success',
@@ -40,7 +40,7 @@ export function ModuleCard({
       </div>
 
       {/* Title + Status */}
-      <h3 className="mb-1 text-lg font-semibold text-white">{module.label}</h3>
+      <h3 className="mb-1 text-lg font-semibold text-heading">{module.label}</h3>
       <Badge variant={statusVariant[module.status]} className="mb-6 w-fit">
         {module.status}
       </Badge>
@@ -48,10 +48,10 @@ export function ModuleCard({
       {/* Footer: Active users + Toggle */}
       <div className="flex items-end justify-between">
         <div>
-          <p className="mb-1 text-xs tracking-wider text-slate-400 uppercase">
+          <p className="mb-1 text-xs tracking-wider text-muted uppercase">
             Active Users
           </p>
-          <p className="text-2xl font-bold text-white">{module.activeUsers}</p>
+          <p className="text-2xl font-bold text-heading">{module.activeUsers}</p>
         </div>
         <Toggle
           checked={module.enabled}

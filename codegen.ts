@@ -18,12 +18,13 @@ const config: CodegenConfig = {
       plugins: [
         'typescript',
         'typescript-operations',
-        'typescript-react-apollo',
       ],
       config: {
-        withHooks: true,
-        withComponent: false,
-        withHOC: false,
+        enumsAsTypes: false,
+        scalars: {
+          DateTime: 'string',
+          JSON: 'Record<string, unknown>',
+        },
       },
     },
   },

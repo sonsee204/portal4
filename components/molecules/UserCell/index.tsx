@@ -23,9 +23,9 @@ export function UserCell({
     <div className={cn('flex items-center gap-3', className)}>
       <Avatar src={src} alt={name} status={status} size="md" />
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-white">{name}</p>
+        <p className="truncate text-sm font-semibold text-heading">{name}</p>
         {subtitle && (
-          <p className="truncate text-xs text-slate-500">{subtitle}</p>
+          <p className="truncate text-xs text-faint">{subtitle}</p>
         )}
       </div>
     </div>

@@ -18,7 +18,7 @@ export function TabGroup({ tabs, active, onChange, className }: TabGroupProps) {
   return (
     <div
       className={cn(
-        'border-surface-border bg-bg-dark inline-flex items-center gap-1 rounded-lg border p-1',
+        'border-surface-border bg-bg inline-flex items-center gap-1 rounded-lg border p-1',
         className
       )}
     >
@@ -30,8 +30,8 @@ export function TabGroup({ tabs, active, onChange, className }: TabGroupProps) {
           className={cn(
             'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
             active === tab.value
-              ? 'bg-surface-dark border-surface-border border text-white shadow-sm'
-              : 'text-slate-500 hover:text-white'
+              ? 'bg-surface border-surface-border border text-heading shadow-sm'
+              : 'text-faint hover:text-heading'
           )}
         >
           {tab.label}

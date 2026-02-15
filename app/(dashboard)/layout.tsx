@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/templates/DashboardLayout';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +21,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <DashboardLayout breadcrumbs={breadcrumbs}>{children}</DashboardLayout>
+    <AuthProvider>
+      <DashboardLayout breadcrumbs={breadcrumbs}>{children}</DashboardLayout>
+    </AuthProvider>
   );
 }

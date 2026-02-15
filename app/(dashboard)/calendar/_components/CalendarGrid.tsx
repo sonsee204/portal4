@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { CalendarBooking } from '@/types/portal';
+import type { CalendarBooking } from '@/types/mock';
 
 const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 07:00 - 18:00
 
@@ -25,11 +25,11 @@ export function CalendarGrid({ courts, bookings }: CalendarGridProps) {
           className="border-surface-border grid border-b"
           style={{ gridTemplateColumns: `60px repeat(${courts.length}, 1fr)` }}
         >
-          <div className="p-2 text-xs text-slate-500">Giờ</div>
+          <div className="p-2 text-xs text-faint">Giờ</div>
           {courts.map((c) => (
             <div
               key={c}
-              className="border-surface-border border-l p-2 text-center text-xs font-medium text-slate-300"
+              className="border-surface-border border-l p-2 text-center text-xs font-medium text-body"
             >
               {c}
             </div>
@@ -45,7 +45,7 @@ export function CalendarGrid({ courts, bookings }: CalendarGridProps) {
               gridTemplateColumns: `60px repeat(${courts.length}, 1fr)`,
             }}
           >
-            <div className="flex h-12 items-center p-2 text-xs text-slate-500">
+            <div className="flex h-12 items-center p-2 text-xs text-faint">
               {String(h).padStart(2, '0')}:00
             </div>
             {courts.map((court) => {
@@ -64,7 +64,7 @@ export function CalendarGrid({ courts, bookings }: CalendarGridProps) {
                       className={cn(
                         'absolute inset-x-0.5 z-10 rounded-md border px-2 py-0.5 text-[10px] font-medium',
                         statusColor[booking.status] ??
-                          'bg-surface-hover text-slate-300'
+                          'bg-surface-hover text-body'
                       )}
                       style={{
                         height: `${(booking.endHour - booking.startHour) * 48}px`,

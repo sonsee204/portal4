@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Pagination } from '@/components/organisms/Pagination';
@@ -11,120 +12,187 @@ import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SearchInput } from '@/components/molecules/SearchInput';
-import { mockUsers } from '@/lib/mock-data';
-import type { UserStatus, UserRole } from '@/types/portal';
+import { PermissionGate } from '@/components/atoms/PermissionGate';
+import { QueryState } from '@/components/molecules/QueryState';
+import { ADMIN_GET_USERS } from '@/graphql/queries/admin';
+import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
+import type { UserRole, User, AdminGetUsersResponse } from '@/types';
+import { CreateUserDialog } from './_components/CreateUserDialog';
 
-const statusVariant: Record<
-  UserStatus,
-  'success' | 'warning' | 'danger' | 'neutral'
-> = {
-  active: 'success',
-  inactive: 'neutral',
-  pending: 'warning',
-  banned: 'danger',
-};
+const PAGE_SIZE = 20;
 
-const roleVariant: Record<
-  UserRole,
-  'info' | 'success' | 'warning' | 'neutral' | 'danger'
-> = {
-  admin: 'danger',
-  partner: 'info',
-  user: 'neutral',
-  coach: 'success',
-  moderator: 'warning',
-};
+function getRoleBadgeVariant(
+  role: UserRole
+): 'info' | 'success' | 'warning' | 'neutral' | 'danger' {
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return 'danger';
+    case 'ADMIN':
+      return 'info';
+    case 'FACILITY_OWNER':
+      return 'success';
+    case 'PLAYER':
+      return 'neutral';
+    default:
+      return 'neutral';
+  }
+}
+
+function getStatusBadge(user: User) {
+  if (user.isSuspended)
+    return { variant: 'danger' as const, label: 'Bị khóa', dot: true };
+  if (user.isActive)
+    return { variant: 'success' as const, label: 'Hoạt động', dot: true };
+  return { variant: 'neutral' as const, label: 'Không hoạt động', dot: true };
+}
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const router = useRouter();
+
+  const { data, loading, error, refetch } = useQuery<AdminGetUsersResponse>(
+    ADMIN_GET_USERS,
+    {
+      variables: {
+        searchQuery: searchQuery || undefined,
+        pagination: { page, limit: PAGE_SIZE },
+      },
+      fetchPolicy: 'cache-and-network',
+    }
+  );
+
+  const users = data?.adminGetUsers.users ?? [];
+  const total = data?.adminGetUsers.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  }, []);
+
+  const handleCreateSuccess = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   return (
     <>
       <PageHeader
         title="Quản lý người dùng"
-        description="Danh sách tất cả người dùng trong hệ thống."
+        description={`Tổng cộng ${total} người dùng trong hệ thống.`}
       >
         <div className="flex items-center gap-3">
           <SearchInput
             placeholder="Tìm người dùng..."
             wrapperClassName="w-56"
+            onChange={(e) => handleSearch(e.target.value)}
           />
-          <Button variant="ghost" size="sm" iconLeft="funnel-outline">
-            Bộ lọc
-          </Button>
-          <Button size="sm" iconLeft="add-outline">
-            Thêm mới
-          </Button>
+          <PermissionGate
+            features={['admin_creation', 'facility_owner_creation']}
+          >
+            <Button
+              size="sm"
+              iconLeft="person-add-outline"
+              onClick={() => setShowCreateDialog(true)}
+            >
+              Tạo tài khoản
+            </Button>
+          </PermissionGate>
         </div>
       </PageHeader>
 
       <div className="mt-6">
-        <DataTable
-          columns={[
-            { key: 'name', label: 'Người dùng', sortable: true },
-            { key: 'role', label: 'Vai trò' },
-            { key: 'status', label: 'Trạng thái' },
-            { key: 'lastLogin', label: 'Lần đăng nhập cuối' },
-            { key: 'actions', label: '' },
-          ]}
-          data={mockUsers}
-          renderRow={(u) => (
-            <tr
-              key={u._id}
-              className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-            >
-              <td className="px-4 py-3">
-                <Link
-                  href={`/users/${u._id}`}
-                  className="block cursor-pointer hover:opacity-90"
+        <QueryState
+          loading={loading && !data}
+          error={error}
+          empty={!loading && users.length === 0}
+          emptyMessage="Không có người dùng nào"
+          emptyIcon="people-outline"
+          onRetry={() => void refetch()}
+        >
+          <DataTable
+            columns={[
+              { key: 'name', label: 'Người dùng', sortable: true },
+              { key: 'role', label: 'Vai trò' },
+              { key: 'status', label: 'Trạng thái' },
+              { key: 'origin', label: 'Nguồn gốc' },
+              { key: 'lastLogin', label: 'Đăng nhập cuối' },
+              { key: 'actions', label: '' },
+            ]}
+            data={users}
+            renderRow={(u: User) => {
+              const status = getStatusBadge(u);
+              return (
+                <tr
+                  key={u._id}
+                  className="border-surface-border hover:bg-surface-hover border-b transition-colors"
                 >
-                  <UserCell
-                    name={u.name}
-                    subtitle={u.email}
-                    status={u.online ? 'online' : undefined}
-                  />
-                </Link>
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant={roleVariant[u.role]}>{u.role}</Badge>
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant={statusVariant[u.status]} dot>
-                  {u.status}
-                </Badge>
-              </td>
-              <td className="px-4 py-3 text-sm text-slate-400">
-                {u.lastLogin}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-1">
-                  <IconButton
-                    icon="eye-outline"
-                    size="sm"
-                    tooltip="Xem chi tiết"
-                    onClick={() => router.push(`/users/${u._id}`)}
-                  />
-                  <IconButton
-                    icon="create-outline"
-                    size="sm"
-                    tooltip="Chỉnh sửa"
-                  />
-                  <IconButton icon="ellipsis-vertical-outline" size="sm" />
-                </div>
-              </td>
-            </tr>
-          )}
-        />
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/users/${u._id}`}
+                      className="block cursor-pointer hover:opacity-90"
+                    >
+                      <UserCell
+                        name={u.fullName}
+                        subtitle={u.email}
+                        src={u.photoURL}
+                      />
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={getRoleBadgeVariant(u.role)}>
+                      {ROLE_DISPLAY_NAMES[u.role] || u.role}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={status.variant} dot={status.dot}>
+                      {status.label}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted">
+                    {u.accountOrigin === 'ADMIN_CREATED'
+                      ? 'Admin tạo'
+                      : 'Tự đăng ký'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted">
+                    {u.lastLoginAt
+                      ? new Date(u.lastLoginAt).toLocaleDateString('vi-VN')
+                      : 'Chưa đăng nhập'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <IconButton
+                        icon="eye-outline"
+                        size="sm"
+                        tooltip="Xem chi tiết"
+                        onClick={() => router.push(`/users/${u._id}`)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            }}
+          />
+        </QueryState>
       </div>
 
-      <Pagination
-        currentPage={page}
-        totalPages={5}
-        totalItems={mockUsers.length}
-        pageSize={10}
-        onPageChange={setPage}
-        className="mt-4"
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          className="mt-4"
+        />
+      )}
+
+      {/* Create User Dialog */}
+      <CreateUserDialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCreateSuccess}
       />
     </>
   );

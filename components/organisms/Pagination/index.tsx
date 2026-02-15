@@ -51,10 +51,10 @@ export function Pagination({
     >
       {/* Info text */}
       {totalItems != null && (
-        <p className="text-sm text-slate-400">
-          Showing <span className="font-medium text-white">{from}</span> to{' '}
-          <span className="font-medium text-white">{to}</span> of{' '}
-          <span className="font-medium text-white">{totalItems}</span> results
+        <p className="text-muted text-sm">
+          Showing <span className="text-heading font-medium">{from}</span> to{' '}
+          <span className="text-heading font-medium">{to}</span> of{' '}
+          <span className="text-heading font-medium">{totalItems}</span> results
         </p>
       )}
 
@@ -63,14 +63,14 @@ export function Pagination({
         <button
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
-          className="border-surface-border hover:bg-surface-hover flex h-8 w-8 items-center justify-center rounded-lg border text-slate-400 transition-colors hover:text-white disabled:opacity-40"
+          className="border-surface-border hover:bg-surface-hover text-muted hover:text-heading flex h-8 w-8 items-center justify-center rounded-lg border transition-colors disabled:opacity-40"
         >
           <IonIcon name="chevron-back-outline" size="sm" />
         </button>
 
         {pages.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e${i}`} className="px-1 text-slate-500">
+            <span key={`e${i}`} className="text-faint px-1">
               ...
             </span>
           ) : (
@@ -81,7 +81,7 @@ export function Pagination({
                 'flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors',
                 p === currentPage
                   ? 'bg-primary text-white'
-                  : 'border-surface-border hover:bg-surface-hover border text-slate-400 hover:text-white'
+                  : 'border-surface-border hover:bg-surface-hover text-muted hover:text-heading border'
               )}
             >
               {p}
@@ -92,7 +92,7 @@ export function Pagination({
         <button
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
-          className="border-surface-border hover:bg-surface-hover flex h-8 w-8 items-center justify-center rounded-lg border text-slate-400 transition-colors hover:text-white disabled:opacity-40"
+          className="border-surface-border hover:bg-surface-hover text-muted hover:text-heading flex h-8 w-8 items-center justify-center rounded-lg border transition-colors disabled:opacity-40"
         >
           <IonIcon name="chevron-forward-outline" size="sm" />
         </button>

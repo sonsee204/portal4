@@ -22,7 +22,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            'bg-surface-dark flex h-10 w-full appearance-none rounded-lg border px-3 pr-10 text-sm text-white transition-colors',
+            'bg-surface text-heading flex h-10 w-full appearance-none rounded-lg border px-3 pr-10 text-sm transition-colors',
             'focus-visible:ring-primary/50 focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error
@@ -40,7 +40,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               ))
             : children}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500">
+        <div className="text-faint pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
           <IonIcon name="chevron-down-outline" size="sm" />
         </div>
       </div>
@@ -49,7 +49,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     if (label) {
       return (
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300">
+          <label className="text-body mb-1.5 block text-sm font-medium">
             {label}
           </label>
           {select}

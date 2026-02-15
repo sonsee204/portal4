@@ -23,7 +23,7 @@ export function VenueFilter({
       <SearchInput placeholder="Tìm sân..." />
       {venues.map((v) => (
         <div key={v.group}>
-          <p className="mb-2 text-xs font-bold tracking-wider text-slate-500 uppercase">
+          <p className="mb-2 text-xs font-bold tracking-wider text-faint uppercase">
             {v.group}
           </p>
           <div className="space-y-2">
@@ -41,7 +41,7 @@ export function VenueFilter({
 
       {/* Legend */}
       <div className="border-surface-border space-y-2 border-t pt-3">
-        <p className="text-xs font-bold text-slate-500">Chú thích</p>
+        <p className="text-xs font-bold text-faint">Chú thích</p>
         {[
           { color: 'bg-primary/30', label: 'Đã thanh toán' },
           { color: 'bg-amber-500/20', label: 'Chờ thanh toán' },
@@ -49,7 +49,7 @@ export function VenueFilter({
         ].map((l) => (
           <div key={l.label} className="flex items-center gap-2">
             <span className={`h-3 w-5 rounded ${l.color}`} />
-            <span className="text-xs text-slate-400">{l.label}</span>
+            <span className="text-xs text-muted">{l.label}</span>
           </div>
         ))}
       </div>

@@ -67,14 +67,19 @@ export function IonIcon({ name, className, size = 'md' }: IonIconProps) {
     if (svgCache.has(name)) return;
     let cancelled = false;
     fetch(`/svg/${name}.svg`)
-      .then((r) => r.text())
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        const ct = r.headers.get('content-type') ?? '';
+        if (!ct.includes('svg')) throw new Error(`unexpected content-type: ${ct}`);
+        return r.text();
+      })
       .then((text) => {
         if (cancelled) return;
         svgCache.set(name, cleanSvg(text));
         notifySubscribers();
       })
       .catch(() => {
-        /* silently ignore missing icons */
+        /* silently ignore — prevents HTML injection if response is not SVG */
       });
     return () => {
       cancelled = true;

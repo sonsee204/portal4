@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
-import type { SupportTicket, TicketStatus } from '@/types/portal';
+import type { SupportTicket, TicketStatus } from '@/types/mock';
 
 const statusVariant: Record<
   TicketStatus,
@@ -48,7 +48,7 @@ export function TicketListItem({
             <p
               className={cn(
                 'truncate text-sm',
-                ticket.unread ? 'font-bold text-white' : 'text-slate-300'
+                ticket.unread ? 'font-bold text-heading' : 'text-body'
               )}
             >
               {ticket.subject}
@@ -57,8 +57,8 @@ export function TicketListItem({
               <span className="bg-primary h-2 w-2 shrink-0 rounded-full" />
             )}
           </div>
-          <p className="mt-0.5 text-xs text-slate-500">{ticket.userName}</p>
-          <p className="mt-1 truncate text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-faint">{ticket.userName}</p>
+          <p className="mt-1 truncate text-xs text-muted">
             {ticket.lastMessage}
           </p>
           <div className="mt-1.5 flex items-center justify-between">
@@ -68,7 +68,7 @@ export function TicketListItem({
             >
               {statusLabel[ticket.status]}
             </Badge>
-            <span className="text-[10px] text-slate-500">
+            <span className="text-[10px] text-faint">
               {ticket.updatedAt}
             </span>
           </div>

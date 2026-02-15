@@ -5,7 +5,7 @@ import { IconButton } from '@/components/atoms/IconButton';
 import { NotificationDropdown } from '@/components/molecules/NotificationDropdown';
 import { mockNotifications } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import type { Notification } from '@/types/portal';
+import type { Notification } from '@/types/mock';
 
 export interface NotificationBellProps {
   count?: number;

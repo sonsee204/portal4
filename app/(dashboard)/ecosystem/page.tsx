@@ -9,7 +9,7 @@ import { ModuleCard } from './_components/ModuleCard';
 import { NotificationForm } from './_components/NotificationForm';
 import { DonutChart } from './_components/DonutChart';
 import { mockSportModules } from '@/lib/mock-data';
-import type { SportModule } from '@/types/portal';
+import type { SportModule } from '@/types/mock';
 
 const healthLogs = [
   {
@@ -68,7 +68,7 @@ export default function EcosystemPage() {
 
           {/* System Health Log */}
           <GlassPanel card>
-            <h3 className="mb-4 text-lg font-semibold text-white">
+            <h3 className="mb-4 text-lg font-semibold text-heading">
               System Health Log
             </h3>
             <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function EcosystemPage() {
               <IonIcon name="bulb-outline" className="text-primary shrink-0" />
               <div>
                 <p className="text-primary text-xs font-bold">Pro Tip</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted">
                   Tắt module trước khi bảo trì sẽ tự động thông báo đến người
                   dùng đang hoạt động trong module đó.
                 </p>

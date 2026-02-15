@@ -9,7 +9,7 @@ import { ChatMessage } from './ChatMessage';
 import type {
   SupportTicket,
   ChatMessage as ChatMessageType,
-} from '@/types/portal';
+} from '@/types/mock';
 
 export function ChatPanel({
   ticket,
@@ -25,8 +25,8 @@ export function ChatPanel({
       {/* Chat header */}
       <div className="border-surface-border flex items-center justify-between border-b pb-3">
         <div>
-          <h3 className="text-sm font-bold text-white">{ticket.subject}</h3>
-          <p className="text-xs text-slate-500">{ticket.userName}</p>
+          <h3 className="text-heading text-sm font-bold">{ticket.subject}</h3>
+          <p className="text-faint text-xs">{ticket.userName}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="warning">Đang xử lý</Badge>
@@ -54,7 +54,7 @@ export function ChatPanel({
             onChange={(e) => setMsg(e.target.value)}
             placeholder="Nhập tin nhắn..."
             rows={1}
-            className="border-surface-border bg-surface-dark focus:border-primary flex-1 resize-none rounded-xl border px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none"
+            className="border-surface-border bg-surface focus:border-primary text-heading placeholder-faint flex-1 resize-none rounded-xl border px-4 py-2.5 text-sm outline-none"
           />
           <Button size="sm" iconLeft="send-outline" disabled={!msg.trim()}>
             Gửi

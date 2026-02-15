@@ -1,37 +1,31 @@
 /**
- * Shared GraphQL types for portal.
- * For full generated types, run: pnpm run codegen
+ * Manual GraphQL type overrides for the portal.
+ *
+ * Most types are now auto-generated in graphql/generated.ts (run: npm run codegen).
+ * Only keep types here that are NOT in generated.ts or need custom shapes
+ * (e.g., aggregated response types the backend returns but codegen doesn't produce).
  */
 
-export interface PaginationInput {
-  page?: number;
-  limit?: number;
-}
+// Re-export commonly used generated types for convenience
+export type {
+  PaginationInput,
+  HealthStatus,
+  VenueLocation,
+  PriceRange,
+  VenuePromotionInfo,
+} from '../generated';
 
-export interface VenueLocation {
-  address?: string;
-  ward?: string;
-  district?: string;
-  city?: string;
-  latitude?: number;
-  longitude?: number;
-}
+// Import for local interface usage
+import type {
+  VenueLocation,
+  PriceRange,
+  VenuePromotionInfo,
+} from '../generated';
 
-export interface PriceRange {
-  minPrice?: number;
-  maxPrice?: number;
-  currency?: string;
-}
-
-export interface VenuePromotionInfo {
-  hasActivePromotions: boolean;
-  activePromotionCount: number;
-  bestDiscountPercent?: number;
-  bestDiscountAmount?: number;
-  featuredBadge?: { text: string; color: string };
-  promotionText?: string;
-}
-
+/**
+ * VenueListItem -- custom aggregated shape returned by searchVenues / getVenues.
+ * Not auto-generated because the backend resolver builds it dynamically.
+ */
 export interface VenueListItem {
   _id: string;
   name: string;
@@ -54,11 +48,4 @@ export interface VenueListResult {
   hasMore: boolean;
   page: number;
   limit: number;
-}
-
-export interface HealthStatus {
-  status: string;
-  database: string;
-  timestamp: string;
-  uptime?: number;
 }

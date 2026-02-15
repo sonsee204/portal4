@@ -16,8 +16,8 @@ export default function Error({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-      <h1 className="text-xl font-bold text-white">Đã xảy ra lỗi</h1>
-      <p className="mt-2 text-center text-slate-400">Vui lòng thử lại sau.</p>
+      <h1 className="text-xl font-bold text-heading">Đã xảy ra lỗi</h1>
+      <p className="mt-2 text-center text-muted">Vui lòng thử lại sau.</p>
       <Button className="mt-6" onClick={reset}>
         Thử lại
       </Button>

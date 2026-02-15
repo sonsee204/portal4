@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Avatar } from '@/components/atoms/Avatar';
+import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import {
   Breadcrumb,
@@ -10,6 +11,8 @@ import {
 } from '@/components/molecules/Breadcrumb';
 import { NotificationBell } from '@/components/molecules/NotificationBell';
 import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
+import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
 
 export interface TopHeaderProps {
   breadcrumbs?: BreadcrumbItem[];
@@ -20,18 +23,35 @@ export interface TopHeaderProps {
 
 export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
   const { setMobileNavOpen } = useUIStore();
+  const user = useAuthStore((s) => s.user);
+
+  const displayName = user?.displayName || user?.fullName || 'User';
+  const initials =
+    user?.displayName
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() ||
+    user?.fullName
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() ||
+    'U';
 
   return (
     <header
       className={cn(
-        'border-surface-border bg-bg-dark/80 sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur-md',
+        'border-surface-border bg-bg/80 sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b px-6 backdrop-blur-md',
         className
       )}
     >
       {/* Left side */}
       <div className="flex items-center gap-4">
         <button
-          className="text-slate-400 hover:text-white lg:hidden"
+          className="text-muted hover:text-heading lg:hidden"
           onClick={() => setMobileNavOpen(true)}
         >
           <IonIcon name="menu-outline" size="md" />
@@ -48,14 +68,27 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
           placeholder="Search..."
           wrapperClassName="hidden md:block w-64"
         />
+        <ThemeToggle />
         <NotificationBell count={3} />
         <div className="bg-surface-border hidden h-8 w-px md:block" />
         <div className="hidden items-center gap-3 md:flex">
           <div className="text-right">
-            <p className="text-sm font-bold text-white">Admin</p>
-            <p className="text-primary text-xs">Super Admin</p>
+            <p
+              className="text-heading max-w-[140px] truncate text-sm font-bold"
+              title={displayName}
+            >
+              {displayName}
+            </p>
+            <p className="text-primary text-xs">
+              {user?.role ? ROLE_DISPLAY_NAMES[user.role] : ''}
+            </p>
           </div>
-          <Avatar fallback="AD" status="online" />
+          <Avatar
+            fallback={initials}
+            src={user?.photoURL}
+            status="online"
+            size="sm"
+          />
         </div>
       </div>
     </header>

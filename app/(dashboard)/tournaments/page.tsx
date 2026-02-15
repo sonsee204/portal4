@@ -42,21 +42,21 @@ export default function TournamentsPage() {
             variant="outline"
             size="md"
             tooltip="Zoom In"
-            className="bg-surface-dark hover:border-primary/50 border-white/10 shadow-lg"
+            className="bg-surface hover:border-primary/50 border-surface-border shadow-lg"
           />
           <IconButton
             icon="remove-outline"
             variant="outline"
             size="md"
             tooltip="Zoom Out"
-            className="bg-surface-dark hover:border-primary/50 border-white/10 shadow-lg"
+            className="bg-surface hover:border-primary/50 border-surface-border shadow-lg"
           />
           <IconButton
             icon="grid-outline"
             variant="outline"
             size="md"
             tooltip="Reset View"
-            className="bg-surface-dark hover:border-primary/50 border-white/10 shadow-lg"
+            className="bg-surface hover:border-primary/50 border-surface-border shadow-lg"
           />
         </div>
       </div>

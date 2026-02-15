@@ -1,21 +1,25 @@
 /**
- * Shared portal data types — used by mock data and page components.
+ * Mock data types -- used ONLY by lib/mock-data.ts and pages that still consume mock data.
+ * These will be replaced by real API types as each feature migrates to real backends.
+ *
+ * NOTE: MockUserRole / MockUser are intentionally prefixed to avoid conflicts
+ * with the real UserRole (from types/auth.ts) and User (from types/user.ts).
  */
 
 /* ------------------------------------------------------------------ */
-/* Users                                                               */
+/* Users (mock-only)                                                   */
 /* ------------------------------------------------------------------ */
 
-export type UserRole = 'admin' | 'partner' | 'user' | 'coach' | 'moderator';
-export type UserStatus = 'active' | 'inactive' | 'pending' | 'banned';
+export type MockUserRole = 'admin' | 'partner' | 'user' | 'coach' | 'moderator';
+export type MockUserStatus = 'active' | 'inactive' | 'pending' | 'banned';
 
-export interface PortalUser {
+export interface MockUser {
   _id: string;
   name: string;
   email: string;
   avatar?: string;
-  role: UserRole;
-  status: UserStatus;
+  role: MockUserRole;
+  status: MockUserStatus;
   lastLogin: string;
   online?: boolean;
   phone?: string;
@@ -187,25 +191,6 @@ export interface Banner {
   status: 'active' | 'scheduled' | 'paused';
   deepLink?: string;
   duration?: number;
-}
-
-/* ------------------------------------------------------------------ */
-/* Audit Logs                                                          */
-/* ------------------------------------------------------------------ */
-
-export type AuditAction = 'lock_account' | 'auto_scale' | 'delete_group' | 'update_profile' | 'api_key_gen' | 'login' | 'config_change';
-export type AuditStatus = 'success' | 'failed';
-
-export interface AuditLog {
-  _id: string;
-  adminName: string;
-  adminInitials: string;
-  action: AuditAction;
-  actionLabel: string;
-  target: string;
-  ip: string;
-  timestamp: string;
-  status: AuditStatus;
 }
 
 /* ------------------------------------------------------------------ */

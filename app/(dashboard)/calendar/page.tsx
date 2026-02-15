@@ -50,13 +50,13 @@ export default function CalendarPage() {
           <TabGroup tabs={viewTabs} active={view} onChange={setView} />
           {/* Date navigation */}
           <div className="flex items-center gap-1">
-            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-slate-400 hover:text-white">
+            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-muted hover:text-heading">
               <IonIcon name="chevron-back-outline" size="sm" />
             </button>
-            <span className="min-w-[120px] text-center text-sm font-medium text-white">
+            <span className="min-w-[120px] text-center text-sm font-medium text-heading">
               20 Th10, 2023
             </span>
-            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-slate-400 hover:text-white">
+            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-muted hover:text-heading">
               <IonIcon name="chevron-forward-outline" size="sm" />
             </button>
           </div>

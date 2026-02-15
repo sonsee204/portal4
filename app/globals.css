@@ -2,24 +2,83 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* Design Tokens                                                       */
+/* Semantic Design Tokens (light = default, .dark = override)          */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* Backgrounds */
+  --bg: #ffffff;
+  --bg-secondary: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --surface-border: rgba(0, 0, 0, 0.08);
+
+  /* Text */
+  --text-heading: #0f172a;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-shadow: rgba(0, 0, 0, 0.08);
+
+  /* Scrollbar */
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #7c3aed;
+}
+
+.dark {
+  --bg: #0f0a19;
+  --bg-secondary: #1a1225;
+  --surface: #1a1225;
+  --surface-hover: #251b33;
+  --surface-border: rgba(255, 255, 255, 0.06);
+
+  --text-heading: #f1f5f9;
+  --text-body: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+
+  --glass-bg: rgba(26, 18, 37, 0.6);
+  --glass-card-bg: rgba(26, 18, 37, 0.75);
+  --glass-border: rgba(124, 58, 237, 0.15);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+
+  --scrollbar-track: #0f0a19;
+  --scrollbar-thumb: #251b33;
+  --scrollbar-thumb-hover: #7c3aed;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tailwind Theme Tokens                                               */
 /* ------------------------------------------------------------------ */
 @theme inline {
   --font-sans: 'Be Vietnam Pro', system-ui, sans-serif;
 
-  /* Primary palette */
+  /* Primary palette (same for both themes) */
   --color-primary: #7c3aed;
   --color-primary-hover: #6d28d9;
   --color-primary-light: #a78bfa;
   --color-primary-glow: rgba(124, 58, 237, 0.5);
 
-  /* Dark surfaces */
-  --color-bg-dark: #0f0a19;
-  --color-surface-dark: #1a1225;
-  --color-surface-hover: #251b33;
-  --color-surface-border: rgba(255, 255, 255, 0.06);
+  /* Semantic surfaces -- driven by CSS variables above */
+  --color-bg: var(--bg);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-border: var(--surface-border);
 
-  /* Semantic */
+  /* Semantic text */
+  --color-heading: var(--text-heading);
+  --color-body: var(--text-body);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+
+  /* Status (same for both themes) */
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
@@ -30,12 +89,16 @@
 /* Base                                                                */
 /* ------------------------------------------------------------------ */
 html {
+  color-scheme: light;
+}
+
+html.dark {
   color-scheme: dark;
 }
 
 body {
-  background: var(--color-bg-dark);
-  color: #e2e8f0; /* slate-200 */
+  background: var(--bg);
+  color: var(--text-body);
   font-family: var(--font-sans);
 }
 
@@ -53,22 +116,22 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-dark);
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-hover);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-surface-hover) var(--color-bg-dark);
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 /* ------------------------------------------------------------------ */
@@ -76,18 +139,18 @@ body {
 /* ------------------------------------------------------------------ */
 @layer utilities {
   .glass-panel {
-    background: rgba(26, 18, 37, 0.6);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
   }
 
   .glass-card {
-    background: rgba(26, 18, 37, 0.75);
+    background: var(--glass-card-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(124, 58, 237, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px var(--glass-shadow);
   }
 
   .neon-glow {

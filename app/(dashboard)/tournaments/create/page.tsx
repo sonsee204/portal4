@@ -54,7 +54,7 @@ export default function CreateTournamentPage() {
                 leftIcon="trophy-outline"
               />
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
+                <label className="mb-2 block text-sm font-medium text-body">
                   Môn thể thao
                 </label>
                 <SportRadioCard selected={sport} onChange={setSport} />

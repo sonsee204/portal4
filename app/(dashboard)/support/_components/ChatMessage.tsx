@@ -2,13 +2,13 @@
 
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/atoms/Avatar';
-import type { ChatMessage as ChatMessageType } from '@/types/portal';
+import type { ChatMessage as ChatMessageType } from '@/types/mock';
 
 export function ChatMessage({ message }: { message: ChatMessageType }) {
   if (message.sender === 'system') {
     return (
       <div className="flex justify-center py-2">
-        <span className="bg-surface-dark rounded-full px-3 py-1 text-[10px] text-slate-500">
+        <span className="bg-surface rounded-full px-3 py-1 text-[10px] text-faint">
           {message.content}
         </span>
       </div>
@@ -29,13 +29,13 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
           className={cn(
             'inline-block rounded-2xl px-4 py-2.5 text-sm',
             isAdmin
-              ? 'bg-primary rounded-tr-sm text-white'
-              : 'bg-surface-dark border-surface-border rounded-tl-sm border text-slate-300'
+              ? 'bg-primary rounded-tr-sm text-heading'
+              : 'bg-surface border-surface-border rounded-tl-sm border text-body'
           )}
         >
           {message.content}
         </div>
-        <p className="mt-1 text-[10px] text-slate-500">{message.time}</p>
+        <p className="mt-1 text-[10px] text-faint">{message.time}</p>
       </div>
     </div>
   );

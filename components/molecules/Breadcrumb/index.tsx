@@ -25,13 +25,13 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               <IonIcon
                 name="chevron-forward-outline"
                 size="xs"
-                className="mx-2 text-slate-600"
+                className="text-faint mx-2"
               />
             )}
             {isLast || !item.href ? (
               <span
                 className={cn(
-                  isLast ? 'font-medium text-white' : 'text-slate-500'
+                  isLast ? 'text-heading font-medium' : 'text-faint'
                 )}
               >
                 {item.label}
@@ -39,7 +39,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
             ) : (
               <Link
                 href={item.href}
-                className="hover:text-primary text-slate-400 transition-colors"
+                className="hover:text-primary text-muted transition-colors"
               >
                 {item.label}
               </Link>

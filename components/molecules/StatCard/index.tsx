@@ -30,7 +30,7 @@ const trendIcons = {
 const trendColors = {
   up: 'text-emerald-400 bg-emerald-400/10',
   down: 'text-red-400 bg-red-400/10',
-  neutral: 'text-slate-400 bg-slate-400/10',
+  neutral: 'text-muted bg-slate-400/10',
 };
 
 export function StatCard({
@@ -55,7 +55,7 @@ export function StatCard({
       <div className="relative mb-4 flex items-start justify-between">
         <div
           className={cn(
-            'border-surface-border flex items-center justify-center rounded-xl border bg-white/5 p-3',
+            'border-surface-border flex items-center justify-center rounded-xl border bg-black/[0.03] p-3 dark:bg-white/5',
             iconColor
           )}
         >
@@ -74,8 +74,8 @@ export function StatCard({
         )}
         {badge && <Badge variant={badge.variant}>{badge.text}</Badge>}
       </div>
-      <p className="mb-1 text-sm font-medium text-slate-400">{label}</p>
-      <h3 className="text-3xl font-bold text-white">{value}</h3>
+      <p className="text-muted mb-1 text-sm font-medium">{label}</p>
+      <h3 className="text-heading text-3xl font-bold">{value}</h3>
     </div>
   );
 }

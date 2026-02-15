@@ -16,7 +16,7 @@ const segmentOffsets = segments.reduce<number[]>((acc, seg, i) => {
 export function DonutChart() {
   return (
     <GlassPanel card>
-      <h3 className="mb-6 text-lg font-semibold text-white">
+      <h3 className="text-heading mb-6 text-lg font-semibold">
         User Distribution
       </h3>
       <div className="mb-8 flex items-center justify-center">
@@ -38,8 +38,8 @@ export function DonutChart() {
             ))}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-white">20.6k</span>
-            <span className="text-xs text-slate-400">Total Users</span>
+            <span className="text-heading text-3xl font-bold">20.6k</span>
+            <span className="text-muted text-xs">Total Users</span>
           </div>
         </div>
       </div>
@@ -47,18 +47,16 @@ export function DonutChart() {
         {segments.map((seg) => (
           <div
             key={seg.label}
-            className="bg-background-dark flex items-center justify-between rounded-lg border border-white/5 p-3"
+            className="bg-bg border-surface-border flex items-center justify-between rounded-lg border p-3"
           >
             <div className="flex items-center gap-3">
               <span
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: seg.color }}
               />
-              <span className="text-sm font-medium text-slate-300">
-                {seg.label}
-              </span>
+              <span className="text-body text-sm font-medium">{seg.label}</span>
             </div>
-            <span className="text-sm font-bold text-white">{seg.value}%</span>
+            <span className="text-heading text-sm font-bold">{seg.value}%</span>
           </div>
         ))}
       </div>

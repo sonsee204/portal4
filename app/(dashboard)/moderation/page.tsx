@@ -40,7 +40,7 @@ export default function ModerationPage() {
         {/* Left panel: list */}
         <GlassPanel card className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">Báo cáo chờ xử lý</h3>
+            <h3 className="text-sm font-bold text-heading">Báo cáo chờ xử lý</h3>
             <Badge variant="danger">{filtered.length}</Badge>
           </div>
           <SearchInput placeholder="Tìm kiếm..." />

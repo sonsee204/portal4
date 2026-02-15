@@ -12,7 +12,7 @@ import { Button } from '@/components/atoms/Button';
 import { IconButton } from '@/components/atoms/IconButton';
 import { Pagination } from '@/components/organisms/Pagination';
 import { mockMatchmakingLogs, mockBanners } from '@/lib/mock-data';
-import type { MatchmakingStatus } from '@/types/portal';
+import type { MatchmakingStatus } from '@/types/mock';
 
 const cmsTabs = [
   { label: 'Matchmaking', value: 'matchmaking' },
@@ -94,20 +94,20 @@ export default function CmsPage() {
                 <td className="px-4 py-3">
                   <UserCell name={m.hostName} subtitle={m.hostId} />
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-300 capitalize">
+                <td className="px-4 py-3 text-sm text-body capitalize">
                   {m.sport}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-400">{m.level}</td>
-                <td className="px-4 py-3 text-sm text-slate-400">{m.time}</td>
+                <td className="px-4 py-3 text-sm text-muted">{m.level}</td>
+                <td className="px-4 py-3 text-sm text-muted">{m.time}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="bg-surface-dark h-1.5 w-16 overflow-hidden rounded-full">
+                    <div className="bg-surface h-1.5 w-16 overflow-hidden rounded-full">
                       <div
                         className="h-full rounded-full bg-emerald-400"
                         style={{ width: `${m.reputationScore}%` }}
                       />
                     </div>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-muted">
                       {m.reputationScore}
                     </span>
                   </div>
@@ -142,7 +142,7 @@ export default function CmsPage() {
                 <span className="text-2xl font-bold text-white/20">Banner</span>
               </div>
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-white">{b.title}</h4>
+                <h4 className="text-sm font-medium text-heading">{b.title}</h4>
                 <Badge
                   variant={
                     b.status === 'active'
@@ -155,7 +155,7 @@ export default function CmsPage() {
                   {b.status}
                 </Badge>
               </div>
-              <p className="text-xs text-slate-500">Deep link: {b.deepLink}</p>
+              <p className="text-xs text-faint">Deep link: {b.deepLink}</p>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"

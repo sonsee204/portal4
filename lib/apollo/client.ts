@@ -6,7 +6,11 @@ import {
   HttpLink,
   ApolloLink,
 } from '@apollo/client';
+import { Observable } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
+import { ErrorLink } from '@apollo/client/link/error';
+import { CombinedGraphQLErrors } from '@apollo/client/errors';
+import { showError } from '@/lib/toast';
 
 const getGraphqlUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_GRAPHQL_URL;
@@ -19,26 +23,122 @@ const getGraphqlUrl = (): string => {
   return '/graphql';
 };
 
+/**
+ * Token storage for client-side Apollo Client.
+ * The token is injected from a server component via the AuthProvider.
+ */
+let _accessToken: string | null = null;
+
+export function setClientAccessToken(token: string | null) {
+  _accessToken = token;
+}
+
+export function getClientAccessToken(): string | null {
+  return _accessToken;
+}
+
 const httpLink = new HttpLink({
   uri: getGraphqlUrl(),
-  headers: {
-    'Apollo-Require-Preflight': 'true',
-  },
+  credentials: 'include', // Send cookies with requests
   fetchOptions: {
     next: { revalidate: 0 },
   },
 });
 
+/**
+ * Auth link: inject access token and client source header
+ */
 const authLink = setContext((_, { headers }) => {
+  const token = _accessToken;
+
   return {
     headers: {
       ...headers,
       'Apollo-Require-Preflight': 'true',
+      'x-client-source': 'portal',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   };
 });
 
-const link = ApolloLink.from([authLink, httpLink]);
+/**
+ * Error link: handle 401 errors by refreshing token.
+ * Apollo Client v4 uses { error, operation, forward } instead of
+ * { graphQLErrors, networkError }.
+ */
+const errorLink = new ErrorLink(({ error, operation, forward }) => {
+  if (CombinedGraphQLErrors.is(error)) {
+    const hasAuthError = error.errors.some(
+      (err) =>
+        err.extensions?.code === 'UNAUTHENTICATED' ||
+        err.message.includes('Unauthorized') ||
+        err.message.includes('Token'),
+    );
+
+    if (hasAuthError) {
+      // Attempt token refresh via API route
+      return new Observable((observer) => {
+        fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+          .then((res) => res.json() as Promise<{ accessToken?: string }>)
+          .then((data) => {
+            if (data.accessToken) {
+              _accessToken = data.accessToken;
+
+              // Retry the failed operation with new token
+              const oldHeaders = operation.getContext().headers as Record<
+                string,
+                string
+              >;
+              operation.setContext({
+                headers: {
+                  ...oldHeaders,
+                  Authorization: `Bearer ${data.accessToken}`,
+                },
+              });
+
+              forward(operation).subscribe(observer);
+            } else {
+              // Refresh failed -- clear client state and redirect to login
+              _accessToken = null;
+              if (client) {
+                void client.clearStore();
+              }
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+              }
+              observer.error(error);
+            }
+          })
+          .catch(() => {
+            _accessToken = null;
+            if (client) {
+              void client.clearStore();
+            }
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+            observer.error(error);
+          });
+      });
+    }
+
+    // Non-auth GraphQL errors: show toast for server errors
+    const serverErrors = error.errors.filter(
+      (err) => err.extensions?.code === 'INTERNAL_SERVER_ERROR',
+    );
+    if (serverErrors.length > 0) {
+      showError('Lỗi hệ thống. Vui lòng thử lại sau.');
+    }
+  } else {
+    // Network or other error
+    console.error('[Network error]:', error);
+    if (typeof window !== 'undefined') {
+      showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+    }
+  }
+});
+
+const link = ApolloLink.from([errorLink, authLink, httpLink]);
 
 export function createApolloClient() {
   return new ApolloClient({
@@ -58,6 +158,9 @@ export function createApolloClient() {
           keyFields: ['_id'],
         },
         Promotion: {
+          keyFields: ['_id'],
+        },
+        User: {
           keyFields: ['_id'],
         },
       },

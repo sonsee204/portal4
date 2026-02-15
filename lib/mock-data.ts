@@ -4,17 +4,17 @@
  */
 
 import type {
-  PortalUser, Transaction, Tournament, BracketMatch,
+  MockUser, Transaction, Tournament, BracketMatch,
   SportModule, Booking, CalendarBooking, Report,
   SupportTicket, ChatMessage, MatchmakingLog, Banner,
-  AuditLog, Permission, ApiKey, Notification,
-} from '@/types/portal';
+  Permission, ApiKey, Notification,
+} from '@/types/mock';
 
 /* ------------------------------------------------------------------ */
 /* Users (code1, code3)                                                */
 /* ------------------------------------------------------------------ */
 
-export const mockUsers: PortalUser[] = [
+export const mockUsers: MockUser[] = [
   { _id: 'u1', name: 'Alex Morgan', email: 'alex.m@hitritech.com', role: 'admin', status: 'active', lastLogin: 'Vừa xong', online: true },
   { _id: 'u2', name: 'Sarah Connor', email: 's.connor@partner.net', role: 'partner', status: 'active', lastLogin: '2 giờ trước', online: true },
   { _id: 'u3', name: 'Michael Chen', email: 'mike.c@hitritech.com', role: 'user', status: 'inactive', lastLogin: '5 ngày trước', online: false },
@@ -188,18 +188,6 @@ export const mockBanners: Banner[] = [
   { _id: 'bn1', title: 'Giải Cầu Lông Mở Rộng 2024', status: 'active', deepLink: '/tournaments/t3' },
   { _id: 'bn2', title: 'Khuyến mãi nạp ví 50%', status: 'active', deepLink: '/promotions/promo1' },
   { _id: 'bn3', title: 'Ra mắt Pickleball Module', status: 'scheduled', deepLink: '/ecosystem' },
-];
-
-/* ------------------------------------------------------------------ */
-/* Audit Logs (code13)                                                 */
-/* ------------------------------------------------------------------ */
-
-export const mockAuditLogs: AuditLog[] = [
-  { _id: 'al1', adminName: 'Alex Morgan', adminInitials: 'AM', action: 'lock_account', actionLabel: 'Lock Account', target: 'user:john_doe_42', ip: '192.168.1.101', timestamp: '2023-10-20 14:32:10', status: 'success' },
-  { _id: 'al2', adminName: 'System', adminInitials: 'SY', action: 'auto_scale', actionLabel: 'Auto-scale', target: 'infra:ap-southeast-1', ip: '10.0.0.1', timestamp: '2023-10-20 14:28:05', status: 'success' },
-  { _id: 'al3', adminName: 'Sarah Connor', adminInitials: 'SC', action: 'delete_group', actionLabel: 'Delete Group', target: 'group:beta_testers', ip: '203.113.152.40', timestamp: '2023-10-20 13:15:22', status: 'failed' },
-  { _id: 'al4', adminName: 'Michael Chen', adminInitials: 'MC', action: 'update_profile', actionLabel: 'Update Profile', target: 'user:emily_davis', ip: '172.16.0.55', timestamp: '2023-10-20 12:00:00', status: 'success' },
-  { _id: 'al5', adminName: 'Alex Morgan', adminInitials: 'AM', action: 'api_key_gen', actionLabel: 'API Key Gen', target: 'api:mobile_app_v2', ip: '192.168.1.101', timestamp: '2023-10-20 10:45:33', status: 'success' },
 ];
 
 /* ------------------------------------------------------------------ */

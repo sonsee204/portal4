@@ -7,16 +7,18 @@ import { ProgressBar } from '@/components/atoms/ProgressBar';
 import { NavItem } from '@/components/molecules/NavItem';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
+import type { UserRole } from '@/types';
+import { canAccess } from '@/lib/permissions';
+import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
+import { useLogout } from '@/hooks/useLogout';
+import {
+  ENABLED_SIDEBAR_ROUTES,
+  type SidebarNavSection,
+  type NavItem as NavItemType,
+} from '@/config/navigation';
 
-export interface SidebarNavSection {
-  section: string;
-  items: {
-    href: string;
-    label: string;
-    icon: string;
-    badge?: number;
-  }[];
-}
+export type { SidebarNavSection };
 
 export interface SidebarProps {
   nav: SidebarNavSection[];
@@ -24,8 +26,34 @@ export interface SidebarProps {
   className?: string;
 }
 
+/**
+ * Filter navigation items based on user role
+ */
+function filterNavByRole(
+  nav: SidebarNavSection[],
+  role: UserRole | null
+): SidebarNavSection[] {
+  return nav
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item: NavItemType) => {
+        // Items without requiredFeature are visible to all
+        if (!item.requiredFeature) return true;
+        return canAccess(role, item.requiredFeature);
+      }),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
 export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
   const { mobileNavOpen, setMobileNavOpen } = useUIStore();
+  const user = useAuthStore((s) => s.user);
+  const userRole = user?.role ?? null;
+
+  const { logout, isLoggingOut } = useLogout();
+
+  // Filter navigation based on role
+  const filteredNav = filterNavByRole(nav, userRole);
 
   return (
     <>
@@ -49,7 +77,7 @@ export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
         <div className="flex items-center justify-between p-6 pb-4">
           <Logo />
           <button
-            className="text-slate-400 hover:text-white lg:hidden"
+            className="text-muted hover:text-heading lg:hidden"
             onClick={() => setMobileNavOpen(false)}
           >
             <IonIcon name="close-outline" size="md" />
@@ -58,9 +86,9 @@ export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="no-scrollbar flex-1 space-y-6 overflow-y-auto px-4 py-2">
-          {nav.map((group) => (
+          {filteredNav.map((group) => (
             <div key={group.section}>
-              <p className="mb-2 px-4 text-[11px] font-bold tracking-widest text-slate-500 uppercase">
+              <p className="text-faint mb-2 px-4 text-[11px] font-bold tracking-widest uppercase">
                 {group.section}
               </p>
               <div className="space-y-1">
@@ -72,6 +100,11 @@ export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
                     icon={item.icon}
                     badge={item.badge}
                     active={activePath === item.href}
+                    disabled={
+                      !ENABLED_SIDEBAR_ROUTES.includes(
+                        item.href as (typeof ENABLED_SIDEBAR_ROUTES)[number]
+                      )
+                    }
                   />
                 ))}
               </div>
@@ -82,30 +115,56 @@ export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
         {/* Sidebar footer */}
         <div className="space-y-4 p-4">
           {/* Server status */}
-          <div className="border-surface-border relative overflow-hidden rounded-xl border bg-gradient-to-br from-white/5 to-transparent p-4">
+          <div className="border-surface-border relative overflow-hidden rounded-xl border bg-gradient-to-br from-black/[0.03] to-transparent p-4 dark:from-white/5">
             <div className="bg-primary/20 absolute -top-4 -right-4 h-16 w-16 rounded-full blur-2xl" />
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Server Status</span>
+              <span className="text-muted text-xs">Server Status</span>
               <span className="neon-glow h-2 w-2 rounded-full bg-emerald-500" />
             </div>
             <ProgressBar value={99} variant="primary" />
-            <p className="mt-1.5 text-[10px] text-slate-500">Uptime: 99.9%</p>
+            <p className="text-faint mt-1.5 text-[10px]">Uptime: 99.9%</p>
           </div>
 
           {/* User profile */}
-          <div className="hover:bg-surface-hover flex cursor-pointer items-center gap-3 rounded-xl p-2 transition-colors">
-            <Avatar fallback="AD" status="online" size="sm" />
+          <div className="flex items-center gap-3 rounded-xl p-2">
+            <Avatar
+              fallback={
+                user?.displayName
+                  ?.split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || 'U'
+              }
+              src={user?.photoURL}
+              status="online"
+              size="sm"
+            />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">Admin</p>
-              <p className="truncate text-xs text-slate-500">
-                admin@hitri.tech
+              <p className="text-heading truncate text-sm font-medium">
+                {user?.displayName || user?.fullName || 'User'}
+              </p>
+              <p className="text-faint truncate text-xs">
+                {userRole ? ROLE_DISPLAY_NAMES[userRole] : ''}
               </p>
             </div>
-            <IonIcon
-              name="log-out-outline"
-              size="sm"
-              className="text-slate-500 transition-colors hover:text-red-400"
-            />
+            <button
+              onClick={() => void logout()}
+              disabled={isLoggingOut}
+              title="Đăng xuất"
+              className={cn(
+                'transition-colors',
+                isLoggingOut
+                  ? 'text-faint pointer-events-none'
+                  : 'text-faint hover:text-red-400'
+              )}
+            >
+              <IonIcon
+                name={isLoggingOut ? 'sync-outline' : 'log-out-outline'}
+                size="sm"
+                className={isLoggingOut ? 'animate-spin' : undefined}
+              />
+            </button>
           </div>
         </div>
       </aside>

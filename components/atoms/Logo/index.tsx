@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 export interface LogoProps {
@@ -17,7 +16,8 @@ function LogoMark({ className }: { className?: string }) {
       className={cn('flex h-9 w-9 items-center justify-center', className)}
       aria-hidden
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element -- SVG doesn't benefit from next/image optimization */}
+      <img
         src="/logo.svg"
         alt="HITRI Logo"
         width={36}
@@ -34,7 +34,7 @@ export function Logo({ variant = 'full', className, href = '/' }: LogoProps) {
       <LogoMark />
       {variant === 'full' && (
         <div>
-          <h1 className="text-lg font-bold tracking-wide text-white">
+          <h1 className="text-heading text-lg font-bold tracking-wide">
             HITRI <span className="text-primary">TECH</span>
           </h1>
           <p className="text-primary/70 text-[10px] font-medium tracking-widest">

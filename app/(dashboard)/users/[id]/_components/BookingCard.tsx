@@ -3,7 +3,7 @@
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { Booking, BookingStatus } from '@/types/portal';
+import type { Booking, BookingStatus } from '@/types/mock';
 
 const statusVariant: Record<
   BookingStatus,
@@ -37,14 +37,14 @@ export function BookingCard({ booking }: { booking: Booking }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-sm font-medium text-white">{booking.venue}</p>
-            <p className="text-xs text-slate-500">{booking.location}</p>
+            <p className="text-sm font-medium text-heading">{booking.venue}</p>
+            <p className="text-xs text-faint">{booking.location}</p>
           </div>
           <Badge variant={statusVariant[booking.status]}>
             {booking.status}
           </Badge>
         </div>
-        <div className="mt-2 flex items-center gap-4 text-xs text-slate-400">
+        <div className="mt-2 flex items-center gap-4 text-xs text-muted">
           <span className="flex items-center gap-1">
             <IonIcon name="calendar-outline" size="xs" />
             {booking.date}

@@ -11,6 +11,8 @@ export interface NavItemProps {
   active?: boolean;
   /** Optional count badge */
   badge?: number;
+  /** When true, item is dimmed and not clickable */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -20,19 +22,35 @@ export function NavItem({
   icon,
   active,
   badge,
+  disabled,
   className,
 }: NavItemProps) {
+  const baseClassName = cn(
+    'group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+    disabled
+      ? 'cursor-not-allowed opacity-50 pointer-events-none text-faint'
+      : active
+        ? 'bg-primary/10 border-primary/20 neon-glow text-heading border'
+        : 'text-muted hover:bg-surface-hover hover:text-heading',
+    className
+  );
+
+  if (disabled) {
+    return (
+      <span className={baseClassName} title="Tính năng đang được phát triển">
+        <IonIcon name={icon} size="md" className="relative z-10" />
+        <span className="relative z-10">{label}</span>
+        {badge != null && badge > 0 && (
+          <span className="bg-primary text-heading relative z-10 ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold">
+            {badge}
+          </span>
+        )}
+      </span>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      className={cn(
-        'group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
-        active
-          ? 'bg-primary/10 border-primary/20 neon-glow border text-white'
-          : 'text-slate-400 hover:bg-white/5 hover:text-white',
-        className
-      )}
-    >
+    <Link href={href} className={baseClassName}>
       {active && (
         <div className="from-primary/20 absolute inset-0 rounded-xl bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       )}
@@ -46,7 +64,7 @@ export function NavItem({
       />
       <span className="relative z-10">{label}</span>
       {badge != null && badge > 0 && (
-        <span className="bg-primary relative z-10 ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white">
+        <span className="bg-primary text-heading relative z-10 ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold">
           {badge}
         </span>
       )}

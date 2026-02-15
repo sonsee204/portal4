@@ -6,7 +6,7 @@ import { Avatar } from '@/components/atoms/Avatar';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { TimelineItem } from '@/components/molecules/TimelineItem';
-import type { Report } from '@/types/portal';
+import type { Report } from '@/types/mock';
 
 const historyItems = [
   {
@@ -37,16 +37,16 @@ export function ReportDetail({ report }: { report: Report }) {
         <div className="border-surface-border flex items-center gap-3 border-b pb-3">
           <Avatar fallback={report.authorName[0].toUpperCase()} />
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-heading">
               @{report.authorName}
             </p>
-            <p className="text-xs text-slate-500">{report.createdAt}</p>
+            <p className="text-xs text-faint">{report.createdAt}</p>
           </div>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">
+        <p className="mt-3 text-sm leading-relaxed text-body">
           {report.content}
         </p>
-        <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+        <div className="mt-3 flex items-center gap-4 text-xs text-faint">
           <span className="flex items-center gap-1">
             <IonIcon name="flag-outline" size="xs" className="text-red-400" />
             {report.reporterCount} báo cáo
@@ -59,7 +59,7 @@ export function ReportDetail({ report }: { report: Report }) {
 
       {/* Violation history */}
       <GlassPanel card>
-        <h4 className="mb-3 text-sm font-bold text-white">Lịch sử vi phạm</h4>
+        <h4 className="mb-3 text-sm font-bold text-heading">Lịch sử vi phạm</h4>
         {historyItems.map((h, i) => (
           <TimelineItem
             key={i}
@@ -74,15 +74,15 @@ export function ReportDetail({ report }: { report: Report }) {
 
       {/* Community reports */}
       <GlassPanel card>
-        <h4 className="mb-3 text-sm font-bold text-white">Báo cáo cộng đồng</h4>
-        <p className="text-xs text-slate-400">
+        <h4 className="mb-3 text-sm font-bold text-heading">Báo cáo cộng đồng</h4>
+        <p className="text-xs text-muted">
           {report.reporterCount} người dùng đã báo cáo nội dung này. Nội dung
           được tự động đánh dấu khi có 3+ báo cáo.
         </p>
       </GlassPanel>
 
       {/* Action bar */}
-      <div className="border-surface-border bg-surface-dark/95 sticky bottom-0 flex items-center gap-3 rounded-xl border p-4 backdrop-blur-sm">
+      <div className="border-surface-border bg-surface/95 sticky bottom-0 flex items-center gap-3 rounded-xl border p-4 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="sm"

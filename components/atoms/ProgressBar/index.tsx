@@ -26,10 +26,10 @@ export function ProgressBar({
     <div className={cn('w-full', className)}>
       {showLabel && (
         <div className="mb-1 flex justify-between text-xs">
-          <span className="text-slate-400">{`${Math.round(pct)}%`}</span>
+          <span className="text-muted">{`${Math.round(pct)}%`}</span>
         </div>
       )}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
         <div
           className={cn(
             'h-full rounded-full bg-gradient-to-r transition-all duration-500',

@@ -1,12 +1,11 @@
-'use client';
-
+import { Suspense } from 'react';
 import { Logo } from '@/components/atoms/Logo';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { LoginForm } from './_components/LoginForm';
 
 export default function LoginPage() {
   return (
-    <div className="bg-bg-dark relative flex min-h-screen items-center justify-center overflow-hidden">
+    <div className="bg-bg relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Animated gradient background */}
       <div className="pointer-events-none absolute inset-0">
         <div className="bg-primary/20 absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full blur-[120px]" />
@@ -28,23 +27,25 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
           <Logo variant="full" />
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-faint">
             Hệ thống quản trị thể thao
           </p>
         </div>
 
-        <LoginForm />
+        <Suspense fallback={null}>
+          <LoginForm />
+        </Suspense>
 
         {/* Footer */}
         <div className="border-surface-border mt-8 border-t pt-4">
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center justify-center gap-2 text-xs text-faint">
             <span className="flex items-center gap-1">
               <span className="neon-glow h-2 w-2 rounded-full bg-emerald-500" />
               System Online
             </span>
-            <span className="text-surface-border">•</span>
+            <span className="text-surface-border">|</span>
             <span>Version 2.0.1</span>
-            <span className="text-surface-border">•</span>
+            <span className="text-surface-border">|</span>
             <span className="flex items-center gap-1">
               <IonIcon name="shield-checkmark-outline" size="xs" />
               SSL Secured

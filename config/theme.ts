@@ -1,6 +1,9 @@
 /**
  * Portal design system tokens — keeps component styling DRY.
  * All components reference these maps instead of hard-coding classes.
+ *
+ * Colors use semantic tokens from globals.css that automatically
+ * switch between light and dark themes via CSS custom properties.
  */
 
 /* ------------------------------------------------------------------ */
@@ -9,19 +12,19 @@
 
 export const badgeVariants = {
   success:
-    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
   warning:
-    'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
   danger:
-    'bg-red-500/10 text-red-400 border border-red-500/20',
+    'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
   info:
-    'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
   neutral:
-    'bg-slate-500/10 text-slate-400 border border-slate-500/20',
+    'bg-slate-500/10 text-muted border border-slate-500/20',
   live:
-    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
   purple:
-    'bg-violet-500/10 text-violet-400 border border-violet-500/20',
+    'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20',
 } as const;
 
 export type BadgeVariant = keyof typeof badgeVariants;
@@ -30,13 +33,13 @@ export const buttonVariants = {
   primary:
     'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/25',
   secondary:
-    'bg-surface-dark text-white border border-surface-border hover:bg-surface-hover',
+    'bg-surface text-heading border border-surface-border hover:bg-surface-hover',
   outline:
-    'border border-surface-border bg-transparent text-slate-300 hover:bg-surface-hover hover:text-white',
+    'border border-surface-border bg-transparent text-body hover:bg-surface-hover hover:text-heading',
   ghost:
-    'bg-transparent text-slate-400 hover:bg-surface-hover hover:text-white',
+    'bg-transparent text-muted hover:bg-surface-hover hover:text-heading',
   danger:
-    'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20',
+    'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20',
 } as const;
 
 export type ButtonVariant = keyof typeof buttonVariants;

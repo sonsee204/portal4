@@ -33,8 +33,8 @@ export function Toggle({
         onClick={() => onChange?.(!checked)}
         className={cn(
           'relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors',
-          'focus-visible:ring-primary focus-visible:ring-offset-bg-dark focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-          checked ? 'bg-primary' : 'bg-slate-700'
+          'focus-visible:ring-primary focus-visible:ring-offset-bg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
+          checked ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'
         )}
       >
         <span
@@ -45,7 +45,7 @@ export function Toggle({
           )}
         />
       </button>
-      {label && <span className="text-sm text-slate-300">{label}</span>}
+      {label && <span className="text-body text-sm">{label}</span>}
     </label>
   );
 }

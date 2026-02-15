@@ -20,13 +20,13 @@ export function PermissionMatrix() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-surface-border border-b">
-              <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-slate-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-faint uppercase">
                 Permission
               </th>
               {roles.map((r) => (
                 <th
                   key={r}
-                  className="px-4 py-3 text-center text-xs font-bold tracking-wider text-slate-500 uppercase"
+                  className="px-4 py-3 text-center text-xs font-bold tracking-wider text-faint uppercase"
                 >
                   {roleLabels[r]}
                 </th>
@@ -39,7 +39,7 @@ export function PermissionMatrix() {
                 <tr key={cat}>
                   <td
                     colSpan={roles.length + 1}
-                    className="bg-surface-dark/50 text-primary px-4 py-2 text-xs font-bold tracking-wider uppercase"
+                    className="bg-surface/50 text-primary px-4 py-2 text-xs font-bold tracking-wider uppercase"
                   >
                     {cat}
                   </td>
@@ -51,7 +51,7 @@ export function PermissionMatrix() {
                       key={perm.key}
                       className="border-surface-border hover:bg-surface-hover border-b transition-colors"
                     >
-                      <td className="px-4 py-2.5 text-sm text-slate-300">
+                      <td className="px-4 py-2.5 text-sm text-body">
                         {perm.label}
                       </td>
                       {roles.map((role) => (

@@ -3,7 +3,7 @@ import { Button } from '@/components/atoms/Button';
 
 export default function NotFound() {
   return (
-    <div className="bg-bg-dark relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+    <div className="bg-bg relative flex min-h-screen items-center justify-center overflow-hidden px-4">
       {/* Gradient blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="bg-primary/20 absolute -top-32 -left-32 h-80 w-80 rounded-full blur-[100px]" />
@@ -12,14 +12,14 @@ export default function NotFound() {
 
       <div className="relative z-10 text-center">
         {/* Large 404 */}
-        <h1 className="neon-text text-[120px] leading-none font-extrabold text-white md:text-[180px]">
+        <h1 className="neon-text text-[120px] leading-none font-extrabold text-heading md:text-[180px]">
           404
         </h1>
 
-        <h2 className="mt-4 text-xl font-bold text-white md:text-2xl">
+        <h2 className="mt-4 text-xl font-bold text-heading md:text-2xl">
           Trang không tồn tại
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
           Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. Hãy kiểm
           tra lại URL hoặc quay về trang chủ.
         </p>

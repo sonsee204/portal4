@@ -14,8 +14,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         className={cn(
-          'bg-surface-dark flex w-full resize-none rounded-lg border px-3 py-3 text-sm text-white transition-colors',
-          'placeholder:text-slate-500',
+          'bg-surface text-heading flex w-full resize-none rounded-lg border px-3 py-3 text-sm transition-colors',
+          'placeholder:text-faint',
           'focus-visible:ring-primary/50 focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
           error
@@ -30,7 +30,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     if (label) {
       return (
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-300">
+          <label className="text-body mb-1.5 block text-sm font-medium">
             {label}
           </label>
           {textarea}

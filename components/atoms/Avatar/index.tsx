@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { avatarStatusColors, type AvatarStatus } from '@/config/theme';
 
@@ -44,14 +45,21 @@ export function Avatar({
   return (
     <div className={cn('relative inline-flex shrink-0', className)}>
       {src ? (
-        <img
-          src={src}
-          alt={alt}
+        <span
           className={cn(
-            'border-surface-border rounded-full border-2 object-cover',
+            'border-surface-border relative block overflow-hidden rounded-full border-2',
             sizeClasses[size]
           )}
-        />
+        >
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes={size === 'sm' ? '32px' : size === 'md' ? '40px' : '48px'}
+            className="object-cover"
+            unoptimized
+          />
+        </span>
       ) : (
         <div
           className={cn(
@@ -66,7 +74,7 @@ export function Avatar({
       {status && (
         <span
           className={cn(
-            'border-bg-dark absolute right-0 bottom-0 rounded-full',
+            'border-bg absolute right-0 bottom-0 rounded-full',
             avatarStatusColors[status],
             dotSizes[size]
           )}

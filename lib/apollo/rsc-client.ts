@@ -1,7 +1,10 @@
 /**
  * Lightweight GraphQL client for Server Components (RSC).
  * Uses fetch directly - no Apollo Client in RSC.
+ * Reads auth token from HttpOnly cookies.
  */
+
+import { getAccessToken } from '@/lib/auth/session';
 
 const getGraphqlUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_GRAPHQL_URL;
@@ -14,20 +17,35 @@ const getGraphqlUrl = (): string => {
 export type RscGraphqlOptions = {
   revalidate?: number | false;
   cache?: RequestCache;
+  /** If true, include auth token in request */
+  authenticated?: boolean;
 };
 
 export async function rscGraphql<T = unknown>(
   query: string,
   variables?: Record<string, unknown>,
-  options: RscGraphqlOptions = {}
+  options: RscGraphqlOptions = {},
 ): Promise<T> {
-  const { revalidate = 60, cache = 'force-cache' } = options;
+  const { revalidate = 60, cache = 'force-cache', authenticated = true } =
+    options;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Apollo-Require-Preflight': 'true',
+    'x-client-source': 'portal',
+  };
+
+  // Include auth token if requested and available
+  if (authenticated) {
+    const accessToken = await getAccessToken();
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+  }
+
   const res = await fetch(getGraphqlUrl(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Apollo-Require-Preflight': 'true',
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
     next: { revalidate, tags: ['graphql'] },
     cache,
@@ -41,7 +59,7 @@ export async function rscGraphql<T = unknown>(
   const json = await res.json();
   if (json.errors?.length) {
     throw new Error(
-      json.errors.map((e: { message: string }) => e.message).join('; ')
+      json.errors.map((e: { message: string }) => e.message).join('; '),
     );
   }
   return json.data as T;

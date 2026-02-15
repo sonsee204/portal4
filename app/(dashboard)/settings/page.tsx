@@ -8,12 +8,14 @@ import { Input } from '@/components/atoms/Input';
 import { Select } from '@/components/atoms/Select';
 import { Toggle } from '@/components/atoms/Toggle';
 import { Button } from '@/components/atoms/Button';
+import { AppearanceSettings } from './_components/AppearanceSettings';
 import { PermissionMatrix } from './_components/PermissionMatrix';
 import { ApiKeyCard } from './_components/ApiKeyCard';
 import { mockApiKeys } from '@/lib/mock-data';
 
 const settingsTabs = [
   { label: 'Cài đặt chung', value: 'general' },
+  { label: 'Giao diện', value: 'appearance' },
   { label: 'Vai trò & Quyền', value: 'rbac' },
   { label: 'API Keys', value: 'api' },
 ];
@@ -68,8 +70,10 @@ export default function SettingsPage() {
             />
             <div className="border-surface-border flex items-center justify-between border-t pt-4">
               <div>
-                <p className="text-sm font-medium text-white">Chế độ bảo trì</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-heading text-sm font-medium">
+                  Chế độ bảo trì
+                </p>
+                <p className="text-faint text-xs">
                   Tạm ngưng truy cập cho người dùng.
                 </p>
               </div>
@@ -77,10 +81,10 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-heading text-sm font-medium">
                   Thông báo email
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-faint text-xs">
                   Gửi email khi có sự kiện quan trọng.
                 </p>
               </div>
@@ -88,6 +92,8 @@ export default function SettingsPage() {
             </div>
           </GlassPanel>
         )}
+
+        {tab === 'appearance' && <AppearanceSettings />}
 
         {tab === 'rbac' && <PermissionMatrix />}
 

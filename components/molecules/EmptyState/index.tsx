@@ -28,12 +28,12 @@ export function EmptyState({
         className
       )}
     >
-      <div className="bg-surface-hover mb-4 flex h-16 w-16 items-center justify-center rounded-full text-slate-500">
+      <div className="bg-surface-hover mb-4 flex h-16 w-16 items-center justify-center rounded-full text-faint">
         <IonIcon name={icon} size="xl" />
       </div>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h3 className="text-lg font-semibold text-heading">{title}</h3>
       {description && (
-        <p className="mt-1 max-w-sm text-sm text-slate-400">{description}</p>
+        <p className="mt-1 max-w-sm text-sm text-muted">{description}</p>
       )}
       {actionLabel && onAction && (
         <Button className="mt-6" size="sm" onClick={onAction}>

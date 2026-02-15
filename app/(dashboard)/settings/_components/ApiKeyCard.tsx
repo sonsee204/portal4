@@ -3,32 +3,32 @@
 import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { ApiKey } from '@/types/portal';
+import type { ApiKey } from '@/types/mock';
 
 export function ApiKeyCard({ apiKey }: { apiKey: ApiKey }) {
   return (
     <GlassPanel card className="flex items-start justify-between gap-4">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-bold text-white">{apiKey.name}</h4>
+          <h4 className="text-sm font-bold text-heading">{apiKey.name}</h4>
           <Badge variant={apiKey.status === 'active' ? 'success' : 'warning'}>
             {apiKey.status}
           </Badge>
         </div>
-        <div className="mt-2 space-y-1 text-xs text-slate-400">
+        <div className="mt-2 space-y-1 text-xs text-muted">
           <p>
-            <span className="text-slate-500">Client ID:</span>{' '}
-            <code className="bg-surface-dark rounded px-1.5 py-0.5 font-mono text-slate-300">
+            <span className="text-faint">Client ID:</span>{' '}
+            <code className="bg-surface rounded px-1.5 py-0.5 font-mono text-body">
               {apiKey.clientId}
             </code>
           </p>
           <p>
-            <span className="text-slate-500">Secret:</span>{' '}
-            <code className="bg-surface-dark rounded px-1.5 py-0.5 font-mono text-slate-300">
+            <span className="text-faint">Secret:</span>{' '}
+            <code className="bg-surface rounded px-1.5 py-0.5 font-mono text-body">
               {apiKey.secret}
             </code>
           </p>
-          <p className="text-slate-500">Tạo ngày: {apiKey.createdAt}</p>
+          <p className="text-faint">Tạo ngày: {apiKey.createdAt}</p>
         </div>
       </div>
       <div className="flex items-center gap-1">

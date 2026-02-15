@@ -25,10 +25,10 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           ref={ref}
           id={id}
           type="checkbox"
-          className="border-surface-border bg-surface-dark text-primary focus:ring-primary/50 h-4 w-4 rounded focus:ring-2 focus:ring-offset-0"
+          className="border-surface-border bg-surface text-primary focus:ring-primary/50 h-4 w-4 rounded focus:ring-2 focus:ring-offset-0"
           {...props}
         />
-        {label && <span className="text-sm text-slate-300">{label}</span>}
+        {label && <span className="text-body text-sm">{label}</span>}
       </label>
     );
   }

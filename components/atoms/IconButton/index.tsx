@@ -48,8 +48,8 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         title={tooltip}
         className={cn(
-          'relative inline-flex items-center justify-center text-slate-400 transition-colors',
-          'hover:bg-surface-hover hover:text-white',
+          'text-muted relative inline-flex items-center justify-center transition-colors',
+          'hover:bg-surface-hover hover:text-heading',
           'focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none',
           'disabled:pointer-events-none disabled:opacity-50',
           sizeClasses[size],
@@ -60,7 +60,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       >
         <IonIcon name={icon} size={resolvedIconSize} />
         {badge && (
-          <span className="bg-primary border-bg-dark absolute top-1 right-1 h-2.5 w-2.5 rounded-full border-2" />
+          <span className="bg-primary border-bg absolute top-1 right-1 h-2.5 w-2.5 rounded-full border-2" />
         )}
       </button>
     );

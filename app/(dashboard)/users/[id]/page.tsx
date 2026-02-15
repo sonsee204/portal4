@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { TabGroup } from '@/components/molecules/TabGroup';
@@ -9,7 +11,10 @@ import { Pagination } from '@/components/organisms/Pagination';
 import { Button } from '@/components/atoms/Button';
 import { ProfileCard } from './_components/ProfileCard';
 import { BookingCard } from './_components/BookingCard';
-import { mockUsers, mockBookings } from '@/lib/mock-data';
+import { QueryState } from '@/components/molecules/QueryState';
+import { GET_USER_PROFILE } from '@/graphql/queries/user';
+import { mockBookings } from '@/lib/mock-data';
+import type { GetUserProfileResponse } from '@/types';
 
 const detailTabs = [
   { label: 'Lịch sử đặt sân', value: 'bookings' },
@@ -25,14 +30,25 @@ const bookingFilters = [
 ];
 
 export default function UserDetailPage() {
+  const params = useParams();
+  const userId = params?.id as string | undefined;
   const [tab, setTab] = useState('bookings');
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const user = mockUsers[0]; // Demo user
 
-  return (
-    <>
-      <PageHeader title="Chi tiết người dùng" description={user.name}>
+  const { data, loading, error, refetch } = useQuery<GetUserProfileResponse>(
+    GET_USER_PROFILE,
+    {
+      variables: { userId: userId ?? '' },
+      skip: !userId,
+    }
+  );
+
+  const user = data?.getUserProfile;
+
+  if (!userId) {
+    return (
+      <PageHeader title="Chi tiết người dùng" description="ID không hợp lệ">
         <Button
           variant="ghost"
           size="sm"
@@ -42,83 +58,113 @@ export default function UserDetailPage() {
           Quay lại
         </Button>
       </PageHeader>
+    );
+  }
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-12">
-        {/* Left panel */}
-        <div className="lg:col-span-3">
-          <ProfileCard user={user} />
-        </div>
+  return (
+    <>
+      <QueryState
+        loading={loading && !user}
+        error={error}
+        empty={!loading && !error && !user}
+        emptyMessage="Không tìm thấy người dùng"
+        onRetry={() => void refetch()}
+      >
+        {user && (
+          <>
+            <PageHeader
+              title="Chi tiết người dùng"
+              description={user.displayName || user.fullName}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                iconLeft="arrow-back-outline"
+                href="/users"
+              >
+                Quay lại
+              </Button>
+            </PageHeader>
 
-        {/* Right panel */}
-        <div className="space-y-6 lg:col-span-9">
-          {/* Stats row */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard
-              icon="calendar-outline"
-              iconColor="text-primary"
-              label="Tổng đặt sân"
-              value="47"
-              trend={{ value: '+5', direction: 'up' }}
-            />
-            <StatCard
-              icon="trophy-outline"
-              iconColor="text-blue-400"
-              label="Giải đấu"
-              value="12"
-            />
-            <StatCard
-              icon="wallet-outline"
-              iconColor="text-emerald-400"
-              label="Ví điện tử"
-              value="2,450,000 ₫"
-            />
-          </div>
-
-          {/* Tabs */}
-          <TabGroup tabs={detailTabs} active={tab} onChange={setTab} />
-
-          {/* Tab content */}
-          {tab === 'bookings' && (
-            <div className="space-y-4">
-              <FilterChips
-                chips={bookingFilters}
-                active={filter}
-                onChange={setFilter}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                {mockBookings
-                  .filter((b) => filter === 'all' || b.status === filter)
-                  .map((b) => (
-                    <BookingCard key={b._id} booking={b} />
-                  ))}
+            <div className="mt-6 grid gap-6 lg:grid-cols-12">
+              {/* Left panel */}
+              <div className="lg:col-span-3">
+                <ProfileCard user={user} />
               </div>
-              <Pagination
-                currentPage={page}
-                totalPages={3}
-                totalItems={47}
-                pageSize={6}
-                onPageChange={setPage}
-              />
-            </div>
-          )}
 
-          {tab === 'tournaments' && (
-            <div className="border-surface-border flex items-center justify-center rounded-xl border border-dashed py-16">
-              <p className="text-sm text-slate-500">
-                Sẽ được cập nhật khi có dữ liệu giải đấu.
-              </p>
-            </div>
-          )}
+              {/* Right panel */}
+              <div className="space-y-6 lg:col-span-9">
+                {/* Stats row */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <StatCard
+                    icon="calendar-outline"
+                    iconColor="text-primary"
+                    label="Tổng đặt sân"
+                    value="47"
+                    trend={{ value: '+5', direction: 'up' }}
+                  />
+                  <StatCard
+                    icon="trophy-outline"
+                    iconColor="text-blue-400"
+                    label="Giải đấu"
+                    value="12"
+                  />
+                  <StatCard
+                    icon="wallet-outline"
+                    iconColor="text-emerald-400"
+                    label="Ví điện tử"
+                    value="2,450,000 ₫"
+                  />
+                </div>
 
-          {tab === 'transactions' && (
-            <div className="border-surface-border flex items-center justify-center rounded-xl border border-dashed py-16">
-              <p className="text-sm text-slate-500">
-                Sẽ được cập nhật khi có dữ liệu giao dịch.
-              </p>
+                {/* Tabs */}
+                <TabGroup tabs={detailTabs} active={tab} onChange={setTab} />
+
+                {/* Tab content */}
+                {tab === 'bookings' && (
+                  <div className="space-y-4">
+                    <FilterChips
+                      chips={bookingFilters}
+                      active={filter}
+                      onChange={setFilter}
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {mockBookings
+                        .filter((b) => filter === 'all' || b.status === filter)
+                        .map((b) => (
+                          <BookingCard key={b._id} booking={b} />
+                        ))}
+                    </div>
+                    <Pagination
+                      currentPage={page}
+                      totalPages={3}
+                      totalItems={47}
+                      pageSize={6}
+                      onPageChange={setPage}
+                    />
+                  </div>
+                )}
+
+                {tab === 'tournaments' && (
+                  <div className="border-surface-border flex items-center justify-center rounded-xl border border-dashed py-16">
+                    <p className="text-sm text-faint">
+                      Sẽ được cập nhật khi có dữ liệu giải đấu.
+                    </p>
+                  </div>
+                )}
+
+                {tab === 'transactions' && (
+                  <div className="border-surface-border flex items-center justify-center rounded-xl border border-dashed py-16">
+                    <p className="text-sm text-faint">
+                      Sẽ được cập nhật khi có dữ liệu giao dịch.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </QueryState>
     </>
   );
 }

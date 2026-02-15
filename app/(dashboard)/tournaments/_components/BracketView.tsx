@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { MatchCard } from './MatchCard';
 import { FinalMatchCard } from './FinalMatchCard';
-import type { BracketMatch } from '@/types/portal';
+import type { BracketMatch } from '@/types/mock';
 
 /* ------------------------------------------------------------------ */
 /* Round config                                                        */
@@ -98,7 +98,7 @@ export function BracketView({ rounds }: { rounds: BracketMatch[][] }) {
               <h4
                 className={cn(
                   'mb-4 text-center text-xs font-bold tracking-widest uppercase',
-                  isFinalRound ? 'text-primary neon-text' : 'text-slate-500'
+                  isFinalRound ? 'text-primary neon-text' : 'text-faint'
                 )}
               >
                 {label}

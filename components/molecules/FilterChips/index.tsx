@@ -32,7 +32,7 @@ export function FilterChips({
             'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
             active === chip.value
               ? 'bg-primary text-white'
-              : 'bg-surface-dark border-surface-border hover:bg-surface-hover border text-slate-400 hover:text-white'
+              : 'bg-surface border-surface-border hover:bg-surface-hover text-muted hover:text-heading border'
           )}
         >
           {chip.label}
@@ -42,7 +42,7 @@ export function FilterChips({
                 'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold',
                 active === chip.value
                   ? 'bg-white/20 text-white'
-                  : 'bg-surface-hover text-slate-500'
+                  : 'bg-surface-hover text-faint'
               )}
             >
               {chip.count}

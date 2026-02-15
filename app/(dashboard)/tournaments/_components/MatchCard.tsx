@@ -1,7 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import type { BracketMatch, MatchPlayer, MatchStatus } from '@/types/portal';
+import type { BracketMatch, MatchPlayer, MatchStatus } from '@/types/mock';
 
 /* ------------------------------------------------------------------ */
 /* Status indicator config                                             */
@@ -15,9 +16,9 @@ interface StatusConfig {
 
 const statusConfig: Record<MatchStatus, StatusConfig> = {
   live: { label: 'LIVE', className: 'text-emerald-400', pulse: true },
-  finished: { label: 'FINISHED', className: 'text-slate-500' },
-  scheduled: { label: 'Scheduled', className: 'text-slate-500' },
-  upcoming: { label: 'Upcoming', className: 'text-slate-500' },
+  finished: { label: 'FINISHED', className: 'text-faint' },
+  scheduled: { label: 'Scheduled', className: 'text-faint' },
+  upcoming: { label: 'Upcoming', className: 'text-faint' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -37,7 +38,7 @@ function PlayerAvatar({
 
   if (isTBD) {
     return (
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-[10px] text-slate-400">
+      <div className="bg-surface-hover text-muted flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px]">
         ?
       </div>
     );
@@ -45,14 +46,16 @@ function PlayerAvatar({
 
   if (player.avatar) {
     return (
-      <img
-        src={player.avatar}
-        alt={player.name}
-        className={cn(
-          'h-6 w-6 shrink-0 rounded-full object-cover',
-          isLoser && 'opacity-70 grayscale'
-        )}
-      />
+      <span className="relative block h-6 w-6 shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={player.avatar}
+          alt={player.name}
+          fill
+          sizes="24px"
+          className={cn('object-cover', isLoser && 'opacity-70 grayscale')}
+          unoptimized
+        />
+      </span>
     );
   }
 
@@ -67,7 +70,7 @@ function PlayerAvatar({
   return (
     <div
       className={cn(
-        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-400 text-[10px] font-bold text-white',
+        'text-heading flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-400 text-[10px] font-bold',
         isLoser && 'opacity-70 grayscale'
       )}
     >
@@ -90,7 +93,7 @@ function SemifinalAvatar({ player }: { player: MatchPlayer }) {
       ? player.name.replace('Winner ', '')
       : '?';
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-500">
+      <div className="bg-surface text-faint flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs">
         {tag}
       </div>
     );
@@ -98,11 +101,16 @@ function SemifinalAvatar({ player }: { player: MatchPlayer }) {
 
   if (player.avatar) {
     return (
-      <img
-        src={player.avatar}
-        alt={player.name}
-        className="h-8 w-8 shrink-0 rounded-full object-cover"
-      />
+      <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={player.avatar}
+          alt={player.name}
+          fill
+          sizes="32px"
+          className="object-cover"
+          unoptimized
+        />
+      </span>
     );
   }
 
@@ -114,7 +122,7 @@ function SemifinalAvatar({ player }: { player: MatchPlayer }) {
     .toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-400 text-xs font-bold text-white">
+    <div className="text-heading flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-400 text-xs font-bold">
       {initials}
     </div>
   );
@@ -171,17 +179,17 @@ export function MatchCard({
             'font-mono text-[10px]',
             match.status === 'scheduled' && match.time?.startsWith('TODAY')
               ? 'text-primary font-bold'
-              : 'text-slate-500'
+              : 'text-faint'
           )}
         >
           MATCH #{match.matchNumber}
         </span>
         {isSemifinal && match.time ? (
-          <div className="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+          <div className="border-surface-border bg-surface text-body rounded border px-2 py-0.5 text-[10px]">
             {match.time}
           </div>
         ) : match.status === 'scheduled' && match.time ? (
-          <span className="text-[10px] text-slate-400">{match.time}</span>
+          <span className="text-muted text-[10px]">{match.time}</span>
         ) : (
           <span
             className={cn(
@@ -213,7 +221,7 @@ export function MatchCard({
                 className={cn(
                   'flex items-center gap-3 rounded p-2',
                   isTBD
-                    ? 'border border-dashed border-slate-600 bg-white/5 opacity-50'
+                    ? 'border-surface-border border border-dashed bg-black/[0.03] opacity-50 dark:bg-white/5'
                     : 'bg-white/5'
                 )}
               >
@@ -221,7 +229,7 @@ export function MatchCard({
                 <span
                   className={cn(
                     'text-sm',
-                    isTBD ? 'text-slate-400' : 'text-white'
+                    isTBD ? 'text-muted' : 'text-heading'
                   )}
                 >
                   {player.name}
@@ -247,7 +255,7 @@ export function MatchCard({
                 <span
                   className={cn(
                     'text-sm',
-                    isWinner ? 'font-medium text-white' : 'text-slate-300'
+                    isWinner ? 'text-heading font-medium' : 'text-body'
                   )}
                 >
                   {player.name}
@@ -259,8 +267,8 @@ export function MatchCard({
                   isWinner
                     ? 'text-emerald-400'
                     : player.score != null
-                      ? 'text-slate-400'
-                      : 'text-slate-400'
+                      ? 'text-muted'
+                      : 'text-muted'
                 )}
               >
                 {player.score != null ? player.score : '-'}

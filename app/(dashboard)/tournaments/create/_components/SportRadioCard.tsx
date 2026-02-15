@@ -28,7 +28,7 @@ export function SportRadioCard({
             'flex flex-col items-center gap-2 rounded-xl border p-4 transition-all',
             selected === opt.value
               ? 'border-primary bg-primary/10 text-primary shadow-primary/10 shadow-md'
-              : 'border-surface-border bg-surface-dark hover:bg-surface-hover text-slate-400 hover:text-white'
+              : 'border-surface-border bg-surface hover:bg-surface-hover text-muted hover:text-heading'
           )}
         >
           <IonIcon name={opt.icon} size="lg" />

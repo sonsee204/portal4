@@ -62,7 +62,7 @@ export default function DashboardPage() {
         <div className="space-y-6 lg:col-span-2">
           {/* Mock bar chart */}
           <GlassPanel card>
-            <h3 className="mb-4 text-sm font-bold text-white">
+            <h3 className="mb-4 text-sm font-bold text-heading">
               Doanh thu theo tuần
             </h3>
             <div className="flex h-48 items-end gap-2">
@@ -75,7 +75,7 @@ export default function DashboardPage() {
                     className="from-primary to-primary-light w-full rounded-t-md bg-gradient-to-t transition-all"
                     style={{ height: `${h}%` }}
                   />
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-faint">
                     {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][i]}
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
 
           {/* Top tournaments table */}
           <GlassPanel card>
-            <h3 className="mb-4 text-sm font-bold text-white">
+            <h3 className="mb-4 text-sm font-bold text-heading">
               Giải đấu nổi bật
             </h3>
             <DataTable
@@ -101,13 +101,13 @@ export default function DashboardPage() {
                   key={t._id}
                   className="border-surface-border hover:bg-surface-hover border-b transition-colors"
                 >
-                  <td className="px-4 py-3 text-sm font-medium text-white">
+                  <td className="px-4 py-3 text-sm font-medium text-heading">
                     {t.name}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-400">
+                  <td className="px-4 py-3 text-sm text-muted">
                     {t.category}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-300">
+                  <td className="px-4 py-3 text-sm text-body">
                     {t.participants}/{t.maxParticipants}
                   </td>
                   <td className="px-4 py-3">
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* System status */}
           <GlassPanel card>
-            <h3 className="mb-4 text-sm font-bold text-white">
+            <h3 className="mb-4 text-sm font-bold text-heading">
               Tình trạng hệ thống
             </h3>
             <div className="space-y-4">
@@ -140,8 +140,8 @@ export default function DashboardPage() {
               ].map((s) => (
                 <div key={s.label}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="text-slate-400">{s.label}</span>
-                    <span className="font-medium text-white">{s.value}%</span>
+                    <span className="text-muted">{s.label}</span>
+                    <span className="font-medium text-heading">{s.value}%</span>
                   </div>
                   <ProgressBar value={s.value} variant={s.variant} />
                 </div>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
 
           {/* Recent activity */}
           <GlassPanel card>
-            <h3 className="mb-4 text-sm font-bold text-white">
+            <h3 className="mb-4 text-sm font-bold text-heading">
               Hoạt động gần đây
             </h3>
             <div>

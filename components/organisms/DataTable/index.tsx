@@ -52,13 +52,13 @@ export function DataTable<T>({
     <div className={cn('overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-white/5">
+          <thead className="bg-black/[0.03] dark:bg-white/5">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    'px-4 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase',
+                    'text-faint px-4 py-3 text-xs font-semibold tracking-wider uppercase',
                     col.align === 'center' && 'text-center',
                     col.align === 'right' && 'text-right'
                   )}
@@ -66,7 +66,7 @@ export function DataTable<T>({
                   {col.sortable ? (
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 transition-colors hover:text-white"
+                      className="hover:text-heading inline-flex items-center gap-1 transition-colors"
                       onClick={() => onSort?.(col.key)}
                     >
                       {col.label}

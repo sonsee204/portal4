@@ -10,17 +10,16 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 
 export function NotificationForm() {
   const [msg, setMsg] = useState('');
-  const maxLen = 160;
 
   return (
     <GlassPanel card={false} className="overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] p-6">
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+      <div className="border-surface-border bg-surface flex items-center justify-between border-b p-6">
+        <h3 className="text-heading flex items-center gap-2 text-lg font-semibold">
           <IonIcon name="megaphone-outline" className="text-primary" />
           Push Notification Center
         </h3>
-        <div className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400">
+        <div className="text-muted flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           System Ready
         </div>
@@ -49,7 +48,7 @@ export function NotificationForm() {
             <Button className="w-full py-4" iconLeft="send-outline">
               Send Push Notification
             </Button>
-            <p className="mt-3 text-center text-xs text-slate-500">
+            <p className="text-faint mt-3 text-center text-xs">
               Estimated reach: ~20,600 users
             </p>
           </div>
@@ -59,10 +58,10 @@ export function NotificationForm() {
         <div className="space-y-6">
           <div>
             <div className="mb-2 flex justify-between">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="text-body block text-sm font-medium">
                 Message Content
               </label>
-              <span className="text-xs text-slate-500">
+              <span className="text-faint text-xs">
                 {msg.length}/140 characters
               </span>
             </div>
@@ -76,11 +75,11 @@ export function NotificationForm() {
           </div>
 
           {/* Preview Card (Mockup) */}
-          <div className="bg-background-dark/50 rounded-lg border border-dashed border-white/20 p-4">
-            <p className="mb-3 text-xs font-semibold text-slate-500 uppercase">
+          <div className="bg-bg-secondary border-surface-border rounded-lg border border-dashed p-4">
+            <p className="text-faint mb-3 text-xs font-semibold uppercase">
               Mobile Preview
             </p>
-            <div className="flex max-w-sm items-start gap-3 rounded-xl border border-white/5 bg-[#1e1e1e] p-3 shadow-md">
+            <div className="border-surface-border bg-surface flex max-w-sm items-start gap-3 rounded-xl border p-3 shadow-md">
               <div className="bg-primary/20 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
                 <IonIcon
                   name="football-outline"
@@ -89,12 +88,12 @@ export function NotificationForm() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="mb-0.5 flex items-baseline justify-between">
-                  <h4 className="truncate text-sm font-semibold text-white">
+                  <h4 className="text-heading truncate text-sm font-semibold">
                     Ao Trình App
                   </h4>
-                  <span className="text-[10px] text-slate-400">now</span>
+                  <span className="text-muted text-[10px]">now</span>
                 </div>
-                <p className="line-clamp-2 text-xs text-slate-300">
+                <p className="text-body line-clamp-2 text-xs">
                   {msg ||
                     'Your message will appear here exactly as typed above...'}
                 </p>

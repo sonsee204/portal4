@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import type { Report, ReportCategory } from '@/types/portal';
+import type { Report, ReportCategory } from '@/types/mock';
 
 const categoryLabel: Record<ReportCategory, string> = {
   hate_speech: 'Ngôn từ thù địch',
@@ -50,15 +50,15 @@ export function ReportListItem({
             >
               {categoryLabel[report.category]}
             </Badge>
-            <span className="font-mono text-[10px] text-slate-500">
+            <span className="font-mono text-[10px] text-faint">
               {report.ticketId}
             </span>
           </div>
-          <p className="mt-1 truncate text-sm text-white">{report.content}</p>
-          <p className="mt-0.5 text-xs text-slate-500">@{report.authorName}</p>
+          <p className="mt-1 truncate text-sm text-heading">{report.content}</p>
+          <p className="mt-0.5 text-xs text-faint">@{report.authorName}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-[10px] text-slate-500">{report.createdAt}</span>
+          <span className="text-[10px] text-faint">{report.createdAt}</span>
           <div className="flex items-center gap-1 text-[10px] text-red-400">
             <IonIcon name="flag-outline" size="xs" />
             {report.reporterCount}
