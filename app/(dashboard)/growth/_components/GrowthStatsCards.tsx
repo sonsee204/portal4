@@ -1,6 +1,7 @@
 'use client';
 
 import { IonIcon } from '@/components/atoms/IonIcon';
+import type { GrowthStats } from '@/types';
 
 export interface GrowthKPI {
   key: string;
@@ -15,10 +16,89 @@ export interface GrowthKPI {
 }
 
 interface GrowthStatsCardsProps {
-  cards: GrowthKPI[];
+  stats?: GrowthStats;
+  loading: boolean;
 }
 
-export function GrowthStatsCards({ cards }: GrowthStatsCardsProps) {
+function formatNumber(n: number): string {
+  return n.toLocaleString('vi-VN');
+}
+
+function formatRevenue(n: number): string {
+  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)}M VND`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K VND`;
+  return `${formatNumber(n)} VND`;
+}
+
+function buildKPIs(stats: GrowthStats): GrowthKPI[] {
+  return [
+    {
+      key: 'totalNewUsers',
+      label: 'Tổng người dùng mới',
+      value: formatNumber(stats.totalNewUsers),
+      icon: 'people-outline',
+      iconColor: 'text-primary',
+      iconBg: 'bg-primary/10',
+      subtitle: 'trong khoảng thời gian',
+    },
+    {
+      key: 'partnerContribution',
+      label: 'Đóng góp từ đối tác',
+      value: `${stats.partnerPercentage}%`,
+      icon: 'hand-left-outline',
+      iconColor: 'text-purple-500',
+      iconBg: 'bg-purple-500/10',
+      progress: {
+        value: stats.partnerPercentage,
+        label: `so ${(100 - stats.partnerPercentage).toFixed(1)}% Hữu cơ`,
+      },
+    },
+    {
+      key: 'activationRate',
+      label: 'Tỷ lệ kích hoạt',
+      value: `${stats.activationRate}%`,
+      icon: 'flash-outline',
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-500/10',
+      subtitle: 'Trung bình toàn nguồn',
+    },
+    {
+      key: 'totalRevenue',
+      label: 'Tổng doanh thu quy đổi',
+      value: formatRevenue(stats.totalRevenue),
+      icon: 'wallet-outline',
+      iconColor: 'text-emerald-500',
+      iconBg: 'bg-emerald-500/10',
+      subtitle: 'từ đối tác giới thiệu',
+    },
+  ];
+}
+
+export function GrowthStatsCards({ stats, loading }: GrowthStatsCardsProps) {
+  const cards = stats ? buildKPIs(stats) : [];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-surface border-surface-border rounded-xl border p-5"
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="bg-surface-hover h-4 w-28 animate-pulse rounded" />
+                <div className="bg-surface-hover h-7 w-20 animate-pulse rounded" />
+              </div>
+              <div className="bg-surface-hover h-10 w-10 animate-pulse rounded-lg" />
+            </div>
+            <div className="bg-surface-hover h-4 w-32 animate-pulse rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (

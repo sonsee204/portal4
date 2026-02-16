@@ -1,30 +1,63 @@
 'use client';
 
+import type { GrowthTrendPoint } from '@/types';
+
 export interface ChartDataPoint {
   organic: number;
   partner: number;
 }
 
 interface TrafficSourceChartProps {
-  data: ChartDataPoint[];
-  labels: string[];
-  tooltip?: {
-    label: string;
-    partner: number;
-    organic: number;
-    /** 0-based index of the bar where the tooltip anchors */
-    anchorIndex: number;
-  };
+  trend?: GrowthTrendPoint[];
+  loading: boolean;
 }
 
 export function TrafficSourceChart({
-  data,
-  labels,
-  tooltip,
+  trend,
+  loading,
 }: TrafficSourceChartProps) {
-  const anchorPct = tooltip
-    ? `${((tooltip.anchorIndex + 0.5) / data.length) * 100}%`
-    : '60%';
+  if (loading) {
+    return (
+      <div className="bg-surface border-surface-border rounded-xl border p-6 shadow-sm">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="bg-surface-hover h-6 w-48 animate-pulse rounded" />
+          <div className="bg-surface-hover h-4 w-32 animate-pulse rounded" />
+        </div>
+        <div className="bg-surface-hover h-64 w-full animate-pulse rounded-lg" />
+      </div>
+    );
+  }
+
+  if (!trend || trend.length === 0) {
+    return (
+      <div className="bg-surface border-surface-border rounded-xl border p-6 shadow-sm">
+        <h3 className="text-heading text-lg font-semibold">
+          Xu hướng nguồn truy cập
+        </h3>
+        <div className="text-faint flex h-64 items-center justify-center text-sm">
+          Chưa có dữ liệu xu hướng
+        </div>
+      </div>
+    );
+  }
+
+  // Convert trend data to percentages for chart rendering
+  const maxValue = Math.max(
+    ...trend.flatMap((t) => [t.organic, t.partner]),
+    1,
+  );
+  const data: ChartDataPoint[] = trend.map((t) => ({
+    organic: (t.organic / maxValue) * 100,
+    partner: (t.partner / maxValue) * 100,
+  }));
+
+  // Use trend labels for X-axis, sampling evenly
+  const labelCount = Math.min(7, trend.length);
+  const step = Math.max(1, Math.floor(trend.length / labelCount));
+  const labels: string[] = [];
+  for (let i = 0; i < trend.length; i += step) {
+    labels.push(trend[i].label);
+  }
 
   return (
     <div className="bg-surface border-surface-border rounded-xl border p-6 shadow-sm">
@@ -47,31 +80,6 @@ export function TrafficSourceChart({
 
       {/* Chart area */}
       <div className="border-surface-border chart-grid relative h-64 w-full rounded-lg border-b border-l">
-        {/* Tooltip (static mock) */}
-        {tooltip && (
-          <>
-            <div
-              className="pointer-events-none absolute top-[20%] z-10 rounded bg-slate-900 p-2 text-xs text-white shadow-xl"
-              style={{ left: anchorPct, transform: 'translateX(-50%)' }}
-            >
-              <div className="mb-1 font-semibold">{tooltip.label}</div>
-              <div className="mb-1 flex items-center gap-2">
-                <span className="bg-primary h-2 w-2 rounded-full" />
-                Đối tác: {tooltip.partner.toLocaleString('vi-VN')}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                Hữu cơ: {tooltip.organic.toLocaleString('vi-VN')}
-              </div>
-            </div>
-            {/* Vertical dashed line */}
-            <div
-              className="absolute top-0 bottom-0 z-0 w-px border-l border-dashed border-slate-400/50"
-              style={{ left: anchorPct }}
-            />
-          </>
-        )}
-
         {/* Organic bars */}
         <div className="absolute inset-0 flex items-end justify-between px-1 opacity-40">
           {data.map((d, i) => (

@@ -31,3 +31,18 @@ export type {
   AuditStatus,
 } from './audit';
 export { AuditActionEnum, AuditCategoryEnum, AuditStatusEnum } from './audit';
+
+// Referral & Growth
+export type {
+  ReferralCode,
+  ReferralTracking,
+  ReferralEventType,
+  GrowthStats,
+  GrowthTrendPoint,
+  PartnerLeaderboardItem,
+  PartnerLeaderboard,
+  ReferralFilterInput,
+  CreateReferralCodeInput,
+  UpdateReferralCodeInput,
+} from './referral';
+export { ReferralEventEnum } from './referral';

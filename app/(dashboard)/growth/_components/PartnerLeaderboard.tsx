@@ -8,6 +8,7 @@ import {
   type DataTableColumn,
 } from '@/components/organisms/DataTable';
 import type { BadgeVariant } from '@/config/theme';
+import type { PartnerLeaderboardItem } from '@/types';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -30,8 +31,44 @@ export interface PartnerRow {
 }
 
 interface PartnerLeaderboardProps {
-  data: PartnerRow[];
-  totalPartners: number;
+  items?: PartnerLeaderboardItem[];
+  totalCodes: number;
+  loading: boolean;
+}
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+function getRoleBadgeVariant(role?: string): BadgeVariant {
+  if (!role) return 'neutral';
+  const r = role.toLowerCase();
+  if (r.includes('ceo') || r.includes('sáng lập')) return 'warning';
+  if (r.includes('cgo') || r.includes('admin')) return 'info';
+  return 'purple';
+}
+
+function formatRevenue(n: number): string {
+  return n.toLocaleString('vi-VN');
+}
+
+export function mapToPartnerRows(
+  items: PartnerLeaderboardItem[],
+): PartnerRow[] {
+  return items.map((item, index) => ({
+    id: item.partnerId,
+    name: item.partnerName,
+    email: item.referralCode,
+    avatar: item.avatarUrl,
+    role: item.role ?? 'Đối tác',
+    roleBadgeVariant: getRoleBadgeVariant(item.role),
+    referralCode: item.referralCode,
+    signups: item.totalSignups,
+    activationRate: item.activationRate,
+    revenue: formatRevenue(item.totalRevenue),
+    trend: (item.trend as 'up' | 'down' | 'flat') || 'flat',
+    isTopPerformer: index === 0,
+  }));
 }
 
 /* ------------------------------------------------------------------ */
@@ -49,7 +86,7 @@ const columns: DataTableColumn[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Helpers                                                             */
+/* Sub-components                                                      */
 /* ------------------------------------------------------------------ */
 
 function ActivationBar({
@@ -85,9 +122,30 @@ function ActivationBar({
 /* ------------------------------------------------------------------ */
 
 export function PartnerLeaderboard({
-  data,
-  totalPartners,
+  items,
+  totalCodes,
+  loading,
 }: PartnerLeaderboardProps) {
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-surface-hover h-6 w-52 animate-pulse rounded" />
+        <div className="bg-surface border-surface-border rounded-xl border p-6 shadow-sm">
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-surface-hover h-14 animate-pulse rounded"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const data = items ? mapToPartnerRows(items) : [];
+
   const renderRow = (row: PartnerRow, index: number) => {
     const isGold = row.isTopPerformer;
     const rowBg = row.isSystem
@@ -229,7 +287,7 @@ export function PartnerLeaderboard({
         {/* Footer */}
         <div className="border-surface-border text-faint flex items-center justify-between border-t px-6 py-4 text-xs">
           <span>
-            Đang hiển thị {data.length} trong tổng {totalPartners} đối tác
+            Đang hiển thị {data.length} trong tổng {totalCodes} mã giới thiệu
           </span>
           <button
             type="button"
