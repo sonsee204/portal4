@@ -38,7 +38,7 @@ export function NotificationBell({ count, className }: NotificationBellProps) {
         iconSize="md"
         badge={displayCount > 0}
         onClick={() => setOpen(!open)}
-        aria-label={`Notifications${displayCount > 0 ? ` (${displayCount} new)` : ''}`}
+        aria-label={`Thông báo${displayCount > 0 ? ` (${displayCount} mới)` : ''}`}
         className={cn(open && 'bg-surface-hover')}
       />
 

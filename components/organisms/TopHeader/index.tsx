@@ -25,7 +25,7 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
   const { setMobileNavOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
 
-  const displayName = user?.displayName || user?.fullName || 'User';
+  const displayName = user?.displayName || user?.fullName || 'Người dùng';
   const initials =
     user?.displayName
       ?.split(' ')
@@ -65,7 +65,7 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
       <div className="flex items-center gap-4">
         {actions}
         <SearchInput
-          placeholder="Search..."
+          placeholder="Tìm kiếm..."
           wrapperClassName="hidden md:block w-64"
         />
         <ThemeToggle />

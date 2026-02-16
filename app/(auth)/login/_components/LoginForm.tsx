@@ -17,11 +17,9 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      !!localStorage.getItem(REMEMBERED_LOGIN_KEY)
-  );
+  // Always start false so server and client match (avoid hydration mismatch).
+  // Restore from localStorage in useEffect after mount.
+  const [rememberMe, setRememberMe] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const { setUser, setInitialized } = useAuthStore();
@@ -39,11 +37,14 @@ export function LoginForm() {
     },
   });
 
-  // Restore remembered email/phone from localStorage (sync external system → React)
+  // Restore remembered email/phone and "remember me" from localStorage after mount (client-only).
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     const saved = localStorage.getItem(REMEMBERED_LOGIN_KEY);
-    if (saved) setValue('emailOrPhone', saved);
+    if (saved) {
+      setValue('emailOrPhone', saved);
+      const id = requestAnimationFrame(() => setRememberMe(true));
+      return () => cancelAnimationFrame(id);
+    }
   }, [setValue]);
 
   // Show error / success from URL params

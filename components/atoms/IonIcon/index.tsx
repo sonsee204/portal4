@@ -36,12 +36,12 @@ function cleanSvg(raw: string): string {
   return raw
     .replace(/<\?xml.*?\?>/, '')
     .replace(/<!DOCTYPE[^>]*>/i, '')
-    .replace(/\s*width="[^"]*"/, '')
-    .replace(/\s*height="[^"]*"/, '')
-    .replace(
-      /<svg([^>]*)>/,
-      '<svg$1 fill="currentColor" stroke="currentColor">'
-    )
+    .replace(/<svg([^>]*)>/, (_match, attrs: string) => {
+      const cleaned = attrs
+        .replace(/\s*width="[^"]*"/g, '')
+        .replace(/\s*height="[^"]*"/g, '');
+      return `<svg${cleaned} fill="currentColor" stroke="currentColor" overflow="visible">`;
+    })
     .replace(/\s*class="([^"]*)"/g, (_match, classes: string) => {
       const attrs: string[] = [];
       if (classes.includes('ionicon-fill-none')) attrs.push('fill="none"');

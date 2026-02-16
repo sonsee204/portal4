@@ -6,7 +6,7 @@
 import type { PortalFeature } from '@/lib/permissions';
 
 /** Routes that are currently enabled (not dimmed/disabled). All others show as disabled. */
-export const ENABLED_SIDEBAR_ROUTES = ['/users', '/audit'] as const;
+export const ENABLED_SIDEBAR_ROUTES = ['/users', '/audit', '/growth'] as const;
 
 export interface NavItem {
   href: string;
@@ -24,9 +24,9 @@ export interface SidebarNavSection {
 
 export const sidebarNav: SidebarNavSection[] = [
   {
-    section: 'Main Menu',
+    section: 'Menu chính',
     items: [
-      { href: '/', label: 'Dashboard', icon: 'grid-outline' },
+      { href: '/', label: 'Tổng quan', icon: 'grid-outline' },
       {
         href: '/users',
         label: 'Quản lý người dùng',
@@ -57,10 +57,16 @@ export const sidebarNav: SidebarNavSection[] = [
         icon: 'calendar-outline',
         requiredFeature: 'calendar',
       },
+      {
+        href: '/growth',
+        label: 'Tăng trưởng & Đối tác',
+        icon: 'trending-up-outline',
+        requiredFeature: 'growth',
+      },
     ],
   },
   {
-    section: 'Operations',
+    section: 'Vận hành',
     items: [
       {
         href: '/moderation',
@@ -76,7 +82,7 @@ export const sidebarNav: SidebarNavSection[] = [
       },
       {
         href: '/cms',
-        label: 'CMS & Banner',
+        label: 'Nội dung & Banner',
         icon: 'images-outline',
         requiredFeature: 'cms',
       },
@@ -89,7 +95,7 @@ export const sidebarNav: SidebarNavSection[] = [
     ],
   },
   {
-    section: 'System',
+    section: 'Hệ thống',
     items: [
       {
         href: '/settings',

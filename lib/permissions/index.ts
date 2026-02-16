@@ -22,7 +22,8 @@ export type PortalFeature =
   | 'finance'
   | 'own_finance'
   | 'support'
-  | 'own_bookings';
+  | 'own_bookings'
+  | 'growth';
 
 /**
  * Feature access map per role
@@ -48,6 +49,7 @@ const PORTAL_FEATURES: Record<UserRole, PortalFeature[]> = {
     'own_finance',
     'support',
     'own_bookings',
+    'growth',
   ],
   ADMIN: [
     'dashboard',
@@ -60,6 +62,7 @@ const PORTAL_FEATURES: Record<UserRole, PortalFeature[]> = {
     'tournaments',
     'cms',
     'support',
+    'growth',
   ],
   FACILITY_OWNER: [
     'dashboard',
@@ -133,8 +136,8 @@ export function isSuperAdminRole(role: UserRole | null | undefined): boolean {
  * Role display names
  */
 export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
+  SUPER_ADMIN: 'Siêu quản trị',
+  ADMIN: 'Quản trị viên',
   FACILITY_OWNER: 'Chủ sân',
   PLAYER: 'Người chơi',
 };
