@@ -6,7 +6,7 @@
 import type { PortalFeature } from '@/lib/permissions';
 
 /** Routes that are currently enabled (not dimmed/disabled). All others show as disabled. */
-export const ENABLED_SIDEBAR_ROUTES = ['/users', '/audit', '/growth'] as const;
+export const ENABLED_SIDEBAR_ROUTES = ['/users', '/audit', '/growth', '/support'] as const;
 
 export interface NavItem {
   href: string;

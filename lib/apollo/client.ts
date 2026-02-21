@@ -11,6 +11,7 @@ import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { showError } from '@/lib/toast';
+import { ERRORS } from '@/lib/strings';
 
 const getGraphqlUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_GRAPHQL_URL;
@@ -127,13 +128,13 @@ const errorLink = new ErrorLink(({ error, operation, forward }) => {
       (err) => err.extensions?.code === 'INTERNAL_SERVER_ERROR',
     );
     if (serverErrors.length > 0) {
-      showError('Lỗi hệ thống. Vui lòng thử lại sau.');
+      showError(ERRORS.SYSTEM);
     }
   } else {
     // Network or other error
     console.error('[Network error]:', error);
     if (typeof window !== 'undefined') {
-      showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+      showError(ERRORS.NETWORK);
     }
   }
 });

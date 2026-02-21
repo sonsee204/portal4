@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
-import { toast } from 'sonner';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
@@ -12,137 +12,99 @@ import {
   type DataTableColumn,
 } from '@/components/organisms/DataTable';
 import {
-  GET_REFERRAL_CODES,
-  CREATE_REFERRAL_CODE,
-  TOGGLE_REFERRAL_CODE,
-} from '@/graphql/queries/referral';
+  useReferralCodes,
+  useCreateReferralCode,
+  useToggleReferralCode,
+} from '@/hooks/referral';
+import { showSuccess } from '@/lib/toast';
+import { GROWTH } from '@/lib/strings';
+import {
+  createReferralCodeSchema,
+  type CreateReferralCodeFormData,
+} from '@/lib/validation/schemas';
 import type { ReferralCode } from '@/types';
 
-/* ------------------------------------------------------------------ */
-/* Types                                                               */
-/* ------------------------------------------------------------------ */
-
-interface CreateFormState {
-  code: string;
-  ownerId: string;
-  ownerName: string;
-  ownerRole: string;
-  maxUses: string;
-}
-
-const INITIAL_FORM: CreateFormState = {
-  code: '',
-  ownerId: '',
-  ownerName: '',
-  ownerRole: '',
-  maxUses: '',
-};
-
-/* ------------------------------------------------------------------ */
-/* Column definitions                                                  */
-/* ------------------------------------------------------------------ */
-
 const columns: DataTableColumn[] = [
-  { key: 'code', label: 'Mã giới thiệu' },
-  { key: 'owner', label: 'Chủ sở hữu' },
-  { key: 'status', label: 'Trạng thái' },
-  { key: 'usage', label: 'Sử dụng', align: 'right' },
-  { key: 'signups', label: 'Đăng ký', align: 'right' },
-  { key: 'revenue', label: 'Doanh thu', align: 'right' },
+  { key: 'code', label: GROWTH.REFERRAL.COLUMNS.CODE },
+  { key: 'owner', label: GROWTH.REFERRAL.COLUMNS.OWNER },
+  { key: 'status', label: GROWTH.REFERRAL.COLUMNS.STATUS },
+  { key: 'usage', label: GROWTH.REFERRAL.COLUMNS.USAGE, align: 'right' },
+  { key: 'signups', label: GROWTH.REFERRAL.COLUMNS.SIGNUPS, align: 'right' },
+  { key: 'revenue', label: GROWTH.REFERRAL.COLUMNS.REVENUE, align: 'right' },
   { key: 'actions', label: '', align: 'center' },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Component                                                           */
-/* ------------------------------------------------------------------ */
-
 export function ReferralCodeManager() {
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [form, setForm] = useState<CreateFormState>(INITIAL_FORM);
 
-  // Queries
-  const { data, loading, refetch } = useQuery<{
-    getReferralCodes: ReferralCode[];
-  }>(GET_REFERRAL_CODES, {
-    fetchPolicy: 'cache-and-network',
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateReferralCodeFormData>({
+    resolver: zodResolver(createReferralCodeSchema),
+    defaultValues: {
+      code: '',
+      ownerId: '',
+      ownerName: '',
+      ownerRole: '',
+      maxUses: '',
+    },
   });
 
-  // Mutations
-  const [createCode, { loading: creating }] = useMutation(
-    CREATE_REFERRAL_CODE,
-    {
-      onCompleted: () => {
-        toast.success('Tạo mã giới thiệu thành công');
-        setForm(INITIAL_FORM);
-        setShowCreateForm(false);
-        void refetch();
-      },
-      onError: (error) => {
-        toast.error(error.message || 'Không thể tạo mã giới thiệu');
-      },
-    }
-  );
+  const { codes, loading, refetch } = useReferralCodes();
 
-  const [toggleCode] = useMutation(TOGGLE_REFERRAL_CODE, {
-    onCompleted: () => {
-      toast.success('Cập nhật trạng thái thành công');
+  const { createCode, loading: creating } = useCreateReferralCode({
+    onSuccess: () => {
+      reset();
+      setShowCreateForm(false);
       void refetch();
     },
-    onError: (error) => {
-      toast.error(error.message || 'Không thể cập nhật trạng thái');
+  });
+
+  const { toggleCode } = useToggleReferralCode({
+    onSuccess: () => {
+      void refetch();
     },
   });
 
-  const handleCreate = useCallback(() => {
-    if (!form.code || !form.ownerId || !form.ownerName) {
-      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
-      return;
-    }
-    void createCode({
-      variables: {
-        input: {
-          code: form.code.toUpperCase(),
-          ownerId: form.ownerId,
-          ownerName: form.ownerName,
-          ownerRole: form.ownerRole || undefined,
-          maxUses: form.maxUses ? parseInt(form.maxUses, 10) : undefined,
-        },
-      },
+  const onSubmit = (data: CreateReferralCodeFormData) => {
+    createCode({
+      code: data.code.toUpperCase(),
+      ownerId: data.ownerId,
+      ownerName: data.ownerName,
+      ownerRole: data.ownerRole || undefined,
+      maxUses: data.maxUses ? parseInt(data.maxUses, 10) : undefined,
     });
-  }, [form, createCode]);
+  };
 
   const handleToggle = useCallback(
     (id: string, isActive: boolean) => {
-      void toggleCode({
-        variables: { id, isActive: !isActive },
-      });
+      toggleCode(id, isActive);
     },
     [toggleCode]
   );
 
   const handleCopyCode = useCallback((code: string) => {
     void navigator.clipboard.writeText(code);
-    toast.success(`Đã sao chép mã: ${code}`);
+    showSuccess(GROWTH.REFERRAL.COPIED_CODE(code));
   }, []);
 
   const handleCopyLink = useCallback((code: string) => {
     const link = `https://aotrinh.vn/download?ref=${code}`;
     void navigator.clipboard.writeText(link);
-    toast.success('Đã sao chép link giới thiệu');
+    showSuccess(GROWTH.REFERRAL.COPIED_LINK);
   }, []);
-
-  const codes = data?.getReferralCodes ?? [];
 
   const renderRow = (code: ReferralCode) => (
     <tr key={code._id} className="hover:bg-surface-hover transition-colors">
-      {/* Code */}
       <td className="px-4 py-3">
         <code className="bg-surface-hover border-surface-border rounded border px-2 py-1 font-mono text-xs font-semibold">
           {code.code}
         </code>
       </td>
 
-      {/* Owner */}
       <td className="px-4 py-3">
         <div>
           <p className="text-heading text-sm font-medium">{code.ownerName}</p>
@@ -152,39 +114,36 @@ export function ReferralCodeManager() {
         </div>
       </td>
 
-      {/* Status */}
       <td className="px-4 py-3">
         <Badge variant={code.isActive ? 'success' : 'danger'}>
-          {code.isActive ? 'Hoạt động' : 'Tắt'}
+          {code.isActive
+            ? GROWTH.REFERRAL.STATUS_ACTIVE
+            : GROWTH.REFERRAL.STATUS_INACTIVE}
         </Badge>
       </td>
 
-      {/* Usage */}
       <td className="text-heading px-4 py-3 text-right text-sm">
         {code.currentUses}
         {code.maxUses ? ` / ${code.maxUses}` : ''}
       </td>
 
-      {/* Signups */}
       <td className="text-heading px-4 py-3 text-right text-sm font-medium">
         {code.totalSignups.toLocaleString()}
       </td>
 
-      {/* Revenue */}
       <td className="text-heading px-4 py-3 text-right text-sm">
         {code.totalRevenue > 0
           ? code.totalRevenue.toLocaleString('vi-VN')
           : '-'}
       </td>
 
-      {/* Actions */}
       <td className="px-4 py-3 text-center">
         <div className="flex items-center justify-center gap-1">
           <button
             type="button"
             onClick={() => handleCopyCode(code.code)}
             className="text-muted hover:text-heading rounded p-1.5 transition-colors"
-            title="Sao chép mã"
+            title={GROWTH.REFERRAL.ACTION_COPY_CODE}
           >
             <IonIcon name="copy-outline" size="sm" />
           </button>
@@ -192,7 +151,7 @@ export function ReferralCodeManager() {
             type="button"
             onClick={() => handleCopyLink(code.code)}
             className="text-muted hover:text-heading rounded p-1.5 transition-colors"
-            title="Sao chép link"
+            title={GROWTH.REFERRAL.ACTION_COPY_LINK}
           >
             <IonIcon name="link-outline" size="sm" />
           </button>
@@ -204,7 +163,11 @@ export function ReferralCodeManager() {
                 ? 'text-red-400 hover:text-red-500'
                 : 'text-emerald-400 hover:text-emerald-500'
             }`}
-            title={code.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
+            title={
+              code.isActive
+                ? GROWTH.REFERRAL.ACTION_DEACTIVATE
+                : GROWTH.REFERRAL.ACTION_ACTIVATE
+            }
           >
             <IonIcon
               name={
@@ -225,7 +188,7 @@ export function ReferralCodeManager() {
       {/* Section Header */}
       <div className="flex items-center justify-between px-1">
         <h3 className="text-heading text-lg font-semibold">
-          Quản lý mã giới thiệu
+          {GROWTH.REFERRAL.SECTION_TITLE}
         </h3>
         <Button
           variant="primary"
@@ -233,78 +196,98 @@ export function ReferralCodeManager() {
           iconLeft={showCreateForm ? 'close-outline' : 'add-outline'}
           onClick={() => setShowCreateForm(!showCreateForm)}
         >
-          {showCreateForm ? 'Đóng' : 'Tạo mã mới'}
+          {showCreateForm
+            ? GROWTH.REFERRAL.TOGGLE_HIDE
+            : GROWTH.REFERRAL.TOGGLE_SHOW}
         </Button>
       </div>
 
       {/* Create Form (inline panel) */}
       {showCreateForm && (
-        <div className="bg-surface border-surface-border rounded-xl border p-5 shadow-sm">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-surface border-surface-border rounded-xl border p-5 shadow-sm"
+        >
           <h4 className="text-heading mb-4 font-semibold">
-            Tạo mã giới thiệu mới
+            {GROWTH.REFERRAL.CREATE_TITLE}
           </h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Input
-              label="Mã giới thiệu"
-              placeholder="VD: CEOVIP"
-              value={form.code}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  code: e.target.value.toUpperCase(),
-                }))
-              }
-              required
+            <Controller
+              name="code"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label={GROWTH.REFERRAL.FORM.CODE}
+                  placeholder={GROWTH.REFERRAL.FORM.CODE_PLACEHOLDER}
+                  error={errors.code?.message}
+                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                />
+              )}
             />
-            <Input
-              label="ID chủ sở hữu"
-              placeholder="ObjectId của user"
-              value={form.ownerId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, ownerId: e.target.value }))
-              }
-              required
+            <Controller
+              name="ownerId"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label={GROWTH.REFERRAL.FORM.OWNER_ID}
+                  placeholder={GROWTH.REFERRAL.FORM.OWNER_ID_PLACEHOLDER}
+                  error={errors.ownerId?.message}
+                />
+              )}
             />
-            <Input
-              label="Tên chủ sở hữu"
-              placeholder="Nguyen Van A"
-              value={form.ownerName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, ownerName: e.target.value }))
-              }
-              required
+            <Controller
+              name="ownerName"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label={GROWTH.REFERRAL.FORM.OWNER_NAME}
+                  placeholder={GROWTH.REFERRAL.FORM.OWNER_NAME_PLACEHOLDER}
+                  error={errors.ownerName?.message}
+                />
+              )}
             />
-            <Input
-              label="Vai trò"
-              placeholder="VD: Đối tác, CEO"
-              value={form.ownerRole}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, ownerRole: e.target.value }))
-              }
+            <Controller
+              name="ownerRole"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label={GROWTH.REFERRAL.FORM.ROLE}
+                  placeholder={GROWTH.REFERRAL.FORM.ROLE_PLACEHOLDER}
+                  error={errors.ownerRole?.message}
+                />
+              )}
             />
-            <Input
-              label="Giới hạn sử dụng"
-              placeholder="Không giới hạn"
-              type="number"
-              value={form.maxUses}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, maxUses: e.target.value }))
-              }
+            <Controller
+              name="maxUses"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label={GROWTH.REFERRAL.FORM.MAX_USES}
+                  placeholder={GROWTH.REFERRAL.FORM.MAX_USES_PLACEHOLDER}
+                  type="number"
+                  error={errors.maxUses?.message}
+                />
+              )}
             />
             <div className="flex items-end">
               <Button
+                type="submit"
                 variant="primary"
                 size="md"
                 iconLeft="checkmark-outline"
-                onClick={handleCreate}
                 disabled={creating}
                 className="w-full"
               >
-                {creating ? 'Đang tạo...' : 'Tạo mã'}
+                {creating ? GROWTH.REFERRAL.SUBMITTING : GROWTH.REFERRAL.SUBMIT}
               </Button>
             </div>
           </div>
-        </div>
+        </form>
       )}
 
       {/* Codes Table */}
@@ -323,14 +306,14 @@ export function ReferralCodeManager() {
             columns={columns}
             data={codes}
             renderRow={renderRow}
-            emptyTitle="Chưa có mã giới thiệu nào"
-            emptyDescription="Tạo mã giới thiệu đầu tiên để bắt đầu theo dõi đối tác"
+            emptyTitle={GROWTH.REFERRAL.EMPTY_TITLE}
+            emptyDescription={GROWTH.REFERRAL.EMPTY_DESCRIPTION}
           />
         )}
 
         {/* Footer */}
         <div className="border-surface-border text-faint border-t px-6 py-3 text-xs">
-          Tổng cộng {codes.length} mã giới thiệu
+          {GROWTH.REFERRAL.TOTAL_CODES(codes.length)}
         </div>
       </div>
     </div>

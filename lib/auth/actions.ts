@@ -7,6 +7,7 @@ import {
   getAccessToken,
 } from './session';
 import { GRAPHQL_URL } from './constants';
+import { AUTH, ERRORS } from '@/lib/strings';
 import type { AuthUser } from '@/types';
 
 /**
@@ -82,11 +83,11 @@ export async function loginAction(
     emailOrPhone = passwordOrFormData.get('emailOrPhone') as string;
     password = passwordOrFormData.get('password') as string;
   } else {
-    return { success: false, error: 'Vui lòng nhập email/số điện thoại và mật khẩu' };
+    return { success: false, error: AUTH.LOGIN.INPUT_REQUIRED };
   }
 
   if (!emailOrPhone || !password) {
-    return { success: false, error: 'Vui lòng nhập email/số điện thoại và mật khẩu' };
+    return { success: false, error: AUTH.LOGIN.INPUT_REQUIRED };
   }
 
   try {
@@ -126,7 +127,7 @@ export async function loginAction(
     }
 
     if (!result.data?.signIn) {
-      return { success: false, error: 'Đăng nhập thất bại. Vui lòng thử lại.' };
+      return { success: false, error: AUTH.LOGIN.FAILED };
     }
 
     const { accessToken, refreshToken, user } = result.data.signIn;
@@ -148,7 +149,7 @@ export async function loginAction(
   } catch {
     return {
       success: false,
-      error: 'Không thể kết nối đến máy chủ. Vui lòng thử lại.',
+      error: ERRORS.SERVER_NETWORK,
     };
   }
 }
@@ -233,7 +234,7 @@ export async function requestPasswordResetAction(
   phone: string,
 ): Promise<ActionResult> {
   if (!phone) {
-    return { success: false, error: 'Vui lòng nhập số điện thoại' };
+    return { success: false, error: AUTH.FORGOT_PASSWORD.PHONE_REQUIRED };
   }
 
   try {
@@ -267,7 +268,7 @@ export async function requestPasswordResetAction(
   } catch {
     return {
       success: false,
-      error: 'Không thể kết nối đến máy chủ. Vui lòng thử lại.',
+      error: ERRORS.SERVER_NETWORK,
     };
   }
 }
@@ -280,7 +281,7 @@ export async function resetPasswordAction(
   newPassword: string,
 ): Promise<ActionResult> {
   if (!idToken || !newPassword) {
-    return { success: false, error: 'Thiếu thông tin xác thực hoặc mật khẩu mới' };
+    return { success: false, error: AUTH.LOGIN.MISSING_CREDENTIALS };
   }
 
   try {
@@ -314,7 +315,7 @@ export async function resetPasswordAction(
   } catch {
     return {
       success: false,
-      error: 'Không thể kết nối đến máy chủ. Vui lòng thử lại.',
+      error: ERRORS.SERVER_NETWORK,
     };
   }
 }

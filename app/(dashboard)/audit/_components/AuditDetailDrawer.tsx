@@ -6,33 +6,14 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { IconButton } from '@/components/atoms/IconButton';
 import type { AuditLog, AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
+import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditDetailDrawerProps {
   log: AuditLog | null;
   onClose: () => void;
 }
 
-const ACTION_LABELS: Record<AuditAction, string> = {
-  LOGIN: 'Đăng nhập',
-  LOGIN_FAILED: 'Đăng nhập thất bại',
-  LOGOUT: 'Đăng xuất',
-  LOGOUT_ALL: 'Đăng xuất tất cả',
-  PASSWORD_CHANGE: 'Đổi mật khẩu',
-  PASSWORD_RESET: 'Đặt lại mật khẩu',
-  ACCOUNT_REGISTER: 'Đăng ký tài khoản',
-  TOKEN_REFRESH_FAILED: 'Làm mới token thất bại',
-  USER_CREATE: 'Tạo người dùng',
-  USER_SUSPEND: 'Khóa tài khoản',
-  USER_UNSUSPEND: 'Mở khóa tài khoản',
-  USER_ROLE_CHANGE: 'Thay đổi vai trò',
-  USER_DELETE: 'Xóa tài khoản',
-  VENUE_APPROVE: 'Duyệt sân',
-  VENUE_REJECT: 'Từ chối sân',
-  VENUE_SUSPEND: 'Tạm ngưng sân',
-  RATE_LIMIT_HIT: 'Vượt giới hạn',
-  CONFIG_CHANGE: 'Thay đổi cấu hình',
-  SYSTEM_ERROR: 'Lỗi hệ thống',
-};
+const ACTION_LABELS: Record<AuditAction, string> = AUDIT.ACTIONS;
 
 const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
   LOGIN: 'neutral',
@@ -56,12 +37,7 @@ const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
   SYSTEM_ERROR: 'danger',
 };
 
-const CATEGORY_LABELS: Record<AuditCategory, string> = {
-  AUTH: 'Xác thực',
-  ADMIN: 'Quản trị',
-  SECURITY: 'Bảo mật',
-  SYSTEM: 'Hệ thống',
-};
+const CATEGORY_LABELS: Record<AuditCategory, string> = AUDIT.CATEGORIES;
 
 function formatTimestamp(iso: string): string {
   return new Date(iso).toLocaleString('vi-VN', {
@@ -133,13 +109,13 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
           {/* Header */}
           <div className="border-surface-border flex items-center justify-between border-b p-4">
             <h2 className="text-heading text-lg font-semibold">
-              Chi tiết Audit Log
+              {AUDIT.DETAIL.TITLE}
             </h2>
             <IconButton
               icon="close-outline"
               size="sm"
               onClick={onClose}
-              tooltip="Đóng"
+              tooltip={COMMON.CLOSE}
             />
           </div>
 
@@ -151,60 +127,62 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
                 {ACTION_LABELS[log.action] ?? log.action}
               </Badge>
               <Badge variant={log.status === 'SUCCESS' ? 'success' : 'danger'}>
-                {log.status === 'SUCCESS' ? 'Thành công' : 'Thất bại'}
+                {log.status === 'SUCCESS'
+                  ? AUDIT.STATUS.SUCCESS
+                  : AUDIT.STATUS.FAILED}
               </Badge>
             </div>
 
             <DetailRow
               icon="person-outline"
-              label="Tác nhân"
-              value={log.actorName || 'Hệ thống'}
+              label={AUDIT.DETAIL.ACTOR}
+              value={log.actorName || AUDIT.ACTOR_SYSTEM}
             />
             <DetailRow
               icon="shield-outline"
-              label="Vai trò"
+              label={AUDIT.DETAIL.ROLE}
               value={log.actorRole}
             />
             <DetailRow
               icon="layers-outline"
-              label="Phân loại"
+              label={AUDIT.DETAIL.CATEGORY}
               value={CATEGORY_LABELS[log.category] ?? log.category}
             />
             <DetailRow
               icon="locate-outline"
-              label="Đối tượng"
+              label={AUDIT.DETAIL.TARGET}
               value={log.target}
               mono
             />
             {log.targetId && (
               <DetailRow
                 icon="finger-print-outline"
-                label="ID đối tượng"
+                label={AUDIT.DETAIL.TARGET_ID}
                 value={log.targetId}
                 mono
               />
             )}
             <DetailRow
               icon="globe-outline"
-              label="Địa chỉ IP"
+              label={AUDIT.DETAIL.IP}
               value={log.ip}
               mono
             />
             <DetailRow
               icon="phone-portrait-outline"
-              label="User Agent"
+              label={AUDIT.DETAIL.USER_AGENT}
               value={log.userAgent}
               mono
             />
             <DetailRow
               icon="link-outline"
-              label="Correlation ID"
+              label={AUDIT.DETAIL.CORRELATION_ID}
               value={log.correlationId}
               mono
             />
             <DetailRow
               icon="time-outline"
-              label="Thời gian"
+              label={AUDIT.DETAIL.TIMESTAMP}
               value={formatTimestamp(log.createdAt)}
             />
 
@@ -218,7 +196,7 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
                     size="sm"
                   />
                   <p className="text-sm font-medium text-red-400">
-                    Thông báo lỗi
+                    {AUDIT.DETAIL.ERROR_TITLE}
                   </p>
                 </div>
                 <p className="text-muted mt-1 font-mono text-xs">

@@ -6,34 +6,38 @@ import {
   OTP_LENGTH,
   FULLNAME_MIN_LENGTH,
 } from './constants';
+import { VALIDATION, GROWTH } from '@/lib/strings';
 
 // ==================== Base Validations ====================
 
 export const emailValidation = z
   .string()
-  .min(1, 'Email là bắt buộc')
-  .email('Email không hợp lệ');
+  .min(1, VALIDATION.EMAIL_REQUIRED)
+  .pipe(z.email({ error: VALIDATION.EMAIL_INVALID }));
 
 export const phoneValidation = z
   .string()
-  .min(1, 'Số điện thoại là bắt buộc')
-  .regex(PHONE_REGEX, 'Số điện thoại không hợp lệ (VD: 0987654321 hoặc +84987654321)');
+  .min(1, VALIDATION.PHONE_REQUIRED)
+  .regex(PHONE_REGEX, VALIDATION.PHONE_INVALID);
 
 export const passwordValidation = z
   .string()
-  .min(PASSWORD_MIN_LENGTH, `Mật khẩu phải có ít nhất ${PASSWORD_MIN_LENGTH} ký tự`);
+  .min(PASSWORD_MIN_LENGTH, VALIDATION.PASSWORD_MIN(PASSWORD_MIN_LENGTH))
+  .regex(/[A-Z]/, VALIDATION.PASSWORD_UPPERCASE)
+  .regex(/[a-z]/, VALIDATION.PASSWORD_LOWERCASE)
+  .regex(/[0-9]/, VALIDATION.PASSWORD_DIGIT);
 
 export const fullNameValidation = z
   .string()
-  .min(FULLNAME_MIN_LENGTH, `Họ tên phải có ít nhất ${FULLNAME_MIN_LENGTH} ký tự`);
+  .min(FULLNAME_MIN_LENGTH, VALIDATION.FULLNAME_MIN(FULLNAME_MIN_LENGTH));
 
 export const otpValidation = z
   .string()
-  .length(OTP_LENGTH, `Mã OTP phải có ${OTP_LENGTH} chữ số`);
+  .length(OTP_LENGTH, VALIDATION.OTP_LENGTH(OTP_LENGTH));
 
 export const emailOrPhoneValidation = z
   .string()
-  .min(1, 'Vui lòng nhập email hoặc số điện thoại')
+  .min(1, VALIDATION.EMAIL_OR_PHONE_REQUIRED)
   .refine(
     (value) => {
       const trimmed = value.trim();
@@ -42,7 +46,7 @@ export const emailOrPhoneValidation = z
       }
       return PHONE_REGEX.test(trimmed.replace(/\s/g, ''));
     },
-    'Email hoặc số điện thoại không hợp lệ',
+    VALIDATION.EMAIL_OR_PHONE_INVALID,
   );
 
 // ==================== Form Schemas ====================
@@ -84,11 +88,22 @@ export type OtpFormData = z.infer<typeof otpSchema>;
 export const resetPasswordSchema = z
   .object({
     newPassword: passwordValidation,
-    confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+    confirmPassword: z.string().min(1, VALIDATION.CONFIRM_PASSWORD),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: VALIDATION.PASSWORD_MISMATCH,
     path: ['confirmPassword'],
   });
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+/** Admin creates a referral code */
+export const createReferralCodeSchema = z.object({
+  code: z.string().min(1, `${GROWTH.REFERRAL.FORM.CODE} là bắt buộc`),
+  ownerId: z.string().min(1, `${GROWTH.REFERRAL.FORM.OWNER_ID} là bắt buộc`),
+  ownerName: z.string().min(1, `${GROWTH.REFERRAL.FORM.OWNER_NAME} là bắt buộc`),
+  ownerRole: z.string().optional(),
+  maxUses: z.string().optional(),
+});
+
+export type CreateReferralCodeFormData = z.infer<typeof createReferralCodeSchema>;

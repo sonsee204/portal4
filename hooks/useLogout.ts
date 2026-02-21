@@ -6,6 +6,7 @@ import { useApolloClient } from '@apollo/client/react';
 import { useAuthStore } from '@/stores/auth';
 import { setClientAccessToken } from '@/lib/apollo/client';
 import { showSuccess } from '@/lib/toast';
+import { AUTH } from '@/lib/strings';
 
 /**
  * Client-side logout hook.
@@ -48,7 +49,7 @@ export function useLogout() {
     // Clear in-memory token
     setClientAccessToken(null);
 
-    showSuccess('Đã đăng xuất');
+    showSuccess(AUTH.LOGOUT.SUCCESS);
 
     router.push('/login');
   }, [isLoggingOut, apolloClient, router]);

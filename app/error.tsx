@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/atoms/Button';
+import { ERRORS, COMMON } from '@/lib/strings';
 
 export default function Error({
   error,
@@ -16,10 +17,10 @@ export default function Error({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
-      <h1 className="text-xl font-bold text-heading">Đã xảy ra lỗi</h1>
-      <p className="mt-2 text-center text-muted">Vui lòng thử lại sau.</p>
+      <h1 className="text-heading text-xl font-bold">{ERRORS.ERROR_TITLE}</h1>
+      <p className="text-muted mt-2 text-center">{ERRORS.GENERIC}</p>
       <Button className="mt-6" onClick={reset}>
-        Thử lại
+        {COMMON.RETRY}
       </Button>
     </div>
   );

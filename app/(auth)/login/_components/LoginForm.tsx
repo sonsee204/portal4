@@ -10,6 +10,7 @@ import { Toggle } from '@/components/atoms/Toggle';
 import { useAuthStore } from '@/stores/auth';
 import { loginAction } from '@/lib/auth/actions';
 import { loginSchema, type LoginFormData } from '@/lib/validation/schemas';
+import { AUTH, ERRORS } from '@/lib/strings';
 
 const REMEMBERED_LOGIN_KEY = 'portal_remembered_login';
 
@@ -83,7 +84,7 @@ export function LoginForm() {
   const errorMessage =
     backendError ||
     (urlError === 'unauthorized'
-      ? 'Tài khoản của bạn không có quyền truy cập Portal.'
+      ? ERRORS.UNAUTHORIZED
       : null);
 
   return (
@@ -91,7 +92,7 @@ export function LoginForm() {
       {/* Success message (e.g. after password reset) */}
       {urlReset === 'success' && (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-          Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.
+          {AUTH.LOGIN.PASSWORD_RESET_SUCCESS}
         </div>
       )}
 
@@ -108,7 +109,7 @@ export function LoginForm() {
         render={({ field }) => (
           <Input
             {...field}
-            label="Email hoặc số điện thoại"
+            label={AUTH.LOGIN.LABEL_EMAIL_OR_PHONE}
             type="text"
             placeholder="admin@naleesports.com"
             leftIcon="mail-outline"
@@ -125,7 +126,7 @@ export function LoginForm() {
           render={({ field }) => (
             <Input
               {...field}
-              label="Mật khẩu"
+              label={AUTH.LOGIN.LABEL_PASSWORD}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               leftIcon="lock-closed-outline"
@@ -143,20 +144,20 @@ export function LoginForm() {
           onClick={() => setShowPassword(!showPassword)}
           tabIndex={-1}
         >
-          {showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          {showPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
       <div className="flex items-center justify-between">
         <label className="text-muted flex items-center gap-2 text-sm">
           <Toggle checked={rememberMe} onChange={setRememberMe} />
-          Ghi nhớ tôi
+          {AUTH.LOGIN.REMEMBER_ME}
         </label>
         <button
           type="button"
           className="text-primary hover:text-primary-light text-sm transition-colors"
           onClick={() => router.push('/forgot-password')}
         >
-          Quên mật khẩu?
+          {AUTH.LOGIN.FORGOT_PASSWORD_LINK}
         </button>
       </div>
       <Button
@@ -166,7 +167,7 @@ export function LoginForm() {
         iconLeft="log-in-outline"
         disabled={isPending}
       >
-        {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        {isPending ? AUTH.LOGIN.LOADING : AUTH.LOGIN.BUTTON}
       </Button>
     </form>
   );

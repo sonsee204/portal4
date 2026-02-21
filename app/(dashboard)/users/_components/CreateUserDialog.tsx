@@ -15,6 +15,7 @@ import {
   createUserSchema,
   type CreateUserFormData,
 } from '@/lib/validation/schemas';
+import { USERS, COMMON } from '@/lib/strings';
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -23,8 +24,8 @@ interface CreateUserDialogProps {
 }
 
 const CREATABLE_ROLES = [
-  { value: 'FACILITY_OWNER', label: 'Chủ sân (Facility Owner)' },
-  { value: 'ADMIN', label: 'Admin' },
+  { value: 'FACILITY_OWNER', label: USERS.ROLES.FACILITY_OWNER },
+  { value: 'ADMIN', label: USERS.ROLES.ADMIN },
 ];
 
 export function CreateUserDialog({
@@ -53,7 +54,7 @@ export function CreateUserDialog({
 
   const [createUser, { loading }] = useMutation(ADMIN_CREATE_USER, {
     onCompleted: () => {
-      showSuccess('Tạo tài khoản thành công');
+      showSuccess(USERS.CREATE.SUCCESS);
       onSuccess();
       handleClose();
     },
@@ -100,16 +101,16 @@ export function CreateUserDialog({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-heading">
-              Tạo tài khoản mới
+            <h2 className="text-heading text-lg font-semibold">
+              {USERS.CREATE.TITLE}
             </h2>
-            <p className="mt-1 text-sm text-muted">
-              Tạo tài khoản cho nhân viên hoặc đối tác
+            <p className="text-muted mt-1 text-sm">
+              {USERS.CREATE.DESCRIPTION}
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="text-muted transition-colors hover:text-heading"
+            className="text-muted hover:text-heading transition-colors"
           >
             <IonIcon name="close-outline" size="md" />
           </button>
@@ -130,7 +131,7 @@ export function CreateUserDialog({
             render={({ field }) => (
               <Input
                 {...field}
-                label="Họ tên"
+                label={USERS.CREATE.LABEL_FULLNAME}
                 placeholder="Nguyễn Văn A"
                 leftIcon="person-outline"
                 error={errors.fullName?.message}
@@ -145,7 +146,7 @@ export function CreateUserDialog({
             render={({ field }) => (
               <Input
                 {...field}
-                label="Email"
+                label={USERS.CREATE.LABEL_EMAIL}
                 type="email"
                 placeholder="user@example.com"
                 leftIcon="mail-outline"
@@ -161,7 +162,7 @@ export function CreateUserDialog({
             render={({ field }) => (
               <Input
                 {...field}
-                label="Số điện thoại"
+                label={USERS.CREATE.LABEL_PHONE}
                 placeholder="0987654321 hoặc +84987654321"
                 leftIcon="call-outline"
                 error={errors.phone?.message}
@@ -176,7 +177,7 @@ export function CreateUserDialog({
             render={({ field }) => (
               <Input
                 {...field}
-                label="Mật khẩu"
+                label={USERS.CREATE.LABEL_PASSWORD}
                 type="password"
                 placeholder="Tối thiểu 6 ký tự"
                 leftIcon="lock-closed-outline"
@@ -190,7 +191,11 @@ export function CreateUserDialog({
             name="role"
             control={control}
             render={({ field }) => (
-              <Select {...field} label="Vai trò" disabled={loading}>
+              <Select
+                {...field}
+                label={USERS.CREATE.LABEL_ROLE}
+                disabled={loading}
+              >
                 {availableRoles.map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label}
@@ -208,7 +213,7 @@ export function CreateUserDialog({
               onClick={handleClose}
               disabled={loading}
             >
-              Hủy
+              {COMMON.CANCEL}
             </Button>
             <Button
               type="submit"
@@ -216,7 +221,7 @@ export function CreateUserDialog({
               iconLeft="person-add-outline"
               disabled={loading}
             >
-              {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
+              {loading ? USERS.CREATE.SUBMITTING : USERS.CREATE.SUBMIT}
             </Button>
           </div>
         </form>

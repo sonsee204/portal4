@@ -1,0 +1,85 @@
+/**
+ * Audit log Vietnamese strings.
+ */
+
+export const AUDIT = {
+  PAGE: {
+    DESCRIPTION: 'Theo dõi mọi hoạt động admin trong hệ thống.',
+    EMPTY: 'Chưa có audit log nào',
+  },
+  ACTIONS: {
+    LOGIN: 'Đăng nhập',
+    LOGIN_FAILED: 'Đăng nhập thất bại',
+    LOGOUT: 'Đăng xuất',
+    LOGOUT_ALL: 'Đăng xuất tất cả',
+    PASSWORD_CHANGE: 'Đổi mật khẩu',
+    PASSWORD_RESET: 'Đặt lại mật khẩu',
+    ACCOUNT_REGISTER: 'Đăng ký tài khoản',
+    TOKEN_REFRESH_FAILED: 'Làm mới token thất bại',
+    USER_CREATE: 'Tạo người dùng',
+    USER_SUSPEND: 'Khóa tài khoản',
+    USER_UNSUSPEND: 'Mở khóa tài khoản',
+    USER_ROLE_CHANGE: 'Thay đổi vai trò',
+    USER_DELETE: 'Xóa tài khoản',
+    VENUE_APPROVE: 'Duyệt sân',
+    VENUE_REJECT: 'Từ chối sân',
+    VENUE_SUSPEND: 'Tạm ngưng sân',
+    RATE_LIMIT_HIT: 'Vượt giới hạn',
+    CONFIG_CHANGE: 'Thay đổi cấu hình',
+    SYSTEM_ERROR: 'Lỗi hệ thống',
+  },
+  CATEGORIES: {
+    AUTH: 'Xác thực',
+    ADMIN: 'Quản trị',
+    SECURITY: 'Bảo mật',
+    SYSTEM: 'Hệ thống',
+  },
+  COLUMNS: {
+    ADMIN: 'Tác nhân',
+    CATEGORY: 'Phân loại',
+    ACTION: 'Hành động',
+    TARGET: 'Đối tượng',
+    IP: 'IP',
+    TIMESTAMP: 'Thời gian',
+    STATUS: 'Trạng thái',
+  },
+  STATUS: {
+    SUCCESS: 'Thành công',
+    FAILED: 'Thất bại',
+  },
+  DETAIL: {
+    TITLE: 'Chi tiết Audit Log',
+    ACTOR: 'Tác nhân',
+    ROLE: 'Vai trò',
+    CATEGORY: 'Phân loại',
+    TARGET: 'Đối tượng',
+    TARGET_ID: 'ID đối tượng',
+    IP: 'Địa chỉ IP',
+    USER_AGENT: 'User Agent',
+    CORRELATION_ID: 'Correlation ID',
+    TIMESTAMP: 'Thời gian',
+    ERROR_TITLE: 'Thông báo lỗi',
+  },
+  FILTER: {
+    SEARCH_PLACEHOLDER: 'Tìm kiếm...',
+  },
+  EXPORT: {
+    COLUMNS: {
+      ID: 'ID',
+      ACTOR: 'Tác nhân',
+      ROLE: 'Vai trò',
+      ACTION: 'Hành động',
+      CATEGORY: 'Phân loại',
+      TARGET: 'Đối tượng',
+      STATUS: 'Trạng thái',
+      IP: 'IP',
+      TIMESTAMP: 'Thời gian',
+      ERROR: 'Lỗi',
+    },
+  },
+  EMPTY: {
+    TITLE: 'Chưa có audit log',
+    DESCRIPTION: 'Các hoạt động hệ thống sẽ được ghi lại tại đây.',
+  },
+  ACTOR_SYSTEM: 'Hệ thống',
+} as const;

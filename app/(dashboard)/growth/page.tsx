@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useQuery } from '@apollo/client/react';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { PageHeader } from '@/components/organisms/PageHeader';
@@ -11,15 +10,8 @@ import { GrowthStatsCards } from './_components/GrowthStatsCards';
 import { TrafficSourceChart } from './_components/TrafficSourceChart';
 import { PartnerLeaderboard } from './_components/PartnerLeaderboard';
 import { ReferralCodeManager } from './_components/ReferralCodeManager';
-import {
-  GET_GROWTH_STATS,
-  GET_PARTNER_LEADERBOARD,
-} from '@/graphql/queries/referral';
-import type {
-  GrowthStats,
-  PartnerLeaderboard as PartnerLeaderboardType,
-  ReferralFilterInput,
-} from '@/types';
+import { useGrowthStats, usePartnerLeaderboard } from '@/hooks/referral';
+import type { ReferralFilterInput } from '@/types';
 
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
@@ -31,41 +23,28 @@ export default function GrowthPage() {
     to?: string;
   }>({});
 
-  const filterVariables: { filter?: ReferralFilterInput } =
-    dateRange.from || dateRange.to ? { filter: dateRange } : {};
+  const filter: ReferralFilterInput | undefined =
+    dateRange.from || dateRange.to ? dateRange : undefined;
 
-  // Growth stats query
   const {
-    data: statsData,
+    stats,
     loading: statsLoading,
     error: statsError,
     refetch: refetchStats,
-  } = useQuery<{ getGrowthStats: GrowthStats }>(GET_GROWTH_STATS, {
-    variables: filterVariables,
-    fetchPolicy: 'cache-and-network',
-  });
+  } = useGrowthStats(filter);
 
-  // Leaderboard query
   const {
-    data: leaderboardData,
+    leaderboard,
     loading: leaderboardLoading,
     error: leaderboardError,
     refetch: refetchLeaderboard,
-  } = useQuery<{ getPartnerLeaderboard: PartnerLeaderboardType }>(
-    GET_PARTNER_LEADERBOARD,
-    {
-      variables: filterVariables,
-      fetchPolicy: 'cache-and-network',
-    }
-  );
+  } = usePartnerLeaderboard(filter);
 
   const handleRefresh = useCallback(() => {
     void refetchStats();
     void refetchLeaderboard();
   }, [refetchStats, refetchLeaderboard]);
 
-  const stats = statsData?.getGrowthStats;
-  const leaderboard = leaderboardData?.getPartnerLeaderboard;
   const hasError = statsError || leaderboardError;
 
   return (

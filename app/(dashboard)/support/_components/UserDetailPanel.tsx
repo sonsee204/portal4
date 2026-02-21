@@ -3,65 +3,92 @@
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import { Textarea } from '@/components/atoms/Textarea';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { SupportTicket } from '@/types/mock';
+import type { ContactInquiry } from '@/types';
+import { ContactSubjectEnum } from '@/types';
 
-export function UserDetailPanel({ ticket }: { ticket: SupportTicket }) {
+const subjectLabel: Record<ContactSubjectEnum, string> = {
+  [ContactSubjectEnum.COOPERATION]: 'Hợp tác',
+  [ContactSubjectEnum.SUPPORT]: 'Hỗ trợ',
+  [ContactSubjectEnum.RECRUITMENT]: 'Tuyển dụng',
+  [ContactSubjectEnum.OTHER]: 'Khác',
+};
+
+export function UserDetailPanel({ inquiry }: { inquiry: ContactInquiry }) {
   return (
     <GlassPanel card className="space-y-5">
-      {/* User info */}
+      {/* Sender info */}
       <div className="flex flex-col items-center text-center">
-        <Avatar fallback={ticket.userName[0]} status="online" />
-        <p className="mt-2 text-sm font-bold text-heading">{ticket.userName}</p>
+        <Avatar fallback={inquiry.name[0]} />
+        <p className="text-heading mt-2 text-sm font-bold">{inquiry.name}</p>
         <Badge variant="info" className="mt-1">
-          Premium Member
+          {subjectLabel[inquiry.subject]}
         </Badge>
       </div>
 
       {/* Contact details */}
       <div className="border-surface-border space-y-3 border-t pt-4">
-        <p className="text-xs font-bold tracking-wider text-faint uppercase">
+        <p className="text-faint text-xs font-bold tracking-wider uppercase">
           Thông tin liên hệ
         </p>
-        <div className="flex items-center gap-2 text-xs text-muted">
+        <div className="text-muted flex items-center gap-2 text-xs">
           <IonIcon name="mail-outline" size="sm" />
-          <span>
-            {ticket.userName.toLowerCase().replace(' ', '.')}@email.com
+          <a
+            href={`mailto:${inquiry.email}`}
+            className="hover:text-heading transition-colors"
+          >
+            {inquiry.email}
+          </a>
+        </div>
+        <div className="text-muted flex items-center gap-2 text-xs">
+          <IonIcon name="call-outline" size="sm" />
+          <a
+            href={`tel:${inquiry.phone}`}
+            className="hover:text-heading transition-colors"
+          >
+            {inquiry.phone}
+          </a>
+        </div>
+      </div>
+
+      {/* Inquiry metadata */}
+      <div className="border-surface-border space-y-2 border-t pt-4">
+        <p className="text-faint text-xs font-bold tracking-wider uppercase">
+          Thông tin yêu cầu
+        </p>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted">Ngày gửi</span>
+          <span className="text-heading font-medium">
+            {new Date(inquiry.createdAt).toLocaleDateString('vi-VN')}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <IonIcon name="call-outline" size="sm" />
-          <span>0912-xxx-xxx</span>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted">Cập nhật</span>
+          <span className="text-heading font-medium">
+            {new Date(inquiry.updatedAt).toLocaleDateString('vi-VN')}
+          </span>
         </div>
+        {inquiry.repliedByUser && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted">Người trả lời</span>
+            <span className="text-heading font-medium">
+              {inquiry.repliedByUser.fullName}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Ticket history */}
-      <div className="border-surface-border space-y-2 border-t pt-4">
-        <p className="text-xs font-bold tracking-wider text-faint uppercase">
-          Lịch sử ticket
-        </p>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">Tổng ticket</span>
-          <span className="font-medium text-heading">7</span>
+      {/* Admin note preview */}
+      {inquiry.adminNote && (
+        <div className="border-surface-border space-y-2 border-t pt-4">
+          <p className="text-faint text-xs font-bold tracking-wider uppercase">
+            Ghi chú nội bộ
+          </p>
+          <p className="text-muted text-xs whitespace-pre-wrap">
+            {inquiry.adminNote}
+          </p>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">Đã giải quyết</span>
-          <span className="font-medium text-emerald-400">5</span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">Thời gian TB</span>
-          <span className="font-medium text-heading">2.5 giờ</span>
-        </div>
-      </div>
-
-      {/* Internal notes */}
-      <div className="border-surface-border space-y-2 border-t pt-4">
-        <p className="text-xs font-bold tracking-wider text-faint uppercase">
-          Ghi chú nội bộ
-        </p>
-        <Textarea placeholder="Ghi chú cho admin..." rows={3} />
-      </div>
+      )}
     </GlassPanel>
   );
 }

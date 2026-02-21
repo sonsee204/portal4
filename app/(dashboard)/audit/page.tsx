@@ -18,6 +18,7 @@ import { AuditFilters } from './_components/AuditFilters';
 import { AuditTable } from './_components/AuditTable';
 import { AuditDetailDrawer } from './_components/AuditDetailDrawer';
 import { AuditExportButton } from './_components/AuditExportButton';
+import { AUDIT } from '@/lib/strings';
 
 const PAGE_SIZE = 20;
 
@@ -108,10 +109,7 @@ export default function AuditPage() {
 
   return (
     <>
-      <PageHeader
-        title="Audit Logs"
-        description="Theo dõi mọi hoạt động admin trong hệ thống."
-      >
+      <PageHeader title="Audit Logs" description={AUDIT.PAGE.DESCRIPTION}>
         <div className="flex items-center gap-3">
           <AuditExportButton logs={logs} disabled={logsLoading} />
         </div>
@@ -144,7 +142,7 @@ export default function AuditPage() {
           error={logsError}
           empty={!logsLoading && logs.length === 0}
           onRetry={handleRefresh}
-          emptyMessage="Chưa có audit log nào"
+          emptyMessage={AUDIT.PAGE.EMPTY}
           emptyIcon="document-text-outline"
         >
           <AuditTable

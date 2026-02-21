@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { ERRORS, COMMON } from '@/lib/strings';
 
 export default function GlobalError({
   error,
@@ -17,22 +18,22 @@ export default function GlobalError({
     <html lang="vi">
       <body className="bg-bg flex min-h-screen items-center justify-center px-4 font-sans antialiased">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-heading">
-            Đã xảy ra lỗi nghiêm trọng
+          <h1 className="text-heading text-2xl font-bold">
+            {ERRORS.GLOBAL_ERROR_TITLE}
           </h1>
-          <p className="mt-3 text-sm text-muted">
-            Hệ thống gặp sự cố không mong muốn. Vui lòng thử lại.
+          <p className="text-muted mt-3 text-sm">
+            {ERRORS.GLOBAL_ERROR_MESSAGE}
           </p>
           {error.digest && (
-            <p className="mt-2 text-xs text-faint">
-              Mã lỗi: {error.digest}
+            <p className="text-faint mt-2 text-xs">
+              {ERRORS.ERROR_CODE_LABEL} {error.digest}
             </p>
           )}
           <button
             onClick={reset}
-            className="bg-primary hover:bg-primary/90 mt-6 rounded-lg px-6 py-2.5 text-sm font-medium text-heading transition-colors"
+            className="bg-primary hover:bg-primary/90 text-heading mt-6 rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
           >
-            Thử lại
+            {COMMON.RETRY}
           </button>
         </div>
       </body>

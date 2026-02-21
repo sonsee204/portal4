@@ -27,6 +27,7 @@ import {
   type ResetPasswordFormData,
 } from '@/lib/validation/schemas';
 import { OTP_LENGTH } from '@/lib/validation/constants';
+import { AUTH, COMMON, ERRORS } from '@/lib/strings';
 import type { ConfirmationResult } from 'firebase/auth';
 
 // ==================== Constants ====================
@@ -127,7 +128,7 @@ export function ForgotPasswordForm() {
         // 1. Backend: validate user exists
         const result = await requestPasswordResetAction(e164);
         if (!result.success) {
-          setError(result.error ?? 'Không thể xác thực tài khoản');
+          setError(result.error ?? AUTH.FORGOT_PASSWORD.ERROR_VERIFY_ACCOUNT);
           return;
         }
 
@@ -140,7 +141,7 @@ export function ForgotPasswordForm() {
         setResendTimer(RESEND_DELAY_S);
         setStep('otp');
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Lỗi gửi mã xác thực';
+        const msg = err instanceof Error ? err.message : AUTH.FORGOT_PASSWORD.ERROR_SEND_OTP;
         setError(msg);
       } finally {
         setLoading(false);
@@ -154,7 +155,7 @@ export function ForgotPasswordForm() {
     setError(null);
 
     if (!confirmationRef.current) {
-      setError('Phiên xác thực hết hạn. Vui lòng thử lại.');
+      setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
       setStep('phone');
       return;
     }
@@ -165,7 +166,7 @@ export function ForgotPasswordForm() {
       idTokenRef.current = token;
       setStep('password');
     } catch {
-      setError('Mã xác thực không đúng. Vui lòng thử lại.');
+      setError(AUTH.FORGOT_PASSWORD.ERROR_INVALID_OTP);
     } finally {
       setLoading(false);
     }
@@ -183,7 +184,7 @@ export function ForgotPasswordForm() {
       setResendTimer(RESEND_DELAY_S);
       otpForm.reset({ otp: '' });
     } catch {
-      setError('Không thể gửi lại mã. Vui lòng thử lại.');
+      setError(AUTH.FORGOT_PASSWORD.ERROR_RESEND_OTP);
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ export function ForgotPasswordForm() {
       setError(null);
 
       if (!idTokenRef.current) {
-        setError('Phiên xác thực hết hạn. Vui lòng thử lại.');
+        setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
         setStep('phone');
         return;
       }
@@ -207,14 +208,14 @@ export function ForgotPasswordForm() {
           data.newPassword
         );
         if (!result.success) {
-          setError(result.error ?? 'Đặt lại mật khẩu thất bại');
+          setError(result.error ?? AUTH.FORGOT_PASSWORD.ERROR_RESET_FAILED);
           return;
         }
 
         // Success — redirect to login with success message
         router.push('/login?reset=success');
       } catch {
-        setError('Không thể kết nối đến máy chủ. Vui lòng thử lại.');
+        setError(ERRORS.SERVER_NETWORK);
       } finally {
         setLoading(false);
       }
@@ -239,7 +240,7 @@ export function ForgotPasswordForm() {
           className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-body"
         >
           <IonIcon name="arrow-back-outline" size="xs" />
-          Quay lại đăng nhập
+          {AUTH.FORGOT_PASSWORD.BACK_TO_LOGIN}
         </Link>
       ) : (
         <button
@@ -252,7 +253,7 @@ export function ForgotPasswordForm() {
           className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-body disabled:opacity-50"
         >
           <IonIcon name="arrow-back-outline" size="xs" />
-          Quay lại
+          {AUTH.FORGOT_PASSWORD.BACK}
         </button>
       )}
     </div>
@@ -268,7 +269,7 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <p className="text-center text-sm text-muted">
-        Nhập số điện thoại đã đăng ký để nhận mã xác thực
+        {AUTH.FORGOT_PASSWORD.PHONE_DESCRIPTION}
       </p>
 
       <Controller
@@ -277,7 +278,7 @@ export function ForgotPasswordForm() {
         render={({ field }) => (
           <Input
             {...field}
-            label="Số điện thoại"
+            label={AUTH.FORGOT_PASSWORD.PHONE_LABEL}
             type="tel"
             placeholder="0987654321"
             leftIcon="call-outline"
@@ -295,7 +296,7 @@ export function ForgotPasswordForm() {
         iconLeft="arrow-forward-outline"
         disabled={loading}
       >
-        {loading ? 'Đang xử lý...' : 'Tiếp tục'}
+        {loading ? COMMON.PROCESSING : AUTH.FORGOT_PASSWORD.PHONE_CONTINUE}
       </Button>
 
       {renderBackLink('login')}
@@ -310,7 +311,7 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <div className="space-y-1 text-center">
-        <p className="text-sm text-muted">Mã xác thực đã được gửi đến</p>
+        <p className="text-sm text-muted">{AUTH.FORGOT_PASSWORD.OTP_SENT_TO}</p>
         <p className="text-primary text-sm font-semibold">
           {formatPhone(phone)}
         </p>
@@ -322,7 +323,7 @@ export function ForgotPasswordForm() {
         render={({ field }) => (
           <Input
             {...field}
-            label="Mã xác thực"
+            label={AUTH.FORGOT_PASSWORD.OTP_LABEL}
             type="text"
             inputMode="numeric"
             placeholder="000000"
@@ -347,13 +348,13 @@ export function ForgotPasswordForm() {
         iconLeft="checkmark-circle-outline"
         disabled={loading}
       >
-        {loading ? 'Đang xác thực...' : 'Xác thực'}
+        {loading ? AUTH.FORGOT_PASSWORD.OTP_VERIFYING : AUTH.FORGOT_PASSWORD.OTP_VERIFY}
       </Button>
 
       <div className="text-center">
         {resendTimer > 0 ? (
           <span className="text-xs text-faint">
-            Gửi lại sau {resendTimer}s
+            {AUTH.FORGOT_PASSWORD.OTP_RESEND_TIMER(resendTimer)}
           </span>
         ) : (
           <button
@@ -362,7 +363,7 @@ export function ForgotPasswordForm() {
             onClick={handleResend}
             className="text-primary hover:text-primary-light text-xs transition-colors disabled:opacity-50"
           >
-            Gửi lại mã xác thực
+            {AUTH.FORGOT_PASSWORD.OTP_RESEND}
           </button>
         )}
       </div>
@@ -379,7 +380,7 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <div className="space-y-1 text-center">
-        <p className="text-sm text-muted">Đặt mật khẩu mới cho tài khoản</p>
+        <p className="text-sm text-muted">{AUTH.FORGOT_PASSWORD.NEW_PASSWORD_DESCRIPTION}</p>
         <p className="text-primary text-sm font-semibold">
           {formatPhone(phone)}
         </p>
@@ -392,7 +393,7 @@ export function ForgotPasswordForm() {
           render={({ field }) => (
             <Input
               {...field}
-              label="Mật khẩu mới"
+              label={AUTH.FORGOT_PASSWORD.NEW_PASSWORD_LABEL}
               type={showPassword ? 'text' : 'password'}
               placeholder="Tối thiểu 6 ký tự"
               leftIcon="lock-closed-outline"
@@ -410,7 +411,7 @@ export function ForgotPasswordForm() {
           onClick={() => setShowPassword(!showPassword)}
           tabIndex={-1}
         >
-          {showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          {showPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
 
@@ -421,7 +422,7 @@ export function ForgotPasswordForm() {
           render={({ field }) => (
             <Input
               {...field}
-              label="Xác nhận mật khẩu"
+              label={AUTH.FORGOT_PASSWORD.CONFIRM_PASSWORD_LABEL}
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Nhập lại mật khẩu"
               leftIcon="lock-closed-outline"
@@ -440,7 +441,7 @@ export function ForgotPasswordForm() {
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           tabIndex={-1}
         >
-          {showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+          {showConfirmPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
 
@@ -451,7 +452,7 @@ export function ForgotPasswordForm() {
         iconLeft="refresh-outline"
         disabled={loading}
       >
-        {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+        {loading ? COMMON.PROCESSING : AUTH.FORGOT_PASSWORD.RESET_BUTTON}
       </Button>
 
       {renderBackLink('otp')}

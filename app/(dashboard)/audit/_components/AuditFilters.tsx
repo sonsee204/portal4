@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { Button } from '@/components/atoms/Button';
 import type { AuditCategory, AuditStatus } from '@/types';
+import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditFiltersProps {
   category: AuditCategory | undefined;
@@ -18,17 +19,17 @@ interface AuditFiltersProps {
 }
 
 const categoryChips = [
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Xác thực', value: 'AUTH' },
-  { label: 'Quản trị', value: 'ADMIN' },
-  { label: 'Bảo mật', value: 'SECURITY' },
-  { label: 'Hệ thống', value: 'SYSTEM' },
+  { label: COMMON.ALL, value: 'all' },
+  { label: AUDIT.CATEGORIES.AUTH, value: 'AUTH' },
+  { label: AUDIT.CATEGORIES.ADMIN, value: 'ADMIN' },
+  { label: AUDIT.CATEGORIES.SECURITY, value: 'SECURITY' },
+  { label: AUDIT.CATEGORIES.SYSTEM, value: 'SYSTEM' },
 ];
 
 const statusChips = [
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Thành công', value: 'SUCCESS' },
-  { label: 'Thất bại', value: 'FAILED' },
+  { label: COMMON.ALL, value: 'all' },
+  { label: AUDIT.STATUS.SUCCESS, value: 'SUCCESS' },
+  { label: AUDIT.STATUS.FAILED, value: 'FAILED' },
 ];
 
 export function AuditFilters({
@@ -90,7 +91,7 @@ export function AuditFilters({
           <div className="relative">
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder={AUDIT.FILTER.SEARCH_PLACEHOLDER}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearchKeyDown}
@@ -112,7 +113,7 @@ export function AuditFilters({
             onClick={onRefresh}
             disabled={loading}
           >
-            Làm mới
+            {COMMON.REFRESH}
           </Button>
         </div>
       </div>

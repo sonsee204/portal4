@@ -5,6 +5,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
 import type { AuditLog, AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
+import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditTableProps {
   logs: AuditLog[];
@@ -12,27 +13,7 @@ interface AuditTableProps {
   onViewDetail: (log: AuditLog) => void;
 }
 
-const ACTION_LABELS: Record<AuditAction, string> = {
-  LOGIN: 'Đăng nhập',
-  LOGIN_FAILED: 'Đăng nhập thất bại',
-  LOGOUT: 'Đăng xuất',
-  LOGOUT_ALL: 'Đăng xuất tất cả',
-  PASSWORD_CHANGE: 'Đổi mật khẩu',
-  PASSWORD_RESET: 'Đặt lại mật khẩu',
-  ACCOUNT_REGISTER: 'Đăng ký tài khoản',
-  TOKEN_REFRESH_FAILED: 'Làm mới token thất bại',
-  USER_CREATE: 'Tạo người dùng',
-  USER_SUSPEND: 'Khóa tài khoản',
-  USER_UNSUSPEND: 'Mở khóa tài khoản',
-  USER_ROLE_CHANGE: 'Thay đổi vai trò',
-  USER_DELETE: 'Xóa tài khoản',
-  VENUE_APPROVE: 'Duyệt sân',
-  VENUE_REJECT: 'Từ chối sân',
-  VENUE_SUSPEND: 'Tạm ngưng sân',
-  RATE_LIMIT_HIT: 'Vượt giới hạn',
-  CONFIG_CHANGE: 'Thay đổi cấu hình',
-  SYSTEM_ERROR: 'Lỗi hệ thống',
-};
+const ACTION_LABELS: Record<AuditAction, string> = AUDIT.ACTIONS;
 
 const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
   LOGIN: 'neutral',
@@ -56,12 +37,7 @@ const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
   SYSTEM_ERROR: 'danger',
 };
 
-const CATEGORY_LABELS: Record<AuditCategory, string> = {
-  AUTH: 'Xác thực',
-  ADMIN: 'Quản trị',
-  SECURITY: 'Bảo mật',
-  SYSTEM: 'Hệ thống',
-};
+const CATEGORY_LABELS: Record<AuditCategory, string> = AUDIT.CATEGORIES;
 
 function formatTimestamp(iso: string): string {
   const date = new Date(iso);
@@ -86,13 +62,13 @@ function getInitials(name?: string): string {
 }
 
 const columns = [
-  { key: 'admin', label: 'Tác nhân' },
-  { key: 'category', label: 'Phân loại' },
-  { key: 'action', label: 'Hành động' },
-  { key: 'target', label: 'Đối tượng' },
-  { key: 'ip', label: 'IP' },
-  { key: 'timestamp', label: 'Thời gian', sortable: true },
-  { key: 'status', label: 'Trạng thái' },
+  { key: 'admin', label: AUDIT.COLUMNS.ADMIN },
+  { key: 'category', label: AUDIT.COLUMNS.CATEGORY },
+  { key: 'action', label: AUDIT.COLUMNS.ACTION },
+  { key: 'target', label: AUDIT.COLUMNS.TARGET },
+  { key: 'ip', label: AUDIT.COLUMNS.IP },
+  { key: 'timestamp', label: AUDIT.COLUMNS.TIMESTAMP, sortable: true },
+  { key: 'status', label: AUDIT.COLUMNS.STATUS },
   { key: 'actions', label: '' },
 ];
 
@@ -114,8 +90,8 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
     <DataTable
       columns={columns}
       data={logs}
-      emptyTitle="Chưa có audit log"
-      emptyDescription="Các hoạt động hệ thống sẽ được ghi lại tại đây."
+      emptyTitle={AUDIT.EMPTY.TITLE}
+      emptyDescription={AUDIT.EMPTY.DESCRIPTION}
       renderRow={(log) => (
         <tr
           key={log._id}
@@ -128,7 +104,7 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
               </div>
               <div>
                 <span className="text-heading text-sm">
-                  {log.actorName || 'Hệ thống'}
+                  {log.actorName || AUDIT.ACTOR_SYSTEM}
                 </span>
                 {log.actorRole && (
                   <p className="text-faint text-xs">{log.actorRole}</p>
@@ -157,14 +133,16 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
           </td>
           <td className="px-4 py-3">
             <Badge variant={log.status === 'SUCCESS' ? 'success' : 'danger'}>
-              {log.status === 'SUCCESS' ? 'Thành công' : 'Thất bại'}
+              {log.status === 'SUCCESS'
+                ? AUDIT.STATUS.SUCCESS
+                : AUDIT.STATUS.FAILED}
             </Badge>
           </td>
           <td className="px-4 py-3">
             <IconButton
               icon="eye-outline"
               size="sm"
-              tooltip="Chi tiết"
+              tooltip={COMMON.VIEW_DETAIL}
               onClick={() => onViewDetail(log)}
             />
           </td>

@@ -6,7 +6,7 @@
 import type {
   MockUser, Transaction, Tournament, BracketMatch,
   SportModule, Booking, CalendarBooking, Report,
-  SupportTicket, ChatMessage, MatchmakingLog, Banner,
+  MatchmakingLog, Banner,
   Permission, ApiKey, Notification,
 } from '@/types/mock';
 
@@ -154,24 +154,6 @@ export const mockReports: Report[] = [
   { _id: 'r1', ticketId: 'RPT-4821', category: 'hate_speech', reporterCount: 5, createdAt: '12 phút trước', content: 'Bài viết chứa ngôn ngữ kích động và xúc phạm đối thủ sau trận đấu.', authorName: 'darkplayer99', status: 'pending' },
   { _id: 'r2', ticketId: 'RPT-4820', category: 'spam', reporterCount: 12, createdAt: '45 phút trước', content: 'Liên tục đăng link quảng cáo cá cược bóng đá trái phép.', authorName: 'betking2024', status: 'pending' },
   { _id: 'r3', ticketId: 'RPT-4819', category: 'scam', reporterCount: 3, createdAt: '2 giờ trước', content: 'Giả mạo admin hệ thống để yêu cầu chuyển tiền cọc sân.', authorName: 'hitri_support_fake', status: 'pending' },
-];
-
-/* ------------------------------------------------------------------ */
-/* Support Tickets (code11)                                            */
-/* ------------------------------------------------------------------ */
-
-export const mockTickets: SupportTicket[] = [
-  { _id: 'tk1', subject: 'Không thể đặt sân badminton', userName: 'Nguyễn Minh', status: 'new', lastMessage: 'Em đặt sân nhưng bị lỗi thanh toán...', updatedAt: '5 phút trước', unread: true },
-  { _id: 'tk2', subject: 'Hoàn tiền trận bị hủy', userName: 'Trần Hùng', status: 'open', lastMessage: 'Trận đấu bị hủy nhưng tiền chưa được hoàn...', updatedAt: '1 giờ trước', unread: true },
-  { _id: 'tk3', subject: 'Lỗi hiển thị lịch thi đấu', userName: 'Lê Thảo', status: 'replied', lastMessage: 'Cảm ơn bạn, vấn đề đã được xử lý.', updatedAt: '3 giờ trước' },
-  { _id: 'tk4', subject: 'Cập nhật thông tin cá nhân', userName: 'Phạm Đức', status: 'closed', lastMessage: 'Đã xác nhận thay đổi email thành công.', updatedAt: '1 ngày trước' },
-];
-
-export const mockChatMessages: ChatMessage[] = [
-  { _id: 'msg1', sender: 'system', content: 'Ticket được tạo bởi Nguyễn Minh', time: '10:00', date: 'Hôm nay' },
-  { _id: 'msg2', sender: 'user', content: 'Xin chào, em đặt sân cầu lông HITRI Center A vào chiều nay nhưng khi thanh toán qua ví thì bị lỗi "Transaction failed". Mong admin hỗ trợ ạ.', time: '10:02' },
-  { _id: 'msg3', sender: 'admin', content: 'Chào bạn, mình đã kiểm tra và thấy giao dịch bị reject do ví không đủ số dư. Bạn vui lòng nạp thêm và thử lại nhé.', time: '10:15' },
-  { _id: 'msg4', sender: 'user', content: 'Em vừa nạp thêm 500k rồi ạ, nhờ admin kiểm tra lại giúp em.', time: '10:32' },
 ];
 
 /* ------------------------------------------------------------------ */

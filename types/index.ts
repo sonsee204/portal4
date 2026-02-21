@@ -46,3 +46,13 @@ export type {
   UpdateReferralCodeInput,
 } from './referral';
 export { ReferralEventEnum } from './referral';
+
+// Contact Inquiries
+export type {
+  ContactInquiry,
+  ContactInquiryList,
+  ContactInquiryStats,
+  ContactInquiryFilterInput,
+  UpdateInquiryStatusInput,
+} from './contact';
+export { ContactSubjectEnum, InquiryStatusEnum } from './contact';

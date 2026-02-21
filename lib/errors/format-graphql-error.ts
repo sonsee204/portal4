@@ -1,19 +1,17 @@
 import type { ErrorLike } from '@apollo/client';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
+import { ERRORS } from '@/lib/strings';
 
-/**
- * Known GraphQL error codes and their user-friendly Vietnamese messages
- */
 const ERROR_CODE_MAP: Record<string, string> = {
-  UNAUTHENTICATED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-  FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
-  BAD_USER_INPUT: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
-  INTERNAL_SERVER_ERROR: 'Lỗi hệ thống. Vui lòng thử lại sau.',
-  NOT_FOUND: 'Không tìm thấy dữ liệu yêu cầu.',
-  CONFLICT: 'Dữ liệu bị trùng. Vui lòng kiểm tra lại.',
+  UNAUTHENTICATED: ERRORS.GQL_UNAUTHENTICATED,
+  FORBIDDEN: ERRORS.GQL_FORBIDDEN,
+  BAD_USER_INPUT: ERRORS.GQL_BAD_INPUT,
+  INTERNAL_SERVER_ERROR: ERRORS.GQL_INTERNAL,
+  NOT_FOUND: ERRORS.GQL_NOT_FOUND,
+  CONFLICT: ERRORS.GQL_CONFLICT,
 };
 
-const FALLBACK_MESSAGE = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+const FALLBACK_MESSAGE = ERRORS.GENERIC;
 
 /**
  * Extract the first user-friendly error message from an Apollo error.

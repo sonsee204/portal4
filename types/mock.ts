@@ -140,33 +140,6 @@ export interface Report {
 }
 
 /* ------------------------------------------------------------------ */
-/* Support Tickets                                                     */
-/* ------------------------------------------------------------------ */
-
-export type TicketStatus = 'new' | 'open' | 'replied' | 'closed';
-export type MessageSender = 'user' | 'admin' | 'system';
-
-export interface SupportTicket {
-  _id: string;
-  subject: string;
-  userName: string;
-  userAvatar?: string;
-  status: TicketStatus;
-  lastMessage: string;
-  updatedAt: string;
-  unread?: boolean;
-}
-
-export interface ChatMessage {
-  _id: string;
-  sender: MessageSender;
-  content: string;
-  time: string;
-  date?: string;
-  image?: string;
-}
-
-/* ------------------------------------------------------------------ */
 /* CMS / Ops                                                           */
 /* ------------------------------------------------------------------ */
 

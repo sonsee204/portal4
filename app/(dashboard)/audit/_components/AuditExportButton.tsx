@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { Button } from '@/components/atoms/Button';
+import { AUDIT } from '@/lib/strings';
 import type { AuditLog } from '@/types';
 
 interface AuditExportButtonProps {
@@ -21,21 +22,21 @@ export function AuditExportButton({ logs, disabled }: AuditExportButtonProps) {
     if (logs.length === 0) return;
 
     const headers = [
-      'ID',
-      'Tác nhân',
-      'Vai trò',
-      'Hành động',
-      'Phân loại',
-      'Đối tượng',
-      'Trạng thái',
-      'IP',
-      'Thời gian',
-      'Lỗi',
+      AUDIT.EXPORT.COLUMNS.ID,
+      AUDIT.EXPORT.COLUMNS.ACTOR,
+      AUDIT.EXPORT.COLUMNS.ROLE,
+      AUDIT.EXPORT.COLUMNS.ACTION,
+      AUDIT.EXPORT.COLUMNS.CATEGORY,
+      AUDIT.EXPORT.COLUMNS.TARGET,
+      AUDIT.EXPORT.COLUMNS.STATUS,
+      AUDIT.EXPORT.COLUMNS.IP,
+      AUDIT.EXPORT.COLUMNS.TIMESTAMP,
+      AUDIT.EXPORT.COLUMNS.ERROR,
     ];
 
     const rows = logs.map((log) => [
       log._id,
-      log.actorName || 'Hệ thống',
+      log.actorName || AUDIT.ACTOR_SYSTEM,
       log.actorRole || '',
       log.action,
       log.category,
