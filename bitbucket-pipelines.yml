@@ -1,0 +1,28 @@
+image: node:24
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build and Deploy Portal to Bizzfly
+          caches:
+            - node
+          script:
+            # 1. Khởi tạo pnpm
+            - npm install -g pnpm
+
+            # 2. Cài đặt và Build
+            - pnpm install
+            - pnpm run build
+
+            # 3. Nén các file cần thiết
+            - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.ts
+
+            # 4. Upload lên server
+            - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_PORTAL/
+
+            # 5. SSH giải nén, XÓA FILE NÉN, và vận hành
+            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_PORTAL && rm -rf .next && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
+
+            # 6. Dọn dẹp file nén ngay trên môi trường build của Bitbucket
+            - rm build.tar.gz
