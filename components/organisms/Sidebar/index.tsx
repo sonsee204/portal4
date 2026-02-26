@@ -115,7 +115,7 @@ export function Sidebar({ nav, activePath = '/', className }: SidebarProps) {
         {/* Sidebar footer */}
         <div className="space-y-4 p-4">
           {/* Server status */}
-          <div className="border-surface-border relative overflow-hidden rounded-xl border bg-gradient-to-br from-black/[0.03] to-transparent p-4 dark:from-white/5">
+          <div className="border-surface-border from-overlay-faint relative overflow-hidden rounded-xl border bg-gradient-to-br to-transparent p-4">
             <div className="bg-primary/20 absolute -top-4 -right-4 h-16 w-16 rounded-full blur-2xl" />
             <div className="mb-2 flex items-center justify-between">
               <span className="text-muted text-xs">Server Status</span>

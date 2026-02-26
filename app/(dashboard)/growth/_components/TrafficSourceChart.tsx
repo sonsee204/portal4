@@ -42,10 +42,7 @@ export function TrafficSourceChart({
   }
 
   // Convert trend data to percentages for chart rendering
-  const maxValue = Math.max(
-    ...trend.flatMap((t) => [t.organic, t.partner]),
-    1,
-  );
+  const maxValue = Math.max(...trend.flatMap((t) => [t.organic, t.partner]), 1);
   const data: ChartDataPoint[] = trend.map((t) => ({
     organic: (t.organic / maxValue) * 100,
     partner: (t.partner / maxValue) * 100,
@@ -68,7 +65,7 @@ export function TrafficSourceChart({
         </h3>
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-500" />
+            <span className="bg-toggle-track h-3 w-3 rounded-full" />
             <span className="text-faint">Hữu cơ</span>
           </div>
           <div className="flex items-center gap-2">
@@ -85,14 +82,14 @@ export function TrafficSourceChart({
           {data.map((d, i) => (
             <div
               key={`organic-${i}`}
-              className="w-[3%] rounded-t bg-slate-300 dark:bg-slate-500"
+              className="bg-toggle-track w-[3%] rounded-t"
               style={{ height: `${d.organic}%` }}
             />
           ))}
         </div>
 
         {/* Partner bars */}
-        <div className="absolute inset-0 flex translate-x-1 items-end justify-between px-1 opacity-80 mix-blend-multiply dark:mix-blend-screen">
+        <div className="blend-adaptive absolute inset-0 flex translate-x-1 items-end justify-between px-1 opacity-80">
           {data.map((d, i) => (
             <div
               key={`partner-${i}`}

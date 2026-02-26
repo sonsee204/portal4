@@ -148,7 +148,7 @@ export function GrowthStatsCards({ stats, loading }: GrowthStatsCardsProps) {
 
             {card.progress && (
               <div className="flex w-full items-center gap-2">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
+                <div className="bg-overlay-subtle h-1.5 flex-1 overflow-hidden rounded-full">
                   <div className="flex h-full">
                     <div
                       className="rounded-full bg-purple-500"

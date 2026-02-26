@@ -221,7 +221,7 @@ export function MatchCard({
                 className={cn(
                   'flex items-center gap-3 rounded p-2',
                   isTBD
-                    ? 'border-surface-border border border-dashed bg-black/[0.03] opacity-50 dark:bg-white/5'
+                    ? 'border-surface-border bg-overlay-faint border border-dashed opacity-50'
                     : 'bg-white/5'
                 )}
               >

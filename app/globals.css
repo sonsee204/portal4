@@ -29,6 +29,23 @@
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #7c3aed;
+
+  /* Status text (adapt per theme) */
+  --status-success-text: #059669;
+  --status-warning-text: #d97706;
+  --status-danger-text: #dc2626;
+  --status-info-text: #2563eb;
+  --status-purple-text: #7c3aed;
+
+  /* Overlays */
+  --overlay-subtle: rgba(0, 0, 0, 0.05);
+  --overlay-faint: rgba(0, 0, 0, 0.03);
+
+  /* Toggle */
+  --toggle-track: #cbd5e1;
+
+  /* Chart grid */
+  --chart-grid-line: #e2e8f0;
 }
 
 .dark {
@@ -51,6 +68,19 @@
   --scrollbar-track: #0f0a19;
   --scrollbar-thumb: #251b33;
   --scrollbar-thumb-hover: #7c3aed;
+
+  --status-success-text: #34d399;
+  --status-warning-text: #fbbf24;
+  --status-danger-text: #f87171;
+  --status-info-text: #60a5fa;
+  --status-purple-text: #a78bfa;
+
+  --overlay-subtle: rgba(255, 255, 255, 0.05);
+  --overlay-faint: rgba(255, 255, 255, 0.03);
+
+  --toggle-track: #334155;
+
+  --chart-grid-line: #334155;
 }
 
 /* ------------------------------------------------------------------ */
@@ -83,6 +113,20 @@
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-info: #3b82f6;
+
+  /* Status text (theme-aware) */
+  --color-status-success-text: var(--status-success-text);
+  --color-status-warning-text: var(--status-warning-text);
+  --color-status-danger-text: var(--status-danger-text);
+  --color-status-info-text: var(--status-info-text);
+  --color-status-purple-text: var(--status-purple-text);
+
+  /* Overlays (theme-aware) */
+  --color-overlay-subtle: var(--overlay-subtle);
+  --color-overlay-faint: var(--overlay-faint);
+
+  /* Toggle (theme-aware) */
+  --color-toggle-track: var(--toggle-track);
 }
 
 /* ------------------------------------------------------------------ */
@@ -180,23 +224,22 @@ body {
     scrollbar-width: none;
   }
 
+  .blend-adaptive {
+    mix-blend-mode: multiply;
+  }
+
+  :is(.dark .blend-adaptive) {
+    mix-blend-mode: screen;
+  }
+
   /* Chart background grid effect */
   .chart-grid {
     background-image: linear-gradient(
         to right,
-        #e2e8f0 1px,
+        var(--chart-grid-line) 1px,
         transparent 1px
       ),
-      linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+      linear-gradient(to bottom, var(--chart-grid-line) 1px, transparent 1px);
     background-size: 4% 20%;
-  }
-
-  :is(.dark .chart-grid) {
-    background-image: linear-gradient(
-        to right,
-        #334155 1px,
-        transparent 1px
-      ),
-      linear-gradient(to bottom, #334155 1px, transparent 1px);
   }
 }

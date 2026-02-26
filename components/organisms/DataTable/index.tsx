@@ -52,7 +52,7 @@ export function DataTable<T>({
     <div className={cn('overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-black/[0.03] dark:bg-white/5">
+          <thead className="bg-overlay-faint">
             <tr>
               {columns.map((col) => (
                 <th

@@ -55,7 +55,7 @@ export function StatCard({
       <div className="relative mb-4 flex items-start justify-between">
         <div
           className={cn(
-            'border-surface-border flex items-center justify-center rounded-xl border bg-black/[0.03] p-3 dark:bg-white/5',
+            'border-surface-border bg-overlay-faint flex items-center justify-center rounded-xl border p-3',
             iconColor
           )}
         >

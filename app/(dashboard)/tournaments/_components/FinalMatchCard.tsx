@@ -81,7 +81,7 @@ function FinalPlayerSlot({ name, avatar }: { name: string; avatar?: string }) {
           className="border-primary/30 h-16 w-16 rounded-full border-2 object-cover"
         />
       ) : (
-        <div className="border-surface-border flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed bg-black/[0.03] dark:bg-white/5">
+        <div className="border-surface-border bg-overlay-faint flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed">
           <IonIcon name="person-outline" size="lg" className="text-faint" />
         </div>
       )}

@@ -53,7 +53,7 @@ function formatRevenue(n: number): string {
 }
 
 export function mapToPartnerRows(
-  items: PartnerLeaderboardItem[],
+  items: PartnerLeaderboardItem[]
 ): PartnerRow[] {
   return items.map((item, index) => ({
     id: item.partnerId,
@@ -106,7 +106,7 @@ function ActivationBar({
 
   return (
     <div className="flex items-center gap-3">
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
+      <div className="bg-overlay-subtle h-2 flex-1 overflow-hidden rounded-full">
         <div
           className={`h-full rounded-full ${barColor}`}
           style={{ width: `${rate}%` }}
@@ -149,9 +149,9 @@ export function PartnerLeaderboard({
   const renderRow = (row: PartnerRow, index: number) => {
     const isGold = row.isTopPerformer;
     const rowBg = row.isSystem
-      ? 'bg-black/[0.02] dark:bg-white/[0.02]'
+      ? 'bg-overlay-faint'
       : isGold
-        ? 'bg-amber-50/40 dark:bg-amber-900/10 border-l-4 border-l-amber-400'
+        ? 'bg-amber-500/10 border-l-4 border-l-amber-400'
         : '';
 
     return (
@@ -163,7 +163,7 @@ export function PartnerLeaderboard({
         <td className="px-4 py-4">
           <div className="flex items-center gap-3">
             {row.isSystem ? (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
+              <div className="bg-overlay-subtle flex h-10 w-10 items-center justify-center rounded-full">
                 <IonIcon name="globe-outline" className="text-muted" />
               </div>
             ) : (
@@ -239,9 +239,7 @@ export function PartnerLeaderboard({
           ) : (
             <span
               className={
-                row.trend === 'up'
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-body'
+                row.trend === 'up' ? 'text-status-success-text' : 'text-body'
               }
             >
               {row.revenue}

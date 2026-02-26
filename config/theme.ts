@@ -12,19 +12,19 @@
 
 export const badgeVariants = {
   success:
-    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+    'bg-emerald-500/10 text-status-success-text border border-emerald-500/20',
   warning:
-    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+    'bg-amber-500/10 text-status-warning-text border border-amber-500/20',
   danger:
-    'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
+    'bg-red-500/10 text-status-danger-text border border-red-500/20',
   info:
-    'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+    'bg-blue-500/10 text-status-info-text border border-blue-500/20',
   neutral:
     'bg-slate-500/10 text-muted border border-slate-500/20',
   live:
-    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+    'bg-emerald-500/10 text-status-success-text border border-emerald-500/20',
   purple:
-    'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20',
+    'bg-violet-500/10 text-status-purple-text border border-violet-500/20',
 } as const;
 
 export type BadgeVariant = keyof typeof badgeVariants;
@@ -39,7 +39,7 @@ export const buttonVariants = {
   ghost:
     'bg-transparent text-muted hover:bg-surface-hover hover:text-heading',
   danger:
-    'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20',
+    'bg-red-500/10 text-status-danger-text border border-red-500/20 hover:bg-red-500/20',
 } as const;
 
 export type ButtonVariant = keyof typeof buttonVariants;

@@ -29,7 +29,7 @@ export function ProgressBar({
           <span className="text-muted">{`${Math.round(pct)}%`}</span>
         </div>
       )}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
+      <div className="bg-overlay-subtle h-2 w-full overflow-hidden rounded-full">
         <div
           className={cn(
             'h-full rounded-full bg-gradient-to-r transition-all duration-500',
