@@ -5,6 +5,7 @@ import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
+import { ERRORS, COMMON } from '@/lib/strings';
 
 interface QueryStateProps {
   /** Whether the query is currently loading */
@@ -61,7 +62,7 @@ export function QueryState({
             className="text-red-400"
           />
         </div>
-        <p className="mt-3 text-sm font-medium text-red-400">Đã xảy ra lỗi</p>
+        <p className="mt-3 text-sm font-medium text-red-400">{ERRORS.ERROR_TITLE}</p>
         <p className="text-muted mt-1 max-w-sm text-center text-xs">
           {formatGraphQLError(error)}
         </p>
@@ -73,7 +74,7 @@ export function QueryState({
             className="mt-4"
             onClick={onRetry}
           >
-            Thử lại
+            {COMMON.RETRY}
           </Button>
         )}
       </div>
@@ -96,7 +97,7 @@ export function QueryState({
             className="mt-3"
             onClick={onRetry}
           >
-            Tải lại
+            {COMMON.RETRY}
           </Button>
         )}
       </div>

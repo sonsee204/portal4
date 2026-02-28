@@ -4,3 +4,4 @@ export { SUPPORT } from './support';
 export { GROWTH } from './growth';
 export { USERS } from './users';
 export { AUDIT } from './audit';
+export { TOURNAMENT } from './tournament';

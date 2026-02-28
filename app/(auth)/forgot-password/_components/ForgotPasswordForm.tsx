@@ -5,19 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import {
-  requestPasswordResetAction,
-  resetPasswordAction,
-} from '@/lib/auth/actions';
-import {
-  setupRecaptcha,
-  sendOtp,
-  verifyOtp,
-  cleanup as cleanupRecaptcha,
-} from '@/lib/firebase/phone-auth';
+import { Stepper } from '@/components/molecules/Stepper';
+import { OtpInput } from './OtpInput';
+import { PasswordStrengthMeter } from '@/app/(auth)/_components/PasswordStrengthMeter';
 import {
   forgotPasswordPhoneSchema,
   otpSchema,
@@ -27,53 +21,84 @@ import {
   type ResetPasswordFormData,
 } from '@/lib/validation/schemas';
 import { OTP_LENGTH } from '@/lib/validation/constants';
-import { AUTH, COMMON, ERRORS } from '@/lib/strings';
+import {
+  requestPasswordResetAction,
+  resetPasswordAction,
+} from '@/lib/auth/actions';
+import {
+  setupRecaptcha,
+  sendOtp,
+  verifyOtp,
+  cleanup,
+} from '@/lib/firebase/phone-auth';
 import type { ConfirmationResult } from 'firebase/auth';
+import { AUTH, COMMON } from '@/lib/strings';
 
-// ==================== Constants ====================
-const RESEND_DELAY_S = 60;
-const RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
-
-// ==================== Types ====================
 type Step = 'phone' | 'otp' | 'password';
 
-// ==================== Helpers ====================
+const STEP_INDEX: Record<Step, number> = { phone: 0, otp: 1, password: 2 };
+const RESEND_DELAY_S = 60;
+const RECAPTCHA_CONTAINER_ID = 'recaptcha-forgot';
 
-/** Normalise Vietnamese phone to E.164 (+84…) */
+const STEPPER_STEPS = [
+  { label: AUTH.FORGOT_PASSWORD.STEP_PHONE },
+  { label: AUTH.FORGOT_PASSWORD.STEP_OTP },
+  { label: AUTH.FORGOT_PASSWORD.STEP_PASSWORD },
+];
+
 function toE164(phone: string): string {
-  const cleaned = phone.replace(/\s/g, '').replace(/^0/, '');
-  return cleaned.startsWith('+') ? cleaned : `+84${cleaned}`;
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('0')) {
+    return `+84${cleaned.slice(1)}`;
+  }
+  if (cleaned.startsWith('84')) {
+    return `+${cleaned}`;
+  }
+  return `+${cleaned}`;
 }
 
-/** Format phone for display: 098 765 4321 */
 function formatPhone(phone: string): string {
   const local = phone.replace(/^\+84/, '0');
   return local.replace(/(\d{3,4})(\d{3})(\d{3,4})/, '$1 $2 $3');
 }
 
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 60 : -60,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -60 : 60,
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeIn' },
+  }),
+};
+
 // ==================== Component ====================
+
 export function ForgotPasswordForm() {
   const router = useRouter();
 
-  // Step state
   const [step, setStep] = useState<Step>('phone');
-  const [phone, setPhone] = useState(''); // Keep for display in later steps
+  const [direction, setDirection] = useState(1);
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Async state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Firebase refs
   const confirmationRef = useRef<ConfirmationResult | null>(null);
   const idTokenRef = useRef<string | null>(null);
 
-  // Resend timer
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Form instances for each step
   const phoneForm = useForm<ForgotPasswordPhoneData>({
     resolver: zodResolver(forgotPasswordPhoneSchema),
     defaultValues: { phone: '' },
@@ -89,96 +114,102 @@ export function ForgotPasswordForm() {
     defaultValues: { newPassword: '', confirmPassword: '' },
   });
 
-  // ==================== Effects ====================
+  const watchPassword = passwordForm.watch('newPassword');
 
-  // Cleanup reCAPTCHA on unmount
   useEffect(() => {
+    setupRecaptcha(RECAPTCHA_CONTAINER_ID);
     return () => {
-      cleanupRecaptcha();
+      cleanup();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // Countdown tick
   useEffect(() => {
-    if (resendTimer <= 0) {
+    if (resendTimer <= 0) return;
+
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      return;
-    }
-    timerRef.current = setInterval(() => setResendTimer((t) => t - 1), 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [resendTimer > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const goToStep = useCallback((target: Step) => {
+    setDirection(STEP_INDEX[target] > STEP_INDEX[step] ? 1 : -1);
+    setError(null);
+    setStep(target);
+  }, [step]);
+
   // ==================== Handlers ====================
 
-  /** Step 1: validate user + send OTP */
   const handlePhoneSubmit = useCallback(
     async (data: ForgotPasswordPhoneData) => {
       setError(null);
       setLoading(true);
       try {
-        const e164 = toE164(data.phone.trim());
-        setPhone(data.phone); // Store for display in later steps
+        setPhone(data.phone);
 
-        // 1. Backend: validate user exists
-        const result = await requestPasswordResetAction(e164);
-        if (!result.success) {
-          setError(result.error ?? AUTH.FORGOT_PASSWORD.ERROR_VERIFY_ACCOUNT);
+        const resetResult = await requestPasswordResetAction(data.phone);
+        if (!resetResult.success) {
+          setError(resetResult.error || AUTH.FORGOT_PASSWORD.ERROR_VERIFY_ACCOUNT);
           return;
         }
 
-        // 2. Firebase: send OTP
-        setupRecaptcha(RECAPTCHA_CONTAINER_ID);
+        const e164 = toE164(data.phone);
         const confirmation = await sendOtp(e164);
         confirmationRef.current = confirmation;
 
-        // 3. Start resend timer + move to step 2
         setResendTimer(RESEND_DELAY_S);
-        setStep('otp');
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : AUTH.FORGOT_PASSWORD.ERROR_SEND_OTP;
-        setError(msg);
+        goToStep('otp');
+      } catch {
+        setError(AUTH.FORGOT_PASSWORD.ERROR_SEND_OTP);
       } finally {
         setLoading(false);
       }
     },
-    []
+    [goToStep],
   );
 
-  /** Step 2: verify OTP */
-  const handleOtpSubmit = useCallback(async (data: OtpFormData) => {
-    setError(null);
+  const handleOtpSubmit = useCallback(
+    async (data: OtpFormData) => {
+      setError(null);
+      setLoading(true);
+      try {
+        if (!confirmationRef.current) {
+          setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
+          goToStep('phone');
+          return;
+        }
 
-    if (!confirmationRef.current) {
-      setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
-      setStep('phone');
-      return;
-    }
+        const idToken = await verifyOtp(confirmationRef.current, data.otp);
+        idTokenRef.current = idToken;
+        goToStep('password');
+      } catch {
+        setError(AUTH.FORGOT_PASSWORD.ERROR_INVALID_OTP);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [goToStep],
+  );
 
-    setLoading(true);
-    try {
-      const token = await verifyOtp(confirmationRef.current, data.otp);
-      idTokenRef.current = token;
-      setStep('password');
-    } catch {
-      setError(AUTH.FORGOT_PASSWORD.ERROR_INVALID_OTP);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /** Resend OTP */
   const handleResend = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      const e164 = toE164(phone.trim());
-      setupRecaptcha(RECAPTCHA_CONTAINER_ID);
+      const e164 = toE164(phone);
       const confirmation = await sendOtp(e164);
       confirmationRef.current = confirmation;
       setResendTimer(RESEND_DELAY_S);
@@ -190,14 +221,13 @@ export function ForgotPasswordForm() {
     }
   }, [phone, otpForm]);
 
-  /** Step 3: reset password */
   const handlePasswordSubmit = useCallback(
     async (data: ResetPasswordFormData) => {
       setError(null);
 
       if (!idTokenRef.current) {
         setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
-        setStep('phone');
+        goToStep('phone');
         return;
       }
 
@@ -205,31 +235,35 @@ export function ForgotPasswordForm() {
       try {
         const result = await resetPasswordAction(
           idTokenRef.current,
-          data.newPassword
+          data.newPassword,
         );
+
         if (!result.success) {
-          setError(result.error ?? AUTH.FORGOT_PASSWORD.ERROR_RESET_FAILED);
+          setError(result.error || AUTH.FORGOT_PASSWORD.ERROR_RESET_FAILED);
           return;
         }
 
-        // Success — redirect to login with success message
         router.push('/login?reset=success');
       } catch {
-        setError(ERRORS.SERVER_NETWORK);
+        setError(AUTH.FORGOT_PASSWORD.ERROR_RESET_FAILED);
       } finally {
         setLoading(false);
       }
     },
-    [router]
+    [router, goToStep],
   );
 
-  // ==================== Render helpers ====================
+  // ==================== Render Helpers ====================
 
   const renderError = () =>
     error ? (
-      <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+      >
         {error}
-      </div>
+      </motion.div>
     ) : null;
 
   const renderBackLink = (target: Step | 'login') => (
@@ -246,10 +280,7 @@ export function ForgotPasswordForm() {
         <button
           type="button"
           disabled={loading}
-          onClick={() => {
-            setError(null);
-            setStep(target);
-          }}
+          onClick={() => goToStep(target)}
           className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-body disabled:opacity-50"
         >
           <IonIcon name="arrow-back-outline" size="xs" />
@@ -259,7 +290,7 @@ export function ForgotPasswordForm() {
     </div>
   );
 
-  // ==================== Step renders ====================
+  // ==================== Step Renders ====================
 
   const renderPhoneStep = () => (
     <form
@@ -321,22 +352,12 @@ export function ForgotPasswordForm() {
         name="otp"
         control={otpForm.control}
         render={({ field }) => (
-          <Input
-            {...field}
-            label={AUTH.FORGOT_PASSWORD.OTP_LABEL}
-            type="text"
-            inputMode="numeric"
-            placeholder="000000"
-            leftIcon="lock-closed-outline"
-            error={otpForm.formState.errors.otp?.message}
+          <OtpInput
+            value={field.value}
+            onChange={field.onChange}
             disabled={loading}
-            maxLength={OTP_LENGTH}
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, '').slice(0, OTP_LENGTH);
-              field.onChange(v);
-            }}
-            autoFocus
-            autoComplete="one-time-code"
+            error={otpForm.formState.errors.otp?.message}
+            length={OTP_LENGTH}
           />
         )}
       />
@@ -348,7 +369,9 @@ export function ForgotPasswordForm() {
         iconLeft="checkmark-circle-outline"
         disabled={loading}
       >
-        {loading ? AUTH.FORGOT_PASSWORD.OTP_VERIFYING : AUTH.FORGOT_PASSWORD.OTP_VERIFY}
+        {loading
+          ? AUTH.FORGOT_PASSWORD.OTP_VERIFYING
+          : AUTH.FORGOT_PASSWORD.OTP_VERIFY}
       </Button>
 
       <div className="text-center">
@@ -380,7 +403,9 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <div className="space-y-1 text-center">
-        <p className="text-sm text-muted">{AUTH.FORGOT_PASSWORD.NEW_PASSWORD_DESCRIPTION}</p>
+        <p className="text-sm text-muted">
+          {AUTH.FORGOT_PASSWORD.NEW_PASSWORD_DESCRIPTION}
+        </p>
         <p className="text-primary text-sm font-semibold">
           {formatPhone(phone)}
         </p>
@@ -398,6 +423,7 @@ export function ForgotPasswordForm() {
               placeholder="Tối thiểu 6 ký tự"
               leftIcon="lock-closed-outline"
               rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              onRightIconClick={() => setShowPassword((v) => !v)}
               error={passwordForm.formState.errors.newPassword?.message}
               disabled={loading}
               autoComplete="new-password"
@@ -411,9 +437,13 @@ export function ForgotPasswordForm() {
           onClick={() => setShowPassword(!showPassword)}
           tabIndex={-1}
         >
-          {showPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
+          {showPassword
+            ? AUTH.LOGIN.HIDE_PASSWORD
+            : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
+
+      <PasswordStrengthMeter password={watchPassword || ''} />
 
       <div>
         <Controller
@@ -429,7 +459,10 @@ export function ForgotPasswordForm() {
               rightIcon={
                 showConfirmPassword ? 'eye-off-outline' : 'eye-outline'
               }
-              error={passwordForm.formState.errors.confirmPassword?.message}
+              onRightIconClick={() => setShowConfirmPassword((v) => !v)}
+              error={
+                passwordForm.formState.errors.confirmPassword?.message
+              }
               disabled={loading}
               autoComplete="new-password"
             />
@@ -441,7 +474,9 @@ export function ForgotPasswordForm() {
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           tabIndex={-1}
         >
-          {showConfirmPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
+          {showConfirmPassword
+            ? AUTH.LOGIN.HIDE_PASSWORD
+            : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
 
@@ -459,15 +494,33 @@ export function ForgotPasswordForm() {
     </form>
   );
 
-  // ==================== Main render ====================
-  return (
-    <>
-      {step === 'phone' && renderPhoneStep()}
-      {step === 'otp' && renderOtpStep()}
-      {step === 'password' && renderPasswordStep()}
+  // ==================== Main Render ====================
 
-      {/* Invisible reCAPTCHA container — required by Firebase Phone Auth */}
+  return (
+    <div className="space-y-6">
       <div id={RECAPTCHA_CONTAINER_ID} />
-    </>
+
+      <Stepper
+        steps={STEPPER_STEPS}
+        currentStep={STEP_INDEX[step]}
+        className="justify-center"
+      />
+
+      {/* Step content with slide transitions */}
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={step}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+        >
+          {step === 'phone' && renderPhoneStep()}
+          {step === 'otp' && renderOtpStep()}
+          {step === 'password' && renderPasswordStep()}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }

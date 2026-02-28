@@ -10,6 +10,7 @@ import { Observable } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
+import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
 import { showError } from '@/lib/toast';
 import { ERRORS } from '@/lib/strings';
 
@@ -123,12 +124,11 @@ const errorLink = new ErrorLink(({ error, operation, forward }) => {
       });
     }
 
-    // Non-auth GraphQL errors: show toast for server errors
-    const serverErrors = error.errors.filter(
-      (err) => err.extensions?.code === 'INTERNAL_SERVER_ERROR',
+    const nonAuthErrors = error.errors.filter(
+      (err) => err.extensions?.code !== 'UNAUTHENTICATED',
     );
-    if (serverErrors.length > 0) {
-      showError(ERRORS.SYSTEM);
+    if (nonAuthErrors.length > 0) {
+      showError(formatGraphQLError(error));
     }
   } else {
     // Network or other error
@@ -162,6 +162,21 @@ export function createApolloClient() {
           keyFields: ['_id'],
         },
         User: {
+          keyFields: ['_id'],
+        },
+        Tournament: {
+          keyFields: ['_id'],
+        },
+        TournamentCategory: {
+          keyFields: ['_id'],
+        },
+        TournamentRegistration: {
+          keyFields: ['_id'],
+        },
+        TournamentMatch: {
+          keyFields: ['_id'],
+        },
+        MatchScorecard: {
           keyFields: ['_id'],
         },
       },

@@ -4,22 +4,34 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
 import { Toggle } from '@/components/atoms/Toggle';
 import { useAuthStore } from '@/stores/auth';
-import { loginAction } from '@/lib/auth/actions';
 import { loginSchema, type LoginFormData } from '@/lib/validation/schemas';
+import { loginAction } from '@/lib/auth/actions';
 import { AUTH, ERRORS } from '@/lib/strings';
 
 const REMEMBERED_LOGIN_KEY = 'portal_remembered_login';
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+};
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  // Always start false so server and client match (avoid hydration mismatch).
-  // Restore from localStorage in useEffect after mount.
   const [rememberMe, setRememberMe] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
@@ -38,7 +50,6 @@ export function LoginForm() {
     },
   });
 
-  // Restore remembered email/phone and "remember me" from localStorage after mount (client-only).
   useEffect(() => {
     const saved = localStorage.getItem(REMEMBERED_LOGIN_KEY);
     if (saved) {
@@ -48,9 +59,8 @@ export function LoginForm() {
     }
   }, [setValue]);
 
-  // Show error / success from URL params
   const urlError = searchParams.get('error');
-  const urlReset = searchParams.get('reset'); // 'success' after password reset
+  const urlReset = searchParams.get('reset');
   const redirectTo = searchParams.get('redirect');
 
   const onSubmit = async (data: LoginFormData) => {
@@ -68,7 +78,6 @@ export function LoginForm() {
         localStorage.removeItem(REMEMBERED_LOGIN_KEY);
       }
 
-      // Populate auth store immediately so Sidebar shows all nav items
       if (result.user) {
         setUser(result.user);
         setInitialized(true);
@@ -83,43 +92,61 @@ export function LoginForm() {
 
   const errorMessage =
     backendError ||
-    (urlError === 'unauthorized'
-      ? ERRORS.UNAUTHORIZED
-      : null);
+    (urlError === 'unauthorized' ? ERRORS.UNAUTHORIZED : null);
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+    <motion.form
+      className="space-y-5"
+      onSubmit={handleSubmit(onSubmit)}
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Success message (e.g. after password reset) */}
       {urlReset === 'success' && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+        <motion.div
+          variants={staggerItem}
+          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400"
+        >
           {AUTH.LOGIN.PASSWORD_RESET_SUCCESS}
-        </div>
+        </motion.div>
       )}
 
       {/* Error message */}
-      {errorMessage && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {errorMessage}
-        </div>
-      )}
-
-      <Controller
-        name="emailOrPhone"
-        control={control}
-        render={({ field }) => (
-          <Input
-            {...field}
-            label={AUTH.LOGIN.LABEL_EMAIL_OR_PHONE}
-            type="text"
-            placeholder="admin@naleesports.com"
-            leftIcon="mail-outline"
-            error={errors.emailOrPhone?.message}
-            disabled={isPending}
-            autoComplete="username"
-          />
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            {errorMessage}
+          </motion.div>
         )}
-      />
-      <div>
+      </AnimatePresence>
+
+      <motion.div variants={staggerItem}>
+        <Controller
+          name="emailOrPhone"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label={AUTH.LOGIN.LABEL_EMAIL_OR_PHONE}
+              type="text"
+              placeholder="admin@naleesports.com"
+              leftIcon="mail-outline"
+              error={errors.emailOrPhone?.message}
+              disabled={isPending}
+              autoComplete="username"
+            />
+          )}
+        />
+      </motion.div>
+
+      <motion.div variants={staggerItem}>
         <Controller
           name="password"
           control={control}
@@ -146,8 +173,9 @@ export function LoginForm() {
         >
           {showPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
-      </div>
-      <div className="flex items-center justify-between">
+      </motion.div>
+
+      <motion.div variants={staggerItem} className="flex items-center justify-between">
         <label className="text-muted flex items-center gap-2 text-sm">
           <Toggle checked={rememberMe} onChange={setRememberMe} />
           {AUTH.LOGIN.REMEMBER_ME}
@@ -159,16 +187,19 @@ export function LoginForm() {
         >
           {AUTH.LOGIN.FORGOT_PASSWORD_LINK}
         </button>
-      </div>
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        iconLeft="log-in-outline"
-        disabled={isPending}
-      >
-        {isPending ? AUTH.LOGIN.LOADING : AUTH.LOGIN.BUTTON}
-      </Button>
-    </form>
+      </motion.div>
+
+      <motion.div variants={staggerItem}>
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          iconLeft="log-in-outline"
+          disabled={isPending}
+        >
+          {isPending ? AUTH.LOGIN.LOADING : AUTH.LOGIN.BUTTON}
+        </Button>
+      </motion.div>
+    </motion.form>
   );
 }

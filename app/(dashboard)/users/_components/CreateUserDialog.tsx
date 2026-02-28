@@ -10,7 +10,8 @@ import { Select } from '@/components/atoms/Select';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { ADMIN_CREATE_USER } from '@/graphql/mutations/admin';
 import { useAuthStore } from '@/stores/auth';
-import { showSuccess, showError as showToastError } from '@/lib/toast';
+import { showSuccess } from '@/lib/toast';
+import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import {
   createUserSchema,
   type CreateUserFormData,
@@ -59,8 +60,8 @@ export function CreateUserDialog({
       handleClose();
     },
     onError: (err) => {
-      setError(err.message);
-      showToastError(err.message);
+      const msg = formatMutationError(err);
+      setError(msg);
     },
   });
 

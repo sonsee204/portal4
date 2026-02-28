@@ -1,0 +1,86 @@
+export const TOURNAMENT = {
+  SUCCESS_CREATE: 'Tạo giải đấu thành công.',
+  SUCCESS_UPDATE: 'Cập nhật giải đấu thành công.',
+  SUCCESS_PUBLISH: 'Đăng giải đấu thành công.',
+  SUCCESS_OPEN_REG: 'Mở đăng ký thành công.',
+  SUCCESS_CLOSE_REG: 'Đóng đăng ký thành công.',
+  SUCCESS_START: 'Bắt đầu giải đấu thành công.',
+  SUCCESS_COMPLETE: 'Kết thúc giải đấu thành công.',
+  SUCCESS_CANCEL: 'Huỷ giải đấu thành công.',
+
+  SUCCESS_CREATE_CATEGORY: 'Tạo nội dung thi đấu thành công.',
+  SUCCESS_UPDATE_CATEGORY: 'Cập nhật nội dung thi đấu thành công.',
+  SUCCESS_DELETE_CATEGORY: 'Xoá nội dung thi đấu thành công.',
+
+  SUCCESS_APPROVE: 'Duyệt đăng ký thành công.',
+  SUCCESS_REJECT: 'Từ chối đăng ký thành công.',
+  SUCCESS_BULK_APPROVE: 'Duyệt hàng loạt thành công.',
+  SUCCESS_BULK_REJECT: 'Từ chối hàng loạt thành công.',
+  SUCCESS_PAYMENT_UPDATE: 'Cập nhật thanh toán thành công.',
+
+  SUCCESS_GENERATE_BRACKET: 'Tạo nhánh đấu thành công.',
+  SUCCESS_RESET_BRACKET: 'Xoá nhánh đấu thành công.',
+  SUCCESS_SEED_PLAYERS: 'Xếp hạt giống thành công.',
+
+  SUCCESS_SCHEDULE: 'Lên lịch trận đấu thành công.',
+  SUCCESS_BULK_SCHEDULE: 'Lên lịch hàng loạt thành công.',
+  SUCCESS_UNSCHEDULE: 'Huỷ lịch trận đấu thành công.',
+  SUCCESS_ASSIGN_REFEREE: 'Phân công trọng tài thành công.',
+  SUCCESS_UPDATE_RESULT: 'Cập nhật kết quả thành công.',
+
+  STATUS_DRAFT: 'Bản nháp',
+  STATUS_PUBLISHED: 'Đã đăng',
+  STATUS_REGISTRATION_OPEN: 'Đang nhận đăng ký',
+  STATUS_REGISTRATION_CLOSED: 'Hết hạn đăng ký',
+  STATUS_IN_PROGRESS: 'Đang diễn ra',
+  STATUS_COMPLETED: 'Đã kết thúc',
+  STATUS_CANCELLED: 'Đã huỷ',
+
+  FORMAT_SINGLE_ELIMINATION: 'Loại trực tiếp',
+  FORMAT_DOUBLE_ELIMINATION: 'Loại trực tiếp kép',
+  FORMAT_ROUND_ROBIN: 'Vòng tròn',
+  FORMAT_GROUP_KNOCKOUT: 'Bảng đấu + Loại trực tiếp',
+
+  MATCH_STATUS_NOT_STARTED: 'Chưa bắt đầu',
+  MATCH_STATUS_LIVE: 'Đang diễn ra',
+  MATCH_STATUS_FINISHED: 'Đã kết thúc',
+  MATCH_STATUS_WALKOVER: 'Xử thua',
+  MATCH_STATUS_BYE: 'Bye',
+  MATCH_STATUS_CANCELLED: 'Đã huỷ',
+
+  REG_STATUS_PENDING: 'Chờ duyệt',
+  REG_STATUS_APPROVED: 'Đã duyệt',
+  REG_STATUS_REJECTED: 'Bị từ chối',
+  REG_STATUS_WAITLISTED: 'Danh sách chờ',
+
+  PAYMENT_UNPAID: 'Chưa thanh toán',
+  PAYMENT_VERIFYING: 'Đang xác minh',
+  PAYMENT_PAID: 'Đã thanh toán',
+  PAYMENT_REFUNDED: 'Đã hoàn tiền',
+
+  GENDER_OPEN: 'Mở',
+  GENDER_MALE: 'Nam',
+  GENDER_FEMALE: 'Nữ',
+  GENDER_MIXED: 'Hỗn hợp',
+
+  MATCH_TYPE_SINGLES: 'Đơn',
+  MATCH_TYPE_DOUBLES: 'Đôi',
+  MATCH_TYPE_TEAM: 'Đồng đội',
+
+  LABEL_TOURNAMENTS: 'Giải đấu',
+  LABEL_CATEGORIES: 'Nội dung thi đấu',
+  LABEL_REGISTRATIONS: 'Đăng ký',
+  LABEL_BRACKET: 'Nhánh đấu',
+  LABEL_SCHEDULE: 'Lịch thi đấu',
+  LABEL_SCORING: 'Chấm điểm',
+  LABEL_DRAW: 'Bốc thăm / Xếp hạt giống',
+
+  EMPTY_TOURNAMENTS: 'Chưa có giải đấu nào.',
+  EMPTY_CATEGORIES: 'Chưa có nội dung thi đấu nào.',
+  EMPTY_REGISTRATIONS: 'Chưa có đăng ký nào.',
+  EMPTY_MATCHES: 'Chưa có trận đấu nào.',
+
+  CONFIRM_DELETE_CATEGORY: 'Bạn có chắc muốn xoá nội dung thi đấu này?',
+  CONFIRM_RESET_BRACKET: 'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
+} as const;

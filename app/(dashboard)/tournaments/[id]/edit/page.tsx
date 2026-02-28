@@ -1,0 +1,74 @@
+'use client';
+
+import { use } from 'react';
+import { useRouter } from 'next/navigation';
+import { PageHeader } from '@/components/organisms/PageHeader';
+import { Button } from '@/components/atoms/Button';
+import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { useTournament } from '@/hooks/tournament';
+import { TournamentFormWizard } from '../../_form/TournamentFormWizard';
+import { mapTournamentToFormData } from '../../_form/_utils/mapFormToInput';
+
+export default function EditTournamentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const router = useRouter();
+  const { tournament, loading, error } = useTournament(id);
+
+  if (loading) {
+    return (
+      <GlassPanel card>
+        <div className="flex items-center justify-center py-20">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  if (error || !tournament) {
+    return (
+      <GlassPanel card>
+        <div className="py-20 text-center">
+          <p className="text-secondary">Không tìm thấy giải đấu.</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/tournaments')}
+            className="mt-4"
+          >
+            Quay lại danh sách
+          </Button>
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Chỉnh sửa giải đấu"
+        description="Cập nhật thông tin giải đấu hiện có."
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          iconLeft="arrow-back-outline"
+          onClick={() => router.push('/tournaments')}
+        >
+          Quay lại
+        </Button>
+      </PageHeader>
+
+      <div className="mt-6">
+        <TournamentFormWizard
+          defaultValues={mapTournamentToFormData(tournament)}
+          isEditMode
+          tournamentId={id}
+        />
+      </div>
+    </>
+  );
+}
