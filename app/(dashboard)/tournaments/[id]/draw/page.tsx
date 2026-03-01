@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import { TOURNAMENT } from '@/lib/strings';
 import {
   useTournamentCategories,
@@ -21,6 +22,7 @@ export default function DrawPage({
   const { id: tournamentId } = use(params);
   const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const { categories, loading: cLoading } =
     useTournamentCategories(tournamentId);
@@ -39,10 +41,10 @@ export default function DrawPage({
 
   const isLoading = generating || resetting;
 
-  const handleReset = () => {
-    if (window.confirm(TOURNAMENT.CONFIRM_RESET_BRACKET)) {
-      void resetBracket(activeCategoryId);
-    }
+  const handleReset = () => setResetDialogOpen(true);
+  const handleConfirmReset = () => {
+    setResetDialogOpen(false);
+    void resetBracket(activeCategoryId);
   };
 
   const roundsMap = useMemo(() => {
@@ -171,6 +173,17 @@ export default function DrawPage({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={resetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        onConfirm={handleConfirmReset}
+        title="Xoá nhánh đấu"
+        description={TOURNAMENT.CONFIRM_RESET_BRACKET}
+        confirmLabel="Xoá nhánh đấu"
+        variant="danger"
+        loading={resetting}
+      />
     </>
   );
 }

@@ -82,6 +82,15 @@ export const CANCEL_TOURNAMENT = gql`
   ${TOURNAMENT_CORE_FRAGMENT}
 `;
 
+export const DELETE_TOURNAMENT = gql`
+  mutation DeleteTournament($id: ID!) {
+    deleteTournament(id: $id) {
+      success
+      message
+    }
+  }
+`;
+
 // ==================== CATEGORY ====================
 
 export const CREATE_CATEGORY = gql`

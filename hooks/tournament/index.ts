@@ -9,6 +9,7 @@ export {
   useStartTournament,
   useCompleteTournament,
   useCancelTournament,
+  useDeleteTournament,
 } from './useTournamentStatus';
 export {
   useTournamentCategories,

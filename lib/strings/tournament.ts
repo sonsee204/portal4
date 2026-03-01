@@ -7,6 +7,7 @@ export const TOURNAMENT = {
   SUCCESS_START: 'Bắt đầu giải đấu thành công.',
   SUCCESS_COMPLETE: 'Kết thúc giải đấu thành công.',
   SUCCESS_CANCEL: 'Huỷ giải đấu thành công.',
+  SUCCESS_DELETE: 'Xoá giải đấu thành công.',
 
   SUCCESS_CREATE_CATEGORY: 'Tạo nội dung thi đấu thành công.',
   SUCCESS_UPDATE_CATEGORY: 'Cập nhật nội dung thi đấu thành công.',
@@ -83,4 +84,5 @@ export const TOURNAMENT = {
   CONFIRM_DELETE_CATEGORY: 'Bạn có chắc muốn xoá nội dung thi đấu này?',
   CONFIRM_RESET_BRACKET: 'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_DELETE_TOURNAMENT: 'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
 } as const;

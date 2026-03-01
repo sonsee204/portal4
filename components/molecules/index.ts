@@ -10,4 +10,5 @@ export { TabGroup } from './TabGroup';
 export { FilterChips } from './FilterChips';
 export { TimelineItem } from './TimelineItem';
 export { Modal } from './Modal';
+export { ConfirmDialog } from './ConfirmDialog';
 export { Stepper } from './Stepper';

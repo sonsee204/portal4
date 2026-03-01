@@ -9,6 +9,7 @@ import {
   START_TOURNAMENT,
   COMPLETE_TOURNAMENT,
   CANCEL_TOURNAMENT,
+  DELETE_TOURNAMENT,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
@@ -55,4 +56,29 @@ export function useCompleteTournament(onSuccess?: () => void) {
 
 export function useCancelTournament(onSuccess?: () => void) {
   return useStatusMutation(CANCEL_TOURNAMENT, 'CancelTournament', TOURNAMENT.SUCCESS_CANCEL, onSuccess);
+}
+
+export function useDeleteTournament(onSuccess?: () => void) {
+  const [mutation, { loading }] = useMutation<{ deleteTournament: { success: boolean } }>(
+    DELETE_TOURNAMENT,
+    {
+      ...createMutationOptions('DeleteTournament', TOURNAMENT.SUCCESS_DELETE),
+      // Evict the deleted tournament from cache immediately so the list
+      // updates without requiring a network refetch or full page reload.
+      update(cache, _result, { variables }) {
+        const id = variables?.id as string | undefined;
+        if (!id) return;
+        cache.evict({ id: cache.identify({ __typename: 'Tournament', _id: id }) });
+        cache.gc();
+      },
+      onCompleted: () => onSuccess?.(),
+    },
+  );
+
+  const execute = useCallback(
+    (id: string) => mutation({ variables: { id } }),
+    [mutation],
+  );
+
+  return { execute, loading };
 }
