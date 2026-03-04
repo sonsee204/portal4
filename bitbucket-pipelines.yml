@@ -13,6 +13,9 @@ pipelines:
 
             # 2. Cài đặt và Build
             - pnpm install
+            # Bước quan trọng: Tải schema "tươi" nhất từ folder Backend trên server về local
+            - scp $SERVER_USER@$SERVER_IP:~/hitri/nalee-sports-backend/src/schema.gql ./schema.gql
+            # Bây giờ chạy build, codegen sẽ đọc file ./schema.gql này
             - pnpm run build
 
             # 3. Nén các file cần thiết
