@@ -70,12 +70,12 @@ const slideVariants = {
   center: {
     x: 0,
     opacity: 1,
-    transition: { duration: 0.3, ease: 'easeOut' },
+    transition: { duration: 0.3, ease: 'easeOut' as const },
   },
   exit: (direction: number) => ({
     x: direction > 0 ? -60 : 60,
     opacity: 0,
-    transition: { duration: 0.2, ease: 'easeIn' },
+    transition: { duration: 0.2, ease: 'easeIn' as const },
   }),
 };
 
@@ -146,11 +146,14 @@ export function ForgotPasswordForm() {
     };
   }, [resendTimer > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const goToStep = useCallback((target: Step) => {
-    setDirection(STEP_INDEX[target] > STEP_INDEX[step] ? 1 : -1);
-    setError(null);
-    setStep(target);
-  }, [step]);
+  const goToStep = useCallback(
+    (target: Step) => {
+      setDirection(STEP_INDEX[target] > STEP_INDEX[step] ? 1 : -1);
+      setError(null);
+      setStep(target);
+    },
+    [step]
+  );
 
   // ==================== Handlers ====================
 
@@ -163,7 +166,9 @@ export function ForgotPasswordForm() {
 
         const resetResult = await requestPasswordResetAction(data.phone);
         if (!resetResult.success) {
-          setError(resetResult.error || AUTH.FORGOT_PASSWORD.ERROR_VERIFY_ACCOUNT);
+          setError(
+            resetResult.error || AUTH.FORGOT_PASSWORD.ERROR_VERIFY_ACCOUNT
+          );
           return;
         }
 
@@ -179,7 +184,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [goToStep],
+    [goToStep]
   );
 
   const handleOtpSubmit = useCallback(
@@ -202,7 +207,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [goToStep],
+    [goToStep]
   );
 
   const handleResend = useCallback(async () => {
@@ -235,7 +240,7 @@ export function ForgotPasswordForm() {
       try {
         const result = await resetPasswordAction(
           idTokenRef.current,
-          data.newPassword,
+          data.newPassword
         );
 
         if (!result.success) {
@@ -250,7 +255,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [router, goToStep],
+    [router, goToStep]
   );
 
   // ==================== Render Helpers ====================
@@ -271,7 +276,7 @@ export function ForgotPasswordForm() {
       {target === 'login' ? (
         <Link
           href="/login"
-          className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-body"
+          className="text-muted hover:text-body inline-flex items-center gap-1 text-sm transition-colors"
         >
           <IonIcon name="arrow-back-outline" size="xs" />
           {AUTH.FORGOT_PASSWORD.BACK_TO_LOGIN}
@@ -281,7 +286,7 @@ export function ForgotPasswordForm() {
           type="button"
           disabled={loading}
           onClick={() => goToStep(target)}
-          className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-body disabled:opacity-50"
+          className="text-muted hover:text-body inline-flex items-center gap-1 text-sm transition-colors disabled:opacity-50"
         >
           <IonIcon name="arrow-back-outline" size="xs" />
           {AUTH.FORGOT_PASSWORD.BACK}
@@ -299,7 +304,7 @@ export function ForgotPasswordForm() {
     >
       {renderError()}
 
-      <p className="text-center text-sm text-muted">
+      <p className="text-muted text-center text-sm">
         {AUTH.FORGOT_PASSWORD.PHONE_DESCRIPTION}
       </p>
 
@@ -342,7 +347,7 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <div className="space-y-1 text-center">
-        <p className="text-sm text-muted">{AUTH.FORGOT_PASSWORD.OTP_SENT_TO}</p>
+        <p className="text-muted text-sm">{AUTH.FORGOT_PASSWORD.OTP_SENT_TO}</p>
         <p className="text-primary text-sm font-semibold">
           {formatPhone(phone)}
         </p>
@@ -376,7 +381,7 @@ export function ForgotPasswordForm() {
 
       <div className="text-center">
         {resendTimer > 0 ? (
-          <span className="text-xs text-faint">
+          <span className="text-faint text-xs">
             {AUTH.FORGOT_PASSWORD.OTP_RESEND_TIMER(resendTimer)}
           </span>
         ) : (
@@ -403,7 +408,7 @@ export function ForgotPasswordForm() {
       {renderError()}
 
       <div className="space-y-1 text-center">
-        <p className="text-sm text-muted">
+        <p className="text-muted text-sm">
           {AUTH.FORGOT_PASSWORD.NEW_PASSWORD_DESCRIPTION}
         </p>
         <p className="text-primary text-sm font-semibold">
@@ -433,13 +438,11 @@ export function ForgotPasswordForm() {
         />
         <button
           type="button"
-          className="mt-1 text-xs text-faint hover:text-muted"
+          className="text-faint hover:text-muted mt-1 text-xs"
           onClick={() => setShowPassword(!showPassword)}
           tabIndex={-1}
         >
-          {showPassword
-            ? AUTH.LOGIN.HIDE_PASSWORD
-            : AUTH.LOGIN.SHOW_PASSWORD}
+          {showPassword ? AUTH.LOGIN.HIDE_PASSWORD : AUTH.LOGIN.SHOW_PASSWORD}
         </button>
       </div>
 
@@ -460,9 +463,7 @@ export function ForgotPasswordForm() {
                 showConfirmPassword ? 'eye-off-outline' : 'eye-outline'
               }
               onRightIconClick={() => setShowConfirmPassword((v) => !v)}
-              error={
-                passwordForm.formState.errors.confirmPassword?.message
-              }
+              error={passwordForm.formState.errors.confirmPassword?.message}
               disabled={loading}
               autoComplete="new-password"
             />
@@ -470,7 +471,7 @@ export function ForgotPasswordForm() {
         />
         <button
           type="button"
-          className="mt-1 text-xs text-faint hover:text-muted"
+          className="text-faint hover:text-muted mt-1 text-xs"
           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
           tabIndex={-1}
         >

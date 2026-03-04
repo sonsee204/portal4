@@ -2,6 +2,7 @@ import type { TournamentFormData } from '@/types/tournament-form';
 
 export const mockTournamentFormData: TournamentFormData = {
   name: 'Giải Cầu Lông Học Sinh THCS Nhị Khê Mở Rộng Lần I - 2026',
+  organizerName: 'THCS Nhị Khê',
   sport: 'badminton',
   startDate: '2026-09-05',
   endDate: '2026-09-07',
@@ -9,6 +10,7 @@ export const mockTournamentFormData: TournamentFormData = {
   locationAddress: 'Xã Nhị Khê, Huyện Thường Tín, TP. Hà Nội',
   description:
     'Giải Cầu Lông Học Sinh THCS Nhị Khê Mở Rộng là sân chơi thể thao chuyên nghiệp dành cho các em học sinh trên địa bàn huyện Thường Tín và các trường khách mời. Giải đấu được tổ chức bài bản với sự hỗ trợ của hệ thống quản lý giải đấu Ao Trình.',
+  introduction: '',
   coverImageUrl: '',
   highlights: [
     'Hệ thống quản lý và bốc thăm tự động bởi Ao Trình',
@@ -26,6 +28,7 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối tiểu học, mới bắt đầu làm quen với thi đấu.',
       popular: true,
       maxRegistrations: 32,
+      prizes: [],
     },
     {
       title: 'Đơn Nữ U11',
@@ -35,6 +38,7 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh nữ khối tiểu học.',
       popular: false,
       maxRegistrations: 24,
+      prizes: [],
     },
     {
       title: 'Đơn Nam 12-13',
@@ -44,6 +48,7 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối 6, 7. Cạnh tranh cao và kỹ thuật cơ bản tốt.',
       popular: false,
       maxRegistrations: 32,
+      prizes: [],
     },
     {
       title: 'Đôi Nam Nữ 12-13',
@@ -53,6 +58,7 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Nội dung đôi nam nữ cho học sinh khối 6, 7.',
       popular: false,
       maxRegistrations: 16,
+      prizes: [],
     },
     {
       title: 'Đơn Nam 14-15',
@@ -62,6 +68,7 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối 8, 9. Trình độ chuyên môn và thể lực cao.',
       popular: false,
       maxRegistrations: 32,
+      prizes: [],
     },
     {
       title: 'Đơn Nữ 14-15',
@@ -71,18 +78,19 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh nữ khối 8, 9.',
       popular: false,
       maxRegistrations: 24,
+      prizes: [],
     },
   ],
 
   format: 'single_elim',
   totalSlots: 128,
   schedule: [
-    { label: 'Đăng ký', date: '01/08 - 30/08', status: 'completed' },
-    { label: 'Bốc thăm', date: '02/09', status: 'active' },
-    { label: 'Vòng bảng', date: '05/09', status: 'upcoming' },
-    { label: 'Tứ kết', date: '06/09', status: 'upcoming' },
-    { label: 'Bán kết', date: '07/09 (sáng)', status: 'upcoming' },
-    { label: 'Chung kết', date: '07/09 (chiều)', status: 'upcoming' },
+    { label: 'Đăng ký', date: '01/08 - 30/08', startTime: '00:00', endTime: '23:59', status: 'completed' },
+    { label: 'Bốc thăm', date: '02/09', startTime: '08:00', endTime: '12:00', status: 'active' },
+    { label: 'Vòng bảng', date: '05/09', startTime: '08:00', endTime: '18:00', status: 'upcoming' },
+    { label: 'Tứ kết', date: '06/09', startTime: '08:00', endTime: '12:00', status: 'upcoming' },
+    { label: 'Bán kết', date: '07/09 (sáng)', startTime: '08:00', endTime: '12:00', status: 'upcoming' },
+    { label: 'Chung kết', date: '07/09 (chiều)', startTime: '14:00', endTime: '18:00', status: 'upcoming' },
   ],
   venueName: 'Nhà thi đấu Đa năng Thanh Trì',
   venueAddress: 'Xã Nhị Khê, Huyện Thường Tín, TP. Hà Nội',

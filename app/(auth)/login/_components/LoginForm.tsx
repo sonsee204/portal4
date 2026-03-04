@@ -25,7 +25,11 @@ const staggerContainer = {
 
 const staggerItem = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: 'easeOut' as const },
+  },
 };
 
 export function LoginForm() {
@@ -91,8 +95,7 @@ export function LoginForm() {
   };
 
   const errorMessage =
-    backendError ||
-    (urlError === 'unauthorized' ? ERRORS.UNAUTHORIZED : null);
+    backendError || (urlError === 'unauthorized' ? ERRORS.UNAUTHORIZED : null);
 
   return (
     <motion.form
@@ -119,7 +122,7 @@ export function LoginForm() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.25, ease: 'easeOut' as const }}
             className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
           >
             {errorMessage}
@@ -175,7 +178,10 @@ export function LoginForm() {
         </button>
       </motion.div>
 
-      <motion.div variants={staggerItem} className="flex items-center justify-between">
+      <motion.div
+        variants={staggerItem}
+        className="flex items-center justify-between"
+      >
         <label className="text-muted flex items-center gap-2 text-sm">
           <Toggle checked={rememberMe} onChange={setRememberMe} />
           {AUTH.LOGIN.REMEMBER_ME}

@@ -237,7 +237,7 @@ export function TournamentFormWizard({
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            transition={{ duration: 0.25, ease: 'easeInOut' as const }}
           >
             {currentStepContent}
           </motion.div>

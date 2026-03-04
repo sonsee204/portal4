@@ -23,7 +23,11 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, x: -20 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, ease: 'easeOut' as const },
+  },
 };
 
 export function AuthBrandPanel() {
@@ -63,7 +67,7 @@ export function AuthBrandPanel() {
             duration: shape.duration,
             delay: shape.delay,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: 'easeInOut' as const,
           }}
         />
       ))}
@@ -81,12 +85,16 @@ export function AuthBrandPanel() {
       >
         {/* Logo */}
         <motion.div variants={itemVariants}>
-          <Logo variant="full" href={undefined} className="[&_h1]:text-white [&_p]:text-violet-300/70" />
+          <Logo
+            variant="full"
+            href={undefined}
+            className="[&_h1]:text-white [&_p]:text-violet-300/70"
+          />
         </motion.div>
 
         {/* Tagline */}
         <motion.div variants={itemVariants} className="mt-10">
-          <h2 className="text-2xl font-bold leading-tight text-white xl:text-3xl">
+          <h2 className="text-2xl leading-tight font-bold text-white xl:text-3xl">
             {AUTH.BRAND.TAGLINE}
           </h2>
           <div className="mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-violet-400 to-emerald-400" />
@@ -107,10 +115,16 @@ export function AuthBrandPanel() {
             className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-3 backdrop-blur-sm"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/20">
-              <IonIcon name={feature.icon} size="sm" className="text-violet-300" />
+              <IonIcon
+                name={feature.icon}
+                size="sm"
+                className="text-violet-300"
+              />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-white">{feature.title}</p>
+              <p className="text-sm font-semibold text-white">
+                {feature.title}
+              </p>
               <p className="text-xs leading-relaxed text-violet-200/60">
                 {feature.description}
               </p>
