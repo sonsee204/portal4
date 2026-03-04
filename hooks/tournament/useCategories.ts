@@ -33,7 +33,9 @@ export function useCreateCategory(tournamentId: string, options?: { onSuccess?: 
   const [mutation, { loading }] = useMutation<{
     createCategory: TournamentCategory;
   }>(CREATE_CATEGORY, {
-    refetchQueries: [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }],
+    refetchQueries: tournamentId
+      ? [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }]
+      : [],
     ...createMutationOptions('CreateCategory', TOURNAMENT.SUCCESS_CREATE_CATEGORY),
     onCompleted: () => options?.onSuccess?.(),
   });
@@ -50,7 +52,9 @@ export function useUpdateCategory(tournamentId: string, options?: { onSuccess?: 
   const [mutation, { loading }] = useMutation<{
     updateCategory: TournamentCategory;
   }>(UPDATE_CATEGORY, {
-    refetchQueries: [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }],
+    refetchQueries: tournamentId
+      ? [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }]
+      : [],
     ...createMutationOptions('UpdateCategory', TOURNAMENT.SUCCESS_UPDATE_CATEGORY),
     onCompleted: () => options?.onSuccess?.(),
   });
@@ -65,7 +69,9 @@ export function useUpdateCategory(tournamentId: string, options?: { onSuccess?: 
 
 export function useDeleteCategory(tournamentId: string, options?: { onSuccess?: () => void }) {
   const [mutation, { loading }] = useMutation(DELETE_CATEGORY, {
-    refetchQueries: [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }],
+    refetchQueries: tournamentId
+      ? [{ query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } }]
+      : [],
     ...createMutationOptions('DeleteCategory', TOURNAMENT.SUCCESS_DELETE_CATEGORY),
     onCompleted: () => options?.onSuccess?.(),
   });

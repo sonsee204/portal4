@@ -8,7 +8,10 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import type { TournamentFormData } from '@/types/tournament-form';
 
-const rankConfig = {
+const RANK_CONFIG: Record<
+  string,
+  { label: string; icon: string; accent: string; iconColor: string }
+> = {
   gold: {
     label: 'Giải Nhất',
     icon: 'trophy-outline',
@@ -30,16 +33,46 @@ const rankConfig = {
       'from-orange-300/20 to-amber-400/10 border-orange-300/30 dark:border-orange-400/20',
     iconColor: 'text-orange-400',
   },
-} as const;
+};
+
+function getRankConfig(rank: string, position: number) {
+  if (RANK_CONFIG[rank]) return RANK_CONFIG[rank];
+  return {
+    label: `Giải ${position}`,
+    icon: 'star-outline',
+    accent:
+      'from-slate-200/20 to-gray-300/10 border-slate-200/30 dark:border-slate-600/20',
+    iconColor: 'text-slate-500',
+  };
+}
+
+const TOP_RANKS = ['gold', 'silver', 'bronze'] as const;
+
+export function getNextPrizeRank(currentPrizes: { rank: string }[]): string {
+  if (currentPrizes.length < 3) return TOP_RANKS[currentPrizes.length];
+  return String(currentPrizes.length + 1);
+}
 
 interface PrizeEditorProps {
   index: number;
   control: Control<TournamentFormData>;
-  rank: 'gold' | 'silver' | 'bronze';
+  rank: string;
+  onRemove?: () => void;
+  canRemove?: boolean;
+  /** Base path for nested prizes (e.g. "categories.0" for category prizes) */
+  basePath?: string;
 }
 
-export function PrizeEditor({ index, control, rank }: PrizeEditorProps) {
-  const config = rankConfig[rank];
+export function PrizeEditor({
+  index,
+  control,
+  rank,
+  onRemove,
+  canRemove,
+  basePath = 'prizes',
+}: PrizeEditorProps) {
+  const config = getRankConfig(rank, index + 1);
+  const perksPath = basePath === 'prizes' ? `prizes.${index}.perks` : `${basePath}.prizes.${index}.perks`;
 
   const {
     fields: perkFields,
@@ -47,7 +80,7 @@ export function PrizeEditor({ index, control, rank }: PrizeEditorProps) {
     remove,
   } = useFieldArray({
     control,
-    name: `prizes.${index}.perks` as never,
+    name: perksPath as never,
   });
 
   return (
@@ -57,21 +90,37 @@ export function PrizeEditor({ index, control, rank }: PrizeEditorProps) {
         config.accent
       )}
     >
-      <div className="mb-4 flex items-center gap-3">
-        <div
-          className={cn(
-            'bg-surface/80 flex h-10 w-10 items-center justify-center rounded-xl',
-            config.iconColor
-          )}
-        >
-          <IonIcon name={config.icon} size="md" />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'bg-surface/80 flex h-10 w-10 items-center justify-center rounded-xl',
+              config.iconColor
+            )}
+          >
+            <IonIcon name={config.icon} size="md" />
+          </div>
+          <h4 className="text-heading text-sm font-bold">{config.label}</h4>
         </div>
-        <h4 className="text-heading text-sm font-bold">{config.label}</h4>
+        {canRemove && onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-faint hover:bg-danger/10 hover:text-danger shrink-0 rounded-lg p-1"
+            title="Xóa giải thưởng"
+          >
+            <IonIcon name="trash-outline" size="sm" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-3">
         <Controller
-          name={`prizes.${index}.amount`}
+          name={
+            (basePath === 'prizes'
+              ? `prizes.${index}.amount`
+              : `${basePath}.prizes.${index}.amount`) as never
+          }
           control={control}
           render={({ field }) => (
             <CurrencyInput
@@ -90,7 +139,11 @@ export function PrizeEditor({ index, control, rank }: PrizeEditorProps) {
             {perkFields.map((perk, pi) => (
               <div key={perk.id} className="flex items-center gap-2">
                 <Controller
-                  name={`prizes.${index}.perks.${pi}`}
+                  name={
+                    (basePath === 'prizes'
+                      ? `prizes.${index}.perks.${pi}`
+                      : `${basePath}.prizes.${index}.perks.${pi}`) as never
+                  }
                   control={control}
                   render={({ field }) => (
                     <Input

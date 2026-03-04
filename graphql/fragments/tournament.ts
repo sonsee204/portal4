@@ -8,6 +8,7 @@ export const TOURNAMENT_CORE_FRAGMENT = gql`
     status
     coverImage
     description
+    introduction
     totalCategories
     totalRegistrations
     totalMatches
@@ -24,6 +25,7 @@ export const TOURNAMENT_CORE_FRAGMENT = gql`
       longitude
     }
     organizer
+    organizerName
     createdAt
     updatedAt
   }
@@ -70,6 +72,8 @@ export const TOURNAMENT_DETAIL_FRAGMENT = gql`
     schedule {
       label
       date
+      startTime
+      endTime
       status
     }
   }
@@ -85,6 +89,9 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
     matchType
     gender
     ageLabel
+    description
+    icon
+    popular
     maxRegistrations
     registeredCount
     matchCount
@@ -95,6 +102,12 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
     groupCount
     advancingPerGroup
     bracketSize
+    prizes {
+      rank
+      title
+      amount
+      perks
+    }
     scoringConfig {
       scoringSystem
       bestOf
@@ -172,6 +185,7 @@ export const REGISTRATION_CORE_FRAGMENT = gql`
     tournamentId
     categoryId
     userId
+    registeredByUserId
     athleteName
     avatarUrl
     dateOfBirth
@@ -180,6 +194,7 @@ export const REGISTRATION_CORE_FRAGMENT = gql`
     guardianName
     guardianPhone
     email
+    phone
     notes
     seed
     paymentAmount

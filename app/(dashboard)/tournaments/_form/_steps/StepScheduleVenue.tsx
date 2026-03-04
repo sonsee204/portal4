@@ -40,9 +40,6 @@ interface StepScheduleVenueProps {
 export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
   const { control, watch } = form;
 
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-
   const {
     fields: scheduleFields,
     append: appendSchedule,
@@ -137,7 +134,7 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
             size="sm"
             iconLeft="add-outline"
             onClick={() =>
-              appendSchedule({ label: '', date: '', status: 'upcoming' })
+              appendSchedule({ label: '', date: '', startTime: '', endTime: '', status: 'upcoming' })
             }
           >
             Thêm giai đoạn
@@ -152,8 +149,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
               status={watch(`schedule.${i}.status`)}
               onRemove={() => removeSchedule(i)}
               canRemove={scheduleFields.length > 1}
-              minDate={startDate || undefined}
-              maxDate={endDate || undefined}
             />
           ))}
         </div>

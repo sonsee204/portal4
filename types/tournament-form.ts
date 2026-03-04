@@ -23,11 +23,16 @@ export interface CategoryFormEntry {
   matchType: 'single' | 'double' | 'mixed';
   icon: string;
   description: string;
+  popular: boolean;
+  maxRegistrations: number;
+  prizes: PrizeEntry[];
 }
 
 export interface SchedulePhaseEntry {
   label: string;
   date: string;
+  startTime: string;
+  endTime: string;
   status: 'upcoming' | 'active' | 'completed';
 }
 
@@ -46,8 +51,9 @@ export interface RuleEntry {
   content: string;
 }
 
+/** rank: gold|silver|bronze for top 3, "4"|"5"|... for position 4+ */
 export interface PrizeEntry {
-  rank: 'gold' | 'silver' | 'bronze';
+  rank: 'gold' | 'silver' | 'bronze' | string;
   title: string;
   amount: string;
   perks: string[];
@@ -70,12 +76,14 @@ export interface ContactEntry {
 
 export interface TournamentFormData {
   name: string;
+  organizerName: string;
   sport: SportType;
   startDate: string;
   endDate: string;
   locationName: string;
   locationAddress: string;
   description: string;
+  introduction: string;
   coverImageUrl: string;
   highlights: string[];
 
@@ -105,18 +113,30 @@ export interface TournamentFormData {
 /* Zod schemas                                                         */
 /* ------------------------------------------------------------------ */
 
+// amount optional — prize rows without amounts are still valid
+const prizeSchema = z.object({
+  rank: z.string(),
+  title: z.string().min(1),
+  amount: z.string(),
+  perks: z.array(z.string()),
+});
+
 const categorySchema = z.object({
   title: z.string().min(1, 'Tên nội dung là bắt buộc'),
   ageLabel: z.string().min(1, 'Nhóm tuổi là bắt buộc'),
   matchType: z.enum(['single', 'double', 'mixed']),
   icon: z.string().min(1),
   description: z.string(),
+  popular: z.boolean(),
+  maxRegistrations: z.number().min(0),
+  prizes: z.array(prizeSchema),
 });
 
 const schedulePhaseSchema = z.object({
   label: z.string().min(1, 'Tên giai đoạn là bắt buộc'),
-  // date is optional — empty items are filtered in mapFormToInput
   date: z.string(),
+  startTime: z.string().max(50),
+  endTime: z.string().max(50),
   status: z.enum(['upcoming', 'active', 'completed']),
 });
 
@@ -136,14 +156,6 @@ const ruleSchema = z.object({
   content: z.string(),
 });
 
-// amount optional — prize rows without amounts are still valid
-const prizeSchema = z.object({
-  rank: z.enum(['gold', 'silver', 'bronze']),
-  title: z.string().min(1),
-  amount: z.string(),
-  perks: z.array(z.string()),
-});
-
 // Both fields optional — empty fee rows are placeholder-only and filtered in mapFormToInput
 const feeSchema = z.object({
   label: z.string(),
@@ -160,12 +172,14 @@ const contactSchema = z.object({
 export const tournamentFormSchema = z
   .object({
     name: z.string().min(1, 'Tên giải đấu là bắt buộc'),
+    organizerName: z.string().max(200),
     sport: z.enum(['badminton', 'pickleball', 'tennis', 'football']),
     startDate: z.string().min(1, 'Ngày bắt đầu là bắt buộc'),
     endDate: z.string().min(1, 'Ngày kết thúc là bắt buộc'),
     locationName: z.string().min(1, 'Tên địa điểm là bắt buộc'),
     locationAddress: z.string().min(1, 'Địa chỉ là bắt buộc'),
     description: z.string(),
+    introduction: z.string().max(10000),
     coverImageUrl: z.string(),
     highlights: z.array(z.string()),
 
@@ -212,10 +226,10 @@ export const tournamentFormSchema = z
 /* ------------------------------------------------------------------ */
 
 export const STEP_FIELDS: Record<number, (keyof TournamentFormData)[]> = {
-  0: ['name', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'coverImageUrl', 'highlights'],
+  0: ['name', 'organizerName', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'introduction', 'coverImageUrl', 'highlights'],
   1: ['categories'],
   2: ['format', 'totalSlots', 'schedule', 'venueName', 'venueAddress', 'facilities', 'courts'],
-  3: ['rules', 'prizes'],
+  3: ['rules'],
   4: ['registrationDeadline', 'fees', 'contacts', 'paymentBank', 'paymentAccountNumber', 'paymentAccountName', 'paymentQrImage'],
   5: [],
 };
@@ -239,23 +253,38 @@ export const FORM_STEPS = [
 
 export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
   name: '',
+  organizerName: '',
   sport: 'badminton',
   startDate: '',
   endDate: '',
   locationName: '',
   locationAddress: '',
   description: '',
+  introduction: '',
   coverImageUrl: '',
   highlights: [''],
 
   categories: [
-    { title: '', ageLabel: '', matchType: 'single', icon: 'person-outline', description: '' },
+    {
+      title: '',
+      ageLabel: '',
+      matchType: 'single',
+      icon: 'person-outline',
+      description: '',
+      popular: false,
+      maxRegistrations: 0,
+      prizes: [
+        { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
+        { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
+        { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
+      ],
+    },
   ],
 
   format: 'single_elim',
   totalSlots: 32,
   schedule: [
-    { label: 'Đăng ký', date: '', status: 'upcoming' },
+    { label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' },
   ],
   venueName: '',
   venueAddress: '',

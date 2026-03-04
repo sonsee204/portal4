@@ -12,7 +12,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  /** A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format. */
+  /** DateTime custom scalar type (ISO 8601) */
   DateTime: { input: string; output: string; }
   /** Arbitrary JSON value */
   JSON: { input: Record<string, unknown>; output: Record<string, unknown>; }
@@ -1414,13 +1414,17 @@ export type CreateCategoryInput = {
   /** Players advancing per group */
   advancingPerGroup?: InputMaybe<Scalars['Int']['input']>;
   ageLabel?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
   format?: TournamentFormat;
   gender?: TournamentGender;
   /** Groups count (GROUP_KNOCKOUT only) */
   groupCount?: InputMaybe<Scalars['Int']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
   matchType?: MatchType;
   maxRegistrations?: InputMaybe<Scalars['Int']['input']>;
+  popular?: InputMaybe<Scalars['Boolean']['input']>;
+  prizes?: InputMaybe<Array<TournamentPrizeInput>>;
   scoringConfig: ScoringConfigInput;
   seedCount?: InputMaybe<Scalars['Int']['input']>;
   title: Scalars['String']['input'];
@@ -1892,12 +1896,14 @@ export type CreateTemplateInput = {
 export type CreateTournamentInput = {
   contacts?: InputMaybe<Array<TournamentContactInput>>;
   courts?: InputMaybe<Array<TournamentCourtInput>>;
-  facilities?: InputMaybe<Array<TournamentFacilityInput>>;
   coverImage?: InputMaybe<Scalars['String']['input']>;
   dates: TournamentDatesInput;
   description?: InputMaybe<Scalars['String']['input']>;
+  facilities?: InputMaybe<Array<TournamentFacilityInput>>;
   highlights?: InputMaybe<Array<Scalars['String']['input']>>;
+  introduction?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<TournamentLocationInput>;
+  organizerName?: InputMaybe<Scalars['String']['input']>;
   paymentInfo?: InputMaybe<TournamentPaymentInfoInput>;
   prizes?: InputMaybe<Array<TournamentPrizeInput>>;
   rules?: InputMaybe<Array<TournamentRuleInput>>;
@@ -3449,6 +3455,8 @@ export type Mutation = {
   deleteProduct: Scalars['Boolean']['output'];
   /** Delete a promotion */
   deletePromotion: Scalars['Boolean']['output'];
+  /** Permanently delete a DRAFT tournament */
+  deleteTournament: SuccessResponse;
   /** Delete venue */
   deleteVenue: Scalars['Boolean']['output'];
   /** Delete venue review */
@@ -3737,6 +3745,8 @@ export type Mutation = {
   uploadPostMedia: UploadPostMediaResponse;
   /** Upload product image and return URL */
   uploadProductImage: UploadPostMediaResponse;
+  /** Upload tournament image (QR code, banner, etc.) and return URL */
+  uploadTournamentImage: UploadPostMediaResponse;
   /** Upload venue image and return URL */
   uploadVenueImage: UploadPostMediaResponse;
   /** Upload venue request image and return URL */
@@ -4306,6 +4316,11 @@ export type MutationDeleteProductArgs = {
 
 export type MutationDeletePromotionArgs = {
   promotionId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteTournamentArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -5041,6 +5056,11 @@ export type MutationUploadPostMediaArgs = {
 
 export type MutationUploadProductImageArgs = {
   input: UploadProductImageInput;
+};
+
+
+export type MutationUploadTournamentImageArgs = {
+  input: UploadTournamentImageInput;
 };
 
 
@@ -8384,12 +8404,18 @@ export type RegisterTournamentInput = {
   club?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
+  /** Existing user ID when registering for another user found by phone */
+  forUserId?: InputMaybe<Scalars['ID']['input']>;
   guardianName?: InputMaybe<Scalars['String']['input']>;
   guardianPhone?: InputMaybe<Scalars['String']['input']>;
   identityProofUrl?: InputMaybe<Scalars['String']['input']>;
+  /** true = self, false = other */
+  isForSelf?: Scalars['Boolean']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   paymentAmount?: InputMaybe<Scalars['Float']['input']>;
   paymentProofUrl?: InputMaybe<Scalars['String']['input']>;
+  /** Participant phone number */
+  phone?: InputMaybe<Scalars['String']['input']>;
   school?: InputMaybe<Scalars['String']['input']>;
   tournamentId: Scalars['ID']['input'];
 };
@@ -9476,18 +9502,22 @@ export type Tournament = {
   _id: Scalars['ID']['output'];
   contacts?: Maybe<Array<TournamentContact>>;
   courts?: Maybe<Array<TournamentCourt>>;
-  facilities?: Maybe<Array<TournamentFacility>>;
   /** Cover image URL */
   coverImage?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   dates: TournamentDates;
-  /** Tournament description (markdown) */
+  /** Short description for landing page */
   description?: Maybe<Scalars['String']['output']>;
+  facilities?: Maybe<Array<TournamentFacility>>;
   /** Highlight bullets */
   highlights?: Maybe<Array<Scalars['String']['output']>>;
+  /** Detailed introduction for overview/detail page (markdown) */
+  introduction?: Maybe<Scalars['String']['output']>;
   location?: Maybe<TournamentLocation>;
   /** Organizer user ID */
   organizer: Scalars['ID']['output'];
+  /** Tên đơn vị ban tổ chức (hiển thị công khai) */
+  organizerName?: Maybe<Scalars['String']['output']>;
   paymentInfo?: Maybe<TournamentPaymentInfo>;
   prizes?: Maybe<Array<TournamentPrize>>;
   rules?: Maybe<Array<TournamentRule>>;
@@ -9514,16 +9544,23 @@ export type TournamentCategory = {
   bracketSize?: Maybe<Scalars['Int']['output']>;
   completedMatchCount: Scalars['Int']['output'];
   createdAt: Scalars['DateTime']['output'];
+  /** Short description for landing page */
+  description?: Maybe<Scalars['String']['output']>;
   /** Display order within tournament */
   displayOrder?: Maybe<Scalars['Int']['output']>;
   format: TournamentFormat;
   gender: TournamentGender;
   /** Groups count (GROUP_KNOCKOUT) */
   groupCount?: Maybe<Scalars['Int']['output']>;
+  /** IonIcon name (e.g. people-outline) */
+  icon?: Maybe<Scalars['String']['output']>;
   matchCount: Scalars['Int']['output'];
   matchType: MatchType;
   /** Max registrations (0 = unlimited) */
   maxRegistrations?: Maybe<Scalars['Int']['output']>;
+  /** Highlight this category on landing */
+  popular?: Maybe<Scalars['Boolean']['output']>;
+  prizes?: Maybe<Array<TournamentPrize>>;
   registeredCount: Scalars['Int']['output'];
   /** Scoring rules for this category */
   scoringConfig: ScoringConfig;
@@ -9575,30 +9612,6 @@ export type TournamentCourtInput = {
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type TournamentFacility = {
-  __typename?: 'TournamentFacility';
-  icon?: Maybe<Scalars['String']['output']>;
-  label: Scalars['String']['output'];
-};
-
-export type TournamentFacilityInput = {
-  icon?: InputMaybe<Scalars['String']['input']>;
-  label: Scalars['String']['input'];
-};
-
-export type TournamentSchedulePhase = {
-  __typename?: 'TournamentSchedulePhase';
-  date?: Maybe<Scalars['String']['output']>;
-  label: Scalars['String']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-};
-
-export type TournamentSchedulePhaseInput = {
-  date?: InputMaybe<Scalars['String']['input']>;
-  label: Scalars['String']['input'];
-  status?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type TournamentDates = {
   __typename?: 'TournamentDates';
   /** Tournament end date */
@@ -9616,6 +9629,19 @@ export type TournamentDatesInput = {
   registrationCloseDate?: InputMaybe<Scalars['String']['input']>;
   registrationOpenDate?: InputMaybe<Scalars['String']['input']>;
   startDate: Scalars['String']['input'];
+};
+
+export type TournamentFacility = {
+  __typename?: 'TournamentFacility';
+  /** Icon name */
+  icon?: Maybe<Scalars['String']['output']>;
+  /** Facility label (e.g. Bãi đỗ xe) */
+  label: Scalars['String']['output'];
+};
+
+export type TournamentFacilityInput = {
+  icon?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
 };
 
 export type TournamentFee = {
@@ -9788,6 +9814,10 @@ export type TournamentRegistration = {
   paymentAmount?: Maybe<Scalars['Float']['output']>;
   paymentProofUrl?: Maybe<Scalars['String']['output']>;
   paymentStatus: TournamentPaymentStatus;
+  /** Participant phone number */
+  phone?: Maybe<Scalars['String']['output']>;
+  /** User who submitted this registration */
+  registeredByUserId: Scalars['ID']['output'];
   registrationStatus: RegistrationStatus;
   rejectionReason?: Maybe<Scalars['String']['output']>;
   reviewedAt?: Maybe<Scalars['DateTime']['output']>;
@@ -9810,6 +9840,28 @@ export type TournamentRule = {
 export type TournamentRuleInput = {
   content?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
+};
+
+export type TournamentSchedulePhase = {
+  __typename?: 'TournamentSchedulePhase';
+  /** Phase date (YYYY-MM-DD or ISO 8601) */
+  date?: Maybe<Scalars['String']['output']>;
+  /** End time (HH:mm or "sáng", "chiều") */
+  endTime?: Maybe<Scalars['String']['output']>;
+  /** Phase label (e.g. Vòng bảng) */
+  label: Scalars['String']['output'];
+  /** Start time (HH:mm or "sáng", "chiều") */
+  startTime?: Maybe<Scalars['String']['output']>;
+  /** upcoming | active | completed */
+  status?: Maybe<Scalars['String']['output']>;
+};
+
+export type TournamentSchedulePhaseInput = {
+  date?: InputMaybe<Scalars['String']['input']>;
+  endTime?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
+  startTime?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum TournamentSortBy {
@@ -9881,13 +9933,17 @@ export type UnpinMessageInput = {
 export type UpdateCategoryInput = {
   advancingPerGroup?: InputMaybe<Scalars['Int']['input']>;
   ageLabel?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
   format?: InputMaybe<TournamentFormat>;
   gender?: InputMaybe<TournamentGender>;
   groupCount?: InputMaybe<Scalars['Int']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   matchType?: InputMaybe<MatchType>;
   maxRegistrations?: InputMaybe<Scalars['Int']['input']>;
+  popular?: InputMaybe<Scalars['Boolean']['input']>;
+  prizes?: InputMaybe<Array<TournamentPrizeInput>>;
   scoringConfig?: InputMaybe<ScoringConfigInput>;
   seedCount?: InputMaybe<Scalars['Int']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
@@ -10221,13 +10277,15 @@ export type UpdateReportStatusInput = {
 export type UpdateTournamentInput = {
   contacts?: InputMaybe<Array<TournamentContactInput>>;
   courts?: InputMaybe<Array<TournamentCourtInput>>;
-  facilities?: InputMaybe<Array<TournamentFacilityInput>>;
   coverImage?: InputMaybe<Scalars['String']['input']>;
   dates?: InputMaybe<TournamentDatesInput>;
   description?: InputMaybe<Scalars['String']['input']>;
+  facilities?: InputMaybe<Array<TournamentFacilityInput>>;
   highlights?: InputMaybe<Array<Scalars['String']['input']>>;
   id: Scalars['ID']['input'];
+  introduction?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<TournamentLocationInput>;
+  organizerName?: InputMaybe<Scalars['String']['input']>;
   paymentInfo?: InputMaybe<TournamentPaymentInfoInput>;
   prizes?: InputMaybe<Array<TournamentPrizeInput>>;
   rules?: InputMaybe<Array<TournamentRuleInput>>;
@@ -10372,6 +10430,13 @@ export type UploadResponse = {
   url: Scalars['String']['output'];
   /** Updated user object */
   user: User;
+};
+
+export type UploadTournamentImageInput = {
+  /** Base64 encoded image data */
+  base64Image: Scalars['String']['input'];
+  /** Tournament ID (used for storage path organisation) */
+  tournamentId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UploadVenueImageInput = {
@@ -11172,15 +11237,15 @@ export type VerifyOtpInput = {
   verificationId: Scalars['String']['input'];
 };
 
-export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
+export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
 
-export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
+export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
 
-export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
+export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
 
 export type MatchCoreFragment = { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, avatarUrl?: string | null, seed?: number | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, avatarUrl?: string | null, seed?: number | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null };
 
-export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string };
+export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string };
 
 export type ScorecardCoreFragment = { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
 
@@ -11243,70 +11308,77 @@ export type CreateTournamentMutationVariables = Exact<{
 }>;
 
 
-export type CreateTournamentMutation = { __typename?: 'Mutation', createTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type CreateTournamentMutation = { __typename?: 'Mutation', createTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type UpdateTournamentMutationVariables = Exact<{
   input: UpdateTournamentInput;
 }>;
 
 
-export type UpdateTournamentMutation = { __typename?: 'Mutation', updateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type UpdateTournamentMutation = { __typename?: 'Mutation', updateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type PublishTournamentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type PublishTournamentMutation = { __typename?: 'Mutation', publishTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type PublishTournamentMutation = { __typename?: 'Mutation', publishTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type OpenRegistrationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type OpenRegistrationMutation = { __typename?: 'Mutation', openRegistration: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type OpenRegistrationMutation = { __typename?: 'Mutation', openRegistration: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type CloseRegistrationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type CloseRegistrationMutation = { __typename?: 'Mutation', closeRegistration: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type CloseRegistrationMutation = { __typename?: 'Mutation', closeRegistration: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type StartTournamentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type StartTournamentMutation = { __typename?: 'Mutation', startTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type StartTournamentMutation = { __typename?: 'Mutation', startTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type CompleteTournamentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type CompleteTournamentMutation = { __typename?: 'Mutation', completeTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type CompleteTournamentMutation = { __typename?: 'Mutation', completeTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type CancelTournamentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type CancelTournamentMutation = { __typename?: 'Mutation', cancelTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type CancelTournamentMutation = { __typename?: 'Mutation', cancelTournament: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+
+export type DeleteTournamentMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteTournamentMutation = { __typename?: 'Mutation', deleteTournament: { __typename?: 'SuccessResponse', success: boolean, message: string } };
 
 export type CreateCategoryMutationVariables = Exact<{
   input: CreateCategoryInput;
 }>;
 
 
-export type CreateCategoryMutation = { __typename?: 'Mutation', createCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
+export type CreateCategoryMutation = { __typename?: 'Mutation', createCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
 
 export type UpdateCategoryMutationVariables = Exact<{
   input: UpdateCategoryInput;
 }>;
 
 
-export type UpdateCategoryMutation = { __typename?: 'Mutation', updateCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
+export type UpdateCategoryMutation = { __typename?: 'Mutation', updateCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
 
 export type DeleteCategoryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -11320,14 +11392,14 @@ export type ApproveRegistrationMutationVariables = Exact<{
 }>;
 
 
-export type ApproveRegistrationMutation = { __typename?: 'Mutation', approveRegistration: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
+export type ApproveRegistrationMutation = { __typename?: 'Mutation', approveRegistration: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
 
 export type RejectRegistrationMutationVariables = Exact<{
   input: RejectRegistrationInput;
 }>;
 
 
-export type RejectRegistrationMutation = { __typename?: 'Mutation', rejectRegistration: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
+export type RejectRegistrationMutation = { __typename?: 'Mutation', rejectRegistration: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
 
 export type BulkApproveRegistrationsMutationVariables = Exact<{
   input: BulkRegistrationActionInput;
@@ -11348,7 +11420,7 @@ export type UpdatePaymentStatusMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePaymentStatusMutation = { __typename?: 'Mutation', updatePaymentStatus: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
+export type UpdatePaymentStatusMutation = { __typename?: 'Mutation', updatePaymentStatus: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
 
 export type GenerateBracketMutationVariables = Exact<{
   input: GenerateBracketInput;
@@ -11447,6 +11519,13 @@ export type TournamentStatusChangedSubscriptionVariables = Exact<{
 
 
 export type TournamentStatusChangedSubscription = { __typename?: 'Subscription', tournamentStatusChanged: string };
+
+export type UploadTournamentImageMutationVariables = Exact<{
+  input: UploadTournamentImageInput;
+}>;
+
+
+export type UploadTournamentImageMutation = { __typename?: 'Mutation', uploadTournamentImage: { __typename?: 'UploadPostMediaResponse', url: string, key: string } };
 
 export type AdminGetUsersQueryVariables = Exact<{
   role?: InputMaybe<UserRole>;
@@ -11570,21 +11649,21 @@ export type GetMyTournamentsQueryVariables = Exact<{
 }>;
 
 
-export type GetMyTournamentsQuery = { __typename?: 'Query', myTournaments: { __typename?: 'TournamentList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, tournaments: Array<{ __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null }> } };
+export type GetMyTournamentsQuery = { __typename?: 'Query', myTournaments: { __typename?: 'TournamentList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, tournaments: Array<{ __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null }> } };
 
 export type GetTournamentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetTournamentQuery = { __typename?: 'Query', tournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type GetTournamentQuery = { __typename?: 'Query', tournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type GetTournamentCategoriesQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
 }>;
 
 
-export type GetTournamentCategoriesQuery = { __typename?: 'Query', tournamentCategories: Array<{ __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } }> };
+export type GetTournamentCategoriesQuery = { __typename?: 'Query', tournamentCategories: Array<{ __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } }> };
 
 export type GetTournamentRegistrationsQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
@@ -11593,7 +11672,7 @@ export type GetTournamentRegistrationsQueryVariables = Exact<{
 }>;
 
 
-export type GetTournamentRegistrationsQuery = { __typename?: 'Query', tournamentRegistrations: { __typename?: 'RegistrationList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, registrations: Array<{ __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string }> } };
+export type GetTournamentRegistrationsQuery = { __typename?: 'Query', tournamentRegistrations: { __typename?: 'RegistrationList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, registrations: Array<{ __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string }> } };
 
 export type GetTournamentBracketQueryVariables = Exact<{
   categoryId: Scalars['ID']['input'];

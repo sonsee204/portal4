@@ -25,6 +25,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const type = props.type ?? 'text';
+    const effectiveRightIcon =
+      rightIcon ??
+      (type === 'date'
+        ? 'calendar-outline'
+        : type === 'time'
+          ? 'time-outline'
+          : undefined);
+    const rightPadding = effectiveRightIcon ? 'pr-10' : 'pr-3';
+
     const input = (
       <div className="relative">
         {leftIcon && (
@@ -43,12 +53,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               ? 'border-red-500 focus-visible:ring-red-500'
               : 'border-surface-border',
             leftIcon ? 'pl-10' : 'px-3',
-            rightIcon ? 'pr-10' : 'pr-3',
+            rightPadding,
             className
           )}
           {...props}
         />
-        {rightIcon &&
+        {effectiveRightIcon &&
           (onRightIconClick ? (
             <button
               type="button"
@@ -57,11 +67,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               tabIndex={0}
               aria-label={undefined}
             >
-              <IonIcon name={rightIcon} size="sm" />
+              <IonIcon name={effectiveRightIcon} size="sm" />
             </button>
           ) : (
-            <div className="text-faint pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <IonIcon name={rightIcon} size="sm" />
+            <div className="text-faint pointer-events-none absolute inset-y-0 right-0 flex w-10 items-center justify-center">
+              <IonIcon name={effectiveRightIcon} size="sm" />
             </div>
           ))}
       </div>

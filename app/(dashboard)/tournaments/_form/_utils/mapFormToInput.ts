@@ -65,10 +65,22 @@ export function mapCategoryEntryToInput(
     tournamentId,
     title: entry.title,
     ageLabel: entry.ageLabel || undefined,
+    description: entry.description || undefined,
+    icon: entry.icon || undefined,
     matchType: MATCH_TYPE_MAP[entry.matchType] ?? MatchType.Singles,
     format: TournamentFormat.SingleElimination,
     gender: TournamentGender.Open,
     scoringConfig: DEFAULT_SCORING_CONFIG[sport] ?? DEFAULT_SCORING_CONFIG.badminton,
+    popular: entry.popular,
+    maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
+    prizes: (entry.prizes ?? [])
+      .filter((p) => p.title)
+      .map((p, i) => ({
+        rank: p.rank || (i < 3 ? ['gold', 'silver', 'bronze'][i] : String(i + 1)),
+        title: p.title,
+        amount: p.amount || undefined,
+        perks: p.perks.filter(Boolean).length > 0 ? p.perks.filter(Boolean) : undefined,
+      })),
   };
 }
 
@@ -90,7 +102,9 @@ export function mapFormToCreateInput(data: TournamentFormData): CreateTournament
   return {
     title: data.name,
     sportType: SPORT_MAP[data.sport] ?? SportType.Badminton,
+    organizerName: data.organizerName?.trim() || undefined,
     description: data.description || undefined,
+    introduction: data.introduction?.trim() || undefined,
     coverImage: data.coverImageUrl || undefined,
     highlights: data.highlights.filter(Boolean).length > 0
       ? data.highlights.filter(Boolean)
@@ -107,14 +121,6 @@ export function mapFormToCreateInput(data: TournamentFormData): CreateTournament
     rules: data.rules
       .filter((r) => r.title)
       .map((r) => ({ title: r.title, content: r.content || undefined })),
-    prizes: data.prizes
-      .filter((p) => p.title)
-      .map((p) => ({
-        rank: p.rank,
-        title: p.title,
-        amount: p.amount || undefined,
-        perks: p.perks.filter(Boolean).length > 0 ? p.perks.filter(Boolean) : undefined,
-      })),
     contacts: data.contacts
       .filter((c) => c.value)
       .map((c) => ({ icon: c.icon || undefined, label: c.label, value: c.value })),
@@ -126,7 +132,13 @@ export function mapFormToCreateInput(data: TournamentFormData): CreateTournament
       .map((f) => ({ label: f.label, icon: f.icon || undefined })),
     schedule: data.schedule
       .filter((s) => s.label)
-      .map((s) => ({ label: s.label, date: s.date || undefined, status: s.status || undefined })),
+      .map((s) => ({
+        label: s.label,
+        date: s.date || undefined,
+        startTime: s.startTime?.trim() || undefined,
+        endTime: s.endTime?.trim() || undefined,
+        status: s.status || undefined,
+      })),
     paymentInfo: (data.paymentBank || data.paymentAccountNumber || data.fees.some((f) => f.label && f.amount))
       ? {
         bank: data.paymentBank || undefined,
@@ -154,6 +166,7 @@ export function mapFormToUpdateInput(
 export function mapTournamentToFormData(tournament: Tournament): TournamentFormData {
   return {
     name: tournament.title,
+    organizerName: tournament.organizerName ?? '',
     sport: SPORT_MAP_REVERSE[tournament.sportType] ?? 'badminton',
     startDate: tournament.dates?.startDate
       ? new Date(tournament.dates.startDate).toISOString().split('T')[0]
@@ -164,6 +177,7 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
     locationName: tournament.location?.name ?? '',
     locationAddress: tournament.location?.address ?? '',
     description: tournament.description ?? '',
+    introduction: (tournament as { introduction?: string }).introduction ?? '',
     coverImageUrl: tournament.coverImage ?? '',
     highlights: tournament.highlights?.length ? tournament.highlights : [''],
 
@@ -176,9 +190,11 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
       ? tournament.schedule.map((s) => ({
         label: s.label,
         date: s.date ?? '',
+        startTime: (s as { startTime?: string }).startTime ?? '',
+        endTime: (s as { endTime?: string }).endTime ?? '',
         status: (s.status as 'upcoming' | 'active' | 'completed') ?? 'upcoming',
       }))
-      : [{ label: 'Đăng ký', date: '', status: 'upcoming' as const }]),
+      : [{ label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' as const }]),
     venueName: tournament.location?.name ?? '',
     venueAddress: tournament.location?.address ?? '',
     facilities: tournament.facilities?.map((f) => ({ icon: f.icon ?? '', label: f.label })) ?? [],
@@ -192,15 +208,17 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
       content: r.content ?? '',
     })) ?? [{ title: '', content: '' }],
 
-    prizes: tournament.prizes?.map((p) => ({
-      rank: (p.rank as 'gold' | 'silver' | 'bronze') ?? 'gold',
-      title: p.title,
-      amount: p.amount ?? '',
-      perks: p.perks?.length ? p.perks : [''],
-    })) ?? [
-        { rank: 'gold' as const, title: 'Giải Nhất', amount: '', perks: [''] },
-        { rank: 'silver' as const, title: 'Giải Nhì', amount: '', perks: [''] },
-        { rank: 'bronze' as const, title: 'Giải Ba', amount: '', perks: [''] },
+    prizes: tournament.prizes?.length
+      ? tournament.prizes.map((p, i) => ({
+        rank: p.rank ?? (i < 3 ? ['gold', 'silver', 'bronze'][i] : String(i + 1)),
+        title: p.title,
+        amount: p.amount ?? '',
+        perks: p.perks?.length ? p.perks : [''],
+      }))
+      : [
+        { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
+        { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
+        { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
       ],
 
     registrationDeadline: tournament.dates?.registrationCloseDate

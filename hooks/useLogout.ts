@@ -16,7 +16,7 @@ import { AUTH } from '@/lib/strings';
  * 2. Clear Apollo Client cache
  * 3. Clear Zustand auth store
  * 4. Clear the in-memory access token
- * 5. Show toast + redirect to /login
+ * 5. Show toast + redirect to /login (portal requires auth for all routes)
  */
 export function useLogout() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -50,7 +50,6 @@ export function useLogout() {
     setClientAccessToken(null);
 
     showSuccess(AUTH.LOGOUT.SUCCESS);
-
     router.push('/login');
   }, [isLoggingOut, apolloClient, router]);
 

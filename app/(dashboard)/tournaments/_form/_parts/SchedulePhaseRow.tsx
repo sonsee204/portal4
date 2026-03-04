@@ -18,8 +18,6 @@ interface SchedulePhaseRowProps {
   status: 'upcoming' | 'active' | 'completed';
   onRemove: () => void;
   canRemove: boolean;
-  minDate?: string;
-  maxDate?: string;
 }
 
 export function SchedulePhaseRow({
@@ -28,8 +26,6 @@ export function SchedulePhaseRow({
   status,
   onRemove,
   canRemove,
-  minDate,
-  maxDate,
 }: SchedulePhaseRowProps) {
   return (
     <div className="group flex items-center gap-3">
@@ -37,8 +33,8 @@ export function SchedulePhaseRow({
         className={cn('h-3 w-3 shrink-0 rounded-full', statusColors[status])}
       />
 
-      <div className="flex flex-1 items-center gap-3">
-        <div className="flex-1">
+      <div className="flex flex-1 flex-wrap items-center gap-3">
+        <div className="min-w-[140px] flex-1">
           <Controller
             name={`schedule.${index}.label`}
             control={control}
@@ -47,7 +43,7 @@ export function SchedulePhaseRow({
             )}
           />
         </div>
-        <div className="w-44">
+        <div className="min-w-[10rem] w-40">
           <Controller
             name={`schedule.${index}.date`}
             control={control}
@@ -55,9 +51,33 @@ export function SchedulePhaseRow({
               <Input
                 {...field}
                 type="date"
-                min={minDate}
-                max={maxDate}
                 error={fieldState.error?.message}
+              />
+            )}
+          />
+        </div>
+        <div className="w-28">
+          <Controller
+            name={`schedule.${index}.startTime`}
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                type="time"
+                placeholder="Bắt đầu"
+              />
+            )}
+          />
+        </div>
+        <div className="w-28">
+          <Controller
+            name={`schedule.${index}.endTime`}
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                type="time"
+                placeholder="Kết thúc"
               />
             )}
           />

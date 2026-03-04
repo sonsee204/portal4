@@ -11,6 +11,7 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { IconButton } from '@/components/atoms/IconButton';
+import { formatCurrency } from '@/lib/utils';
 import { mockTransactions } from '@/lib/mock-data';
 import type { TransactionStatus } from '@/types/mock';
 
@@ -107,7 +108,7 @@ export default function FinancePage() {
                 key={t._id}
                 className="border-surface-border hover:bg-surface-hover border-b transition-colors"
               >
-                <td className="px-4 py-3 font-mono text-xs text-muted">
+                <td className="text-muted px-4 py-3 font-mono text-xs">
                   {t._id}
                 </td>
                 <td className="px-4 py-3">
@@ -122,13 +123,10 @@ export default function FinancePage() {
                     }
                   >
                     {t.type === 'deposit' ? '+' : '-'}
-                    {new Intl.NumberFormat('vi-VN').format(
-                      Math.abs(t.amount)
-                    )}{' '}
-                    ₫
+                    {formatCurrency(Math.abs(t.amount))}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-muted">
+                <td className="text-muted px-4 py-3 text-xs">
                   <div>{t.date}</div>
                   <div className="text-faint">{t.time}</div>
                 </td>

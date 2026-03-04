@@ -81,6 +81,9 @@ export function StepReview({
         onEdit={onGoToStep}
       >
         <ReviewField label="Tên giải" value={data.name} />
+        {data.organizerName && (
+          <ReviewField label="Đơn vị ban tổ chức" value={data.organizerName} />
+        )}
         <ReviewField label="Môn" value={sportLabel} />
         <ReviewField
           label="Ngày"
@@ -95,6 +98,11 @@ export function StepReview({
         {data.description && (
           <p className="text-muted mt-1 line-clamp-3 text-xs">
             {data.description}
+          </p>
+        )}
+        {data.introduction && (
+          <p className="text-muted mt-1 line-clamp-3 text-xs">
+            {data.introduction}
           </p>
         )}
         {data.highlights.filter(Boolean).length > 0 && (
@@ -175,7 +183,12 @@ export function StepReview({
                 <div key={i} className="flex items-center gap-2 text-xs">
                   <span className="bg-primary h-1.5 w-1.5 rounded-full" />
                   <span className="text-heading font-medium">{s.label}</span>
-                  <span className="text-muted">{s.date}</span>
+                  <span className="text-muted">
+                    {s.date}
+                    {s.startTime || s.endTime
+                      ? ` • ${s.startTime || '—'} - ${s.endTime || '—'}`
+                      : ''}
+                  </span>
                 </div>
               ))}
             </div>
@@ -239,38 +252,69 @@ export function StepReview({
             </div>
           </div>
         )}
-        {data.prizes.length > 0 && (
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            {data.prizes.map((p) => (
-              <div
-                key={p.rank}
-                className="border-surface-border bg-overlay-faint rounded-lg border p-3 text-center"
-              >
-                <IonIcon
-                  name={
-                    p.rank === 'gold'
-                      ? 'trophy-outline'
-                      : p.rank === 'silver'
-                        ? 'medal-outline'
-                        : 'ribbon-outline'
-                  }
-                  size="md"
-                  className={
-                    p.rank === 'gold'
-                      ? 'text-amber-500'
-                      : p.rank === 'silver'
-                        ? 'text-slate-400'
-                        : 'text-orange-400'
-                  }
-                />
-                <p className="text-heading mt-1 text-xs font-bold">{p.title}</p>
-                <p className="text-primary text-sm font-semibold">
-                  {p.amount ? displayVND(p.amount) : '—'}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        {(() => {
+          const categoriesWithPrizes = tournamentId
+            ? (apiCategories ?? []).filter((c) => (c.prizes?.length ?? 0) > 0)
+            : (data.categories ?? []).filter(
+                (c) => (c.prizes?.length ?? 0) > 0
+              );
+          if (categoriesWithPrizes.length === 0) return null;
+          return (
+            <div className="mt-3 space-y-4">
+              {categoriesWithPrizes.map((cat, ci) => (
+                <div key={(cat as { _id?: string })._id ?? `cat-${ci}`}>
+                  <span className="text-muted mb-2 block text-xs font-medium">
+                    {(cat as { title?: string }).title}
+                  </span>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {(
+                      (
+                        cat as {
+                          prizes?: {
+                            rank: string;
+                            title: string;
+                            amount?: string;
+                          }[];
+                        }
+                      ).prizes ?? []
+                    ).map((p, i) => {
+                      const icon =
+                        p.rank === 'gold'
+                          ? 'trophy-outline'
+                          : p.rank === 'silver'
+                            ? 'medal-outline'
+                            : p.rank === 'bronze'
+                              ? 'ribbon-outline'
+                              : 'star-outline';
+                      const color =
+                        p.rank === 'gold'
+                          ? 'text-amber-500'
+                          : p.rank === 'silver'
+                            ? 'text-slate-400'
+                            : p.rank === 'bronze'
+                              ? 'text-orange-400'
+                              : 'text-slate-500';
+                      return (
+                        <div
+                          key={`${p.rank}-${i}`}
+                          className="border-surface-border bg-overlay-faint rounded-lg border p-3 text-center"
+                        >
+                          <IonIcon name={icon} size="md" className={color} />
+                          <p className="text-heading mt-1 text-xs font-bold">
+                            {p.title}
+                          </p>
+                          <p className="text-primary text-sm font-semibold">
+                            {p.amount ? displayVND(p.amount) : '—'}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </ReviewSection>
 
       {/* Registration */}

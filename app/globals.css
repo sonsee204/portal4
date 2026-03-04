@@ -178,6 +178,28 @@ body {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
+/* Hide native date/time picker icon — use custom icon instead for alignment */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  background: none;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 2.5rem;
+  height: 100%;
+  cursor: pointer;
+}
+input[type='date']::-moz-calendar-picker-indicator,
+input[type='time']::-moz-calendar-picker-indicator {
+  background: none;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 2.5rem;
+  height: 100%;
+  cursor: pointer;
+}
+
 /* ------------------------------------------------------------------ */
 /* Glassmorphism Utilities                                             */
 /* ------------------------------------------------------------------ */

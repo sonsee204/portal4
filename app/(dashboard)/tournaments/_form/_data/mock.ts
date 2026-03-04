@@ -24,6 +24,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'single',
       icon: 'person-outline',
       description: 'Dành cho học sinh khối tiểu học, mới bắt đầu làm quen với thi đấu.',
+      popular: true,
+      maxRegistrations: 32,
     },
     {
       title: 'Đơn Nữ U11',
@@ -31,6 +33,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'single',
       icon: 'person-outline',
       description: 'Dành cho học sinh nữ khối tiểu học.',
+      popular: false,
+      maxRegistrations: 24,
     },
     {
       title: 'Đơn Nam 12-13',
@@ -38,6 +42,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'single',
       icon: 'school-outline',
       description: 'Dành cho học sinh khối 6, 7. Cạnh tranh cao và kỹ thuật cơ bản tốt.',
+      popular: false,
+      maxRegistrations: 32,
     },
     {
       title: 'Đôi Nam Nữ 12-13',
@@ -45,6 +51,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'mixed',
       icon: 'people-outline',
       description: 'Nội dung đôi nam nữ cho học sinh khối 6, 7.',
+      popular: false,
+      maxRegistrations: 16,
     },
     {
       title: 'Đơn Nam 14-15',
@@ -52,6 +60,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'single',
       icon: 'fitness-outline',
       description: 'Dành cho học sinh khối 8, 9. Trình độ chuyên môn và thể lực cao.',
+      popular: false,
+      maxRegistrations: 32,
     },
     {
       title: 'Đơn Nữ 14-15',
@@ -59,6 +69,8 @@ export const mockTournamentFormData: TournamentFormData = {
       matchType: 'single',
       icon: 'fitness-outline',
       description: 'Dành cho học sinh nữ khối 8, 9.',
+      popular: false,
+      maxRegistrations: 24,
     },
   ],
 
@@ -138,4 +150,5 @@ export const mockTournamentFormData: TournamentFormData = {
   paymentBank: 'Ngân hàng MB Bank',
   paymentAccountNumber: '0333 444 555',
   paymentAccountName: 'NGUYEN VAN A',
+  paymentQrImage: '',
 };

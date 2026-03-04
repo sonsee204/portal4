@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { useAuthStore } from '@/stores/auth';
 import { Input } from '@/components/atoms/Input';
 import { Textarea } from '@/components/atoms/Textarea';
 import { Button } from '@/components/atoms/Button';
@@ -16,8 +18,16 @@ interface StepBasicInfoProps {
 }
 
 export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
-  const { control, watch } = form;
+  const { control, watch, setValue } = form;
   const startDate = watch('startDate');
+  const organizerName = watch('organizerName');
+  const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    if (!tournamentId && !organizerName && user?.fullName) {
+      setValue('organizerName', user.fullName);
+    }
+  }, [tournamentId, organizerName, user?.fullName, setValue]);
 
   const {
     fields: highlightFields,
@@ -46,6 +56,20 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
                 label="Tên giải đấu"
                 placeholder="VD: Giải Cầu lông Mùa Đông 2026"
                 leftIcon="trophy-outline"
+                error={fieldState.error?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="organizerName"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Input
+                {...field}
+                label="Đơn vị ban tổ chức"
+                placeholder="VD: Liên đoàn cầu lông VN, Trường THCS Nhị Khê"
+                leftIcon="business-outline"
                 error={fieldState.error?.message}
               />
             )}
@@ -149,7 +173,7 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
         </div>
       </GlassPanel>
 
-      {/* Description */}
+      {/* Description & Introduction */}
       <GlassPanel card>
         <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">
           <IonIcon
@@ -157,7 +181,7 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
             size="sm"
             className="text-primary"
           />
-          Mô tả
+          Mô tả & Giới thiệu
         </h3>
         <div className="space-y-4">
           <Controller
@@ -166,9 +190,21 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
             render={({ field }) => (
               <Textarea
                 {...field}
-                label="Mô tả giải đấu"
-                placeholder="Thông tin thêm về giải đấu..."
-                rows={4}
+                label="Mô tả ngắn (trang landing)"
+                placeholder="Mô tả ngắn gọn hiển thị trên trang landing..."
+                rows={3}
+              />
+            )}
+          />
+          <Controller
+            name="introduction"
+            control={control}
+            render={({ field }) => (
+              <Textarea
+                {...field}
+                label="Giới thiệu chi tiết (trang tổng quan)"
+                placeholder="Nội dung giới thiệu chi tiết hiển thị trên tab Tổng quan..."
+                rows={5}
               />
             )}
           />

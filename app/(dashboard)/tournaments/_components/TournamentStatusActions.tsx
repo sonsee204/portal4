@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/atoms/Button';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import {
@@ -74,6 +75,12 @@ export function TournamentStatusActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        <Link href={`/tournaments/${tournamentId}/registrations`}>
+          <Button size="sm" variant="outline" iconLeft="people-outline">
+            Quản lý đăng ký
+          </Button>
+        </Link>
+
         {status === 'DRAFT' && (
           <Button
             size="sm"
