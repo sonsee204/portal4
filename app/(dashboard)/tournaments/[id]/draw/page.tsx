@@ -14,6 +14,36 @@ import {
   useResetBracket,
 } from '@/hooks/tournament';
 
+function categoryStatusLabel(status?: string): {
+  text: string;
+  className: string;
+} | null {
+  switch (status) {
+    case 'DRAW_PENDING':
+      return {
+        text: 'Chờ bốc thăm',
+        className: 'bg-amber-500/10 text-amber-400',
+      };
+    case 'DRAW_COMPLETED':
+      return {
+        text: 'Đã bốc thăm',
+        className: 'bg-blue-500/10 text-blue-400',
+      };
+    case 'IN_PROGRESS':
+      return {
+        text: 'Đang thi đấu',
+        className: 'bg-emerald-500/10 text-emerald-400',
+      };
+    case 'COMPLETED':
+      return {
+        text: 'Hoàn thành',
+        className: 'bg-slate-500/10 text-slate-400',
+      };
+    default:
+      return null;
+  }
+}
+
 export default function DrawPage({
   params,
 }: {
@@ -24,16 +54,23 @@ export default function DrawPage({
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
-  const { categories, loading: cLoading } =
-    useTournamentCategories(tournamentId);
+  const {
+    categories,
+    loading: cLoading,
+    refetch: refetchCategories,
+  } = useTournamentCategories(tournamentId);
   const activeCategoryId = selectedCategoryId || categories[0]?._id || '';
+  const activeCategory = categories.find((c) => c._id === activeCategoryId);
   const {
     matches,
     loading: bLoading,
     refetch,
   } = useTournamentBracket(activeCategoryId, !activeCategoryId);
 
-  const onSuccess = useCallback(() => void refetch(), [refetch]);
+  const onSuccess = useCallback(() => {
+    void refetch();
+    void refetchCategories();
+  }, [refetch, refetchCategories]);
   const { generateBracket, loading: generating } = useGenerateBracket({
     onSuccess,
   });
@@ -56,6 +93,8 @@ export default function DrawPage({
     }
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   }, [matches]);
+
+  const statusBadge = categoryStatusLabel(activeCategory?.status as string);
 
   if (cLoading) {
     return (
@@ -83,21 +122,41 @@ export default function DrawPage({
         </Button>
       </PageHeader>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {categories.map((cat) => (
-          <button
-            key={cat._id}
-            onClick={() => setSelectedCategoryId(cat._id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeCategoryId === cat._id
-                ? 'bg-primary text-white'
-                : 'bg-surface-elevated text-secondary hover:text-primary'
-            }`}
-          >
-            {cat.title}
-          </button>
-        ))}
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        {categories.map((cat) => {
+          const badge = categoryStatusLabel(cat.status as string);
+          return (
+            <button
+              key={cat._id}
+              onClick={() => setSelectedCategoryId(cat._id)}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                activeCategoryId === cat._id
+                  ? 'bg-primary text-white'
+                  : 'bg-surface-elevated text-secondary hover:text-primary'
+              }`}
+            >
+              {cat.title}
+              {badge && activeCategoryId !== cat._id && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${badge.className}`}
+                >
+                  {badge.text}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      {statusBadge && (
+        <div className="mt-3">
+          <span
+            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusBadge.className}`}
+          >
+            {statusBadge.text}
+          </span>
+        </div>
+      )}
 
       <div className="mt-4 flex items-center gap-3">
         <Button
