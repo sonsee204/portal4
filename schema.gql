@@ -341,6 +341,21 @@ input ApproveParticipantInput {
   userId: ID!
 }
 
+input ApproveRegistrationInput {
+  registrationId: ID!
+
+  """Optional seed number"""
+  seed: Int
+}
+
+input AssignRefereeInput {
+  matchId: ID!
+
+  """System user ID (triggers invite flow). Omit for external referees."""
+  refereeId: ID
+  refereeName: String
+}
+
 """Types of auditable actions in the system"""
 enum AuditAction {
   ACCOUNT_REGISTER
@@ -1004,6 +1019,20 @@ type BulkOperationResult {
   success: Int!
 }
 
+input BulkRegistrationActionInput {
+  registrationIds: [ID!]!
+}
+
+input BulkScheduleMatchInput {
+  items: [ScheduleMatchInput!]!
+}
+
+input BulkUnscheduleByDateInput {
+  """YYYY-MM-DD local date to clear"""
+  date: String
+  tournamentId: ID!
+}
+
 input BulkUpdateDisplayOrderInput {
   """Shop ID (for validation)"""
   shopId: ID
@@ -1141,6 +1170,16 @@ type CategorySalesPerformance {
 
   """Total revenue"""
   revenue: Int!
+}
+
+"""Status of a tournament category"""
+enum CategoryStatus {
+  COMPLETED
+  DRAW_COMPLETED
+  DRAW_PENDING
+  IN_PROGRESS
+  PENDING
+  REGISTRATION_OPEN
 }
 
 type CategoryTree {
@@ -1669,38 +1708,25 @@ input CreateBookingPassInput {
 }
 
 input CreateCategoryInput {
-  """Category color (hex code)"""
-  color: String
-
-  """Category description"""
+  """Players advancing per group"""
+  advancingPerGroup: Int
+  ageLabel: String
   description: String
-
-  """Display order"""
   displayOrder: Int
+  format: TournamentFormat! = SINGLE_ELIMINATION
+  gender: TournamentGender! = OPEN
 
-  """Category icon"""
+  """Groups count (GROUP_KNOCKOUT only)"""
+  groupCount: Int
   icon: String
-
-  """Category image URL"""
-  imageUrl: String
-
-  """Category name"""
-  name: String!
-
-  """Parent category ID"""
-  parentId: ID
-
-  """Shop ID (for shop categories)"""
-  shopId: ID
-
-  """URL-friendly slug (auto-generated if not provided)"""
-  slug: String
-
-  """Category type"""
-  type: CategoryType
-
-  """Venue ID (for venue categories)"""
-  venueId: ID
+  matchType: MatchType! = SINGLES
+  maxRegistrations: Int
+  popular: Boolean = false
+  prizes: [TournamentPrizeInput!]
+  scoringConfig: ScoringConfigInput!
+  seedCount: Int
+  title: String!
+  tournamentId: ID!
 }
 
 input CreateClaimRequestInput {
@@ -2358,6 +2384,25 @@ input CreateTemplateInput {
   visibility: GameVisibility = PUBLIC
 }
 
+input CreateTournamentInput {
+  contacts: [TournamentContactInput!]
+  courts: [TournamentCourtInput!]
+  coverImage: String
+  dates: TournamentDatesInput!
+  description: String
+  facilities: [TournamentFacilityInput!]
+  highlights: [String!]
+  introduction: String
+  location: TournamentLocationInput
+  organizerName: String
+  paymentInfo: TournamentPaymentInfoInput
+  prizes: [TournamentPrizeInput!]
+  rules: [TournamentRuleInput!]
+  schedule: [TournamentSchedulePhaseInput!]
+  sportType: SportType!
+  title: String!
+}
+
 input CreateVenueInput {
   """Advance booking days"""
   advanceBookingDays: Int = 14
@@ -2581,9 +2626,7 @@ type CustomerMetric {
   value: Float!
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
+"""DateTime custom scalar type (ISO 8601)"""
 scalar DateTime
 
 type DayPriceBreakdown {
@@ -2742,6 +2785,14 @@ input EquipmentItemInput {
 
   """Số lượng"""
   quantity: Int!
+}
+
+"""Combined input for the full draw operation"""
+input ExecuteDrawInput {
+  categoryId: ID!
+
+  """Seeds to assign before generating bracket (empty = no seeds)"""
+  seeds: [SeedPlayerInput!]! = []
 }
 
 type FavoriteResult {
@@ -2990,6 +3041,10 @@ enum GenderRestriction {
   FEMALE_PREFERRED
   MALE_ONLY
   MALE_PREFERRED
+}
+
+input GenerateBracketInput {
+  categoryId: ID!
 }
 
 type Group {
@@ -3629,6 +3684,16 @@ input LocationInput {
   displayText: String
 }
 
+input ManualMatchResultInput {
+  matchId: ID!
+
+  """Set scores [[p1,p2],[p1,p2],...]"""
+  setScores: [[Int!]!]
+
+  """Winner: 1 or 2"""
+  winner: Int!
+}
+
 type MarkAllAsReadResponse {
   """Number of notifications marked as read"""
   count: Int!
@@ -3646,6 +3711,88 @@ input MarkMvpInput {
 
   """ID MVP"""
   userId: ID!
+}
+
+type MatchCourt {
+  courtId: String
+  name: String!
+}
+
+input MatchFilterInput {
+  categoryId: String
+
+  """Filter by group ID"""
+  groupId: String
+
+  """Filter by referee ID"""
+  refereeId: String
+  round: Int
+  status: MatchStatus
+  statuses: [MatchStatus!]
+}
+
+type MatchList {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  limit: Int!
+  matches: [TournamentMatch!]!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+type MatchPlayer {
+  avatarUrl: String
+  name: String
+  registrationId: ID
+  seed: Int
+  userId: ID
+}
+
+type MatchScorecard {
+  _id: ID!
+  bestOf: Int!
+  categoryId: ID!
+  createdAt: DateTime!
+
+  """Index of the current set (0-based)"""
+  currentSetIndex: Int!
+
+  """Total elapsed seconds"""
+  elapsedSeconds: Int!
+
+  """Who is on the left side: 1 or 2"""
+  leftSidePlayer: Int
+  matchId: ID!
+  pointHistory: [PointEvent!]!
+
+  """Snapshot of scoring rules at match start"""
+  scoringConfig: ScoringConfig!
+
+  """Who is serving: 1 or 2"""
+  servingPlayer: Int
+  sets: [ScorecardSet!]!
+  status: ScorecardStatus!
+  tournamentId: ID!
+  updatedAt: DateTime!
+}
+
+"""Status of a tournament match"""
+enum MatchStatus {
+  BYE
+  CANCELLED
+  FINISHED
+  LIVE
+  NOT_STARTED
+  RETIREMENT
+  WALKOVER
+}
+
+"""Type of match (singles, doubles, or team)"""
+enum MatchType {
+  DOUBLES
+  SINGLES
+  TEAM
 }
 
 type Message {
@@ -3839,6 +3986,45 @@ type MessageReport {
   updatedAt: DateTime!
 }
 
+input MessageReportFilterInput {
+  """Filter by report status"""
+  status: ReportStatus
+}
+
+type MessageReportList {
+  """Has more reports to load"""
+  hasMore: Boolean!
+
+  """Number of items per page"""
+  limit: Int!
+
+  """Current page number"""
+  page: Int!
+
+  """List of message reports"""
+  reports: [MessageReport!]!
+
+  """Total number of reports"""
+  total: Int!
+}
+
+type MessageReportStats {
+  """Total dismissed reports"""
+  dismissedReports: Int!
+
+  """Total pending reports"""
+  pendingReports: Int!
+
+  """Total resolved reports"""
+  resolvedReports: Int!
+
+  """Total reviewed reports"""
+  reviewedReports: Int!
+
+  """Total reports"""
+  totalReports: Int!
+}
+
 """Status of message delivery"""
 enum MessageStatus {
   DELIVERED
@@ -3935,11 +4121,20 @@ type Mutation {
   """Duyệt yêu cầu tham gia"""
   approveJoinRequest(input: ApproveParticipantInput!): PickupGameParticipant!
 
+  """Approve registration"""
+  approveRegistration(input: ApproveRegistrationInput!): TournamentRegistration!
+
   """Approve a venue request (Admin only)"""
   approveVenueRequest(adminNote: String, requestId: ID!): VenueRequest!
 
   """Archive a conversation"""
   archiveConversation(conversationId: ID!): Conversation!
+
+  """Assign referee to match"""
+  assignReferee(input: AssignRefereeInput!): TournamentMatch!
+
+  """Auto-seed top players in category"""
+  autoSeedPlayers(categoryId: ID!, count: Int!): SuccessResponse!
 
   """Block a user"""
   blockUser(input: BlockUserInput!): UserBlock!
@@ -3947,11 +4142,23 @@ type Mutation {
   """Bookmark a post"""
   bookmarkPost(postId: ID!): PostBookmark!
 
+  """Bulk approve registrations"""
+  bulkApproveRegistrations(input: BulkRegistrationActionInput!): Int!
+
   """Check-in nhiều người"""
   bulkCheckIn(input: BulkCheckInInput!): [PickupGameParticipant!]!
 
   """Bulk delete products"""
   bulkDeleteProducts(input: BulkDeleteProductsInput!): BulkOperationResult!
+
+  """Bulk reject registrations"""
+  bulkRejectRegistrations(input: BulkRegistrationActionInput!): Int!
+
+  """Bulk schedule matches"""
+  bulkScheduleMatches(input: BulkScheduleMatchInput!): [TournamentMatch!]!
+
+  """Bulk unschedule all matches for a tournament on a given date"""
+  bulkUnscheduleByDate(input: BulkUnscheduleByDateInput!): Int!
 
   """Bulk update display order"""
   bulkUpdateDisplayOrder(input: BulkUpdateDisplayOrderInput!): Boolean!
@@ -3998,6 +4205,9 @@ type Mutation {
   """Cancel a single session of recurring booking"""
   cancelRecurringSession(reason: String, sessionBookingId: ID!): Booking!
 
+  """Cancel tournament"""
+  cancelTournament(id: ID!): Tournament!
+
   """Cancel a pending request"""
   cancelVenueRequest(requestId: ID!): VenueRequest!
 
@@ -4019,6 +4229,15 @@ type Mutation {
   """Clear all read notifications"""
   clearReadNotifications: Int!
 
+  """Clear referee from match"""
+  clearReferee(matchId: ID!): TournamentMatch!
+
+  """Clear all seeds for a category"""
+  clearSeeds(categoryId: ID!): SuccessResponse!
+
+  """Close registration"""
+  closeRegistration(id: ID!): Tournament!
+
   """Complete booking"""
   completeBooking(bookingId: ID!): Booking!
 
@@ -4028,8 +4247,14 @@ type Mutation {
   """Kết thúc kèo thủ công"""
   completePickupGame(gameId: ID!): PickupGame!
 
+  """Complete tournament"""
+  completeTournament(id: ID!): Tournament!
+
   """Confirm booking"""
   confirmBooking(bookingId: ID!): Booking!
+
+  """Confirm draw and transition category to IN_PROGRESS"""
+  confirmDraw(categoryId: ID!): SuccessResponse!
 
   """Confirm email update after OTP verification"""
   confirmEmailUpdate(input: ConfirmEmailUpdateInput!): SuccessResponse!
@@ -4055,8 +4280,8 @@ type Mutation {
   """Create booking pass"""
   createBookingPass(input: CreateBookingPassInput!): BookingPass!
 
-  """Create category"""
-  createCategory(input: CreateCategoryInput!): ProductCategory!
+  """Create category in tournament"""
+  createCategory(input: CreateCategoryInput!): TournamentCategory!
 
   """Submit a claim request for an unclaimed venue"""
   createClaimRequest(input: CreateClaimRequestInput!): VenueClaimRequest!
@@ -4122,6 +4347,9 @@ type Mutation {
   """
   createStaffRecurringBooking(input: CreateStaffRecurringBookingInput!): Booking!
 
+  """Create a new tournament"""
+  createTournament(input: CreateTournamentInput!): Tournament!
+
   """Create a new venue (request)"""
   createVenue(input: CreateVenueInput!): Venue!
 
@@ -4144,7 +4372,7 @@ type Mutation {
   deleteAccount(password: String!): SuccessResponse!
 
   """Delete category"""
-  deleteCategory(categoryId: ID!): Boolean!
+  deleteCategory(id: ID!): SuccessResponse!
 
   """Delete a comment"""
   deleteComment(commentId: ID!): Boolean!
@@ -4164,6 +4392,9 @@ type Mutation {
   """Delete a message"""
   deleteMessage(messageId: ID!): Boolean!
 
+  """Delete a message by admin (Admin only)"""
+  deleteMessageByAdmin(messageId: ID!): Boolean!
+
   """Delete a notification"""
   deleteNotification(notificationId: ID!): Boolean!
 
@@ -4179,6 +4410,9 @@ type Mutation {
   """Delete a promotion"""
   deletePromotion(promotionId: ID!): Boolean!
 
+  """Permanently delete a DRAFT tournament"""
+  deleteTournament(id: ID!): SuccessResponse!
+
   """Delete venue"""
   deleteVenue(venueId: ID!): Boolean!
 
@@ -4187,6 +4421,11 @@ type Mutation {
 
   """Duplicate product"""
   duplicateProduct(productId: ID!): Product!
+
+  """
+  Execute full draw: clear seeds, assign new seeds, generate bracket — all in one transaction
+  """
+  executeDraw(input: ExecuteDrawInput!): [TournamentMatch!]!
 
   """Express interest in a public pass"""
   expressInterest(message: String, passId: ID!): BookingPass!
@@ -4199,6 +4438,9 @@ type Mutation {
 
   """Forward a message"""
   forwardMessage(input: ForwardMessageInput!): [Message!]!
+
+  """Generate bracket for category"""
+  generateBracket(input: GenerateBracketInput!): [TournamentMatch!]!
 
   """Import stock for a product"""
   importStock(input: ImportStockInput!, venueId: ID!): StockMovement!
@@ -4265,6 +4507,9 @@ type Mutation {
   """Mute a conversation"""
   muteConversation(conversationId: ID!): Conversation!
 
+  """Open registration"""
+  openRegistration(id: ID!): Tournament!
+
   """Pause a promotion"""
   pausePromotion(promotionId: ID!): Promotion!
 
@@ -4282,6 +4527,9 @@ type Mutation {
   """Publish product"""
   publishProduct(productId: ID!): Product!
 
+  """Publish tournament (DRAFT -> PUBLISHED)"""
+  publishTournament(id: ID!): Tournament!
+
   """Đánh giá người tham gia"""
   rateParticipants(input: RateParticipantsInput!): Boolean!
 
@@ -4290,6 +4538,9 @@ type Mutation {
 
   """Register interest in a hold booking to get notified when it expires"""
   registerBookingInterest(bookingId: ID!): Boolean!
+
+  """Register for tournament"""
+  registerForTournament(input: RegisterTournamentInput!): TournamentRegistration!
 
   """Reject booking"""
   rejectBooking(bookingId: ID!, reason: String): Booking!
@@ -4302,6 +4553,9 @@ type Mutation {
 
   """Từ chối yêu cầu tham gia"""
   rejectJoinRequest(input: RejectParticipantInput!): Boolean!
+
+  """Reject registration"""
+  rejectRegistration(input: RejectRegistrationInput!): TournamentRegistration!
 
   """Reject a venue request (Admin only)"""
   rejectVenueRequest(rejectionReason: String!, requestId: ID!): VenueRequest!
@@ -4333,6 +4587,9 @@ type Mutation {
   """Report a post"""
   reportPost(input: ReportPostInput!): PostReport!
 
+  """Report a user"""
+  reportUser(input: ReportUserInput!): UserReport!
+
   """Request email update (validates availability, sends OTP to new email)"""
   requestEmailUpdate(input: RequestEmailUpdateInput!): EmailUpdateRequestResponse!
 
@@ -4355,8 +4612,14 @@ type Mutation {
   """
   requestPhoneUpdate(input: RequestPhoneUpdateInput!): SuccessResponse!
 
+  """Reset bracket (delete all matches)"""
+  resetBracket(categoryId: ID!): SuccessResponse!
+
   """Reset password after OTP verification via Firebase Phone Auth"""
   resetPassword(input: ResetPasswordInput!): SuccessResponse!
+
+  """Referee responds to invite (accept or decline)"""
+  respondRefereeInvite(input: RespondRefereeInviteInput!): TournamentMatch!
 
   """Process customer return"""
   returnStock(input: ReturnStockInput!, venueId: ID!): StockMovement!
@@ -4372,6 +4635,15 @@ type Mutation {
 
   """Lưu kèo"""
   saveGame(gameId: ID!): SavedGame!
+
+  """Schedule a match"""
+  scheduleMatch(input: ScheduleMatchInput!): TournamentMatch!
+
+  """Score a point"""
+  scorePoint(input: ScorePointInput!): MatchScorecard!
+
+  """Seed players in category"""
+  seedPlayers(input: SeedPlayersInput!): SuccessResponse!
 
   """Select interested user for pass (owner action)"""
   selectInterestedUser(passId: ID!, userId: ID!): BookingPass!
@@ -4397,6 +4669,9 @@ type Mutation {
   """Set typing status in a group"""
   setGroupTypingStatus(groupId: ID!, isTyping: Boolean!): Boolean!
 
+  """VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE)"""
+  setRetirement(input: SetRetirementInput!): TournamentMatch!
+
   """Login with email/phone and password"""
   signIn(input: SignInInput!): AuthResponse!
 
@@ -4412,8 +4687,14 @@ type Mutation {
   """Sign up with Firebase Phone Authentication"""
   signUpWithFirebase(input: FirebaseSignUpInput!): AuthResponse!
 
+  """Start a match and create scorecard"""
+  startMatch(input: StartMatchInput!): MatchScorecard!
+
   """Bắt đầu kèo thủ công"""
   startPickupGame(gameId: ID!): PickupGame!
+
+  """Start tournament"""
+  startTournament(id: ID!): Tournament!
 
   """Signal that user is typing"""
   startTyping(conversationId: ID!): Boolean!
@@ -4448,6 +4729,9 @@ type Mutation {
   """Hủy nhận dụng cụ"""
   unclaimEquipment(input: ClaimEquipmentInput!): PickupGame!
 
+  """Undo last point"""
+  undoLastPoint(matchId: ID!): MatchScorecard!
+
   """Bỏ theo dõi host"""
   unfollowHost(hostId: ID!): Boolean!
 
@@ -4472,6 +4756,9 @@ type Mutation {
   """Bỏ lưu kèo"""
   unsaveGame(gameId: ID!): Boolean!
 
+  """Remove schedule from match"""
+  unscheduleMatch(matchId: ID!): TournamentMatch!
+
   """Unsubscribe user from a notification topic"""
   unsubscribeUserFromTopic(topic: String!, userId: String!): TopicSubscriptionResponse!
 
@@ -4481,7 +4768,7 @@ type Mutation {
   updateAcquisitionSource(source: AcquisitionSource!): Boolean!
 
   """Update category"""
-  updateCategory(input: UpdateCategoryInput!): ProductCategory!
+  updateCategory(input: UpdateCategoryInput!): TournamentCategory!
 
   """Update a comment"""
   updateComment(commentId: ID!, input: UpdateCommentInput!): PostComment!
@@ -4498,8 +4785,14 @@ type Mutation {
   """Update a legal document (admin only)"""
   updateLegalDocument(input: UpdateLegalDocumentInput!): LegalDocument!
 
+  """Manual match result override"""
+  updateMatchResult(input: ManualMatchResultInput!): MatchScorecard!
+
   """Update a message"""
   updateMessage(input: UpdateMessageInput!): Message!
+
+  """Update message report status (Admin only)"""
+  updateMessageReportStatus(input: UpdateMessageReportStatusInput!): MessageReport!
 
   """Update internal note"""
   updateOrderInternalNote(internalNote: String!, orderId: ID!): Order!
@@ -4514,7 +4807,7 @@ type Mutation {
   updateParticipantPayment(input: UpdateParticipantPaymentInput!): PickupGameParticipant!
 
   """Update payment status"""
-  updatePaymentStatus(orderId: ID!, paymentStatus: OrderPaymentStatus!): Order!
+  updatePaymentStatus(input: UpdatePaymentStatusInput!): TournamentRegistration!
 
   """Cập nhật kèo"""
   updatePickupGame(input: UpdatePickupGameInput!): PickupGame!
@@ -4536,6 +4829,12 @@ type Mutation {
 
   """Update report status (Admin only)"""
   updateReportStatus(input: UpdateReportStatusInput!): PostReport!
+
+  """Update tournament details"""
+  updateTournament(input: UpdateTournamentInput!): Tournament!
+
+  """Update user report status (Admin only)"""
+  updateUserReportStatus(input: UpdateUserReportStatusInput!): UserReport!
 
   """Update venue"""
   updateVenue(input: UpdateVenueInput!): Venue!
@@ -4575,6 +4874,9 @@ type Mutation {
 
   """Upload product image and return URL"""
   uploadProductImage(input: UploadProductImageInput!): UploadPostMediaResponse!
+
+  """Upload tournament image (QR code, banner, etc.) and return URL"""
+  uploadTournamentImage(input: UploadTournamentImageInput!): UploadPostMediaResponse!
 
   """Upload venue image and return URL"""
   uploadVenueImage(input: UploadVenueImageInput!): UploadPostMediaResponse!
@@ -4710,6 +5012,11 @@ type NotificationData {
   """Screen to navigate to"""
   screen: String
 
+  """
+  Secondary target entity ID (e.g. tournamentId when targetId is matchId)
+  """
+  secondaryTargetId: String
+
   """Target entity ID (booking, tournament, user, etc.)"""
   targetId: String
 }
@@ -4721,6 +5028,7 @@ input NotificationDataInput {
   requesterId: String
   roleName: String
   screen: String
+  secondaryTargetId: String
   staffName: String
   targetId: String
   type: String
@@ -4765,6 +5073,7 @@ enum NotificationType {
   SOCIAL
   SYSTEM
   TOURNAMENT
+  USER_REPORT
 }
 
 type OperatingHours {
@@ -5736,6 +6045,43 @@ input PinMessageInput {
 
   """Message ID to pin"""
   messageId: ID!
+}
+
+type PlayerRanking {
+  avatarUrl: String
+  club: String
+
+  """Group stage points (3 win, 1 draw, 0 loss)"""
+  groupPoints: Int
+  matchesLost: Int!
+  matchesPlayed: Int!
+  matchesWon: Int!
+  playerName: String
+  pointsLost: Int!
+  pointsWon: Int!
+  rank: Int!
+  registrationId: ID!
+  seed: Int
+  setsLost: Int!
+  setsWon: Int!
+  winRate: Float!
+}
+
+type PointEvent {
+  id: ID!
+
+  """[player1Score, player2Score] after point"""
+  scoreAfter: [Int!]!
+
+  """Player who scored: 1 or 2"""
+  scoringPlayer: Int!
+
+  """Who was serving: 1 or 2"""
+  servingPlayer: Int!
+  setNumber: Int!
+
+  """ISO timestamp"""
+  timestamp: String!
 }
 
 type Post {
@@ -7119,6 +7465,15 @@ type Query {
   """Get inventory report for venue"""
   getInventoryReport(venueId: ID!): InventoryReport!
 
+  """Get a single message report by ID (Admin only)"""
+  getMessageReportById(reportId: ID!): MessageReport!
+
+  """Get message report statistics (Admin only)"""
+  getMessageReportStats: MessageReportStats!
+
+  """Get all message reports (Admin only)"""
+  getMessageReportsForAdmin(filter: MessageReportFilterInput, pagination: PaginationInput): MessageReportList!
+
   """Get messages in a conversation"""
   getMessages(conversationId: ID!, pagination: PaginationInput): MessageList!
 
@@ -7194,6 +7549,15 @@ type Query {
   """Get user profile by ID"""
   getUserProfile(userId: String!): User!
 
+  """Get a single user report by ID (Admin only)"""
+  getUserReportById(reportId: ID!): UserReport!
+
+  """Get user report statistics (Admin only)"""
+  getUserReportStats: UserReportStats!
+
+  """Get all user reports with filters (Admin only)"""
+  getUserReportsForAdmin(filter: UserReportFilterInput, pagination: PaginationInput): UserReportList!
+
   """Check if current user has bookmarked a post"""
   hasBookmarkedPost(postId: ID!): Boolean!
 
@@ -7202,6 +7566,9 @@ type Query {
 
   """Check if current user has reported a post"""
   hasReportedPost(postId: ID!): Boolean!
+
+  """Check if current user has reported a user"""
+  hasReportedUser(userId: String!): Boolean!
 
   """Simple health check endpoint"""
   health: String!
@@ -7233,11 +7600,20 @@ type Query {
   """Get all versions of a legal document type (admin only)"""
   legalDocumentVersions(type: LegalDocumentType!): [LegalDocument!]!
 
+  """Currently live matches"""
+  liveMatches(tournamentId: ID!): [TournamentMatch!]!
+
   """Lookup customer by phone for staff order creation"""
   lookupCustomerByPhone(phone: String!): CustomerLookup
 
   """Get low stock products"""
   lowStockProducts(shopId: ID, venueId: ID): [Product!]!
+
+  """Single match detail"""
+  matchDetail(matchId: ID!): TournamentMatch!
+
+  """Get live scorecard for a match"""
+  matchScorecard(matchId: ID!): MatchScorecard
 
   """Get current user profile"""
   me: User!
@@ -7281,8 +7657,14 @@ type Query {
   """Get my recurring bookings (customer)"""
   myRecurringBookings(pagination: PaginationInput): RecurringBookingList!
 
+  """Current user's registrations"""
+  myRegistrations(pagination: PaginationInput): RegistrationList!
+
   """Kèo đã lưu"""
   mySavedGames(pagination: PaginationInput): SavedGameList!
+
+  """My organized tournaments"""
+  myTournaments(filter: TournamentFilterInput, pagination: PaginationInput): TournamentList!
 
   """Get venue availability with user pending slots info"""
   myVenueAvailability(date: String!, venueId: ID!): VenueAvailability!
@@ -7380,6 +7762,9 @@ type Query {
   """Get recurring booking details with all sessions"""
   recurringBookingDetails(masterBookingId: ID!): RecurringBookingDetails!
 
+  """Matches assigned to current user as referee"""
+  refereeMatches(tournamentId: ID!): [TournamentMatch!]!
+
   """Search messages in a conversation"""
   searchMessages(input: SearchMessagesInput!, pagination: PaginationInput): MessageList!
 
@@ -7406,6 +7791,33 @@ type Query {
 
   """Test query for notification service"""
   testNotificationService: String!
+
+  """Get tournament by ID"""
+  tournament(id: ID!): Tournament!
+
+  """Full bracket for a category"""
+  tournamentBracket(categoryId: ID!): [TournamentMatch!]!
+
+  """Categories for a tournament"""
+  tournamentCategories(tournamentId: ID!): [TournamentCategory!]!
+
+  """Tournament matches with filters"""
+  tournamentMatches(filter: MatchFilterInput, pagination: PaginationInput, tournamentId: ID!): MatchList!
+
+  """Rankings for a category"""
+  tournamentRankings(categoryId: ID!): [PlayerRanking!]!
+
+  """List registrations for a tournament (organizer)"""
+  tournamentRegistrations(filter: RegistrationFilterInput, pagination: PaginationInput, tournamentId: ID!): RegistrationList!
+
+  """Tournament results/champions"""
+  tournamentResults(tournamentId: ID!): [TournamentChampion!]!
+
+  """Tournament statistics"""
+  tournamentStats(tournamentId: ID!): TournamentStats!
+
+  """List tournaments with filters"""
+  tournaments(filter: TournamentFilterInput, pagination: PaginationInput): TournamentList!
 
   """Get user profile by ID"""
   userProfile(userId: String!): User
@@ -7645,6 +8057,13 @@ enum RecurringFrequency {
   WEEKLY
 }
 
+"""Status of referee invitation for a match"""
+enum RefereeInviteStatus {
+  CONFIRMED
+  DECLINED
+  PENDING
+}
+
 type ReferralCode {
   _id: ID!
 
@@ -7727,6 +8146,57 @@ type RefundInfo {
   refundRequestedBy: ID
 }
 
+input RegisterTournamentInput {
+  athleteName: String!
+  categoryId: ID!
+  club: String
+  dateOfBirth: String
+  email: String
+
+  """Existing user ID when registering for another user found by phone"""
+  forUserId: ID
+  guardianName: String
+  guardianPhone: String
+  identityProofUrl: String
+
+  """true = self, false = other"""
+  isForSelf: Boolean! = true
+  notes: String
+  paymentAmount: Float
+  paymentProofUrl: String
+
+  """Participant phone number"""
+  phone: String
+  school: String
+  tournamentId: ID!
+}
+
+input RegistrationFilterInput {
+  """Filter by category ID"""
+  categoryId: String
+  paymentStatus: TournamentPaymentStatus
+  registrationStatus: RegistrationStatus
+  searchQuery: String
+}
+
+type RegistrationList {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  limit: Int!
+  page: Int!
+  registrations: [TournamentRegistration!]!
+  total: Int!
+  totalPages: Int!
+}
+
+"""Status of a tournament registration"""
+enum RegistrationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  WAITLISTED
+}
+
 input RejectParticipantInput {
   """ID kèo"""
   gameId: ID!
@@ -7736,6 +8206,11 @@ input RejectParticipantInput {
 
   """ID người chơi"""
   userId: ID!
+}
+
+input RejectRegistrationInput {
+  reason: String
+  registrationId: ID!
 }
 
 input RemoveGroupMessageReactionInput {
@@ -7779,6 +8254,17 @@ enum ReportStatus {
   PENDING
   RESOLVED
   REVIEWED
+}
+
+input ReportUserInput {
+  """Additional details"""
+  description: String
+
+  """Reason for reporting"""
+  reason: UserReportReason!
+
+  """ID of the user to report"""
+  userId: ID!
 }
 
 type RequestAmenity {
@@ -7974,6 +8460,12 @@ enum ResourceType {
   VENUE
 }
 
+input RespondRefereeInviteInput {
+  accept: Boolean!
+  matchId: ID!
+  notificationId: ID!
+}
+
 input ReturnStockInput {
   """Return reason/notes"""
   note: String
@@ -8088,6 +8580,114 @@ type SavedGameList {
   totalPages: Int!
 }
 
+input ScheduleMatchInput {
+  courtName: String
+  estimatedDurationMinutes: Int
+  matchId: ID!
+  scheduledAt: String
+}
+
+input ScorePointInput {
+  matchId: ID!
+
+  """Player who scored: 1 or 2"""
+  scoringPlayer: Int!
+}
+
+type ScoreSummary {
+  """Total sets won [p1, p2]"""
+  finalScore: [Int!]!
+
+  """Score per set"""
+  sets: [SetScoreSummary!]!
+}
+
+type ScorecardSet {
+  isComplete: Boolean!
+  player1Score: Int!
+  player2Score: Int!
+  setNumber: Int!
+
+  """1 or 2"""
+  winner: Int
+}
+
+"""Status of a match scorecard"""
+enum ScorecardStatus {
+  FINISHED
+  INTERVAL
+  IN_PROGRESS
+  MATCH_POINT
+  NOT_STARTED
+  SET_POINT
+}
+
+"""Generic scoring configuration for any sport"""
+type ScoringConfig {
+  """Best of N sets/periods"""
+  bestOf: Int!
+
+  """Score at which deuce starts"""
+  deuceAt: Int!
+
+  """Whether deuce rules apply"""
+  deuceEnabled: Boolean!
+
+  """Max points per set (0 = unlimited, win by margin)"""
+  maxPoints: Int!
+
+  """Period duration in minutes (timed sports)"""
+  periodDurationMinutes: Int!
+
+  """Number of periods (timed sports)"""
+  periodsCount: Int!
+
+  """Points to win a set (0 for timed sports)"""
+  pointsPerSet: Int!
+  scoringSystem: ScoringSystem!
+
+  """Serve rotation interval (used when serveRule = ROTATION)"""
+  serveRotationInterval: Int
+
+  """How serve changes after each point (default: RALLY_POINT)"""
+  serveRule: ServeRule
+
+  """Sets needed to win the match"""
+  setsToWin: Int!
+
+  """Whether tiebreak rules apply (tennis)"""
+  tiebreakEnabled: Boolean!
+
+  """Points to win a tiebreak"""
+  tiebreakPoints: Int!
+
+  """Must win by N points (default 2)"""
+  winByMargin: Int!
+}
+
+input ScoringConfigInput {
+  bestOf: Int!
+  deuceAt: Int! = 0
+  deuceEnabled: Boolean! = false
+  maxPoints: Int! = 0
+  periodDurationMinutes: Int! = 0
+  periodsCount: Int! = 0
+  pointsPerSet: Int!
+  scoringSystem: ScoringSystem!
+  setsToWin: Int!
+  tiebreakEnabled: Boolean! = false
+  tiebreakPoints: Int! = 0
+  winByMargin: Int! = 2
+}
+
+"""Type of scoring system used for a sport"""
+enum ScoringSystem {
+  CUSTOM
+  SETS_AND_POINTS
+  TIMED_GOALS
+  TIMED_POINTS
+}
+
 input SearchMessagesInput {
   """Conversation ID to search within"""
   conversationId: ID!
@@ -8100,6 +8700,19 @@ input SearchMessagesInput {
 
   """Filter by sender user ID"""
   senderId: ID
+}
+
+input SeedPlayerInput {
+  """Registration ID"""
+  registrationId: ID!
+
+  """Seed number (1 = top seed)"""
+  seed: Int!
+}
+
+input SeedPlayersInput {
+  categoryId: ID!
+  seeds: [SeedPlayerInput!]!
 }
 
 input SendGroupMessageInput {
@@ -8210,6 +8823,13 @@ input SendNotificationToUsersInput {
   userIds: [String!]!
 }
 
+"""How serve changes after each scored point"""
+enum ServeRule {
+  NO_SERVE
+  RALLY_POINT
+  ROTATION
+}
+
 type ServerInfo {
   environment: String!
   name: String!
@@ -8235,6 +8855,18 @@ type ServicePerformance {
 
   """Trend percentage vs previous period"""
   trend: Float!
+}
+
+input SetRetirementInput {
+  matchId: ID!
+
+  """Player who retired: 1 or 2"""
+  retiredPlayer: Int!
+}
+
+type SetScoreSummary {
+  player1: Int!
+  player2: Int!
 }
 
 input SignInInput {
@@ -8437,6 +9069,13 @@ input StackingRulesInput {
   stackableWithIds: [ID!]
 }
 
+input StartMatchInput {
+  matchId: ID!
+
+  """Initial serving player: 1 or 2"""
+  servingPlayer: Int
+}
+
 """Reason for stock adjustment"""
 enum StockAdjustmentReason {
   CORRECTION
@@ -8623,6 +9262,9 @@ type Subscription {
   """Subscribe to typing indicators in a group"""
   groupTypingStatus(groupId: ID!): GroupTypingStatusPayload!
 
+  """Score updates for a specific match"""
+  matchScoreUpdated(matchId: ID!): MatchScorecard!
+
   """Subscribe to message deletions"""
   messageDeleted(conversationId: ID!): MessageDeletedPayload!
 
@@ -8634,6 +9276,15 @@ type Subscription {
 
   """Subscribe to message updates"""
   messageUpdated(conversationId: ID!): Message!
+
+  """Real-time notification for a specific user"""
+  notificationCreated(userId: ID!): Notification!
+
+  """Any match updated in tournament"""
+  tournamentMatchesUpdated(tournamentId: ID!): String!
+
+  """Tournament status changed"""
+  tournamentStatusChanged(tournamentId: ID!): String!
 
   """Subscribe to typing indicators"""
   typingStatus(conversationId: ID!): TypingStatusPayload!
@@ -8787,6 +9438,458 @@ type TopicSubscriptionResponse {
   success: Boolean!
 }
 
+type Tournament {
+  _id: ID!
+  contacts: [TournamentContact!]
+  courts: [TournamentCourt!]
+
+  """Cover image URL"""
+  coverImage: String
+  createdAt: DateTime!
+  dates: TournamentDates!
+
+  """Short description for landing page"""
+  description: String
+  facilities: [TournamentFacility!]
+
+  """Highlight bullets"""
+  highlights: [String!]
+
+  """Detailed introduction for overview/detail page (markdown)"""
+  introduction: String
+  location: TournamentLocation
+
+  """Organizer user ID"""
+  organizer: ID!
+
+  """Tên đơn vị ban tổ chức (hiển thị công khai)"""
+  organizerName: String
+  paymentInfo: TournamentPaymentInfo
+  prizes: [TournamentPrize!]
+  rules: [TournamentRule!]
+  schedule: [TournamentSchedulePhase!]
+
+  """Primary sport"""
+  sportType: SportType!
+  status: TournamentStatus!
+
+  """Tournament title"""
+  title: String!
+  totalCategories: Int!
+  totalMatches: Int!
+  totalRegistrations: Int!
+  updatedAt: DateTime!
+}
+
+type TournamentCategory {
+  _id: ID!
+
+  """Players per group advancing (GROUP_KNOCKOUT)"""
+  advancingPerGroup: Int
+
+  """Age label (e.g. U11, U13, Open)"""
+  ageLabel: String
+
+  """Bracket size (power of 2, auto-calculated)"""
+  bracketSize: Int
+  completedMatchCount: Int!
+  createdAt: DateTime!
+
+  """Short description for landing page"""
+  description: String
+
+  """Display order within tournament"""
+  displayOrder: Int
+  format: TournamentFormat!
+  gender: TournamentGender!
+
+  """Groups count (GROUP_KNOCKOUT)"""
+  groupCount: Int
+
+  """IonIcon name (e.g. people-outline)"""
+  icon: String
+  matchCount: Int!
+  matchType: MatchType!
+
+  """Max registrations (0 = unlimited)"""
+  maxRegistrations: Int
+
+  """Highlight this category on landing"""
+  popular: Boolean
+  prizes: [TournamentPrize!]
+  registeredCount: Int!
+
+  """Scoring rules for this category"""
+  scoringConfig: ScoringConfig!
+
+  """Number of seeded players"""
+  seedCount: Int
+  status: CategoryStatus!
+
+  """Category title (e.g. Nam Đơn U15)"""
+  title: String!
+  tournamentId: ID!
+  updatedAt: DateTime!
+}
+
+type TournamentChampion {
+  bronzeNames: [String!]
+  categoryId: ID!
+  categoryTitle: String!
+  goldName: String
+  silverName: String
+}
+
+type TournamentContact {
+  """Icon name"""
+  icon: String
+
+  """Contact label (e.g. Hotline, Email)"""
+  label: String!
+
+  """Contact value"""
+  value: String!
+}
+
+input TournamentContactInput {
+  icon: String
+  label: String!
+  value: String!
+}
+
+type TournamentCourt {
+  name: String!
+  notes: String
+
+  """available | maintenance | reserved"""
+  status: String
+}
+
+input TournamentCourtInput {
+  name: String!
+  notes: String
+  status: String
+}
+
+type TournamentDates {
+  """Tournament end date"""
+  endDate: DateTime
+
+  """Registration closes"""
+  registrationCloseDate: DateTime
+
+  """Registration opens"""
+  registrationOpenDate: DateTime
+
+  """Tournament start date"""
+  startDate: DateTime!
+}
+
+input TournamentDatesInput {
+  endDate: String
+  registrationCloseDate: String
+  registrationOpenDate: String
+  startDate: String!
+}
+
+type TournamentFacility {
+  """Icon name"""
+  icon: String
+
+  """Facility label (e.g. Bãi đỗ xe)"""
+  label: String!
+}
+
+input TournamentFacilityInput {
+  icon: String
+  label: String!
+}
+
+type TournamentFee {
+  amount: String!
+  label: String!
+}
+
+input TournamentFeeInput {
+  amount: String!
+  label: String!
+}
+
+input TournamentFilterInput {
+  dateFrom: String
+  dateTo: String
+  searchQuery: String
+  sortBy: TournamentSortBy = CREATED_AT
+  sortOrder: TournamentSortOrder = DESC
+  sportType: SportType
+  status: TournamentStatus
+  statuses: [TournamentStatus!]
+}
+
+"""Bracket/competition format for a tournament category"""
+enum TournamentFormat {
+  DOUBLE_ELIMINATION
+  GROUP_KNOCKOUT
+  ROUND_ROBIN
+  SINGLE_ELIMINATION
+}
+
+"""Gender restriction for a tournament category"""
+enum TournamentGender {
+  FEMALE
+  MALE
+  MIXED
+  OPEN
+}
+
+type TournamentList {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+  totalPages: Int!
+  tournaments: [Tournament!]!
+}
+
+type TournamentLocation {
+  """Full address"""
+  address: String
+  latitude: Float
+  longitude: Float
+
+  """Venue name"""
+  name: String
+}
+
+input TournamentLocationInput {
+  address: String
+  latitude: Float
+  longitude: Float
+  name: String
+}
+
+type TournamentMatch {
+  _id: ID!
+
+  """Position in bracket (for elimination formats)"""
+  bracketPosition: Int
+  categoryId: ID!
+  court: MatchCourt
+  createdAt: DateTime!
+
+  """Match duration in seconds (set after completion)"""
+  durationSeconds: Int
+  estimatedDurationMinutes: Int
+
+  """Group ID (for GROUP_KNOCKOUT format)"""
+  groupId: String
+
+  """Is this a BYE match (auto-advance)"""
+  isBye: Boolean!
+
+  """Losers bracket next match (double elimination)"""
+  losersNextMatchId: ID
+  losersNextMatchSlot: Int
+
+  """Unique match number within tournament"""
+  matchNumber: Int!
+
+  """Timestamp when the match was started (status → LIVE)"""
+  matchStartedAt: DateTime
+
+  """Match ID where winner advances to"""
+  nextMatchId: ID
+
+  """Slot in next match (1 or 2)"""
+  nextMatchSlot: Int
+  player1: MatchPlayer
+  player2: MatchPlayer
+  refereeId: ID
+
+  """
+  Invite status when referee has a system account (PENDING/CONFIRMED/DECLINED)
+  """
+  refereeInviteStatus: RefereeInviteStatus
+  refereeName: String
+
+  """Player who retired: 1 or 2 (only set when status is RETIREMENT)"""
+  retiredPlayer: Int
+
+  """Round number (1 = first round)"""
+  round: Int!
+
+  """Round label (e.g. Vòng 1, Tứ kết, Bán kết, Chung kết)"""
+  roundLabel: String!
+  scheduledAt: DateTime
+  scoreSummary: ScoreSummary
+
+  """Currently serving player (1 or 2), synced from scorecard during LIVE"""
+  servingPlayer: Int
+  status: MatchStatus!
+  tournamentId: ID!
+  updatedAt: DateTime!
+
+  """Winner: 1 = player1, 2 = player2"""
+  winner: Int
+}
+
+type TournamentPaymentInfo {
+  accountName: String
+  accountNumber: String
+  bank: String
+  fees: [TournamentFee!]
+  qrImage: String
+}
+
+input TournamentPaymentInfoInput {
+  accountName: String
+  accountNumber: String
+  bank: String
+  fees: [TournamentFeeInput!]
+  qrImage: String
+}
+
+"""Payment status for a tournament registration"""
+enum TournamentPaymentStatus {
+  PAID
+  REFUNDED
+  UNPAID
+  VERIFYING
+}
+
+type TournamentPrize {
+  """Prize amount/description"""
+  amount: String
+
+  """Extra perks"""
+  perks: [String!]
+
+  """Rank label (gold, silver, bronze, etc.)"""
+  rank: String!
+
+  """Prize title"""
+  title: String!
+}
+
+input TournamentPrizeInput {
+  amount: String
+  perks: [String!]
+  rank: String!
+  title: String!
+}
+
+type TournamentRegistration {
+  _id: ID!
+
+  """Athlete full name"""
+  athleteName: String!
+  avatarUrl: String
+  categoryId: ID!
+  club: String
+  createdAt: DateTime!
+  dateOfBirth: String
+  email: String
+  guardianName: String
+  guardianPhone: String
+  identityProofUrl: String
+  notes: String
+
+  """Payment amount in VND"""
+  paymentAmount: Float
+  paymentProofUrl: String
+  paymentStatus: TournamentPaymentStatus!
+
+  """Participant phone number"""
+  phone: String
+
+  """User who submitted this registration"""
+  registeredByUserId: ID!
+  registrationStatus: RegistrationStatus!
+  rejectionReason: String
+  reviewedAt: DateTime
+  reviewedBy: ID
+  school: String
+
+  """Seed number (set after draw)"""
+  seed: Int
+  tournamentId: ID!
+  updatedAt: DateTime!
+
+  """Registered user (if authenticated)"""
+  userId: ID
+}
+
+type TournamentRule {
+  content: String
+  title: String!
+}
+
+input TournamentRuleInput {
+  content: String
+  title: String!
+}
+
+type TournamentSchedulePhase {
+  """Phase date (YYYY-MM-DD or ISO 8601)"""
+  date: String
+
+  """End time (HH:mm or "sáng", "chiều")"""
+  endTime: String
+
+  """Phase label (e.g. Vòng bảng)"""
+  label: String!
+
+  """Start time (HH:mm or "sáng", "chiều")"""
+  startTime: String
+
+  """upcoming | active | completed"""
+  status: String
+}
+
+input TournamentSchedulePhaseInput {
+  date: String
+  endTime: String
+  label: String!
+  startTime: String
+  status: String
+}
+
+enum TournamentSortBy {
+  CREATED_AT
+  REGISTRATIONS
+  START_DATE
+  TITLE
+}
+
+enum TournamentSortOrder {
+  ASC
+  DESC
+}
+
+type TournamentStats {
+  avgMatchDurationSeconds: Int!
+  completedMatches: Int!
+  longestMatchDurationSeconds: Int!
+  longestMatchLabel: String
+  totalCategories: Int!
+  totalMatches: Int!
+  totalPointsScored: Int!
+  totalRegistrations: Int!
+  totalSetsPlayed: Int!
+}
+
+"""Status of a tournament"""
+enum TournamentStatus {
+  CANCELLED
+  COMPLETED
+  DRAFT
+  IN_PROGRESS
+  PUBLISHED
+  REGISTRATION_CLOSED
+  REGISTRATION_OPEN
+}
+
 input TransferProductItem {
   """Product ID to transfer"""
   productId: ID!
@@ -8826,35 +9929,22 @@ input UnpinMessageInput {
 }
 
 input UpdateCategoryInput {
-  """Category ID"""
-  categoryId: ID!
-
-  """Category color (hex code)"""
-  color: String
-
-  """Category description"""
+  advancingPerGroup: Int
+  ageLabel: String
   description: String
-
-  """Display order"""
   displayOrder: Int
-
-  """Category icon"""
+  format: TournamentFormat
+  gender: TournamentGender
+  groupCount: Int
   icon: String
-
-  """Category image URL"""
-  imageUrl: String
-
-  """Is category active"""
-  isActive: Boolean
-
-  """Category name"""
-  name: String
-
-  """Parent category ID"""
-  parentId: ID
-
-  """URL-friendly slug"""
-  slug: String
+  id: ID!
+  matchType: MatchType
+  maxRegistrations: Int
+  popular: Boolean
+  prizes: [TournamentPrizeInput!]
+  scoringConfig: ScoringConfigInput
+  seedCount: Int
+  title: String
 }
 
 input UpdateCommentInput {
@@ -8957,6 +10047,17 @@ input UpdateMessageInput {
   text: String!
 }
 
+input UpdateMessageReportStatusInput {
+  """Admin notes"""
+  notes: String
+
+  """ID of the report to update"""
+  reportId: ID!
+
+  """New status"""
+  status: ReportStatus!
+}
+
 input UpdateParticipantDepositInput {
   """Trạng thái đặt cọc mới"""
   depositStatus: DepositStatus!
@@ -8986,6 +10087,12 @@ input UpdateParticipantPaymentInput {
 
   """ID người chơi"""
   userId: ID!
+}
+
+input UpdatePaymentStatusInput {
+  paymentAmount: Float
+  paymentStatus: TournamentPaymentStatus!
+  registrationId: ID!
 }
 
 input UpdatePickupGameInput {
@@ -9293,6 +10400,36 @@ input UpdateReportStatusInput {
   status: PostReportStatus!
 }
 
+input UpdateTournamentInput {
+  contacts: [TournamentContactInput!]
+  courts: [TournamentCourtInput!]
+  coverImage: String
+  dates: TournamentDatesInput
+  description: String
+  facilities: [TournamentFacilityInput!]
+  highlights: [String!]
+  id: ID!
+  introduction: String
+  location: TournamentLocationInput
+  organizerName: String
+  paymentInfo: TournamentPaymentInfoInput
+  prizes: [TournamentPrizeInput!]
+  rules: [TournamentRuleInput!]
+  schedule: [TournamentSchedulePhaseInput!]
+  title: String
+}
+
+input UpdateUserReportStatusInput {
+  """Admin notes about the resolution"""
+  notes: String
+
+  """ID of the report to update"""
+  reportId: ID!
+
+  """New status"""
+  status: UserReportStatus!
+}
+
 input UpdateVenueInput {
   """Advance booking days"""
   advanceBookingDays: Int
@@ -9469,6 +10606,14 @@ type UploadResponse {
   user: User!
 }
 
+input UploadTournamentImageInput {
+  """Base64 encoded image data"""
+  base64Image: String!
+
+  """Tournament ID (used for storage path organisation)"""
+  tournamentId: ID
+}
+
 input UploadVenueImageInput {
   """Base64 encoded image data"""
   base64Image: String!
@@ -9542,6 +10687,9 @@ type User {
 type UserBlock {
   _id: ID!
 
+  """Blocked user details (resolved field)"""
+  blockedUser: User
+
   """User who was blocked"""
   blockedUserId: ID!
 
@@ -9560,6 +10708,105 @@ type UserList {
   page: Int!
   total: Int!
   users: [User!]!
+}
+
+type UserReport {
+  _id: ID!
+  createdAt: DateTime!
+
+  """Additional details about the report"""
+  description: String
+
+  """Admin notes or resolution details"""
+  notes: String
+
+  """Reason for reporting"""
+  reason: UserReportReason!
+
+  """User who was reported (resolved field)"""
+  reportedUser: User
+
+  """User that was reported"""
+  reportedUserId: ID!
+
+  """User who filed the report (resolved field)"""
+  reporter: User
+
+  """User who reported"""
+  reporterId: ID!
+
+  """When the report was reviewed"""
+  reviewedAt: DateTime
+
+  """Admin who reviewed"""
+  reviewedBy: ID
+
+  """Admin who reviewed (resolved field)"""
+  reviewer: User
+
+  """Status of the report"""
+  status: UserReportStatus!
+  updatedAt: DateTime!
+}
+
+input UserReportFilterInput {
+  """Filter by report reason"""
+  reason: UserReportReason
+
+  """Filter by report status"""
+  status: UserReportStatus
+}
+
+type UserReportList {
+  """Has more reports to load"""
+  hasMore: Boolean!
+
+  """Number of items per page"""
+  limit: Int!
+
+  """Current page number"""
+  page: Int!
+
+  """List of user reports"""
+  reports: [UserReport!]!
+
+  """Total number of reports"""
+  total: Int!
+}
+
+"""Reason for reporting a user"""
+enum UserReportReason {
+  HARASSMENT
+  HATE_SPEECH
+  IMPERSONATION
+  INAPPROPRIATE_CONTENT
+  OTHER
+  SPAM
+}
+
+type UserReportStats {
+  """Total dismissed reports"""
+  dismissedReports: Int!
+
+  """Total pending reports"""
+  pendingReports: Int!
+
+  """Total resolved reports"""
+  resolvedReports: Int!
+
+  """Total reviewed reports"""
+  reviewedReports: Int!
+
+  """Total reports"""
+  totalReports: Int!
+}
+
+"""Status of user report"""
+enum UserReportStatus {
+  DISMISSED
+  PENDING
+  RESOLVED
+  REVIEWED
 }
 
 enum UserRole {
