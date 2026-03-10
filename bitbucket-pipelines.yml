@@ -2,30 +2,34 @@ image: node:24
 
 pipelines:
   branches:
-    main:
+    main: # Production
       - step:
-          name: Build and Deploy Portal to Bizzfly
+          name: Build and Deploy Portal to Bizzfly (Production)
+          deployment: production
           caches:
             - node
           script:
-            # 1. Khởi tạo pnpm
             - npm install -g pnpm
-
-            # 2. Cài đặt và Build
             - pnpm install
-            # Bước quan trọng: Tải schema "tươi" nhất từ folder Backend trên server về local
             - scp $SERVER_USER@$SERVER_IP:~/hitri/nalee-sports-backend/src/schema.gql ./schema.gql
-            # Bây giờ chạy build, codegen sẽ đọc file ./schema.gql này
             - pnpm run build
-
-            # 3. Nén các file cần thiết
             - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.ts
-
-            # 4. Upload lên server
             - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
-
-            # 5. SSH giải nén, XÓA FILE NÉN, và vận hành
             - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH && rm -rf .next && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
+            - rm build.tar.gz
 
-            # 6. Dọn dẹp file nén ngay trên môi trường build của Bitbucket
+    release/staging: # Staging (cùng server, khác DB & storage)
+      - step:
+          name: Build and Deploy Portal to Bizzfly (Staging)
+          deployment: staging
+          caches:
+            - node
+          script:
+            - npm install -g pnpm
+            - pnpm install
+            - scp $SERVER_USER@$SERVER_IP:~/hitri-staging/nalee-sports-backend/src/schema.gql ./schema.gql
+            - pnpm run build
+            - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.ts
+            - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_STAGING/
+            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_STAGING && rm -rf .next && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal-staging || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal-staging' -- start -p 3002"
             - rm build.tar.gz
