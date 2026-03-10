@@ -15,7 +15,7 @@ pipelines:
             - pnpm run build
             - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.mjs
             - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
-            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH && rm -rf .next && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
+            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
             - rm build.tar.gz
 
     release/staging: # Staging (cùng server, khác DB & storage)
@@ -31,5 +31,5 @@ pipelines:
             - pnpm run build
             - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.mjs
             - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_STAGING/
-            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_STAGING && rm -rf .next && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal-staging || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal-staging' -- start -p 4001"
+            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_STAGING && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal-staging || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal-staging' -- start -p 4001"
             - rm build.tar.gz
