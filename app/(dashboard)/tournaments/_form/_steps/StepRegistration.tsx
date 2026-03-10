@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, type ChangeEvent } from 'react';
+import Image from 'next/image';
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Input } from '@/components/atoms/Input';
@@ -262,9 +263,11 @@ export function StepRegistration({
               render={({ field }) =>
                 field.value ? (
                   <div className="relative inline-block">
-                    <img
+                    <Image
                       src={field.value}
                       alt="QR Code"
+                      width={160}
+                      height={160}
                       className="border-surface-border h-40 w-40 rounded-lg border object-contain"
                     />
                     <button

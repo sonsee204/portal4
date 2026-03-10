@@ -1,11 +1,17 @@
 'use client';
 
+import { useMutation } from '@apollo/client/react';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
+import {
+  ADMIN_SUSPEND_USER,
+  ADMIN_UNSUSPEND_USER,
+} from '@/graphql/mutations/admin';
+import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import type { User } from '@/types';
 
 interface ProfileCardProps {
@@ -38,6 +44,32 @@ export function ProfileCard({ user }: ProfileCardProps) {
       ? 'online'
       : 'offline';
 
+  const [suspendUser, { loading: suspending }] = useMutation(
+    ADMIN_SUSPEND_USER,
+    createMutationOptions('AdminSuspendUser', 'Khóa tài khoản thành công')
+  );
+
+  const [unsuspendUser, { loading: unsuspending }] = useMutation(
+    ADMIN_UNSUSPEND_USER,
+    createMutationOptions('AdminUnsuspendUser', 'Mở khóa tài khoản thành công')
+  );
+
+  const actionLoading = suspending || unsuspending;
+
+  const handleToggleSuspend = () => {
+    if (user.isSuspended) {
+      const confirmed = window.confirm(`Mở khóa tài khoản ${displayName}?`);
+      if (!confirmed) return;
+      void unsuspendUser({ variables: { userId: user._id } });
+    } else {
+      const reason = window.prompt(`Lý do khóa tài khoản ${displayName}:`);
+      if (reason === null) return;
+      void suspendUser({
+        variables: { userId: user._id, reason: reason || undefined },
+      });
+    }
+  };
+
   return (
     <GlassPanel card className="space-y-6">
       {/* Header */}
@@ -48,7 +80,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
           status={status}
           size="lg"
         />
-        <h2 className="mt-3 text-lg font-bold text-heading">{displayName}</h2>
+        <h2 className="text-heading mt-3 text-lg font-bold">{displayName}</h2>
         <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
           <Badge variant="info">
             {ROLE_DISPLAY_NAMES[user.role] ?? user.role}
@@ -94,14 +126,18 @@ export function ProfileCard({ user }: ProfileCardProps) {
 
       {/* Danger zone */}
       <div className="border-surface-border space-y-2 border-t pt-4">
-        <p className="text-xs font-bold tracking-wider text-faint uppercase">
+        <p className="text-faint text-xs font-bold tracking-wider uppercase">
           Admin Actions
         </p>
         <Button
           variant="ghost"
           size="sm"
           className="w-full justify-start text-amber-400 hover:bg-amber-500/10"
-          iconLeft="lock-closed-outline"
+          iconLeft={
+            user.isSuspended ? 'lock-open-outline' : 'lock-closed-outline'
+          }
+          onClick={handleToggleSuspend}
+          disabled={actionLoading}
         >
           {user.isSuspended ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
         </Button>

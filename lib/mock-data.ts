@@ -7,7 +7,7 @@ import type {
   MockUser, Transaction, Tournament, BracketMatch,
   SportModule, Booking, CalendarBooking, Report,
   MatchmakingLog, Banner,
-  Permission, ApiKey, Notification,
+  Permission, ApiKey,
 } from '@/types/mock';
 
 /* ------------------------------------------------------------------ */
@@ -214,13 +214,3 @@ export const mockRecentActivity = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Notifications                                                       */
-/* ------------------------------------------------------------------ */
-
-export const mockNotifications: Notification[] = [
-  { _id: 'n1', type: 'success', title: 'Giải đấu bắt đầu', message: 'Giải Cầu Lông HITRI Open 2024 đã chính thức khởi tranh', icon: 'trophy-outline', timestamp: '2 phút trước', read: false, actionUrl: '/tournaments/t3' },
-  { _id: 'n2', type: 'info', title: 'Cập nhật lịch thi đấu', message: 'Trận đấu của bạn đã được chuyển sang sân số 3', icon: 'calendar-outline', timestamp: '15 phút trước', read: false },
-  { _id: 'n3', type: 'success', title: 'Thanh toán thành công', message: 'Bạn đã đặt sân thành công. Mã đặt sân: #BK-1234', icon: 'checkmark-circle-outline', timestamp: '1 giờ trước', read: false },
-  { _id: 'n4', type: 'warning', title: 'Sắp đến hạn thanh toán', message: 'Đơn đặt sân #BK-5678 sẽ hết hạn trong 2 giờ nữa', icon: 'time-outline', timestamp: '3 giờ trước', read: true },
-  { _id: 'n5', type: 'info', title: 'Kết quả trận đấu', message: 'Trận đấu vòng bảng của bạn đã kết thúc với tỷ số 21-19', icon: 'tennisball-outline', timestamp: '1 ngày trước', read: true },
-];

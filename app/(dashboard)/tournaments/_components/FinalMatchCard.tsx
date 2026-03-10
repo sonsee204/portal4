@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import type { BracketMatch } from '@/types/mock';
@@ -75,9 +76,11 @@ function FinalPlayerSlot({ name, avatar }: { name: string; avatar?: string }) {
   return (
     <div className="flex flex-col items-center gap-2">
       {avatar && !isTBD ? (
-        <img
+        <Image
           src={avatar}
           alt={name}
+          width={64}
+          height={64}
           className="border-primary/30 h-16 w-16 rounded-full border-2 object-cover"
         />
       ) : (

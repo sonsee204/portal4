@@ -14,6 +14,24 @@ import {
 } from '@/hooks/tournament';
 import { MatchStatus } from '@/graphql/generated';
 
+const REFEREE_STATUS_CONFIG: Record<
+  string,
+  { label: string; className: string }
+> = {
+  PENDING: {
+    label: 'Chờ xác nhận',
+    className: 'bg-amber-500/10 text-amber-500',
+  },
+  CONFIRMED: {
+    label: 'Đã xác nhận',
+    className: 'bg-emerald-500/10 text-emerald-500',
+  },
+  DECLINED: {
+    label: 'Đã từ chối',
+    className: 'bg-red-500/10 text-red-500',
+  },
+};
+
 export default function SchedulePage({
   params,
 }: {
@@ -184,8 +202,27 @@ export default function SchedulePage({
                     <td className="text-secondary p-3 text-xs">
                       {m.court?.name ?? '—'}
                     </td>
-                    <td className="text-secondary p-3 text-xs">
-                      {m.refereeName ?? '—'}
+                    <td className="p-3 text-xs">
+                      {m.refereeName ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-secondary">
+                            {m.refereeName}
+                          </span>
+                          {m.refereeInviteStatus && (
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                                REFEREE_STATUS_CONFIG[m.refereeInviteStatus]
+                                  ?.className ?? ''
+                              }`}
+                            >
+                              {REFEREE_STATUS_CONFIG[m.refereeInviteStatus]
+                                ?.label ?? m.refereeInviteStatus}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-secondary">—</span>
+                      )}
                     </td>
                     <td className="p-3">
                       <span

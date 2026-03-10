@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/templates/DashboardLayout';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
 
 /** Map path segment to Vietnamese breadcrumb label */
 const SEGMENT_LABELS: Record<string, string> = {
@@ -37,7 +38,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
-      <DashboardLayout breadcrumbs={breadcrumbs}>{children}</DashboardLayout>
+      <NotificationProvider>
+        <DashboardLayout breadcrumbs={breadcrumbs}>{children}</DashboardLayout>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

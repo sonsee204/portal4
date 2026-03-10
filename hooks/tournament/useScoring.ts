@@ -32,11 +32,14 @@ export function useMatchScorecard(matchId: string, skip = false) {
     subscribeToMore<{ matchScoreUpdated: MatchScorecard }>({
       document: MATCH_SCORE_UPDATED_SUB,
       variables: { matchId },
-      updateQuery: (_prev, { subscriptionData }) => {
-        if (!subscriptionData.data) return undefined as never;
-        return {
-          matchScorecard: subscriptionData.data.matchScoreUpdated,
-        } as { matchScorecard: MatchScorecard | null };
+      updateQuery: (prev, { subscriptionData }) => {
+        const incoming = subscriptionData.data?.matchScoreUpdated;
+        if (!incoming) return prev as { matchScorecard: MatchScorecard | null };
+        const existing = prev?.matchScorecard;
+        if (existing?.updatedAt && incoming.updatedAt && existing.updatedAt >= incoming.updatedAt) {
+          return prev as { matchScorecard: MatchScorecard | null };
+        }
+        return { matchScorecard: incoming } as { matchScorecard: MatchScorecard | null };
       },
     });
 

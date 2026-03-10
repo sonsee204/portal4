@@ -69,7 +69,7 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
           wrapperClassName="hidden md:block w-64"
         />
         <ThemeToggle />
-        <NotificationBell count={3} />
+        <NotificationBell />
         <div className="bg-surface-border hidden h-8 w-px md:block" />
         <div className="hidden items-center gap-3 md:flex">
           <div className="text-right">

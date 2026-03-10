@@ -170,6 +170,7 @@ export const MATCH_CORE_FRAGMENT = gql`
     estimatedDurationMinutes
     refereeId
     refereeName
+    refereeInviteStatus
     nextMatchId
     nextMatchSlot
     losersNextMatchId

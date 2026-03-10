@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -16,8 +17,7 @@ function LogoMark({ className }: { className?: string }) {
       className={cn('flex h-9 w-9 items-center justify-center', className)}
       aria-hidden
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- SVG doesn't benefit from next/image optimization */}
-      <img
+      <Image
         src="/logo.svg"
         alt="HITRI Logo"
         width={36}

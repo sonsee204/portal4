@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, type ChangeEvent } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { useUploadTournamentImage } from '@/hooks/shared/useUploadTournamentImage';
@@ -51,11 +52,13 @@ export function CoverImageUploader({
       />
 
       {value ? (
-        <div className="relative overflow-hidden rounded-xl">
-          <img
+        <div className="relative h-[200px] w-full overflow-hidden rounded-xl">
+          <Image
             src={value}
             alt="Ảnh bìa giải đấu"
-            className="h-[200px] w-full rounded-xl object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 600px"
+            className="rounded-xl object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/0 opacity-0 transition-all hover:bg-black/40 hover:opacity-100">
             <button

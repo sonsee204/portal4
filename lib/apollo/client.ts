@@ -5,10 +5,14 @@ import {
   InMemoryCache,
   HttpLink,
   ApolloLink,
+  split,
 } from '@apollo/client';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { getMainDefinition } from '@apollo/client/utilities';
 import { Observable } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
+import { createClient } from 'graphql-ws';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
 import { showError } from '@/lib/toast';
@@ -24,6 +28,9 @@ const getGraphqlUrl = (): string => {
   }
   return '/graphql';
 };
+
+const getGraphqlWsUrl = (): string =>
+  process.env.NEXT_PUBLIC_GRAPHQL_WS_URL ?? 'ws://localhost:3000/graphql';
 
 /**
  * Token storage for client-side Apollo Client.
@@ -139,9 +146,36 @@ const errorLink = new ErrorLink(({ error, operation, forward }) => {
   }
 });
 
-const link = ApolloLink.from([errorLink, authLink, httpLink]);
+function createWsLink(): GraphQLWsLink {
+  return new GraphQLWsLink(
+    createClient({
+      url: getGraphqlWsUrl(),
+      connectionParams: () => ({
+        authorization: _accessToken ? `Bearer ${_accessToken}` : '',
+        'x-client-source': 'portal',
+      }),
+    }),
+  );
+}
 
 export function createApolloClient() {
+  const httpChain = ApolloLink.from([errorLink, authLink, httpLink]);
+
+  const link =
+    typeof window === 'undefined'
+      ? httpChain
+      : split(
+        ({ query }) => {
+          const def = getMainDefinition(query);
+          return (
+            def.kind === 'OperationDefinition' &&
+            def.operation === 'subscription'
+          );
+        },
+        createWsLink(),
+        httpChain,
+      );
+
   return new ApolloClient({
     link,
     cache: new InMemoryCache({

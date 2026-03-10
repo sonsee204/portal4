@@ -1,6 +1,7 @@
 'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
+import Image from 'next/image';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import {
@@ -366,9 +367,11 @@ export function StepReview({
             {data.paymentQrImage && (
               <div className="mt-2">
                 <span className="text-muted text-xs font-medium">QR Code:</span>
-                <img
+                <Image
                   src={data.paymentQrImage}
                   alt="QR Code"
+                  width={96}
+                  height={96}
                   className="border-surface-border mt-1 h-24 w-24 rounded-lg border object-contain"
                 />
               </div>

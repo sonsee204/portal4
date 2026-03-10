@@ -7,76 +7,65 @@ import { Avatar } from '@/components/atoms/Avatar';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { formatDateTime } from '@/lib/utils';
-import { PostReportStatus } from '@/graphql/generated';
-import { POST_REPORT_REASON_LABELS, POST_REPORT_STATUS_LABELS } from '../types';
-import type { ModerationReport } from '../types';
+import {
+  USER_REPORT_REASON_LABELS,
+  USER_REPORT_STATUS_LABELS,
+  type UserModerationReport,
+  type UserReportStatus,
+} from '../types';
 
-interface ReportDetailProps {
-  report: ModerationReport;
+interface UserReportDetailProps {
+  report: UserModerationReport;
   onUpdateStatus: (
     reportId: string,
-    status: PostReportStatus,
+    status: UserReportStatus,
     notes?: string
   ) => Promise<void>;
-  onDeletePost: (postId: string) => Promise<void>;
   onSuspendUser: (userId: string, reason?: string) => Promise<void>;
   loading?: boolean;
 }
 
-export function ReportDetail({
+export function UserReportDetail({
   report,
   onUpdateStatus,
-  onDeletePost,
   onSuspendUser,
   loading,
-}: ReportDetailProps) {
-  const authorName =
-    report.post?.author?.displayName ||
-    report.post?.author?.userName ||
+}: UserReportDetailProps) {
+  const reportedName =
+    report.reportedUser?.displayName ||
+    report.reportedUser?.userName ||
     'Unknown';
-  const authorInitial = authorName[0]?.toUpperCase() ?? 'U';
-  const content = report.post?.content || report.description || '';
+  const reportedInitial = reportedName[0]?.toUpperCase() ?? 'U';
   const reporterName =
     report.reporter?.displayName || report.reporter?.userName || 'Ẩn danh';
   const isActionable =
-    report.status === PostReportStatus.Pending ||
-    report.status === PostReportStatus.Reviewed;
+    report.status === 'PENDING' || report.status === 'REVIEWED';
 
   const handleDismiss = () => {
-    void onUpdateStatus(report._id, PostReportStatus.Dismissed);
+    void onUpdateStatus(report._id, 'DISMISSED');
   };
 
-  const handleKeep = () => {
-    void onUpdateStatus(
-      report._id,
-      PostReportStatus.Dismissed,
-      'Nội dung hợp lệ'
-    );
+  const handleReview = () => {
+    void onUpdateStatus(report._id, 'REVIEWED', 'Đang xem xét');
   };
 
-  const handleDeletePost = () => {
-    const postId = report.post?._id;
-    if (!postId) return;
-    void onDeletePost(postId);
+  const handleResolve = () => {
+    void onUpdateStatus(report._id, 'RESOLVED', 'Đã xử lý vi phạm');
   };
 
   const handleSuspend = async () => {
-    const authorId = report.post?.author?._id;
-    if (!authorId) return;
+    const userId = report.reportedUser?._id;
+    if (!userId) return;
     const confirmed = window.confirm(
-      `Khóa tài khoản @${authorName}? Hành động này sẽ đình chỉ tài khoản.`
+      `Khóa tài khoản @${reportedName}? Hành động này sẽ đình chỉ tài khoản.`
     );
     if (!confirmed) return;
     try {
       await onSuspendUser(
-        authorId,
-        `Vi phạm: ${POST_REPORT_REASON_LABELS[report.reason]}`
+        userId,
+        `Vi phạm: ${USER_REPORT_REASON_LABELS[report.reason]}`
       );
-      await onUpdateStatus(
-        report._id,
-        PostReportStatus.Resolved,
-        'Tài khoản đã bị khóa'
-      );
+      await onUpdateStatus(report._id, 'RESOLVED', 'Tài khoản đã bị khóa');
     } catch {
       // Errors are handled by mutation options (toast), no need to rethrow
     }
@@ -84,19 +73,21 @@ export function ReportDetail({
 
   return (
     <div className="space-y-6">
-      {/* Post card */}
+      {/* Reported user card */}
       <GlassPanel card>
         <div className="border-surface-border flex items-center gap-3 border-b pb-3">
           <Avatar
-            fallback={authorInitial}
-            src={report.post?.author?.photoURL ?? undefined}
+            fallback={reportedInitial}
+            src={report.reportedUser?.photoURL ?? undefined}
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="text-heading text-sm font-medium">@{authorName}</p>
-              {report.post?.author?._id && (
+              <p className="text-heading text-sm font-semibold">
+                @{reportedName}
+              </p>
+              {report.reportedUser?._id && (
                 <Link
-                  href={`/users/${report.post.author._id}`}
+                  href={`/users/${report.reportedUser._id}`}
                   className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-xs transition-colors"
                 >
                   <IonIcon name="open-outline" size="xs" />
@@ -104,21 +95,25 @@ export function ReportDetail({
                 </Link>
               )}
             </div>
-            <p className="text-faint text-xs">
-              {formatDateTime(report.createdAt)}
-            </p>
+            <p className="text-faint text-xs">Người bị báo cáo</p>
           </div>
         </div>
-        <p className="text-body mt-3 text-sm leading-relaxed">{content}</p>
-        <div className="text-faint mt-3 flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1">
+
+        <div className="mt-3 flex items-center gap-4 text-xs">
+          <span className="text-faint flex items-center gap-1">
             <IonIcon name="flag-outline" size="xs" className="text-red-400" />
             Báo cáo bởi @{reporterName}
           </span>
           <Badge variant="danger" className="text-[10px]">
-            {POST_REPORT_REASON_LABELS[report.reason]}
+            {USER_REPORT_REASON_LABELS[report.reason]}
           </Badge>
         </div>
+
+        {report.description && (
+          <p className="text-body bg-surface-hover mt-3 rounded-lg p-3 text-sm leading-relaxed">
+            &ldquo;{report.description}&rdquo;
+          </p>
+        )}
       </GlassPanel>
 
       {/* Report info */}
@@ -131,39 +126,31 @@ export function ReportDetail({
             <span className="text-faint">Trạng thái</span>
             <Badge
               variant={
-                report.status === PostReportStatus.Pending
+                report.status === 'PENDING'
                   ? 'warning'
-                  : report.status === PostReportStatus.Resolved
+                  : report.status === 'RESOLVED'
                     ? 'success'
                     : 'neutral'
               }
             >
-              {POST_REPORT_STATUS_LABELS[report.status]}
+              {USER_REPORT_STATUS_LABELS[report.status]}
             </Badge>
           </div>
           <div className="flex justify-between">
             <span className="text-faint">Lý do</span>
             <span className="text-body">
-              {POST_REPORT_REASON_LABELS[report.reason]}
+              {USER_REPORT_REASON_LABELS[report.reason]}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-faint">ID báo cáo</span>
             <span className="text-faint font-mono text-xs">{report._id}</span>
           </div>
-          {report.post?._id && (
+          {report.reportedUser?._id && (
             <div className="flex justify-between">
-              <span className="text-faint">ID bài viết</span>
+              <span className="text-faint">ID người bị báo cáo</span>
               <span className="text-faint font-mono text-xs">
-                {report.post._id}
-              </span>
-            </div>
-          )}
-          {report.post?.author?._id && (
-            <div className="flex justify-between">
-              <span className="text-faint">ID tác giả</span>
-              <span className="text-faint font-mono text-xs">
-                {report.post.author._id}
+                {report.reportedUser._id}
               </span>
             </div>
           )}
@@ -177,12 +164,12 @@ export function ReportDetail({
               {report.reporterId}
             </span>
           </div>
-          {report.description && (
-            <div className="flex justify-between">
-              <span className="text-faint">Mô tả</span>
-              <span className="text-body">{report.description}</span>
-            </div>
-          )}
+          <div className="flex justify-between">
+            <span className="text-faint">Ngày báo cáo</span>
+            <span className="text-body">
+              {formatDateTime(report.createdAt)}
+            </span>
+          </div>
           {report.reviewer && (
             <div className="flex justify-between">
               <span className="text-faint">Người xem xét</span>
@@ -200,9 +187,11 @@ export function ReportDetail({
             </div>
           )}
           {report.notes && (
-            <div className="flex justify-between">
+            <div className="flex flex-col gap-1">
               <span className="text-faint">Ghi chú</span>
-              <span className="text-body">{report.notes}</span>
+              <span className="text-body bg-surface-hover rounded-lg p-2 text-xs">
+                {report.notes}
+              </span>
             </div>
           )}
         </div>
@@ -224,29 +213,29 @@ export function ReportDetail({
           <Button
             variant="ghost"
             size="sm"
-            iconLeft="checkmark-outline"
-            className="flex-1 text-emerald-400 hover:bg-emerald-500/10"
-            onClick={handleKeep}
+            iconLeft="eye-outline"
+            className="flex-1 text-amber-400 hover:bg-amber-500/10"
+            onClick={handleReview}
             disabled={loading}
           >
-            Giữ lại
+            Xem xét
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            iconLeft="trash-outline"
-            className="flex-1 text-red-400 hover:bg-red-500/10"
-            onClick={handleDeletePost}
+            iconLeft="checkmark-circle-outline"
+            className="flex-1 text-emerald-400 hover:bg-emerald-500/10"
+            onClick={handleResolve}
             disabled={loading}
           >
-            Xoá
+            Giải quyết
           </Button>
           <Button
             size="sm"
             iconLeft="lock-closed-outline"
             className="flex-1 bg-red-500 hover:bg-red-600"
             onClick={handleSuspend}
-            disabled={loading || !report.post?.author?._id}
+            disabled={loading || !report.reportedUser?._id}
           >
             Khoá TK
           </Button>
