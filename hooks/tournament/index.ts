@@ -23,6 +23,8 @@ export {
   useRejectRegistration,
   useBulkRegistrationActions,
   useUpdatePaymentStatus,
+  useBulkImportRegistrations,
+  useExportRegistrations,
 } from './useRegistrations';
 export {
   useTournamentBracket,

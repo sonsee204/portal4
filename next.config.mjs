@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'hitri-media-prod.hn.ss.bfcplatform.vn',
       },
+      {
+        protocol: 'https',
+        hostname: 'hitri-media-staging.hn.ss.bfcplatform.vn',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },

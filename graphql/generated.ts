@@ -837,6 +837,58 @@ export type BulkDeleteProductsInput = {
   venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type BulkImportError = {
+  __typename?: 'BulkImportError';
+  /** Tên vận động viên (nếu có) */
+  athleteName?: Maybe<Scalars['String']['output']>;
+  /** Lý do thất bại */
+  reason: Scalars['String']['output'];
+  /** Số thứ tự dòng (1-based) */
+  row: Scalars['Int']['output'];
+};
+
+export type BulkImportRegistrationItemInput = {
+  /** Tên vận động viên (bắt buộc) */
+  athleteName: Scalars['String']['input'];
+  /** ID hạng mục thi đấu (bắt buộc) */
+  categoryId: Scalars['ID']['input'];
+  /** CLB / Đội */
+  club?: InputMaybe<Scalars['String']['input']>;
+  /** Ngày sinh (YYYY-MM-DD) */
+  dateOfBirth?: InputMaybe<Scalars['String']['input']>;
+  /** Email */
+  email?: InputMaybe<Scalars['String']['input']>;
+  /** Tên phụ huynh / người giám hộ */
+  guardianName?: InputMaybe<Scalars['String']['input']>;
+  /** SĐT phụ huynh / người giám hộ */
+  guardianPhone?: InputMaybe<Scalars['String']['input']>;
+  /** Ghi chú */
+  notes?: InputMaybe<Scalars['String']['input']>;
+  /** Phí đăng ký (VND) */
+  paymentAmount?: InputMaybe<Scalars['Float']['input']>;
+  /** Số điện thoại */
+  phone?: InputMaybe<Scalars['String']['input']>;
+  /** Trường / Đơn vị */
+  school?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type BulkImportRegistrationsInput = {
+  /** Danh sách đăng ký (tối đa 500) */
+  registrations: Array<BulkImportRegistrationItemInput>;
+  /** ID giải đấu */
+  tournamentId: Scalars['ID']['input'];
+};
+
+export type BulkImportResult = {
+  __typename?: 'BulkImportResult';
+  /** Chi tiết các dòng thất bại */
+  errors: Array<BulkImportError>;
+  /** Số lượng đăng ký thất bại */
+  failedCount: Scalars['Int']['output'];
+  /** Số lượng đăng ký thành công */
+  successCount: Scalars['Int']['output'];
+};
+
 export type BulkOperationResult = {
   __typename?: 'BulkOperationResult';
   /** IDs of items that failed */
@@ -3226,6 +3278,39 @@ export type MessageReport = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type MessageReportFilterInput = {
+  /** Filter by report status */
+  status?: InputMaybe<ReportStatus>;
+};
+
+export type MessageReportList = {
+  __typename?: 'MessageReportList';
+  /** Has more reports to load */
+  hasMore: Scalars['Boolean']['output'];
+  /** Number of items per page */
+  limit: Scalars['Int']['output'];
+  /** Current page number */
+  page: Scalars['Int']['output'];
+  /** List of message reports */
+  reports: Array<MessageReport>;
+  /** Total number of reports */
+  total: Scalars['Int']['output'];
+};
+
+export type MessageReportStats = {
+  __typename?: 'MessageReportStats';
+  /** Total dismissed reports */
+  dismissedReports: Scalars['Int']['output'];
+  /** Total pending reports */
+  pendingReports: Scalars['Int']['output'];
+  /** Total resolved reports */
+  resolvedReports: Scalars['Int']['output'];
+  /** Total reviewed reports */
+  reviewedReports: Scalars['Int']['output'];
+  /** Total reports */
+  totalReports: Scalars['Int']['output'];
+};
+
 /** Status of message delivery */
 export enum MessageStatus {
   Delivered = 'DELIVERED',
@@ -3319,6 +3404,8 @@ export type Mutation = {
   bulkCheckIn: Array<PickupGameParticipant>;
   /** Bulk delete products */
   bulkDeleteProducts: BulkOperationResult;
+  /** Bulk import registrations from file (organizer only) */
+  bulkImportRegistrations: BulkImportResult;
   /** Bulk reject registrations */
   bulkRejectRegistrations: Scalars['Int']['output'];
   /** Bulk schedule matches */
@@ -3471,6 +3558,8 @@ export type Mutation = {
   deleteGroup: Scalars['Boolean']['output'];
   /** Delete a message */
   deleteMessage: Scalars['Boolean']['output'];
+  /** Delete a message by admin (Admin only) */
+  deleteMessageByAdmin: Scalars['Boolean']['output'];
   /** Delete a notification */
   deleteNotification: Scalars['Boolean']['output'];
   /** Delete a post */
@@ -3595,6 +3684,8 @@ export type Mutation = {
   reportMessage: MessageReport;
   /** Report a post */
   reportPost: PostReport;
+  /** Report a user */
+  reportUser: UserReport;
   /** Request email update (validates availability, sends OTP to new email) */
   requestEmailUpdate: EmailUpdateRequestResponse;
   /** Request confirmation for a hold booking (customer) */
@@ -3725,6 +3816,8 @@ export type Mutation = {
   updateMatchResult: MatchScorecard;
   /** Update a message */
   updateMessage: Message;
+  /** Update message report status (Admin only) */
+  updateMessageReportStatus: MessageReport;
   /** Update internal note */
   updateOrderInternalNote: Order;
   /** Update order status */
@@ -3751,6 +3844,8 @@ export type Mutation = {
   updateReportStatus: PostReport;
   /** Update tournament details */
   updateTournament: Tournament;
+  /** Update user report status (Admin only) */
+  updateUserReportStatus: UserReport;
   /** Update venue */
   updateVenue: Venue;
   /** Update venue order type configurations */
@@ -3959,6 +4054,11 @@ export type MutationBulkCheckInArgs = {
 
 export type MutationBulkDeleteProductsArgs = {
   input: BulkDeleteProductsInput;
+};
+
+
+export type MutationBulkImportRegistrationsArgs = {
+  input: BulkImportRegistrationsInput;
 };
 
 
@@ -4352,6 +4452,11 @@ export type MutationDeleteMessageArgs = {
 };
 
 
+export type MutationDeleteMessageByAdminArgs = {
+  messageId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteNotificationArgs = {
   notificationId: Scalars['ID']['input'];
 };
@@ -4668,6 +4773,11 @@ export type MutationReportMessageArgs = {
 
 export type MutationReportPostArgs = {
   input: ReportPostInput;
+};
+
+
+export type MutationReportUserArgs = {
+  input: ReportUserInput;
 };
 
 
@@ -4990,6 +5100,11 @@ export type MutationUpdateMessageArgs = {
 };
 
 
+export type MutationUpdateMessageReportStatusArgs = {
+  input: UpdateMessageReportStatusInput;
+};
+
+
 export type MutationUpdateOrderInternalNoteArgs = {
   internalNote: Scalars['String']['input'];
   orderId: Scalars['ID']['input'];
@@ -5057,6 +5172,11 @@ export type MutationUpdateReportStatusArgs = {
 
 export type MutationUpdateTournamentArgs = {
   input: UpdateTournamentInput;
+};
+
+
+export type MutationUpdateUserReportStatusArgs = {
+  input: UpdateUserReportStatusInput;
 };
 
 
@@ -5303,7 +5423,8 @@ export enum NotificationType {
   PostReport = 'POST_REPORT',
   Social = 'SOCIAL',
   System = 'SYSTEM',
-  Tournament = 'TOURNAMENT'
+  Tournament = 'TOURNAMENT',
+  UserReport = 'USER_REPORT'
 }
 
 export type OperatingHours = {
@@ -6052,6 +6173,8 @@ export type PinMessageInput = {
 
 export type PlayerRanking = {
   __typename?: 'PlayerRanking';
+  avatarUrl?: Maybe<Scalars['String']['output']>;
+  club?: Maybe<Scalars['String']['output']>;
   /** Group stage points (3 win, 1 draw, 0 loss) */
   groupPoints?: Maybe<Scalars['Int']['output']>;
   matchesLost: Scalars['Int']['output'];
@@ -6062,6 +6185,7 @@ export type PlayerRanking = {
   pointsWon: Scalars['Int']['output'];
   rank: Scalars['Int']['output'];
   registrationId: Scalars['ID']['output'];
+  seed?: Maybe<Scalars['Int']['output']>;
   setsLost: Scalars['Int']['output'];
   setsWon: Scalars['Int']['output'];
   winRate: Scalars['Float']['output'];
@@ -7088,6 +7212,8 @@ export type Query = {
   court: Court;
   /** Get current active legal documents (ToS and Privacy Policy) */
   currentLegalDocuments: CurrentLegalDocuments;
+  /** Export all registrations without pagination (organizer only, max 2000) */
+  exportTournamentRegistrations: Array<TournamentRegistration>;
   /** Get my favorite venues */
   favoriteVenues: VenueList;
   /** Host đang theo dõi */
@@ -7126,6 +7252,12 @@ export type Query = {
   getGrowthStats: GrowthStats;
   /** Get inventory report for venue */
   getInventoryReport: InventoryReport;
+  /** Get a single message report by ID (Admin only) */
+  getMessageReportById: MessageReport;
+  /** Get message report statistics (Admin only) */
+  getMessageReportStats: MessageReportStats;
+  /** Get all message reports (Admin only) */
+  getMessageReportsForAdmin: MessageReportList;
   /** Get messages in a conversation */
   getMessages: MessageList;
   /** Get current user bookmarked posts */
@@ -7176,12 +7308,20 @@ export type Query = {
   getUserPosts: PostList;
   /** Get user profile by ID */
   getUserProfile: User;
+  /** Get a single user report by ID (Admin only) */
+  getUserReportById: UserReport;
+  /** Get user report statistics (Admin only) */
+  getUserReportStats: UserReportStats;
+  /** Get all user reports with filters (Admin only) */
+  getUserReportsForAdmin: UserReportList;
   /** Check if current user has bookmarked a post */
   hasBookmarkedPost: Scalars['Boolean']['output'];
   /** Check if current user has liked a post */
   hasLikedPost: Scalars['Boolean']['output'];
   /** Check if current user has reported a post */
   hasReportedPost: Scalars['Boolean']['output'];
+  /** Check if current user has reported a user */
+  hasReportedUser: Scalars['Boolean']['output'];
   /** Simple health check endpoint */
   health: Scalars['String']['output'];
   /** Detailed health check with database status */
@@ -7549,6 +7689,12 @@ export type QueryCourtArgs = {
 };
 
 
+export type QueryExportTournamentRegistrationsArgs = {
+  filter?: InputMaybe<RegistrationFilterInput>;
+  tournamentId: Scalars['ID']['input'];
+};
+
+
 export type QueryFavoriteVenuesArgs = {
   pagination?: InputMaybe<PaginationInput>;
 };
@@ -7643,6 +7789,17 @@ export type QueryGetGrowthStatsArgs = {
 
 export type QueryGetInventoryReportArgs = {
   venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryGetMessageReportByIdArgs = {
+  reportId: Scalars['ID']['input'];
+};
+
+
+export type QueryGetMessageReportsForAdminArgs = {
+  filter?: InputMaybe<MessageReportFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
 };
 
 
@@ -7768,6 +7925,17 @@ export type QueryGetUserProfileArgs = {
 };
 
 
+export type QueryGetUserReportByIdArgs = {
+  reportId: Scalars['ID']['input'];
+};
+
+
+export type QueryGetUserReportsForAdminArgs = {
+  filter?: InputMaybe<UserReportFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
 export type QueryHasBookmarkedPostArgs = {
   postId: Scalars['ID']['input'];
 };
@@ -7780,6 +7948,11 @@ export type QueryHasLikedPostArgs = {
 
 export type QueryHasReportedPostArgs = {
   postId: Scalars['ID']['input'];
+};
+
+
+export type QueryHasReportedUserArgs = {
+  userId: Scalars['String']['input'];
 };
 
 
@@ -8582,6 +8755,15 @@ export enum ReportStatus {
   Reviewed = 'REVIEWED'
 }
 
+export type ReportUserInput = {
+  /** Additional details */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Reason for reporting */
+  reason: UserReportReason;
+  /** ID of the user to report */
+  userId: Scalars['ID']['input'];
+};
+
 export type RequestAmenity = {
   __typename?: 'RequestAmenity';
   /** Amenity icon */
@@ -8897,6 +9079,10 @@ export type ScoringConfig = {
   /** Points to win a set (0 for timed sports) */
   pointsPerSet: Scalars['Int']['output'];
   scoringSystem: ScoringSystem;
+  /** Serve rotation interval (used when serveRule = ROTATION) */
+  serveRotationInterval?: Maybe<Scalars['Int']['output']>;
+  /** How serve changes after each point (default: RALLY_POINT) */
+  serveRule?: Maybe<ServeRule>;
   /** Sets needed to win the match */
   setsToWin: Scalars['Int']['output'];
   /** Whether tiebreak rules apply (tennis) */
@@ -9035,6 +9221,13 @@ export type SendNotificationToUsersInput = {
   /** Array of target user IDs */
   userIds: Array<Scalars['String']['input']>;
 };
+
+/** How serve changes after each scored point */
+export enum ServeRule {
+  NoServe = 'NO_SERVE',
+  RallyPoint = 'RALLY_POINT',
+  Rotation = 'ROTATION'
+}
 
 export type ServerInfo = {
   __typename?: 'ServerInfo';
@@ -9832,6 +10025,8 @@ export type TournamentMatch = {
   losersNextMatchSlot?: Maybe<Scalars['Int']['output']>;
   /** Unique match number within tournament */
   matchNumber: Scalars['Int']['output'];
+  /** Timestamp when the match was started (status → LIVE) */
+  matchStartedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Match ID where winner advances to */
   nextMatchId?: Maybe<Scalars['ID']['output']>;
   /** Slot in next match (1 or 2) */
@@ -9850,6 +10045,8 @@ export type TournamentMatch = {
   roundLabel: Scalars['String']['output'];
   scheduledAt?: Maybe<Scalars['DateTime']['output']>;
   scoreSummary?: Maybe<ScoreSummary>;
+  /** Currently serving player (1 or 2), synced from scorecard during LIVE */
+  servingPlayer?: Maybe<Scalars['Int']['output']>;
   status: MatchStatus;
   tournamentId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
@@ -9984,10 +10181,15 @@ export enum TournamentSortOrder {
 
 export type TournamentStats = {
   __typename?: 'TournamentStats';
+  avgMatchDurationSeconds: Scalars['Int']['output'];
   completedMatches: Scalars['Int']['output'];
+  longestMatchDurationSeconds: Scalars['Int']['output'];
+  longestMatchLabel?: Maybe<Scalars['String']['output']>;
   totalCategories: Scalars['Int']['output'];
   totalMatches: Scalars['Int']['output'];
+  totalPointsScored: Scalars['Int']['output'];
   totalRegistrations: Scalars['Int']['output'];
+  totalSetsPlayed: Scalars['Int']['output'];
 };
 
 /** Status of a tournament */
@@ -10131,6 +10333,15 @@ export type UpdateMessageInput = {
   messageId: Scalars['ID']['input'];
   /** Updated text content */
   text: Scalars['String']['input'];
+};
+
+export type UpdateMessageReportStatusInput = {
+  /** Admin notes */
+  notes?: InputMaybe<Scalars['String']['input']>;
+  /** ID of the report to update */
+  reportId: Scalars['ID']['input'];
+  /** New status */
+  status: ReportStatus;
 };
 
 export type UpdateParticipantDepositInput = {
@@ -10399,6 +10610,15 @@ export type UpdateTournamentInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateUserReportStatusInput = {
+  /** Admin notes about the resolution */
+  notes?: InputMaybe<Scalars['String']['input']>;
+  /** ID of the report to update */
+  reportId: Scalars['ID']['input'];
+  /** New status */
+  status: UserReportStatus;
+};
+
 export type UpdateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -10609,6 +10829,8 @@ export type User = {
 export type UserBlock = {
   __typename?: 'UserBlock';
   _id: Scalars['ID']['output'];
+  /** Blocked user details (resolved field) */
+  blockedUser?: Maybe<User>;
   /** User who was blocked */
   blockedUserId: Scalars['ID']['output'];
   /** User who blocked */
@@ -10627,6 +10849,88 @@ export type UserList = {
   total: Scalars['Int']['output'];
   users: Array<User>;
 };
+
+export type UserReport = {
+  __typename?: 'UserReport';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Additional details about the report */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Admin notes or resolution details */
+  notes?: Maybe<Scalars['String']['output']>;
+  /** Reason for reporting */
+  reason: UserReportReason;
+  /** User who was reported (resolved field) */
+  reportedUser?: Maybe<User>;
+  /** User that was reported */
+  reportedUserId: Scalars['ID']['output'];
+  /** User who filed the report (resolved field) */
+  reporter?: Maybe<User>;
+  /** User who reported */
+  reporterId: Scalars['ID']['output'];
+  /** When the report was reviewed */
+  reviewedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Admin who reviewed */
+  reviewedBy?: Maybe<Scalars['ID']['output']>;
+  /** Admin who reviewed (resolved field) */
+  reviewer?: Maybe<User>;
+  /** Status of the report */
+  status: UserReportStatus;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type UserReportFilterInput = {
+  /** Filter by report reason */
+  reason?: InputMaybe<UserReportReason>;
+  /** Filter by report status */
+  status?: InputMaybe<UserReportStatus>;
+};
+
+export type UserReportList = {
+  __typename?: 'UserReportList';
+  /** Has more reports to load */
+  hasMore: Scalars['Boolean']['output'];
+  /** Number of items per page */
+  limit: Scalars['Int']['output'];
+  /** Current page number */
+  page: Scalars['Int']['output'];
+  /** List of user reports */
+  reports: Array<UserReport>;
+  /** Total number of reports */
+  total: Scalars['Int']['output'];
+};
+
+/** Reason for reporting a user */
+export enum UserReportReason {
+  Harassment = 'HARASSMENT',
+  HateSpeech = 'HATE_SPEECH',
+  Impersonation = 'IMPERSONATION',
+  InappropriateContent = 'INAPPROPRIATE_CONTENT',
+  Other = 'OTHER',
+  Spam = 'SPAM'
+}
+
+export type UserReportStats = {
+  __typename?: 'UserReportStats';
+  /** Total dismissed reports */
+  dismissedReports: Scalars['Int']['output'];
+  /** Total pending reports */
+  pendingReports: Scalars['Int']['output'];
+  /** Total resolved reports */
+  resolvedReports: Scalars['Int']['output'];
+  /** Total reviewed reports */
+  reviewedReports: Scalars['Int']['output'];
+  /** Total reports */
+  totalReports: Scalars['Int']['output'];
+};
+
+/** Status of user report */
+export enum UserReportStatus {
+  Dismissed = 'DISMISSED',
+  Pending = 'PENDING',
+  Resolved = 'RESOLVED',
+  Reviewed = 'REVIEWED'
+}
 
 export enum UserRole {
   Admin = 'ADMIN',
@@ -11411,6 +11715,27 @@ export type UpdateContactInquiryStatusMutationVariables = Exact<{
 
 export type UpdateContactInquiryStatusMutation = { __typename?: 'Mutation', updateContactInquiryStatus: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } };
 
+export type UpdateReportStatusMutationVariables = Exact<{
+  input: UpdateReportStatusInput;
+}>;
+
+
+export type UpdateReportStatusMutation = { __typename?: 'Mutation', updateReportStatus: { __typename?: 'PostReport', _id: string, status: PostReportStatus, notes?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
+
+export type UpdateUserReportStatusMutationVariables = Exact<{
+  input: UpdateUserReportStatusInput;
+}>;
+
+
+export type UpdateUserReportStatusMutation = { __typename?: 'Mutation', updateUserReportStatus: { __typename?: 'UserReport', _id: string, status: UserReportStatus, notes?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
+
+export type DeletePostByAdminMutationVariables = Exact<{
+  postId: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePostByAdminMutation = { __typename?: 'Mutation', deletePostByAdmin: boolean };
+
 export type MarkNotificationAsReadMutationVariables = Exact<{
   notificationId: Scalars['ID']['input'];
 }>;
@@ -11576,6 +11901,13 @@ export type UpdatePaymentStatusMutationVariables = Exact<{
 
 
 export type UpdatePaymentStatusMutation = { __typename?: 'Mutation', updatePaymentStatus: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string } };
+
+export type BulkImportRegistrationsMutationVariables = Exact<{
+  input: BulkImportRegistrationsInput;
+}>;
+
+
+export type BulkImportRegistrationsMutation = { __typename?: 'Mutation', bulkImportRegistrations: { __typename?: 'BulkImportResult', successCount: number, failedCount: number, errors: Array<{ __typename?: 'BulkImportError', row: number, athleteName?: string | null, reason: string }> } };
 
 export type GenerateBracketMutationVariables = Exact<{
   input: GenerateBracketInput;
@@ -11747,6 +12079,32 @@ export type HealthQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type HealthQuery = { __typename?: 'Query', health: string };
 
+export type GetPostReportsForAdminQueryVariables = Exact<{
+  filter?: InputMaybe<PostReportFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+}>;
+
+
+export type GetPostReportsForAdminQuery = { __typename?: 'Query', getPostReportsForAdmin: { __typename?: 'PostReportList', total: number, page: number, limit: number, hasMore: boolean, reports: Array<{ __typename?: 'PostReport', _id: string, postId: string, reason: PostReportReason, status: PostReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reporterId: string, reviewedAt?: string | null, reviewedBy?: string | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, post?: { __typename?: 'Post', _id: string, content: string, author: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null }> } };
+
+export type GetPostReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetPostReportStatsQuery = { __typename?: 'Query', getPostReportStats: { __typename?: 'PostReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
+
+export type GetUserReportsForAdminQueryVariables = Exact<{
+  filter?: InputMaybe<UserReportFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+}>;
+
+
+export type GetUserReportsForAdminQuery = { __typename?: 'Query', getUserReportsForAdmin: { __typename?: 'UserReportList', total: number, page: number, limit: number, hasMore: boolean, reports: Array<{ __typename?: 'UserReport', _id: string, reportedUserId: string, reporterId: string, reason: UserReportReason, status: UserReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reportedUser?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null }> } };
+
+export type GetUserReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUserReportStatsQuery = { __typename?: 'Query', getUserReportStats: { __typename?: 'UserReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
+
 export type GetNotificationsQueryVariables = Exact<{
   filter?: InputMaybe<NotificationFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
@@ -11913,6 +12271,14 @@ export type GetTournamentStatsQueryVariables = Exact<{
 
 
 export type GetTournamentStatsQuery = { __typename?: 'Query', tournamentStats: { __typename?: 'TournamentStats', totalCategories: number, totalRegistrations: number, totalMatches: number, completedMatches: number } };
+
+export type ExportTournamentRegistrationsQueryVariables = Exact<{
+  tournamentId: Scalars['ID']['input'];
+  filter?: InputMaybe<RegistrationFilterInput>;
+}>;
+
+
+export type ExportTournamentRegistrationsQuery = { __typename?: 'Query', exportTournamentRegistrations: Array<{ __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string }> };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];

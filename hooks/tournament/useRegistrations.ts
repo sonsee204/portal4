@@ -2,13 +2,17 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_TOURNAMENT_REGISTRATIONS } from '@/graphql/queries/tournament';
+import {
+  GET_TOURNAMENT_REGISTRATIONS,
+  EXPORT_TOURNAMENT_REGISTRATIONS,
+} from '@/graphql/queries/tournament';
 import {
   APPROVE_REGISTRATION,
   REJECT_REGISTRATION,
   BULK_APPROVE_REGISTRATIONS,
   BULK_REJECT_REGISTRATIONS,
   UPDATE_PAYMENT_STATUS,
+  BULK_IMPORT_REGISTRATIONS,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
@@ -18,7 +22,10 @@ import type {
   PaginationInput,
   TournamentRegistration,
   TournamentPaymentStatus,
+  BulkImportResult,
+  BulkImportRegistrationsInput,
 } from '@/graphql/generated';
+import type { BulkImportItem } from '@/lib/utils/registration-import';
 
 interface UseRegistrationsOptions {
   tournamentId: string;
@@ -135,4 +142,55 @@ export function useUpdatePaymentStatus(tournamentId: string, options?: { onSucce
   );
 
   return { updatePayment, loading };
+}
+
+export function useBulkImportRegistrations(
+  tournamentId: string,
+  options?: { onSuccess?: (result: BulkImportResult) => void },
+) {
+  const [mutation, { loading }] = useMutation<{
+    bulkImportRegistrations: BulkImportResult;
+  }>(BULK_IMPORT_REGISTRATIONS);
+
+  const bulkImport = useCallback(
+    (registrations: BulkImportItem[]) => {
+      const input: BulkImportRegistrationsInput = {
+        tournamentId,
+        registrations: registrations.map((r) => ({
+          ...r,
+          categoryId: r.categoryId,
+        })),
+      };
+      return mutation({ variables: { input } }).then((res) => {
+        const result = res.data?.bulkImportRegistrations;
+        if (result) options?.onSuccess?.(result);
+        return result;
+      });
+    },
+    [mutation, tournamentId, options],
+  );
+
+  return { bulkImport, loading };
+}
+
+export function useExportRegistrations(tournamentId: string) {
+  const { data, loading, refetch } = useQuery<{
+    exportTournamentRegistrations: TournamentRegistration[];
+  }>(EXPORT_TOURNAMENT_REGISTRATIONS, {
+    variables: { tournamentId },
+    skip: true,
+    fetchPolicy: 'network-only',
+  });
+
+  const fetchForExport = useCallback(
+    (filter?: RegistrationFilterInput) =>
+      refetch({ tournamentId, filter }),
+    [refetch, tournamentId],
+  );
+
+  return {
+    registrations: data?.exportTournamentRegistrations ?? [],
+    loading,
+    fetchForExport,
+  };
 }

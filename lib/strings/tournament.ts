@@ -85,4 +85,21 @@ export const TOURNAMENT = {
   CONFIRM_RESET_BRACKET: 'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_DELETE_TOURNAMENT: 'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
+
+  IMPORT_TITLE: 'Import VĐV từ file',
+  IMPORT_STEP_UPLOAD: 'Tải file lên',
+  IMPORT_STEP_PREVIEW: 'Xem trước & kiểm tra',
+  IMPORT_STEP_RESULT: 'Kết quả',
+  IMPORT_DROP_HINT: 'Kéo thả file vào đây hoặc nhấn để chọn',
+  IMPORT_ACCEPT_FORMATS: 'Hỗ trợ: .xlsx, .xls, .csv',
+  IMPORT_DOWNLOAD_TEMPLATE: 'Tải file mẫu',
+  IMPORT_PARSE_ERROR: 'Không thể đọc file. Vui lòng kiểm tra định dạng.',
+  IMPORT_SUCCESS: (n: number) => `Nhập thành công ${n} VĐV`,
+  IMPORT_PARTIAL: (ok: number, fail: number) =>
+    `Thành công ${ok} VĐV • Thất bại ${fail} dòng`,
+  IMPORT_CONFIRM: (n: number) => `Xác nhận import ${n} VĐV`,
+
+  EXPORT_BUTTON: 'Xuất Excel',
+  EXPORT_FILENAME: (name: string, date: string) =>
+    `${name}-dang-ky-${date}.xlsx`,
 } as const;
