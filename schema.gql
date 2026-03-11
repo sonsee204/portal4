@@ -1011,6 +1011,71 @@ input BulkDeleteProductsInput {
   venueId: ID
 }
 
+type BulkImportError {
+  """Tên vận động viên (nếu có)"""
+  athleteName: String
+
+  """Lý do thất bại"""
+  reason: String!
+
+  """Số thứ tự dòng (1-based)"""
+  row: Int!
+}
+
+input BulkImportRegistrationItemInput {
+  """Tên vận động viên (bắt buộc)"""
+  athleteName: String!
+
+  """ID hạng mục thi đấu (bắt buộc)"""
+  categoryId: ID!
+
+  """CLB / Đội"""
+  club: String
+
+  """Ngày sinh (YYYY-MM-DD)"""
+  dateOfBirth: String
+
+  """Email"""
+  email: String
+
+  """Tên phụ huynh / người giám hộ"""
+  guardianName: String
+
+  """SĐT phụ huynh / người giám hộ"""
+  guardianPhone: String
+
+  """Ghi chú"""
+  notes: String
+
+  """Phí đăng ký (VND)"""
+  paymentAmount: Float
+
+  """Số điện thoại"""
+  phone: String
+
+  """Trường / Đơn vị"""
+  school: String
+}
+
+input BulkImportRegistrationsInput {
+  """Danh sách đăng ký (tối đa 500)"""
+  registrations: [BulkImportRegistrationItemInput!]!
+
+  """ID giải đấu"""
+  tournamentId: ID!
+}
+
+type BulkImportResult {
+  """Chi tiết các dòng thất bại"""
+  errors: [BulkImportError!]!
+
+  """Số lượng đăng ký thất bại"""
+  failedCount: Int!
+
+  """Số lượng đăng ký thành công"""
+  successCount: Int!
+}
+
 type BulkOperationResult {
   """IDs of items that failed"""
   failed: [String!]!
@@ -4150,6 +4215,9 @@ type Mutation {
 
   """Bulk delete products"""
   bulkDeleteProducts(input: BulkDeleteProductsInput!): BulkOperationResult!
+
+  """Bulk import registrations from file (organizer only)"""
+  bulkImportRegistrations(input: BulkImportRegistrationsInput!): BulkImportResult!
 
   """Bulk reject registrations"""
   bulkRejectRegistrations(input: BulkRegistrationActionInput!): Int!
@@ -7407,6 +7475,9 @@ type Query {
 
   """Get current active legal documents (ToS and Privacy Policy)"""
   currentLegalDocuments: CurrentLegalDocuments!
+
+  """Export all registrations without pagination (organizer only, max 2000)"""
+  exportTournamentRegistrations(filter: RegistrationFilterInput, tournamentId: ID!): [TournamentRegistration!]!
 
   """Get my favorite venues"""
   favoriteVenues(pagination: PaginationInput): VenueList!

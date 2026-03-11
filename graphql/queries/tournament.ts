@@ -171,3 +171,12 @@ export const GET_TOURNAMENT_STATS = gql`
     }
   }
 `;
+
+export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
+  query ExportTournamentRegistrations($tournamentId: ID!, $filter: RegistrationFilterInput) {
+    exportTournamentRegistrations(tournamentId: $tournamentId, filter: $filter) {
+      ...RegistrationCore
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
+`;

@@ -161,6 +161,20 @@ export const UPDATE_PAYMENT_STATUS = gql`
   ${REGISTRATION_CORE_FRAGMENT}
 `;
 
+export const BULK_IMPORT_REGISTRATIONS = gql`
+  mutation BulkImportRegistrations($input: BulkImportRegistrationsInput!) {
+    bulkImportRegistrations(input: $input) {
+      successCount
+      failedCount
+      errors {
+        row
+        athleteName
+        reason
+      }
+    }
+  }
+`;
+
 // ==================== BRACKET & DRAW ====================
 
 export const GENERATE_BRACKET = gql`

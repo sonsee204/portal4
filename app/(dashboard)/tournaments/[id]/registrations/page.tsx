@@ -13,6 +13,9 @@ import {
   useBulkRegistrationActions,
   useUpdatePaymentStatus,
 } from '@/hooks/tournament';
+import { useTournamentCategories } from '@/hooks/tournament';
+import { ExportButton } from './_components/ExportButton';
+import { ImportModal } from './_components/ImportModal';
 import type {
   RegistrationStatus,
   TournamentPaymentStatus,
@@ -70,6 +73,9 @@ export default function RegistrationsPage({
     'ALL'
   );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [importOpen, setImportOpen] = useState(false);
+
+  const { categories } = useTournamentCategories(tournamentId);
 
   const { registrations, total, loading, refetch } = useRegistrations({
     tournamentId,
@@ -146,6 +152,15 @@ export default function RegistrationsPage({
         title="Quản lý đăng ký"
         description={`${total} đăng ký • ${pendingCount} chờ duyệt • ${approvedCount} đã duyệt`}
       >
+        <ExportButton tournamentId={tournamentId} />
+        <Button
+          variant="outline"
+          size="sm"
+          iconLeft="cloud-upload-outline"
+          onClick={() => setImportOpen(true)}
+        >
+          Import VĐV
+        </Button>
         <Button
           variant="ghost"
           size="sm"
@@ -155,6 +170,14 @@ export default function RegistrationsPage({
           Quay lại
         </Button>
       </PageHeader>
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        tournamentId={tournamentId}
+        categories={categories}
+        onSuccess={onSuccess}
+      />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
@@ -276,9 +299,9 @@ export default function RegistrationsPage({
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${REG_STATUS_COLORS[reg.registrationStatus] ?? ''}`}
                       >
-                        {TOURNAMENT[
+                        {(TOURNAMENT[
                           `REG_STATUS_${reg.registrationStatus}` as keyof typeof TOURNAMENT
-                        ] ?? reg.registrationStatus}
+                        ] as string | undefined) ?? reg.registrationStatus}
                       </span>
                     </td>
                     <td className="p-3">
