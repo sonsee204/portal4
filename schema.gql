@@ -1108,7 +1108,7 @@ input BulkImportRegistrationItemInput {
   """SĐT đồng đội (dùng cho nội dung đôi)"""
   partnerPhone: String
 
-  """Phí đăng ký (VND)"""
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
   paymentAmount: Float
 
   """Số điện thoại"""
@@ -8385,6 +8385,8 @@ input RegisterTournamentInput {
   """
   members: [EntryMemberInput!]
   notes: String
+
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
   paymentAmount: Float
   paymentProofUrl: String
 
