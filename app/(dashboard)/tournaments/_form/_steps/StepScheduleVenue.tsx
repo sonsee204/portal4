@@ -154,40 +154,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
         </div>
       </GlassPanel>
 
-      {/* Venue */}
-      <GlassPanel card>
-        <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">
-          <IonIcon name="location-outline" size="sm" className="text-primary" />
-          Địa điểm thi đấu
-        </h3>
-        <div className="space-y-4">
-          <Controller
-            name="venueName"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                label="Tên nhà thi đấu / sân"
-                placeholder="VD: Nhà thi đấu Đa năng Thanh Trì"
-                leftIcon="business-outline"
-              />
-            )}
-          />
-          <Controller
-            name="venueAddress"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                label="Địa chỉ"
-                placeholder="Địa chỉ chi tiết..."
-                leftIcon="navigate-outline"
-              />
-            )}
-          />
-        </div>
-      </GlassPanel>
-
       {/* Facilities */}
       <GlassPanel card>
         <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">

@@ -5,9 +5,11 @@ import * as XLSX from 'xlsx';
 import { Button } from '@/components/atoms/Button';
 import { TOURNAMENT } from '@/lib/strings';
 import { useExportRegistrations } from '@/hooks/tournament';
-import type {
-  RegistrationFilterInput,
-  TournamentRegistration,
+import {
+  RegistrationStatus,
+  TournamentPaymentStatus,
+  type RegistrationFilterInput,
+  type TournamentRegistration,
 } from '@/graphql/generated';
 
 interface ExportButtonProps {
@@ -16,18 +18,18 @@ interface ExportButtonProps {
   filter?: RegistrationFilterInput;
 }
 
-const REGISTRATION_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Chờ duyệt',
-  APPROVED: 'Đã duyệt',
-  REJECTED: 'Bị từ chối',
-  WAITLISTED: 'Danh sách chờ',
+const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
+  [RegistrationStatus.Pending]: 'Chờ duyệt',
+  [RegistrationStatus.Approved]: 'Đã duyệt',
+  [RegistrationStatus.Rejected]: 'Bị từ chối',
+  [RegistrationStatus.Waitlisted]: 'Danh sách chờ',
 };
 
-const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  UNPAID: 'Chưa thanh toán',
-  VERIFYING: 'Đang xác minh',
-  PAID: 'Đã thanh toán',
-  REFUNDED: 'Đã hoàn tiền',
+const PAYMENT_STATUS_LABELS: Record<TournamentPaymentStatus, string> = {
+  [TournamentPaymentStatus.Unpaid]: 'Chưa thanh toán',
+  [TournamentPaymentStatus.Verifying]: 'Đang xác minh',
+  [TournamentPaymentStatus.Paid]: 'Đã thanh toán',
+  [TournamentPaymentStatus.Refunded]: 'Đã hoàn tiền',
 };
 
 function formatDateVN(dateStr?: string | null): string {

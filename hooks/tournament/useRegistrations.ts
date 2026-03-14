@@ -12,6 +12,7 @@ import {
   BULK_APPROVE_REGISTRATIONS,
   BULK_REJECT_REGISTRATIONS,
   UPDATE_PAYMENT_STATUS,
+  DELETE_REGISTRATION,
   BULK_IMPORT_REGISTRATIONS,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
@@ -92,6 +93,24 @@ export function useRejectRegistration(tournamentId: string, options?: { onSucces
   );
 
   return { reject, loading };
+}
+
+export function useDeleteRegistration(tournamentId: string, options?: { onSuccess?: () => void }) {
+  const [mutation, { loading }] = useMutation<{
+    deleteRegistration: { success: boolean; message: string };
+  }>(DELETE_REGISTRATION, {
+    refetchQueries: [{ query: GET_TOURNAMENT_REGISTRATIONS, variables: { tournamentId } }],
+    ...createMutationOptions('DeleteRegistration', TOURNAMENT.SUCCESS_DELETE_REGISTRATION),
+    onCompleted: () => options?.onSuccess?.(),
+  });
+
+  const deleteRegistration = useCallback(
+    (registrationId: string) =>
+      mutation({ variables: { input: { registrationId } } }),
+    [mutation],
+  );
+
+  return { deleteRegistration, loading };
 }
 
 export function useBulkRegistrationActions(tournamentId: string, options?: { onSuccess?: () => void }) {

@@ -14,6 +14,14 @@ export type UserRole = `${UserRoleEnum}`;
  */
 export { UserRoleEnum };
 
+/** Location shape for user profile */
+export interface AuthUserLocation {
+  city?: string;
+  country?: string;
+  displayText?: string;
+  coordinates?: { latitude: number; longitude: number };
+}
+
 /**
  * Authenticated user shape -- subset of the full User entity,
  * returned by the Me query and stored in the auth Zustand store.
@@ -25,6 +33,13 @@ export interface AuthUser {
   displayName: string;
   role: UserRole;
   photoURL?: string;
+  phone?: string;
+  userName?: string;
+  bio?: string;
+  club?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | null;
+  dateOfBirth?: string | null;
+  location?: AuthUserLocation | null;
 }
 
 /**

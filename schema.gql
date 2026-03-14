@@ -1820,6 +1820,11 @@ input CreateCategoryInput {
   prizes: [TournamentPrizeInput!]
   scoringConfig: ScoringConfigInput!
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean = false
   title: String!
   tournamentId: ID!
 }
@@ -2755,6 +2760,10 @@ input DayScheduleInput {
 
   """Slots for this day"""
   slots: [BookedSlotInput!]!
+}
+
+input DeleteRegistrationInput {
+  registrationId: ID!
 }
 
 type DepositConfig {
@@ -4507,6 +4516,9 @@ type Mutation {
 
   """Delete a promotion"""
   deletePromotion(promotionId: ID!): Boolean!
+
+  """Delete registration (organizer only)"""
+  deleteRegistration(input: DeleteRegistrationInput!): SuccessResponse!
 
   """Permanently delete a DRAFT tournament"""
   deleteTournament(id: ID!): SuccessResponse!
@@ -9396,6 +9408,11 @@ type Subscription {
   """Real-time notification for a specific user"""
   notificationCreated(userId: ID!): Notification!
 
+  """
+  Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list.
+  """
+  tournamentListUpdated: String!
+
   """Any match updated in tournament"""
   tournamentMatchesUpdated(tournamentId: ID!): String!
 
@@ -9640,6 +9657,11 @@ type TournamentCategory {
 
   """Number of seeded players"""
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean
   status: CategoryStatus!
 
   """Category title (e.g. Nam Đơn U15)"""
@@ -9901,6 +9923,7 @@ type TournamentRegistration {
   """Athlete full name"""
   athleteName: String!
   avatarUrl: String
+  category: TournamentCategory
   categoryId: ID!
   club: String
   createdAt: DateTime!
@@ -9929,6 +9952,7 @@ type TournamentRegistration {
 
   """Seed number (set after draw)"""
   seed: Int
+  tournament: Tournament
   tournamentId: ID!
   updatedAt: DateTime!
 
@@ -10060,6 +10084,11 @@ input UpdateCategoryInput {
   prizes: [TournamentPrizeInput!]
   scoringConfig: ScoringConfigInput
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean
   title: String
 }
 
@@ -10396,6 +10425,7 @@ input UpdateProductInput {
 
 input UpdateProfileInput {
   bio: String
+  club: String
   coverPhotoURL: String
   dateOfBirth: String
   displayName: String
@@ -10802,6 +10832,7 @@ type User {
   """How the user discovered the platform (collected via onboarding survey)"""
   acquisitionSource: AcquisitionSource
   bio: String
+  club: String
   coverPhotoURL: String
   createdAt: DateTime!
 

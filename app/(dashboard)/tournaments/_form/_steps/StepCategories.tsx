@@ -75,6 +75,7 @@ interface EditState {
   description: string;
   popular: boolean;
   maxRegistrations: number;
+  sharedThirdPlace: boolean;
   prizes: PrizeDraft[];
 }
 
@@ -98,6 +99,7 @@ function CategoryApiCard({
     description: category.description ?? '',
     popular: category.popular ?? false,
     maxRegistrations: category.maxRegistrations ?? 0,
+    sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
     prizes: (category.prizes ?? []).length > 0
       ? (category.prizes ?? []).map((p) => ({
           rank: p.rank ?? 'gold',
@@ -123,6 +125,7 @@ function CategoryApiCard({
       description: category.description ?? '',
       popular: category.popular ?? false,
       maxRegistrations: category.maxRegistrations ?? 0,
+      sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
       prizes: (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
             rank: p.rank ?? 'gold',
@@ -150,6 +153,7 @@ function CategoryApiCard({
       description: draft.description || undefined,
       popular: draft.popular,
       maxRegistrations: draft.maxRegistrations,
+      sharedThirdPlace: draft.sharedThirdPlace,
       prizes: draft.prizes
         .filter((p) => p.title)
         .map((p, i) => ({
@@ -264,6 +268,29 @@ function CategoryApiCard({
           </div>
         </div>
 
+        <div className="flex items-end pb-1">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={draft.sharedThirdPlace}
+              onClick={() => update({ sharedThirdPlace: !draft.sharedThirdPlace })}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                draft.sharedThirdPlace ? 'bg-primary' : 'bg-surface-border'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                  draft.sharedThirdPlace ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-heading text-sm">
+              Đồng giải ba (không đánh trận tranh hạng 3-4)
+            </span>
+          </label>
+        </div>
+
         <Textarea
           label="Mô tả"
           placeholder="Mô tả ngắn về nội dung thi đấu..."
@@ -307,15 +334,25 @@ function CategoryApiCard({
                 className="border-surface-border rounded-lg border p-3"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-heading text-sm font-medium">
-                    {prize.rank === 'gold'
-                      ? 'Giải Nhất'
-                      : prize.rank === 'silver'
-                        ? 'Giải Nhì'
-                        : prize.rank === 'bronze'
-                          ? 'Giải Ba'
-                          : `Giải ${pi + 1}`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-heading text-sm font-medium">
+                      {prize.rank === 'gold'
+                        ? 'Giải Nhất'
+                        : prize.rank === 'silver'
+                          ? 'Giải Nhì'
+                          : prize.rank === 'bronze'
+                            ? 'Giải Ba'
+                            : `Giải ${pi + 1}`}
+                    </span>
+                    {draft.sharedThirdPlace && prize.rank === 'bronze' && (
+                      <span
+                        className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400"
+                        title="Đồng giải ba - 2 VĐV"
+                      >
+                        ×2
+                      </span>
+                    )}
+                  </div>
                   {draft.prizes.length > 1 && (
                     <button
                       type="button"
@@ -507,6 +544,7 @@ function StepCategoriesEditMode({
       description: '',
       popular: false,
       maxRegistrations: 0,
+      sharedThirdPlace: false,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -663,6 +701,7 @@ function StepCategoriesCreateMode({
               description: '',
               popular: false,
               maxRegistrations: 0,
+              sharedThirdPlace: false,
               prizes: [
                 { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                 { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -723,6 +762,7 @@ function StepCategoriesCreateMode({
                 description: '',
                 popular: false,
                 maxRegistrations: 0,
+                sharedThirdPlace: false,
                 prizes: [
                   { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                   { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },

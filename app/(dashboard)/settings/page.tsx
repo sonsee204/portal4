@@ -11,8 +11,10 @@ import { Button } from '@/components/atoms/Button';
 import { AppearanceSettings } from './_components/AppearanceSettings';
 import { PermissionMatrix } from './_components/PermissionMatrix';
 import { ApiKeyCard } from './_components/ApiKeyCard';
+import { ProfileSettings } from './_components/ProfileSettings';
 
 const settingsTabs = [
+  { label: 'Hồ sơ cá nhân', value: 'profile' },
   { label: 'Cài đặt chung', value: 'general' },
   { label: 'Giao diện', value: 'appearance' },
   { label: 'Vai trò & Quyền', value: 'rbac' },
@@ -60,6 +62,8 @@ export default function SettingsPage() {
       />
 
       <div className="mt-6">
+        {tab === 'profile' && <ProfileSettings />}
+
         {tab === 'general' && (
           <GlassPanel card className="max-w-2xl space-y-5">
             <Input

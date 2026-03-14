@@ -21,6 +21,7 @@ export {
   useRegistrations,
   useApproveRegistration,
   useRejectRegistration,
+  useDeleteRegistration,
   useBulkRegistrationActions,
   useUpdatePaymentStatus,
   useBulkImportRegistrations,
