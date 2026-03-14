@@ -2,7 +2,56 @@
 
 import { Checkbox } from '@/components/atoms/Checkbox';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import { mockPermissions, mockRolePermissions } from '@/lib/mock-data';
+
+interface Permission {
+  key: string;
+  label: string;
+  category: string;
+}
+
+const PERMISSIONS: Permission[] = [
+  {
+    key: 'user.create_edit',
+    label: 'Tạo/Sửa người dùng',
+    category: 'User Management',
+  },
+  { key: 'user.delete', label: 'Xoá người dùng', category: 'User Management' },
+  {
+    key: 'finance.view',
+    label: 'Xem Dashboard tài chính',
+    category: 'Finance',
+  },
+  { key: 'finance.refund', label: 'Xử lý hoàn tiền', category: 'Finance' },
+  { key: 'ops.tournaments', label: 'Quản lý giải đấu', category: 'Operations' },
+  { key: 'ops.scores', label: 'Sửa điểm trận đấu', category: 'Operations' },
+];
+
+const ROLE_PERMISSIONS: Record<string, Record<string, boolean>> = {
+  super_admin: {
+    'user.create_edit': true,
+    'user.delete': true,
+    'finance.view': true,
+    'finance.refund': true,
+    'ops.tournaments': true,
+    'ops.scores': true,
+  },
+  staff: {
+    'user.create_edit': true,
+    'user.delete': false,
+    'finance.view': true,
+    'finance.refund': false,
+    'ops.tournaments': true,
+    'ops.scores': true,
+  },
+  moderator: {
+    'user.create_edit': false,
+    'user.delete': false,
+    'finance.view': false,
+    'finance.refund': false,
+    'ops.tournaments': false,
+    'ops.scores': false,
+  },
+};
 
 const roles = ['super_admin', 'staff', 'moderator'];
 const roleLabels: Record<string, string> = {
@@ -12,7 +61,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function PermissionMatrix() {
-  const categories = [...new Set(mockPermissions.map((p) => p.category))];
+  const categories = [...new Set(PERMISSIONS.map((p) => p.category))];
 
   return (
     <GlassPanel card>
@@ -20,13 +69,13 @@ export function PermissionMatrix() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-surface-border border-b">
-              <th className="px-4 py-3 text-left text-xs font-bold tracking-wider text-faint uppercase">
+              <th className="text-faint px-4 py-3 text-left text-xs font-bold tracking-wider uppercase">
                 Permission
               </th>
               {roles.map((r) => (
                 <th
                   key={r}
-                  className="px-4 py-3 text-center text-xs font-bold tracking-wider text-faint uppercase"
+                  className="text-faint px-4 py-3 text-center text-xs font-bold tracking-wider uppercase"
                 >
                   {roleLabels[r]}
                 </th>
@@ -44,29 +93,25 @@ export function PermissionMatrix() {
                     {cat}
                   </td>
                 </tr>
-                {mockPermissions
-                  .filter((p) => p.category === cat)
-                  .map((perm) => (
-                    <tr
-                      key={perm.key}
-                      className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-                    >
-                      <td className="px-4 py-2.5 text-sm text-body">
-                        {perm.label}
+                {PERMISSIONS.filter((p) => p.category === cat).map((perm) => (
+                  <tr
+                    key={perm.key}
+                    className="border-surface-border hover:bg-surface-hover border-b transition-colors"
+                  >
+                    <td className="text-body px-4 py-2.5 text-sm">
+                      {perm.label}
+                    </td>
+                    {roles.map((role) => (
+                      <td key={role} className="px-4 py-2.5 text-center">
+                        <Checkbox
+                          checked={ROLE_PERMISSIONS[role]?.[perm.key] ?? false}
+                          onChange={() => {}}
+                          className="justify-center"
+                        />
                       </td>
-                      {roles.map((role) => (
-                        <td key={role} className="px-4 py-2.5 text-center">
-                          <Checkbox
-                            checked={
-                              mockRolePermissions[role]?.[perm.key] ?? false
-                            }
-                            onChange={() => {}}
-                            className="justify-center"
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                    ))}
+                  </tr>
+                ))}
               </>
             ))}
           </tbody>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
+import { useMutation } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { FilterChips } from '@/components/molecules/FilterChips';
@@ -14,20 +14,33 @@ import { Pagination } from '@/components/organisms/Pagination';
 import { Badge } from '@/components/atoms/Badge';
 import { ReportDetail } from './_components/ReportDetail';
 import { UserReportDetail } from './_components/UserReportDetail';
+import { MessageReportDetail } from './_components/MessageReportDetail';
 import { cn, formatDateTime } from '@/lib/utils';
 import {
   GET_POST_REPORTS_FOR_ADMIN,
   GET_POST_REPORT_STATS,
   GET_USER_REPORTS_FOR_ADMIN,
   GET_USER_REPORT_STATS,
+  GET_MESSAGE_REPORTS_FOR_ADMIN,
+  GET_MESSAGE_REPORT_STATS,
 } from '@/graphql/queries/moderation';
 import {
   UPDATE_REPORT_STATUS,
   UPDATE_USER_REPORT_STATUS,
   DELETE_POST_BY_ADMIN,
+  UPDATE_MESSAGE_REPORT_STATUS,
+  DELETE_MESSAGE_BY_ADMIN,
 } from '@/graphql/mutations/moderation';
 import { ADMIN_SUSPEND_USER } from '@/graphql/mutations/admin';
 import { PostReportStatus } from '@/graphql/generated';
+import {
+  usePostReports,
+  usePostReportStats,
+  useUserReports,
+  useUserReportStats,
+  useMessageReports,
+  useMessageReportStats,
+} from '@/hooks/admin';
 import {
   POST_REPORT_REASON_LABELS,
   POST_REPORT_REASON_VARIANTS,
@@ -35,57 +48,20 @@ import {
   USER_REPORT_REASON_LABELS,
   USER_REPORT_REASON_VARIANTS,
   USER_REPORT_STATUS_LABELS,
+  MESSAGE_REPORT_STATUS_LABELS,
 } from './types';
 import type {
   ModerationReport,
   UserModerationReport,
   UserReportStatus,
+  MessageModerationReport,
+  MessageReportStatus,
 } from './types';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 
 const PAGE_SIZE = 20;
 
-type ReportTab = 'posts' | 'users';
-
-interface ReportsQueryData {
-  getPostReportsForAdmin: {
-    reports: ModerationReport[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface PostStatsQueryData {
-  getPostReportStats: {
-    totalReports: number;
-    pendingReports: number;
-    reviewedReports: number;
-    resolvedReports: number;
-    dismissedReports: number;
-  };
-}
-
-interface UserReportsQueryData {
-  getUserReportsForAdmin: {
-    reports: UserModerationReport[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface UserStatsQueryData {
-  getUserReportStats: {
-    totalReports: number;
-    pendingReports: number;
-    reviewedReports: number;
-    resolvedReports: number;
-    dismissedReports: number;
-  };
-}
+type ReportTab = 'posts' | 'users' | 'messages';
 
 const POST_FILTER_CHIPS = [
   { label: 'Chờ xử lý', value: 'PENDING' },
@@ -103,42 +79,57 @@ const USER_FILTER_CHIPS = [
   { label: 'Tất cả', value: 'ALL' },
 ];
 
+const MESSAGE_FILTER_CHIPS = [
+  { label: 'Chờ xử lý', value: 'PENDING' },
+  { label: 'Đang xem xét', value: 'REVIEWED' },
+  { label: 'Đã xử lý', value: 'RESOLVED' },
+  { label: 'Bỏ qua', value: 'DISMISSED' },
+  { label: 'Tất cả', value: 'ALL' },
+];
+
 export default function ModerationPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>('posts');
 
   // Post reports state
-  const [statusFilter, setStatusFilter] = useState<string>('PENDING');
+  const [statusFilter, setStatusFilter] = useState<PostReportStatus | 'ALL'>(
+    PostReportStatus.Pending
+  );
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // User reports state
-  const [userStatusFilter, setUserStatusFilter] = useState<string>('PENDING');
+  const [userStatusFilter, setUserStatusFilter] = useState<
+    UserReportStatus | 'ALL'
+  >('PENDING');
   const [userPage, setUserPage] = useState(1);
   const [selectedUserReportId, setSelectedUserReportId] = useState<
     string | null
   >(null);
 
+  // Message reports state
+  const [msgStatusFilter, setMsgStatusFilter] = useState<
+    MessageReportStatus | 'ALL'
+  >('PENDING');
+  const [msgPage, setMsgPage] = useState(1);
+  const [selectedMsgReportId, setSelectedMsgReportId] = useState<string | null>(
+    null
+  );
+
   // ---- Post Reports ----
   const postFilterVar =
-    statusFilter === 'ALL'
-      ? undefined
-      : { status: statusFilter as PostReportStatus };
+    statusFilter === 'ALL' ? undefined : { status: statusFilter };
 
   const postPaginationVar = { page, limit: PAGE_SIZE };
 
   const {
-    data: reportsData,
+    reports,
+    total: postTotal,
     loading: reportsLoading,
     error: reportsError,
     refetch: refetchReports,
-  } = useQuery<ReportsQueryData>(GET_POST_REPORTS_FOR_ADMIN, {
-    variables: { filter: postFilterVar, pagination: postPaginationVar },
-    fetchPolicy: 'cache-and-network',
-  });
+  } = usePostReports(postFilterVar, postPaginationVar);
 
-  const { data: postStatsData } = useQuery<PostStatsQueryData>(
-    GET_POST_REPORT_STATS
-  );
+  const { stats: postStats } = usePostReportStats();
 
   const [updateStatus, { loading: updatingStatus }] = useMutation(
     UPDATE_REPORT_STATUS,
@@ -160,18 +151,14 @@ export default function ModerationPage() {
   const userPaginationVar = { page: userPage, limit: PAGE_SIZE };
 
   const {
-    data: userReportsData,
+    reports: userReports,
+    total: userTotal,
     loading: userReportsLoading,
     error: userReportsError,
     refetch: refetchUserReports,
-  } = useQuery<UserReportsQueryData>(GET_USER_REPORTS_FOR_ADMIN, {
-    variables: { filter: userFilterVar, pagination: userPaginationVar },
-    fetchPolicy: 'cache-and-network',
-  });
+  } = useUserReports(userFilterVar, userPaginationVar);
 
-  const { data: userStatsData } = useQuery<UserStatsQueryData>(
-    GET_USER_REPORT_STATS
-  );
+  const { stats: userStats } = useUserReportStats();
 
   const [updateUserReportStatus, { loading: updatingUserStatus }] = useMutation(
     UPDATE_USER_REPORT_STATUS,
@@ -181,6 +168,35 @@ export default function ModerationPage() {
     )
   );
 
+  // ---- Message Reports ----
+  const msgFilterVar =
+    msgStatusFilter === 'ALL' ? undefined : { status: msgStatusFilter };
+
+  const msgPaginationVar = { page: msgPage, limit: PAGE_SIZE };
+
+  const {
+    reports: msgReports,
+    total: msgTotal,
+    loading: msgReportsLoading,
+    error: msgReportsError,
+    refetch: refetchMsgReports,
+  } = useMessageReports(msgFilterVar, msgPaginationVar);
+
+  const { stats: msgStats } = useMessageReportStats();
+
+  const [updateMsgReportStatus, { loading: updatingMsgStatus }] = useMutation(
+    UPDATE_MESSAGE_REPORT_STATUS,
+    createMutationOptions(
+      'UpdateMessageReportStatus',
+      'Cập nhật trạng thái thành công'
+    )
+  );
+
+  const [deleteMessage, { loading: deletingMessage }] = useMutation(
+    DELETE_MESSAGE_BY_ADMIN,
+    createMutationOptions('DeleteMessageByAdmin', 'Tin nhắn đã được xóa')
+  );
+
   // ---- Shared: Suspend user ----
   const [suspendUser, { loading: suspendingUser }] = useMutation(
     ADMIN_SUSPEND_USER,
@@ -188,10 +204,7 @@ export default function ModerationPage() {
   );
 
   // ---- Derived state ----
-  const reports = reportsData?.getPostReportsForAdmin?.reports ?? [];
-  const postTotal = reportsData?.getPostReportsForAdmin?.total ?? 0;
   const postTotalPages = Math.ceil(postTotal / PAGE_SIZE);
-  const postStats = postStatsData?.getPostReportStats;
 
   const effectiveId =
     reports.find((r) => r._id === selectedId)?._id ?? reports[0]?._id ?? null;
@@ -199,10 +212,7 @@ export default function ModerationPage() {
     ? reports.find((r) => r._id === effectiveId)
     : undefined;
 
-  const userReports = userReportsData?.getUserReportsForAdmin?.reports ?? [];
-  const userTotal = userReportsData?.getUserReportsForAdmin?.total ?? 0;
   const userTotalPages = Math.ceil(userTotal / PAGE_SIZE);
-  const userStats = userStatsData?.getUserReportStats;
 
   const effectiveUserReportId =
     userReports.find((r) => r._id === selectedUserReportId)?._id ??
@@ -212,17 +222,32 @@ export default function ModerationPage() {
     ? userReports.find((r) => r._id === effectiveUserReportId)
     : undefined;
 
-  const activeStats = activeTab === 'posts' ? postStats : userStats;
+  const msgTotalPages = Math.ceil(msgTotal / PAGE_SIZE);
+
+  const effectiveMsgReportId =
+    msgReports.find((r) => r._id === selectedMsgReportId)?._id ??
+    msgReports[0]?._id ??
+    null;
+  const selectedMsgReport = effectiveMsgReportId
+    ? msgReports.find((r) => r._id === effectiveMsgReportId)
+    : undefined;
+
+  const activeStats =
+    activeTab === 'posts'
+      ? postStats
+      : activeTab === 'users'
+        ? userStats
+        : msgStats;
 
   // ---- Handlers ----
   const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
+    setStatusFilter(value as PostReportStatus | 'ALL');
     setPage(1);
     setSelectedId(null);
   };
 
   const handleUserStatusFilterChange = (value: string) => {
-    setUserStatusFilter(value);
+    setUserStatusFilter(value as UserReportStatus | 'ALL');
     setUserPage(1);
     setSelectedUserReportId(null);
   };
@@ -299,6 +324,42 @@ export default function ModerationPage() {
     });
   };
 
+  const handleMsgStatusFilterChange = (value: string) => {
+    setMsgStatusFilter(value as MessageReportStatus | 'ALL');
+    setMsgPage(1);
+    setSelectedMsgReportId(null);
+  };
+
+  const handleUpdateMsgReportStatus = async (
+    reportId: string,
+    status: MessageReportStatus,
+    notes?: string
+  ) => {
+    await updateMsgReportStatus({
+      variables: { input: { reportId, status, notes } },
+      refetchQueries: [
+        {
+          query: GET_MESSAGE_REPORTS_FOR_ADMIN,
+          variables: { filter: msgFilterVar, pagination: msgPaginationVar },
+        },
+        { query: GET_MESSAGE_REPORT_STATS },
+      ],
+    });
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    await deleteMessage({
+      variables: { messageId },
+      refetchQueries: [
+        {
+          query: GET_MESSAGE_REPORTS_FOR_ADMIN,
+          variables: { filter: msgFilterVar, pagination: msgPaginationVar },
+        },
+        { query: GET_MESSAGE_REPORT_STATS },
+      ],
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -358,10 +419,135 @@ export default function ModerationPage() {
         >
           Báo cáo người dùng
         </button>
+        <button
+          onClick={() => setActiveTab('messages')}
+          className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === 'messages'
+              ? 'bg-primary text-white'
+              : 'bg-surface-hover text-muted hover:text-heading'
+          }`}
+        >
+          Báo cáo tin nhắn
+        </button>
       </div>
 
       {/* Content */}
-      {activeTab === 'posts' ? (
+      {activeTab === 'messages' && (
+        <div className="mt-4 space-y-6">
+          <GlassPanel card className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <FilterChips
+                chips={MESSAGE_FILTER_CHIPS}
+                active={msgStatusFilter}
+                onChange={handleMsgStatusFilterChange}
+              />
+              <SearchInput placeholder="Tìm kiếm..." className="w-64" />
+            </div>
+            <QueryState
+              loading={msgReportsLoading && msgReports.length === 0}
+              error={msgReportsError}
+              empty={
+                !msgReportsLoading &&
+                !msgReportsError &&
+                msgReports.length === 0
+              }
+              emptyMessage="Không có báo cáo tin nhắn nào."
+              onRetry={() => {
+                void refetchMsgReports();
+              }}
+            >
+              <DataTable
+                columns={[
+                  { key: 'id', label: 'ID' },
+                  { key: 'reason', label: 'Lý do' },
+                  { key: 'messageId', label: 'ID tin nhắn' },
+                  { key: 'reporterId', label: 'ID người báo cáo' },
+                  { key: 'status', label: 'Trạng thái' },
+                  { key: 'createdAt', label: 'Ngày tạo' },
+                ]}
+                data={msgReports}
+                emptyTitle="Không có báo cáo tin nhắn nào"
+                renderRow={(r: MessageModerationReport) => {
+                  const isActive = r._id === effectiveMsgReportId;
+                  return (
+                    <tr
+                      key={r._id}
+                      onClick={() => setSelectedMsgReportId(r._id)}
+                      className={cn(
+                        'border-surface-border cursor-pointer border-b transition-colors',
+                        isActive ? 'bg-primary/10' : 'hover:bg-surface-hover'
+                      )}
+                    >
+                      <td className="text-faint px-4 py-3 font-mono text-xs">
+                        {r._id.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="text-body max-w-[200px] truncate px-4 py-3 text-sm">
+                        {r.reason.length > 50
+                          ? `${r.reason.slice(0, 50)}…`
+                          : r.reason}
+                      </td>
+                      <td className="text-faint px-4 py-3 font-mono text-xs">
+                        {r.messageId.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="text-faint px-4 py-3 font-mono text-xs">
+                        {r.reporterId.slice(-6).toUpperCase()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={
+                            r.status === 'PENDING'
+                              ? 'warning'
+                              : r.status === 'RESOLVED'
+                                ? 'success'
+                                : 'neutral'
+                          }
+                          className="text-[10px]"
+                        >
+                          {MESSAGE_REPORT_STATUS_LABELS[r.status]}
+                        </Badge>
+                      </td>
+                      <td className="text-faint px-4 py-3 text-xs">
+                        {formatDateTime(r.createdAt)}
+                      </td>
+                    </tr>
+                  );
+                }}
+              />
+            </QueryState>
+            {msgTotalPages > 1 && (
+              <Pagination
+                currentPage={msgPage}
+                totalPages={msgTotalPages}
+                totalItems={msgTotal}
+                pageSize={PAGE_SIZE}
+                onPageChange={(p) => {
+                  setMsgPage(p);
+                  setSelectedMsgReportId(null);
+                }}
+              />
+            )}
+          </GlassPanel>
+
+          {selectedMsgReport ? (
+            <MessageReportDetail
+              report={selectedMsgReport}
+              onUpdateStatus={handleUpdateMsgReportStatus}
+              onDeleteMessage={handleDeleteMessage}
+              loading={updatingMsgStatus || deletingMessage}
+            />
+          ) : (
+            <GlassPanel card>
+              <EmptyState
+                icon="chatbubble-ellipses-outline"
+                title="Chọn báo cáo"
+                description="Chọn một báo cáo tin nhắn để xem chi tiết."
+              />
+            </GlassPanel>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'posts' && (
         <div className="mt-4 space-y-6">
           <GlassPanel card className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -489,7 +675,9 @@ export default function ModerationPage() {
             </GlassPanel>
           )}
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'users' && (
         <div className="mt-4 space-y-6">
           <GlassPanel card className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">

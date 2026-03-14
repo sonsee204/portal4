@@ -122,3 +122,27 @@ export interface UserModerationReport {
   reviewedBy?: string | null;
   reviewer?: { _id: string; displayName?: string | null } | null;
 }
+
+// ==================== MESSAGE REPORTS ====================
+
+export type MessageReportStatus = 'PENDING' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED';
+
+export const MESSAGE_REPORT_STATUS_LABELS: Record<MessageReportStatus, string> = {
+  PENDING: 'Chờ xử lý',
+  REVIEWED: 'Đang xem xét',
+  RESOLVED: 'Đã xử lý',
+  DISMISSED: 'Đã bỏ qua',
+};
+
+export interface MessageModerationReport {
+  _id: string;
+  messageId: string;
+  reporterId: string;
+  reason: string;
+  status: MessageReportStatus;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+}

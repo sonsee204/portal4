@@ -29,3 +29,23 @@ export const DELETE_POST_BY_ADMIN = gql`
     deletePostByAdmin(postId: $postId)
   }
 `;
+
+export const UPDATE_MESSAGE_REPORT_STATUS = gql`
+  mutation UpdateMessageReportStatus(
+    $input: UpdateMessageReportStatusInput!
+  ) {
+    updateMessageReportStatus(input: $input) {
+      _id
+      status
+      notes
+      reviewedAt
+      reviewedBy
+    }
+  }
+`;
+
+export const DELETE_MESSAGE_BY_ADMIN = gql`
+  mutation DeleteMessageByAdmin($messageId: ID!) {
+    deleteMessageByAdmin(messageId: $messageId)
+  }
+`;

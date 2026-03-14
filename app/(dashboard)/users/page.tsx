@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Pagination } from '@/components/organisms/Pagination';
@@ -14,9 +13,9 @@ import { IconButton } from '@/components/atoms/IconButton';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { PermissionGate } from '@/components/atoms/PermissionGate';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ADMIN_GET_USERS } from '@/graphql/queries/admin';
+import { useAdminUsers } from '@/hooks/admin';
 import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
-import type { UserRole, User, AdminGetUsersResponse } from '@/types';
+import type { UserRole, User } from '@/types';
 import { CreateUserDialog } from './_components/CreateUserDialog';
 
 const PAGE_SIZE = 20;
@@ -52,19 +51,10 @@ export default function UsersPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const router = useRouter();
 
-  const { data, loading, error, refetch } = useQuery<AdminGetUsersResponse>(
-    ADMIN_GET_USERS,
-    {
-      variables: {
-        searchQuery: searchQuery || undefined,
-        pagination: { page, limit: PAGE_SIZE },
-      },
-      fetchPolicy: 'cache-and-network',
-    }
-  );
-
-  const users = data?.adminGetUsers.users ?? [];
-  const total = data?.adminGetUsers.total ?? 0;
+  const { users, total, loading, error, refetch } = useAdminUsers({
+    searchQuery,
+    pagination: { page, limit: PAGE_SIZE },
+  });
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleSearch = useCallback((query: string) => {
@@ -104,7 +94,7 @@ export default function UsersPage() {
 
       <div className="mt-6">
         <QueryState
-          loading={loading && !data}
+          loading={loading && users.length === 0}
           error={error}
           empty={!loading && users.length === 0}
           emptyMessage="Không có người dùng nào"
@@ -150,12 +140,12 @@ export default function UsersPage() {
                       {status.label}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted">
+                  <td className="text-muted px-4 py-3 text-sm">
                     {u.accountOrigin === 'ADMIN_CREATED'
                       ? 'Admin tạo'
                       : 'Tự đăng ký'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted">
+                  <td className="text-muted px-4 py-3 text-sm">
                     {u.lastLoginAt
                       ? new Date(u.lastLoginAt).toLocaleDateString('vi-VN')
                       : 'Chưa đăng nhập'}

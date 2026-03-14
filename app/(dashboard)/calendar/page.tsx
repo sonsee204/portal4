@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { TabGroup } from '@/components/molecules/TabGroup';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
@@ -8,7 +8,11 @@ import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { CalendarGrid } from './_components/CalendarGrid';
 import { VenueFilter } from './_components/VenueFilter';
-import { mockCalendarBookings, mockVenues } from '@/lib/mock-data';
+import { QueryState } from '@/components/molecules/QueryState';
+import { COMMON } from '@/lib/strings';
+import { useAdminAllBookings } from '@/hooks/admin';
+
+const CALENDAR_BOOKING_LIMIT = 100;
 
 const viewTabs = [
   { label: 'Ngày', value: 'day' },
@@ -16,28 +20,109 @@ const viewTabs = [
   { label: 'Tháng', value: 'month' },
 ];
 
+function formatDateForQuery(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function formatDateDisplay(date: Date): string {
+  return date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export default function CalendarPage() {
   const [view, setView] = useState('day');
-  const allCourts = mockVenues.flatMap((v) =>
-    v.courts.map((c) => `${v.group.split('(')[0].trim()} - ${c}`)
-  );
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(allCourts)
-  );
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  const dateStr = formatDateForQuery(currentDate);
+
+  const { bookings, loading, error, refetch } = useAdminAllBookings({
+    fromDate: dateStr,
+    toDate: dateStr,
+    pagination: { page: 1, limit: CALENDAR_BOOKING_LIMIT },
+  });
+
+  const courts = useMemo(() => {
+    const set = new Set<string>();
+    bookings.forEach((b: { venueName: string; courtName: string }) => {
+      if (b.courtName) set.add(`${b.venueName} - ${b.courtName}`);
+    });
+    return Array.from(set).sort();
+  }, [bookings]);
+
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+
+  const effectiveSelected = selected.size > 0 ? selected : new Set(courts);
 
   const handleToggle = (court: string) => {
     setSelected((prev) => {
-      const next = new Set(prev);
+      const base = prev.size > 0 ? prev : new Set(courts);
+      const next = new Set(base);
       if (next.has(court)) next.delete(court);
       else next.add(court);
       return next;
     });
   };
 
-  const flatVenues = mockVenues.map((v) => ({
-    group: v.group,
-    courts: v.courts.map((c) => `${v.group.split('(')[0].trim()} - ${c}`),
-  }));
+  const venueGroups = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    courts.forEach((c) => {
+      const parts = c.split(' - ');
+      const venue = parts[0];
+      const court = parts.slice(1).join(' - ');
+      if (!map[venue]) map[venue] = [];
+      map[venue].push(c);
+    });
+    return Object.entries(map).map(([group, cts]) => ({ group, courts: cts }));
+  }, [courts]);
+
+  const calendarBookings = useMemo(
+    () =>
+      bookings
+        .filter((b: { venueName: string; courtName: string }) =>
+          effectiveSelected.has(`${b.venueName} - ${b.courtName}`)
+        )
+        .map(
+          (b: {
+            _id: string;
+            venueName: string;
+            courtName: string;
+            timeSlots: string;
+            status: string;
+          }) => {
+            const [startTime] = (b.timeSlots || '').split(' - ');
+            const startHour = startTime
+              ? parseInt(startTime.split(':')[0], 10)
+              : 0;
+            const endPart = (b.timeSlots || '').split(' - ')[1];
+            const endHour = endPart
+              ? parseInt(endPart.split(':')[0], 10)
+              : startHour + 1;
+            return {
+              _id: b._id,
+              court: `${b.venueName} - ${b.courtName}`,
+              startHour,
+              endHour,
+              status: (b.status.toLowerCase() === 'confirmed'
+                ? 'paid'
+                : b.status.toLowerCase()) as 'paid' | 'pending' | 'maintenance',
+              userName: '',
+              venue: b.venueName,
+            };
+          }
+        ),
+    [bookings, effectiveSelected]
+  );
+
+  const navigateDate = (delta: number) => {
+    setCurrentDate((d) => {
+      const next = new Date(d);
+      next.setDate(next.getDate() + delta);
+      return next;
+    });
+  };
 
   return (
     <>
@@ -48,38 +133,51 @@ export default function CalendarPage() {
         />
         <div className="flex items-center gap-3">
           <TabGroup tabs={viewTabs} active={view} onChange={setView} />
-          {/* Date navigation */}
           <div className="flex items-center gap-1">
-            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-muted hover:text-heading">
+            <button
+              onClick={() => navigateDate(-1)}
+              className="hover:bg-surface-hover text-muted hover:text-heading rounded-lg p-1.5"
+            >
               <IonIcon name="chevron-back-outline" size="sm" />
             </button>
-            <span className="min-w-[120px] text-center text-sm font-medium text-heading">
-              20 Th10, 2023
+            <span className="text-heading min-w-[120px] text-center text-sm font-medium">
+              {formatDateDisplay(currentDate)}
             </span>
-            <button className="hover:bg-surface-hover rounded-lg p-1.5 text-muted hover:text-heading">
+            <button
+              onClick={() => navigateDate(1)}
+              className="hover:bg-surface-hover text-muted hover:text-heading rounded-lg p-1.5"
+            >
               <IonIcon name="chevron-forward-outline" size="sm" />
             </button>
           </div>
-          <Button size="sm" iconLeft="add-outline">
-            Đặt sân mới
+          <Button
+            size="sm"
+            variant="ghost"
+            iconLeft="today-outline"
+            onClick={() => setCurrentDate(new Date())}
+          >
+            Hôm nay
           </Button>
         </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
         <VenueFilter
-          venues={flatVenues}
-          selected={selected}
+          venues={venueGroups}
+          selected={effectiveSelected}
           onToggle={handleToggle}
         />
         <GlassPanel card>
-          <CalendarGrid
-            courts={Array.from(selected)}
-            bookings={mockCalendarBookings.map((b) => ({
-              ...b,
-              court: `${b.venue.includes('A') ? 'HITRI Center A' : 'HITRI Center B'} - ${b.court}`,
-            }))}
-          />
+          <QueryState
+            loading={loading}
+            error={error}
+            onRetry={() => void refetch()}
+          >
+            <CalendarGrid
+              courts={Array.from(effectiveSelected)}
+              bookings={calendarBookings}
+            />
+          </QueryState>
         </GlassPanel>
       </div>
     </>

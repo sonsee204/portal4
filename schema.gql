@@ -191,6 +191,36 @@ input AdjustStockInput {
   variantId: ID
 }
 
+type AdminAllBookingList {
+  bookings: [AdminBookingItem!]!
+
+  """JSON map of bookingId -> customerName"""
+  customerNamesJson: String!
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+type AdminBookingItem {
+  _id: ID!
+  courtName: String!
+  date: String!
+  status: String!
+  timeSlots: String!
+  totalPrice: Int!
+  venueAddress: String!
+  venueName: String!
+}
+
+type AdminBookingList {
+  bookings: [AdminBookingItem!]!
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
 input AdminCreateUserInput {
   email: String!
   fullName: String!
@@ -4516,6 +4546,9 @@ type Mutation {
   """Invite a user to join a group (admin/mod only)"""
   inviteMember(groupId: ID!, message: String, userId: ID!): GroupMember!
 
+  """Mời người chơi vào kèo"""
+  inviteToGame(gameId: ID!, userIds: [ID!]!): Boolean!
+
   """Kick người chơi"""
   kickParticipant(input: KickParticipantInput!): Boolean!
 
@@ -4588,6 +4621,9 @@ type Mutation {
   Process refund - mark order as refunded after actual refund is done (Owner only). Pass base64 images for refund proof.
   """
   processRefund(orderId: ID!, refundNote: String, refundProofBase64Images: [String!]): Order!
+
+  """Host đôn người chơi từ danh sách chờ"""
+  promoteFromWaitlist(gameId: ID!, participantId: ID): Boolean!
 
   """Publish kèo nháp"""
   publishPickupGame(gameId: ID!): PickupGame!
@@ -4846,6 +4882,9 @@ type Mutation {
 
   """Update court"""
   updateCourt(input: UpdateCourtInput!): Court!
+
+  """Cập nhật template"""
+  updateGameTemplate(input: UpdateTemplateInput!): GameTemplate!
 
   """Update a group (admin only)"""
   updateGroup(input: UpdateGroupInput!): Group!
@@ -7387,11 +7426,17 @@ type Query {
   """
   activeVenuePromotions(userId: ID, venueId: ID!): [Promotion!]!
 
+  """Get all bookings (Admin only)"""
+  adminGetAllBookings(fromDate: String, pagination: PaginationInput, statuses: [String!], toDate: String): AdminAllBookingList!
+
   """Get pending venue requests (Admin only)"""
   adminGetPendingVenues(pagination: PaginationInput): PendingVenueList!
 
   """Get system statistics (Admin only)"""
   adminGetSystemStats: SystemStats!
+
+  """Get bookings for a specific user (Admin only)"""
+  adminGetUserBookings(pagination: PaginationInput, statuses: [String!], userId: ID!): AdminBookingList!
 
   """Get all users (Admin only)"""
   adminGetUsers(isActive: Boolean, isSuspended: Boolean, pagination: PaginationInput, role: UserRole, searchQuery: String): UserList!
@@ -10469,6 +10514,56 @@ input UpdateReportStatusInput {
 
   """New status for the report"""
   status: PostReportStatus!
+}
+
+input UpdateTemplateInput {
+  """Chế độ duyệt"""
+  approvalMode: ApprovalMode
+
+  """Cấu hình chi phí"""
+  costConfig: CostConfigInput
+
+  """Địa điểm tùy chỉnh"""
+  customLocation: CustomLocationInput
+
+  """Cấu hình đặt cọc"""
+  depositConfig: DepositConfigInput
+
+  """Mô tả"""
+  description: String
+
+  """Dụng cụ cần mang"""
+  equipment: [EquipmentItemInput!]
+
+  """Loại hình chơi"""
+  gameType: GameType
+
+  """Cấu hình giới tính"""
+  genderConfig: GenderConfigInput
+
+  """Tên template"""
+  name: String
+
+  """Yêu cầu trình độ"""
+  skillRequirement: SkillRequirementInput
+
+  """Cấu hình số người"""
+  slotConfig: SlotConfigInput
+
+  """Môn thể thao"""
+  sportType: SportType
+
+  """Tags"""
+  tags: [String!]
+
+  """ID template"""
+  templateId: ID!
+
+  """ID sân"""
+  venueId: ID
+
+  """Độ hiển thị"""
+  visibility: GameVisibility
 }
 
 input UpdateTournamentInput {

@@ -1,18 +1,11 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Pagination } from '@/components/organisms/Pagination';
 import { QueryState } from '@/components/molecules/QueryState';
-import { AUDIT_GET_LOGS, AUDIT_GET_STATS } from '@/graphql/queries/audit';
-import type {
-  AuditLog,
-  AuditLogList,
-  AuditStats,
-  AuditCategory,
-  AuditStatus,
-} from '@/types';
+import { useAuditLogs, useAuditStats } from '@/hooks/audit';
+import type { AuditLog, AuditCategory, AuditStatus } from '@/types';
 import { AuditStatsCards } from './_components/AuditStatsCards';
 import { AuditFilters } from './_components/AuditFilters';
 import { AuditTable } from './_components/AuditTable';
@@ -44,29 +37,21 @@ export default function AuditPage() {
     };
   }, [category, status, search, page]);
 
-  // Queries
   const {
-    data: logsData,
+    logs,
+    total: totalItems,
     loading: logsLoading,
     error: logsError,
     refetch: refetchLogs,
-  } = useQuery<{ auditLogs: AuditLogList }>(AUDIT_GET_LOGS, {
-    variables: filterVariables,
-    fetchPolicy: 'cache-and-network',
-  });
+  } = useAuditLogs(filterVariables, { fetchPolicy: 'cache-and-network' });
 
   const {
-    data: statsData,
+    stats,
     loading: statsLoading,
     refetch: refetchStats,
-  } = useQuery<{ auditStats: AuditStats }>(AUDIT_GET_STATS, {
-    fetchPolicy: 'cache-and-network',
-  });
+  } = useAuditStats({ fetchPolicy: 'cache-and-network' });
 
-  const logs = logsData?.auditLogs?.logs ?? [];
-  const totalItems = logsData?.auditLogs?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const stats = statsData?.auditStats;
 
   // Build category counts from stats
   const totalByCategory = useMemo(() => {
