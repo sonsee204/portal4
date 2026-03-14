@@ -160,11 +160,14 @@ export function ImportStepUpload({ onParsed, onError }: ImportStepUploadProps) {
           <span>Trường</span>
           <span>Tên phụ huynh</span>
           <span>SĐT phụ huynh</span>
-          <span>Phí đăng ký</span>
+          <span>Phí đăng ký (1 VĐV / 2 VĐV cho đôi)</span>
           <span>Ghi chú</span>
         </div>
         <p className="mt-2">
           <span className="text-yellow-400">*</span> Bắt buộc
+        </p>
+        <p className="text-faint mt-1">
+          Lệ phí: nội dung đơn theo 1 VĐV, nội dung đôi theo 2 VĐV (cả đội).
         </p>
       </div>
     </div>

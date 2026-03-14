@@ -67,6 +67,9 @@ export function ImportStepPreview({
               </th>
               <th className="text-secondary p-2 text-left font-medium">SĐT</th>
               <th className="text-secondary p-2 text-left font-medium">CLB</th>
+              <th className="text-secondary p-2 text-left font-medium">
+                Đồng đội
+              </th>
               <th className="text-secondary w-40 p-2 text-left font-medium">
                 Lỗi
               </th>
@@ -105,6 +108,9 @@ export function ImportStepPreview({
                 </td>
                 <td className="text-secondary p-2">{row.phone || '–'}</td>
                 <td className="text-secondary p-2">{row.club || '–'}</td>
+                <td className="text-secondary p-2">
+                  {row.partnerName || '–'}
+                </td>
                 <td className="p-2">
                   {row.errors.length > 0 ? (
                     <ul className="space-y-0.5">

@@ -75,6 +75,7 @@ interface EditState {
   description: string;
   popular: boolean;
   maxRegistrations: number;
+  bracketSize: number;
   sharedThirdPlace: boolean;
   prizes: PrizeDraft[];
 }
@@ -99,6 +100,7 @@ function CategoryApiCard({
     description: category.description ?? '',
     popular: category.popular ?? false,
     maxRegistrations: category.maxRegistrations ?? 0,
+    bracketSize: category.bracketSize ?? 0,
     sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
     prizes: (category.prizes ?? []).length > 0
       ? (category.prizes ?? []).map((p) => ({
@@ -125,6 +127,7 @@ function CategoryApiCard({
       description: category.description ?? '',
       popular: category.popular ?? false,
       maxRegistrations: category.maxRegistrations ?? 0,
+      bracketSize: category.bracketSize ?? 0,
       sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
       prizes: (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
@@ -153,6 +156,7 @@ function CategoryApiCard({
       description: draft.description || undefined,
       popular: draft.popular,
       maxRegistrations: draft.maxRegistrations,
+      bracketSize: draft.bracketSize > 0 ? draft.bracketSize : undefined,
       sharedThirdPlace: draft.sharedThirdPlace,
       prizes: draft.prizes
         .filter((p) => p.title)
@@ -233,7 +237,7 @@ function CategoryApiCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Input
             label="Số VĐV tối đa"
             placeholder="0 = Không giới hạn"
@@ -243,6 +247,20 @@ function CategoryApiCard({
             onChange={(e) =>
               update({ maxRegistrations: parseInt(e.target.value, 10) || 0 })
             }
+          />
+          <Select
+            label="Kích thước nhánh đấu"
+            value={String(draft.bracketSize)}
+            onChange={(e) => update({ bracketSize: Number(e.target.value) })}
+            options={[
+              { label: 'Tự động', value: '0' },
+              { label: '4', value: '4' },
+              { label: '8', value: '8' },
+              { label: '16', value: '16' },
+              { label: '32', value: '32' },
+              { label: '64', value: '64' },
+              { label: '128', value: '128' },
+            ]}
           />
           <div className="flex items-end pb-1">
             <label className="flex cursor-pointer items-center gap-2.5">
@@ -544,6 +562,7 @@ function StepCategoriesEditMode({
       description: '',
       popular: false,
       maxRegistrations: 0,
+      bracketSize: 0,
       sharedThirdPlace: false,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
@@ -701,6 +720,7 @@ function StepCategoriesCreateMode({
               description: '',
               popular: false,
               maxRegistrations: 0,
+              bracketSize: 0,
               sharedThirdPlace: false,
               prizes: [
                 { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
@@ -762,6 +782,7 @@ function StepCategoriesCreateMode({
                 description: '',
                 popular: false,
                 maxRegistrations: 0,
+                bracketSize: 0,
                 sharedThirdPlace: false,
                 prizes: [
                   { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },

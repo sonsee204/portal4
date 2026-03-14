@@ -176,7 +176,6 @@ export function StepReview({
           label="Thể thức"
           value={formatLabels[data.format] ?? data.format}
         />
-        <ReviewField label="Số slot" value={data.totalSlots} />
         {data.schedule.length > 0 && (
           <div className="mt-2">
             <span className="text-muted text-xs font-medium">Lịch trình:</span>

@@ -46,23 +46,29 @@ function formatDateVN(dateStr?: string | null): string {
 }
 
 function toExcelRows(registrations: TournamentRegistration[]) {
-  return registrations.map((r, i) => ({
-    STT: i + 1,
-    'Tên VĐV': r.athleteName,
-    SĐT: r.phone ?? '',
-    Email: r.email ?? '',
-    'Ngày sinh': r.dateOfBirth ? formatDateVN(r.dateOfBirth) : '',
-    'CLB / Đội': r.club ?? '',
-    Trường: r.school ?? '',
-    'Tên phụ huynh': r.guardianName ?? '',
-    'SĐT phụ huynh': r.guardianPhone ?? '',
-    'Trạng thái':
-      REGISTRATION_STATUS_LABELS[r.registrationStatus] ?? r.registrationStatus,
-    'Thanh toán': PAYMENT_STATUS_LABELS[r.paymentStatus] ?? r.paymentStatus,
-    'Phí đăng ký': r.paymentAmount ?? 0,
-    'Ghi chú': r.notes ?? '',
-    'Ngày đăng ký': formatDateVN(r.createdAt),
-  }));
+  return registrations.map((r, i) => {
+    const partner = r.members && r.members.length > 1 ? r.members[1] : null;
+    return {
+      STT: i + 1,
+      'Tên VĐV': r.athleteName,
+      SĐT: r.phone ?? '',
+      Email: r.email ?? '',
+      'Ngày sinh': r.dateOfBirth ? formatDateVN(r.dateOfBirth) : '',
+      'CLB / Đội': r.club ?? '',
+      Trường: r.school ?? '',
+      'Tên đồng đội': partner?.name ?? '',
+      'SĐT đồng đội': partner?.phone ?? '',
+      'Tên phụ huynh': r.guardianName ?? '',
+      'SĐT phụ huynh': r.guardianPhone ?? '',
+      'Trạng thái':
+        REGISTRATION_STATUS_LABELS[r.registrationStatus] ??
+        r.registrationStatus,
+      'Thanh toán': PAYMENT_STATUS_LABELS[r.paymentStatus] ?? r.paymentStatus,
+      'Phí đăng ký': r.paymentAmount ?? 0,
+      'Ghi chú': r.notes ?? '',
+      'Ngày đăng ký': formatDateVN(r.createdAt),
+    };
+  });
 }
 
 export function ExportButton({

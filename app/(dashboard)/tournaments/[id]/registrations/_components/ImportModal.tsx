@@ -5,10 +5,14 @@ import { Modal } from '@/components/molecules/Modal';
 import { Stepper } from '@/components/molecules/Stepper';
 import { TOURNAMENT } from '@/lib/strings';
 import { validateRows, toImportItems } from '@/lib/utils/registration-import';
-import { useBulkImportRegistrations } from '@/hooks/tournament';
+import {
+  useBulkImportRegistrations,
+  usePreviewBulkImport,
+} from '@/hooks/tournament';
 import { ImportStepUpload } from './ImportStepUpload';
 import { ImportStepPreview } from './ImportStepPreview';
 import { ImportStepResult } from './ImportStepResult';
+import { BracketAdjustmentModal } from './BracketAdjustmentModal';
 import type { ParsedRow, ValidatedRow } from '@/lib/utils/registration-import';
 import type { BulkImportResult, TournamentCategory } from '@/graphql/generated';
 
@@ -41,15 +45,26 @@ export function ImportModal({
   const [importResult, setImportResult] = useState<BulkImportResult | null>(
     null
   );
+  const [pendingAdjustments, setPendingAdjustments] = useState<
+    Array<{
+      categoryId: string;
+      categoryTitle: string;
+      currentBracketSize: number;
+      newRegistrationCount: number;
+      suggestedBracketSize: number;
+    }>
+  >([]);
 
   const { bulkImport, loading: importing } =
-    useBulkImportRegistrations(tournamentId);
+    useBulkImportRegistrations(tournamentId, { onSuccess });
+  const { preview, loading: previewing } = usePreviewBulkImport(tournamentId);
 
   const resetState = useCallback(() => {
     setStep(0);
     setValidatedRows([]);
     setParseError(null);
     setImportResult(null);
+    setPendingAdjustments([]);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -80,15 +95,42 @@ export function ImportModal({
     setParseError(null);
   }, []);
 
+  const doImport = useCallback(
+    async (bracketSizeAdjustments?: Array<{ categoryId: string; newBracketSize: number }>) => {
+      const items = toImportItems(validatedRows);
+      if (items.length === 0) return;
+      const result = await bulkImport(items, bracketSizeAdjustments);
+      if (result) {
+        setImportResult(result);
+        setStep(2);
+      }
+    },
+    [validatedRows, bulkImport],
+  );
+
   const handleConfirm = useCallback(async () => {
     const items = toImportItems(validatedRows);
     if (items.length === 0) return;
-    const result = await bulkImport(items);
-    if (result) {
-      setImportResult(result);
-      setStep(2);
+    const adjustments = await preview(items);
+    if (adjustments.length > 0) {
+      setPendingAdjustments(adjustments);
+      return;
     }
-  }, [validatedRows, bulkImport]);
+    await doImport();
+  }, [validatedRows, preview, doImport]);
+
+  const handleAdjustmentConfirm = useCallback(async () => {
+    const bracketSizeAdjustments = pendingAdjustments.map((a) => ({
+      categoryId: a.categoryId,
+      newBracketSize: a.suggestedBracketSize,
+    }));
+    setPendingAdjustments([]);
+    await doImport(bracketSizeAdjustments);
+  }, [pendingAdjustments, doImport]);
+
+  const handleAdjustmentReject = useCallback(() => {
+    setPendingAdjustments([]);
+  }, []);
 
   return (
     <Modal
@@ -122,9 +164,17 @@ export function ImportModal({
             rows={validatedRows}
             onBack={handleBack}
             onConfirm={() => void handleConfirm()}
-            importing={importing}
+            importing={importing || previewing}
           />
         )}
+
+        <BracketAdjustmentModal
+          open={pendingAdjustments.length > 0}
+          onClose={handleAdjustmentReject}
+          onConfirm={() => void handleAdjustmentConfirm()}
+          adjustments={pendingAdjustments}
+          loading={importing}
+        />
 
         {step === 2 && importResult && (
           <ImportStepResult result={importResult} onClose={handleClose} />

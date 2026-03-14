@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
 import {
   GET_TOURNAMENT_REGISTRATIONS,
+  GET_TOURNAMENT_CATEGORIES,
   EXPORT_TOURNAMENT_REGISTRATIONS,
+  PREVIEW_BULK_IMPORT,
 } from '@/graphql/queries/tournament';
 import {
   APPROVE_REGISTRATION,
@@ -27,6 +29,7 @@ import type {
   BulkImportRegistrationsInput,
 } from '@/graphql/generated';
 import type { BulkImportItem } from '@/lib/utils/registration-import';
+import type { BracketSizeAdjustmentInput } from '@/graphql/generated';
 
 interface UseRegistrationsOptions {
   tournamentId: string;
@@ -163,22 +166,61 @@ export function useUpdatePaymentStatus(tournamentId: string, options?: { onSucce
   return { updatePayment, loading };
 }
 
+export function usePreviewBulkImport(tournamentId: string) {
+  const [runQuery, { loading }] = useLazyQuery<{
+    previewBulkImport: { adjustmentsNeeded: Array<{
+      categoryId: string;
+      categoryTitle: string;
+      currentBracketSize: number;
+      newRegistrationCount: number;
+      suggestedBracketSize: number;
+    }> };
+  }>(PREVIEW_BULK_IMPORT);
+
+  const preview = useCallback(
+    (registrations: BulkImportItem[]) => {
+      const input = {
+        tournamentId,
+        registrations: registrations.map((r) => ({
+          ...r,
+          categoryId: r.categoryId,
+        })),
+      };
+      return runQuery({ variables: { input } }).then((res) => {
+        const data = res.data?.previewBulkImport;
+        return data?.adjustmentsNeeded ?? [];
+      });
+    },
+    [runQuery, tournamentId],
+  );
+
+  return { preview, loading };
+}
+
 export function useBulkImportRegistrations(
   tournamentId: string,
   options?: { onSuccess?: (result: BulkImportResult) => void },
 ) {
   const [mutation, { loading }] = useMutation<{
     bulkImportRegistrations: BulkImportResult;
-  }>(BULK_IMPORT_REGISTRATIONS);
+  }>(BULK_IMPORT_REGISTRATIONS, {
+    refetchQueries: [
+      { query: GET_TOURNAMENT_CATEGORIES, variables: { tournamentId } },
+    ],
+  });
 
   const bulkImport = useCallback(
-    (registrations: BulkImportItem[]) => {
+    (
+      registrations: BulkImportItem[],
+      bracketSizeAdjustments?: BracketSizeAdjustmentInput[],
+    ) => {
       const input: BulkImportRegistrationsInput = {
         tournamentId,
         registrations: registrations.map((r) => ({
           ...r,
           categoryId: r.categoryId,
         })),
+        bracketSizeAdjustments,
       };
       return mutation({ variables: { input } }).then((res) => {
         const result = res.data?.bulkImportRegistrations;

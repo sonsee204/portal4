@@ -1022,6 +1022,31 @@ type BookmarkList {
   total: Int!
 }
 
+type BracketSizeAdjustment {
+  """ID hạng mục cần điều chỉnh"""
+  categoryId: String!
+
+  """Tên nội dung thi đấu"""
+  categoryTitle: String!
+
+  """Kích thước nhánh đấu hiện tại"""
+  currentBracketSize: Int!
+
+  """Số VĐV sau khi import"""
+  newRegistrationCount: Int!
+
+  """Kích thước nhánh đấu đề xuất (lũy thừa 2 phù hợp)"""
+  suggestedBracketSize: Int!
+}
+
+input BracketSizeAdjustmentInput {
+  """ID hạng mục"""
+  categoryId: ID!
+
+  """Kích thước nhánh đấu mới (lũy thừa 2)"""
+  newBracketSize: Int!
+}
+
 input BulkCheckInInput {
   """ID kèo"""
   gameId: ID!
@@ -1077,7 +1102,13 @@ input BulkImportRegistrationItemInput {
   """Ghi chú"""
   notes: String
 
-  """Phí đăng ký (VND)"""
+  """Tên đồng đội (dùng cho nội dung đôi)"""
+  partnerName: String
+
+  """SĐT đồng đội (dùng cho nội dung đôi)"""
+  partnerPhone: String
+
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
   paymentAmount: Float
 
   """Số điện thoại"""
@@ -1088,6 +1119,9 @@ input BulkImportRegistrationItemInput {
 }
 
 input BulkImportRegistrationsInput {
+  """Điều chỉnh kích thước nhánh đấu (khi user đồng ý từ preview)"""
+  bracketSizeAdjustments: [BracketSizeAdjustmentInput!]
+
   """Danh sách đăng ký (tối đa 500)"""
   registrations: [BulkImportRegistrationItemInput!]!
 
@@ -1806,6 +1840,9 @@ input CreateCategoryInput {
   """Players advancing per group"""
   advancingPerGroup: Int
   ageLabel: String
+
+  """Bracket size (power of 2). 0 or null = auto-calculate."""
+  bracketSize: Int
   description: String
   displayOrder: Int
   format: TournamentFormat! = SINGLE_ELIMINATION
@@ -2863,6 +2900,32 @@ type EmailUpdateRequestResponse {
   verificationId: String!
 }
 
+type EntryMember {
+  avatarUrl: String
+  club: String
+  dateOfBirth: String
+  email: String
+  name: String!
+  phone: String
+  school: String
+  userId: ID
+}
+
+"""A single member within a registration entry"""
+input EntryMemberInput {
+  club: String
+  dateOfBirth: String
+  email: String
+
+  """Existing user ID (if member has an account)"""
+  forUserId: ID
+
+  """Member full name"""
+  name: String!
+  phone: String
+  school: String
+}
+
 type EquipmentItem {
   """ID thiết bị"""
   _id: ID!
@@ -3845,8 +3908,17 @@ type MatchList {
   totalPages: Int!
 }
 
+type MatchMember {
+  avatarUrl: String
+  name: String
+  userId: ID
+}
+
 type MatchPlayer {
   avatarUrl: String
+
+  """Individual members (1 for singles, 2 for doubles)"""
+  members: [MatchMember!]
   name: String
   registrationId: ID
   seed: Int
@@ -6531,6 +6603,19 @@ enum PostVisibility {
   PUBLIC
 }
 
+input PreviewBulkImportInput {
+  """Danh sách đăng ký cần preview"""
+  registrations: [BulkImportRegistrationItemInput!]!
+
+  """ID giải đấu"""
+  tournamentId: ID!
+}
+
+type PreviewBulkImportResult {
+  """Các nội dung cần điều chỉnh kích thước nhánh đấu (nếu vượt quá)"""
+  adjustmentsNeeded: [BracketSizeAdjustment!]!
+}
+
 type PriceRange {
   """Currency (VND, USD, etc.)"""
   currency: String
@@ -7863,6 +7948,11 @@ type Query {
   """Get popular/featured sports"""
   popularSports: [Sport!]!
 
+  """
+  Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only)
+  """
+  previewBulkImport(input: PreviewBulkImportInput!): PreviewBulkImportResult!
+
   """Get product by ID"""
   product(productId: ID!): Product!
 
@@ -8289,7 +8379,14 @@ input RegisterTournamentInput {
 
   """true = self, false = other"""
   isForSelf: Boolean! = true
+
+  """
+  Entry members for doubles/team. When provided, takes precedence over flat athlete fields.
+  """
+  members: [EntryMemberInput!]
   notes: String
+
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
   paymentAmount: Float
   paymentProofUrl: String
 
@@ -9932,6 +10029,11 @@ type TournamentRegistration {
   guardianName: String
   guardianPhone: String
   identityProofUrl: String
+
+  """
+  Entry members: 1 for singles, 2 for doubles, N for team. Empty for legacy data.
+  """
+  members: [EntryMember!]
   notes: String
 
   """Payment amount in VND"""
@@ -10071,6 +10173,9 @@ input UnpinMessageInput {
 input UpdateCategoryInput {
   advancingPerGroup: Int
   ageLabel: String
+
+  """Bracket size (power of 2). 0 or null = auto-calculate."""
+  bracketSize: Int
   description: String
   displayOrder: Int
   format: TournamentFormat

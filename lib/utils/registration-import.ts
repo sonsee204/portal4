@@ -21,6 +21,8 @@ export const COLUMN_MAP: Record<string, string> = {
   'SĐT phụ huynh': 'guardianPhone',
   'Phí đăng ký': 'paymentAmount',
   'Ghi chú': 'notes',
+  'Tên đồng đội': 'partnerName',
+  'SĐT đồng đội': 'partnerPhone',
 };
 
 // -------------------------------------------------------
@@ -38,6 +40,8 @@ export interface ParsedRow {
   guardianPhone?: string;
   paymentAmount?: number;
   notes?: string;
+  partnerName?: string;
+  partnerPhone?: string;
   /** original row index 1-based */
   _rowIndex: number;
 }
@@ -61,6 +65,8 @@ export interface BulkImportItem {
   guardianPhone?: string;
   paymentAmount?: number;
   notes?: string;
+  partnerName?: string;
+  partnerPhone?: string;
 }
 
 // -------------------------------------------------------
@@ -215,5 +221,7 @@ export function toImportItems(validatedRows: ValidatedRow[]): BulkImportItem[] {
       guardianPhone: r.guardianPhone || undefined,
       paymentAmount: r.paymentAmount,
       notes: r.notes || undefined,
+      partnerName: r.partnerName?.trim() || undefined,
+      partnerPhone: r.partnerPhone?.trim() || undefined,
     }));
 }
