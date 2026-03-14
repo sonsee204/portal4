@@ -11,32 +11,40 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { IconButton } from '@/components/atoms/IconButton';
+import { EmptyState } from '@/components/molecules/EmptyState';
+import { QueryState } from '@/components/molecules/QueryState';
 import { formatCurrency } from '@/lib/utils';
-import { mockTransactions } from '@/lib/mock-data';
-import type { TransactionStatus } from '@/types/mock';
+import { COMMON } from '@/lib/strings';
+import {
+  BOOKING_STATUS_VARIANT,
+  BOOKING_STATUS_LABEL,
+} from '@/lib/constants/booking-status';
+import {
+  useSystemStats,
+  useAdminAllBookings,
+  type AdminBooking,
+} from '@/hooks/admin';
 
-const statusVariant: Record<
-  TransactionStatus,
-  'success' | 'warning' | 'danger'
-> = {
-  success: 'success',
-  pending: 'warning',
-  failed: 'danger',
-};
-
-const typeTabs = [
+const statusTabs = [
   { label: 'Tất cả', value: 'all' },
-  { label: 'Nạp tiền', value: 'deposit' },
-  { label: 'Rút tiền', value: 'withdrawal' },
+  { label: 'Hoàn thành', value: 'COMPLETED' },
+  { label: 'Đã xác nhận', value: 'CONFIRMED' },
+  { label: 'Chờ xử lý', value: 'PENDING' },
+  { label: 'Đã hủy', value: 'CANCELLED' },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function FinancePage() {
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const filtered = mockTransactions.filter(
-    (t) => typeFilter === 'all' || t.type === typeFilter
-  );
+  const { stats } = useSystemStats();
+  const { bookings, customerNames, total, loading, error, refetch } =
+    useAdminAllBookings({
+      statuses: statusFilter === 'all' ? undefined : [statusFilter],
+      pagination: { page, limit: PAGE_SIZE },
+    });
 
   return (
     <>
@@ -48,112 +56,128 @@ export default function FinancePage() {
           <Button variant="ghost" size="sm" iconLeft="calendar-outline">
             Bộ lọc ngày
           </Button>
-          <Button size="sm" iconLeft="add-outline">
-            Nạp tiền thủ công
-          </Button>
         </div>
       </PageHeader>
 
-      {/* Stats */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard
-          icon="trending-up-outline"
-          iconColor="text-emerald-400"
-          label="Doanh thu tháng"
-          value="142,500,000 ₫"
-          trend={{ value: '+5.2%', direction: 'up' }}
-        />
-        <StatCard
-          icon="hourglass-outline"
-          iconColor="text-amber-400"
-          label="Đang chờ xử lý"
-          value="12,300,000 ₫"
-          trend={{ value: '3 giao dịch', direction: 'neutral' }}
-        />
-        <StatCard
-          icon="wallet-outline"
-          iconColor="text-blue-400"
-          label="Lợi nhuận ròng"
-          value="98,200,000 ₫"
-          trend={{ value: '+8.1%', direction: 'up' }}
-        />
-      </div>
+      <QueryState
+        loading={loading && bookings.length === 0}
+        error={error}
+        onRetry={() => void refetch()}
+      >
+        {/* Stats */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <StatCard
+            icon="trending-up-outline"
+            iconColor="text-emerald-400"
+            label="Tổng doanh thu"
+            value={formatCurrency(stats?.totalRevenue ?? 0)}
+          />
+          <StatCard
+            icon="receipt-outline"
+            iconColor="text-amber-400"
+            label="Tổng đặt sân"
+            value={String(stats?.totalBookings ?? 0)}
+          />
+          <StatCard
+            icon="business-outline"
+            iconColor="text-blue-400"
+            label="Sân hoạt động"
+            value={String(stats?.activeVenues ?? 0)}
+          />
+        </div>
 
-      {/* Transaction table */}
-      <GlassPanel card className="mt-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Transaction table */}
+        <GlassPanel card className="mt-6">
           <TabGroup
-            tabs={typeTabs}
-            active={typeFilter}
-            onChange={setTypeFilter}
+            tabs={statusTabs}
+            active={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
           />
-          <Button variant="ghost" size="sm" iconLeft="download-outline">
-            Export CSV
-          </Button>
-        </div>
 
-        <div className="mt-4">
-          <DataTable
-            columns={[
-              { key: 'id', label: 'Mã GD', sortable: true },
-              { key: 'user', label: 'Người dùng' },
-              { key: 'amount', label: 'Số tiền', sortable: true },
-              { key: 'datetime', label: 'Thời gian' },
-              { key: 'status', label: 'Trạng thái' },
-              { key: 'actions', label: '' },
-            ]}
-            data={filtered}
-            renderRow={(t) => (
-              <tr
-                key={t._id}
-                className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-              >
-                <td className="text-muted px-4 py-3 font-mono text-xs">
-                  {t._id}
-                </td>
-                <td className="px-4 py-3">
-                  <UserCell name={t.userName} subtitle={t.memberType} />
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      t.type === 'deposit'
-                        ? 'font-medium text-emerald-400'
-                        : 'font-medium text-red-400'
-                    }
+          <div className="mt-4">
+            {loading && bookings.length === 0 ? (
+              <div className="flex justify-center py-12">
+                <div className="text-muted text-sm">{COMMON.LOADING}</div>
+              </div>
+            ) : bookings.length === 0 ? (
+              <EmptyState
+                icon="receipt-outline"
+                title="Chưa có giao dịch"
+                description="Không tìm thấy giao dịch nào phù hợp với bộ lọc."
+              />
+            ) : (
+              <DataTable
+                columns={[
+                  { key: 'id', label: 'Mã GD', sortable: true },
+                  { key: 'user', label: 'Khách hàng' },
+                  { key: 'venue', label: 'Cụm sân' },
+                  { key: 'amount', label: 'Số tiền', sortable: true },
+                  { key: 'date', label: 'Ngày' },
+                  { key: 'status', label: 'Trạng thái' },
+                  { key: 'actions', label: '' },
+                ]}
+                data={bookings}
+                renderRow={(b: AdminBooking) => (
+                  <tr
+                    key={b._id}
+                    className="border-surface-border hover:bg-surface-hover border-b transition-colors"
                   >
-                    {t.type === 'deposit' ? '+' : '-'}
-                    {formatCurrency(Math.abs(t.amount))}
-                  </span>
-                </td>
-                <td className="text-muted px-4 py-3 text-xs">
-                  <div>{t.date}</div>
-                  <div className="text-faint">{t.time}</div>
-                </td>
-                <td className="px-4 py-3">
-                  <Badge variant={statusVariant[t.status]}>{t.status}</Badge>
-                </td>
-                <td className="px-4 py-3">
-                  <IconButton
-                    icon="eye-outline"
-                    size="sm"
-                    tooltip="Xem chi tiết"
-                  />
-                </td>
-              </tr>
+                    <td className="text-muted px-4 py-3 font-mono text-xs">
+                      {b._id.slice(-8).toUpperCase()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <UserCell
+                        name={customerNames[b._id] || 'N/A'}
+                        subtitle={b.courtName}
+                      />
+                    </td>
+                    <td className="text-body px-4 py-3 text-sm">
+                      {b.venueName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-emerald-400">
+                        {formatCurrency(b.totalPrice)}
+                      </span>
+                    </td>
+                    <td className="text-muted px-4 py-3 text-xs">
+                      <div>{b.date}</div>
+                      <div className="text-faint">{b.timeSlots}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={BOOKING_STATUS_VARIANT[b.status] ?? 'neutral'}
+                      >
+                        {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <IconButton
+                        icon="eye-outline"
+                        size="sm"
+                        tooltip="Xem chi tiết"
+                      />
+                    </td>
+                  </tr>
+                )}
+              />
             )}
-          />
-        </div>
-      </GlassPanel>
+          </div>
+        </GlassPanel>
 
-      <Pagination
-        currentPage={page}
-        totalPages={10}
-        totalItems={98}
-        pageSize={10}
-        onPageChange={setPage}
-        className="mt-4"
-      />
+        {total > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={Math.ceil(total / PAGE_SIZE)}
+            totalItems={total}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+            className="mt-4"
+          />
+        )}
+      </QueryState>
     </>
   );
 }
