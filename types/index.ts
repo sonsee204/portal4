@@ -6,7 +6,7 @@
  */
 
 // Auth & roles
-export type { UserRole, AuthUser, SessionTokens } from './auth';
+export type { UserRole, AuthUser, AuthUserLocation, SessionTokens } from './auth';
 export { UserRoleEnum } from './auth';
 
 // User domain

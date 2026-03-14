@@ -6,7 +6,7 @@
 import type { PortalFeature } from '@/lib/permissions';
 
 /** Routes that are currently enabled (not dimmed/disabled). All others show as disabled. */
-export const ENABLED_SIDEBAR_ROUTES = ['/users', '/audit', '/growth', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests'] as const;
+export const ENABLED_SIDEBAR_ROUTES = ['/profile', '/users', '/audit', '/growth', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests'] as const;
 
 export interface NavItem {
   href: string;
@@ -107,6 +107,11 @@ export const sidebarNav: SidebarNavSection[] = [
   {
     section: 'Hệ thống',
     items: [
+      {
+        href: '/profile',
+        label: 'Hồ sơ cá nhân',
+        icon: 'person-outline',
+      },
       {
         href: '/settings',
         label: 'Cài đặt',

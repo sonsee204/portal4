@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useMemo, useCallback } from 'react';
+import { use, useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
@@ -65,7 +65,14 @@ export default function DrawPage({
     matches,
     loading: bLoading,
     refetch,
+    subscribeToMatchUpdates,
   } = useTournamentBracket(activeCategoryId, !activeCategoryId);
+
+  useEffect(() => {
+    if (!tournamentId || !activeCategoryId) return;
+    const unsubscribe = subscribeToMatchUpdates(tournamentId);
+    return () => unsubscribe();
+  }, [subscribeToMatchUpdates, tournamentId, activeCategoryId]);
 
   const onSuccess = useCallback(() => {
     void refetch();
@@ -161,7 +168,11 @@ export default function DrawPage({
       <div className="mt-4 flex items-center gap-3">
         <Button
           size="sm"
-          disabled={isLoading || !activeCategoryId}
+          disabled={
+            isLoading ||
+            !activeCategoryId ||
+            matches.length > 0 /* đã có bảng đấu */
+          }
           onClick={() => void generateBracket(activeCategoryId)}
         >
           {generating ? 'Đang tạo...' : 'Tạo nhánh đấu'}

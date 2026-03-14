@@ -10,6 +10,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   users: 'Quản lý người dùng',
   audit: 'Nhật ký hệ thống',
   growth: 'Tăng trưởng & Đối tác',
+  profile: 'Hồ sơ cá nhân',
   settings: 'Cài đặt',
   ecosystem: 'Hệ sinh thái',
   tournaments: 'Giải đấu',

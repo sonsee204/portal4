@@ -25,6 +25,7 @@ export interface CategoryFormEntry {
   description: string;
   popular: boolean;
   maxRegistrations: number;
+  sharedThirdPlace: boolean;
   prizes: PrizeEntry[];
 }
 
@@ -92,8 +93,6 @@ export interface TournamentFormData {
   format: string;
   totalSlots: number;
   schedule: SchedulePhaseEntry[];
-  venueName: string;
-  venueAddress: string;
   facilities: FacilityEntry[];
   courts: CourtEntry[];
 
@@ -129,6 +128,7 @@ const categorySchema = z.object({
   description: z.string(),
   popular: z.boolean(),
   maxRegistrations: z.number().min(0),
+  sharedThirdPlace: z.boolean(),
   prizes: z.array(prizeSchema),
 });
 
@@ -188,8 +188,6 @@ export const tournamentFormSchema = z
     format: z.string().min(1, 'Thể thức là bắt buộc'),
     totalSlots: z.number().min(2, 'Cần ít nhất 2 slot'),
     schedule: z.array(schedulePhaseSchema),
-    venueName: z.string(),
-    venueAddress: z.string(),
     facilities: z.array(facilitySchema),
     courts: z.array(courtSchema),
 
@@ -228,7 +226,7 @@ export const tournamentFormSchema = z
 export const STEP_FIELDS: Record<number, (keyof TournamentFormData)[]> = {
   0: ['name', 'organizerName', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'introduction', 'coverImageUrl', 'highlights'],
   1: ['categories'],
-  2: ['format', 'totalSlots', 'schedule', 'venueName', 'venueAddress', 'facilities', 'courts'],
+  2: ['format', 'totalSlots', 'schedule', 'facilities', 'courts'],
   3: ['rules'],
   4: ['registrationDeadline', 'fees', 'contacts', 'paymentBank', 'paymentAccountNumber', 'paymentAccountName', 'paymentQrImage'],
   5: [],
@@ -273,6 +271,7 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       description: '',
       popular: false,
       maxRegistrations: 0,
+      sharedThirdPlace: false,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -286,8 +285,6 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
   schedule: [
     { label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' },
   ],
-  venueName: '',
-  venueAddress: '',
   facilities: [],
   courts: [{ name: 'Sân 1', status: 'available' }],
 

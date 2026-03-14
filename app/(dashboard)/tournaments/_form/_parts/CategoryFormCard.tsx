@@ -64,6 +64,8 @@ export function CategoryFormCard({
   });
 
   const prizes = useWatch({ control, name: `categories.${index}.prizes` }) ?? [];
+  const sharedThirdPlace =
+    useWatch({ control, name: `categories.${index}.sharedThirdPlace` }) ?? false;
 
   return (
     <div
@@ -194,6 +196,35 @@ export function CategoryFormCard({
           </div>
         </div>
 
+        <div className="flex items-end pb-1">
+          <Controller
+            name={`categories.${index}.sharedThirdPlace`}
+            control={control}
+            render={({ field }) => (
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={field.value}
+                  onClick={() => field.onChange(!field.value)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                    field.value ? 'bg-primary' : 'bg-surface-border'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                      field.value ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-heading text-sm">
+                  Đồng giải ba (không đánh trận tranh hạng 3-4)
+                </span>
+              </label>
+            )}
+          />
+        </div>
+
         <Controller
           name={`categories.${index}.description`}
           control={control}
@@ -238,6 +269,7 @@ export function CategoryFormCard({
                 control={control}
                 rank={prizes[pi]?.rank ?? 'gold'}
                 basePath={basePath}
+                sharedThirdPlace={sharedThirdPlace}
                 onRemove={() => removePrize(pi)}
                 canRemove={prizeFields.length > 1}
               />

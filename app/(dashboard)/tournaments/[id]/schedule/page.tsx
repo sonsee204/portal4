@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useCallback } from 'react';
+import { use, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
@@ -12,25 +12,27 @@ import {
   useUnscheduleMatch,
   useAssignReferee,
 } from '@/hooks/tournament';
-import { MatchStatus } from '@/graphql/generated';
+import { MatchStatus, RefereeInviteStatus } from '@/graphql/generated';
 
 const REFEREE_STATUS_CONFIG: Record<
-  string,
+  RefereeInviteStatus,
   { label: string; className: string }
 > = {
-  PENDING: {
+  [RefereeInviteStatus.Pending]: {
     label: 'Chờ xác nhận',
     className: 'bg-amber-500/10 text-amber-500',
   },
-  CONFIRMED: {
+  [RefereeInviteStatus.Confirmed]: {
     label: 'Đã xác nhận',
     className: 'bg-emerald-500/10 text-emerald-500',
   },
-  DECLINED: {
+  [RefereeInviteStatus.Declined]: {
     label: 'Đã từ chối',
     className: 'bg-red-500/10 text-red-500',
   },
 };
+
+const ALL_MATCH_STATUS = 'ALL' as const;
 
 export default function SchedulePage({
   params,
@@ -39,13 +41,25 @@ export default function SchedulePage({
 }) {
   const { id: tournamentId } = use(params);
   const router = useRouter();
-  const [statusFilter, setStatusFilter] = useState<MatchStatus | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<
+    MatchStatus | typeof ALL_MATCH_STATUS
+  >(ALL_MATCH_STATUS);
 
-  const { matches, loading, refetch } = useTournamentMatches({
-    tournamentId,
-    filter: statusFilter === 'ALL' ? undefined : { status: statusFilter },
-    pagination: { page: 1, limit: 100 },
-  });
+  const { matches, loading, refetch, subscribeToMatchUpdates } =
+    useTournamentMatches({
+      tournamentId,
+      filter:
+        statusFilter === ALL_MATCH_STATUS
+          ? undefined
+          : { status: statusFilter },
+      pagination: { page: 1, limit: 100 },
+    });
+
+  useEffect(() => {
+    if (!tournamentId) return;
+    const unsubscribe = subscribeToMatchUpdates();
+    return () => unsubscribe();
+  }, [subscribeToMatchUpdates, tournamentId]);
 
   const onSuccess = useCallback(() => void refetch(), [refetch]);
   const { scheduleMatch, loading: scheduling } = useScheduleMatch({
@@ -87,13 +101,14 @@ export default function SchedulePage({
     });
   }
 
-  const STATUS_COLORS: Record<string, string> = {
-    NOT_STARTED: 'text-secondary',
-    LIVE: 'text-green-400',
-    FINISHED: 'text-emerald-400',
-    BYE: 'text-yellow-400',
-    WALKOVER: 'text-orange-400',
-    CANCELLED: 'text-red-400',
+  const STATUS_COLORS: Record<MatchStatus, string> = {
+    [MatchStatus.NotStarted]: 'text-secondary',
+    [MatchStatus.Live]: 'text-green-400',
+    [MatchStatus.Finished]: 'text-emerald-400',
+    [MatchStatus.Bye]: 'text-yellow-400',
+    [MatchStatus.Walkover]: 'text-orange-400',
+    [MatchStatus.Cancelled]: 'text-red-400',
+    [MatchStatus.Retirement]: 'text-orange-400',
   };
 
   return (
@@ -114,14 +129,14 @@ export default function SchedulePage({
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
         {[
-          { label: 'Tất cả', value: 'ALL' as const },
+          { label: 'Tất cả', value: ALL_MATCH_STATUS },
           { label: 'Chưa bắt đầu', value: MatchStatus.NotStarted },
           { label: 'Đang diễn ra', value: MatchStatus.Live },
           { label: 'Đã kết thúc', value: MatchStatus.Finished },
         ].map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setStatusFilter(tab.value as MatchStatus | 'ALL')}
+            onClick={() => setStatusFilter(tab.value)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
               statusFilter === tab.value
                 ? 'bg-primary text-white'

@@ -102,6 +102,7 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
     groupCount
     advancingPerGroup
     bracketSize
+    sharedThirdPlace
     prizes {
       rank
       title

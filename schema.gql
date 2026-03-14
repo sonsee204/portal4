@@ -10396,6 +10396,7 @@ input UpdateProductInput {
 
 input UpdateProfileInput {
   bio: String
+  club: String
   coverPhotoURL: String
   dateOfBirth: String
   displayName: String
@@ -10802,6 +10803,7 @@ type User {
   """How the user discovered the platform (collected via onboarding survey)"""
   acquisitionSource: AcquisitionSource
   bio: String
+  club: String
   coverPhotoURL: String
   createdAt: DateTime!
 

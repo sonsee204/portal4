@@ -5,11 +5,12 @@ import { useQuery, useMutation } from '@apollo/client/react';
 import { GET_TOURNAMENT_BRACKET } from '@/graphql/queries/tournament';
 import { GENERATE_BRACKET, RESET_BRACKET, SEED_PLAYERS } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
+import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';
 import type { TournamentMatch, SeedPlayerInput } from '@/graphql/generated';
 
 export function useTournamentBracket(categoryId: string, skip = false) {
-  const { data, loading, error, refetch } = useQuery<{
+  const { data, loading, error, refetch, subscribeToMore } = useQuery<{
     tournamentBracket: TournamentMatch[];
   }>(GET_TOURNAMENT_BRACKET, {
     variables: { categoryId },
@@ -17,11 +18,18 @@ export function useTournamentBracket(categoryId: string, skip = false) {
     skip: skip || !categoryId,
   });
 
+  const subscribeToMatchUpdates = useCallback(
+    (tournamentId: string) =>
+      createMatchSubscription(subscribeToMore, refetch, tournamentId),
+    [subscribeToMore, refetch],
+  );
+
   return {
     matches: data?.tournamentBracket ?? [],
     loading,
     error,
     refetch,
+    subscribeToMatchUpdates,
   };
 }
 

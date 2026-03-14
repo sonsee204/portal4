@@ -4,6 +4,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import Image from 'next/image';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
+import { RichContent } from '@/components/atoms/RichContent';
 import {
   ReviewSection,
   ReviewField,
@@ -97,14 +98,14 @@ export function StepReview({
         <ReviewField label="Địa điểm" value={data.locationName} />
         <ReviewField label="Địa chỉ" value={data.locationAddress} />
         {data.description && (
-          <p className="text-muted mt-1 line-clamp-3 text-xs">
-            {data.description}
-          </p>
+          <div className="text-muted mt-1 text-xs">
+            <RichContent content={data.description} compact />
+          </div>
         )}
         {data.introduction && (
-          <p className="text-muted mt-1 line-clamp-3 text-xs">
-            {data.introduction}
-          </p>
+          <div className="text-muted mt-1 text-xs">
+            <RichContent content={data.introduction} compact />
+          </div>
         )}
         {data.highlights.filter(Boolean).length > 0 && (
           <div className="mt-2">
@@ -195,7 +196,6 @@ export function StepReview({
             </div>
           </div>
         )}
-        <ReviewField label="Nhà thi đấu" value={data.venueName} />
         {data.facilities.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {data.facilities.map((f, i) => (
