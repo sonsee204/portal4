@@ -146,6 +146,11 @@ export const MATCH_CORE_FRAGMENT = gql`
       name
       avatarUrl
       seed
+      members {
+        userId
+        name
+        avatarUrl
+      }
     }
     player2 {
       registrationId
@@ -153,6 +158,11 @@ export const MATCH_CORE_FRAGMENT = gql`
       name
       avatarUrl
       seed
+      members {
+        userId
+        name
+        avatarUrl
+      }
     }
     scoreSummary {
       sets {
@@ -199,6 +209,16 @@ export const REGISTRATION_CORE_FRAGMENT = gql`
     phone
     notes
     seed
+    members {
+      userId
+      name
+      avatarUrl
+      phone
+      email
+      dateOfBirth
+      club
+      school
+    }
     paymentAmount
     paymentProofUrl
     identityProofUrl

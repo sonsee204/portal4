@@ -11,6 +11,7 @@ import {
 interface RegistrationDetailModalProps {
   registration: TournamentRegistration | null;
   categoryTitle?: string;
+  categoryMatchType?: string;
   onClose: () => void;
 }
 
@@ -93,6 +94,7 @@ const PAYMENT_LABELS: Record<TournamentPaymentStatus, string> = {
 export function RegistrationDetailModal({
   registration: reg,
   categoryTitle,
+  categoryMatchType,
   onClose,
 }: RegistrationDetailModalProps) {
   if (!reg) return null;
@@ -119,6 +121,32 @@ export function RegistrationDetailModal({
           <DetailRow icon="school-outline" label="Trường" value={reg.school} />
           <DetailRow icon="people-outline" label="CLB / Đội" value={reg.club} />
         </Section>
+
+        {reg.members && reg.members.length > 1 && (
+          <Section title="Thành viên đội">
+            {reg.members.map((m, i) => (
+              <div
+                key={i}
+                className="border-surface-border mb-2 rounded-lg border p-3 last:mb-0"
+              >
+                <p className="text-heading text-sm font-medium">
+                  {m.name}
+                  {i === 0 && (
+                    <span className="text-faint ml-2 text-xs font-normal">
+                      (Đại diện)
+                    </span>
+                  )}
+                </p>
+                {m.phone && (
+                  <p className="text-secondary text-xs">SĐT: {m.phone}</p>
+                )}
+                {m.club && (
+                  <p className="text-secondary text-xs">CLB: {m.club}</p>
+                )}
+              </div>
+            ))}
+          </Section>
+        )}
 
         <Section title="Liên hệ">
           <DetailRow
@@ -151,7 +179,11 @@ export function RegistrationDetailModal({
           <DetailRow
             icon="cash-outline"
             label="Phí đăng ký"
-            value={formatCurrency(reg.paymentAmount)}
+            value={
+              reg.paymentAmount != null
+                ? `${formatCurrency(reg.paymentAmount)}${categoryMatchType === 'DOUBLES' ? ' (cho 2 VĐV)' : ' (cho 1 VĐV)'}`
+                : null
+            }
           />
           <DetailRow
             icon="card-outline"

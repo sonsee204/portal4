@@ -25,6 +25,16 @@ const iconOptions = [
   { label: 'Cúp', value: 'trophy-outline' },
 ];
 
+const bracketSizeOptions = [
+  { label: 'Tự động', value: '0' },
+  { label: '4', value: '4' },
+  { label: '8', value: '8' },
+  { label: '16', value: '16' },
+  { label: '32', value: '32' },
+  { label: '64', value: '64' },
+  { label: '128', value: '128' },
+];
+
 const accentColors = [
   'from-orange-400/20 to-amber-500/10 border-orange-300/30 dark:border-orange-500/20',
   'from-violet-400/20 to-purple-500/10 border-violet-300/30 dark:border-violet-500/20',
@@ -148,7 +158,7 @@ export function CategoryFormCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Controller
             name={`categories.${index}.maxRegistrations`}
             control={control}
@@ -163,6 +173,19 @@ export function CategoryFormCard({
                 onChange={(e) =>
                   field.onChange(parseInt(e.target.value, 10) || 0)
                 }
+              />
+            )}
+          />
+          <Controller
+            name={`categories.${index}.bracketSize`}
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                value={String(field.value ?? 0)}
+                onChange={(e) => field.onChange(Number(e.target.value))}
+                label="Kích thước nhánh đấu"
+                options={bracketSizeOptions}
               />
             )}
           />

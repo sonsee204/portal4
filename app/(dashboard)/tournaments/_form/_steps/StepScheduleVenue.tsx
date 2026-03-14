@@ -98,22 +98,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
               />
             )}
           />
-          <Controller
-            name="totalSlots"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                value={field.value || ''}
-                onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-                label="Số slot tối đa"
-                type="number"
-                placeholder="32"
-                leftIcon="people-outline"
-                error={fieldState.error?.message}
-              />
-            )}
-          />
         </div>
       </GlassPanel>
 

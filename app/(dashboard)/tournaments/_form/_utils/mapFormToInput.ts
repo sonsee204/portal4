@@ -73,6 +73,7 @@ export function mapCategoryEntryToInput(
     scoringConfig: DEFAULT_SCORING_CONFIG[sport] ?? DEFAULT_SCORING_CONFIG.badminton,
     popular: entry.popular,
     maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
+    bracketSize: entry.bracketSize > 0 ? entry.bracketSize : undefined,
     sharedThirdPlace: entry.sharedThirdPlace,
     prizes: (entry.prizes ?? [])
       .filter((p) => p.title)
@@ -186,7 +187,6 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
     categories: [],
 
     format: 'single_elim',
-    totalSlots: 32,
     schedule: (tournament.schedule?.length
       ? tournament.schedule.map((s) => ({
         label: s.label,

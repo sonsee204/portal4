@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { Pagination } from '@/components/organisms/Pagination';
 import { TOURNAMENT } from '@/lib/strings';
 import {
   useRegistrations,
@@ -21,6 +22,8 @@ import { ImportModal } from './_components/ImportModal';
 import { RegistrationDetailModal } from './_components/RegistrationDetailModal';
 import { RejectModal } from './_components/RejectModal';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
+
+const PAGE_SIZE = 20;
 import {
   RegistrationStatus,
   TournamentPaymentStatus,
@@ -93,7 +96,18 @@ export default function RegistrationsPage({
   const router = useRouter();
   const [statusFilter, setStatusFilter] =
     useState<StatusFilterValue>(ALL_STATUS);
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const handleStatusFilterChange = useCallback((value: StatusFilterValue) => {
+    setStatusFilter(value);
+    setPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    setSelectedIds(new Set());
+  }, []);
   const [importOpen, setImportOpen] = useState(false);
   const [detailReg, setDetailReg] = useState<TournamentRegistration | null>(
     null
@@ -109,14 +123,25 @@ export default function RegistrationsPage({
     () => new Map(categories?.map((c) => [c._id, c.title]) ?? []),
     [categories]
   );
+  const categoryMatchTypeMap = useMemo(
+    () => new Map(categories?.map((c) => [c._id, c.matchType]) ?? []),
+    [categories]
+  );
 
-  const { registrations, total, loading, refetch } = useRegistrations({
+  const {
+    registrations,
+    total,
+    page: currentPage,
+    totalPages,
+    loading,
+    refetch,
+  } = useRegistrations({
     tournamentId,
     filter:
       statusFilter === ALL_STATUS
         ? undefined
         : { registrationStatus: statusFilter },
-    pagination: { page: 1, limit: 50 },
+    pagination: { page, limit: PAGE_SIZE },
   });
 
   const onSuccess = useCallback(() => {
@@ -199,18 +224,11 @@ export default function RegistrationsPage({
     void updatePayment(regId, status);
   };
 
-  const pendingCount = registrations.filter(
-    (r) => r.registrationStatus === RegistrationStatus.Pending
-  ).length;
-  const approvedCount = registrations.filter(
-    (r) => r.registrationStatus === RegistrationStatus.Approved
-  ).length;
-
   return (
     <>
       <PageHeader
         title="Quản lý đăng ký"
-        description={`${total} đăng ký • ${pendingCount} chờ duyệt • ${approvedCount} đã duyệt`}
+        description={`${total} đăng ký${totalPages > 1 ? ` • Trang ${currentPage}/${totalPages}` : ''}`}
       >
         <ExportButton tournamentId={tournamentId} />
         <Button
@@ -244,6 +262,9 @@ export default function RegistrationsPage({
         categoryTitle={
           detailReg ? categoryMap.get(detailReg.categoryId) : undefined
         }
+        categoryMatchType={
+          detailReg ? categoryMatchTypeMap.get(detailReg.categoryId) : undefined
+        }
         onClose={() => setDetailReg(null)}
       />
 
@@ -276,7 +297,7 @@ export default function RegistrationsPage({
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
-              onClick={() => setStatusFilter(f.value)}
+              onClick={() => handleStatusFilterChange(f.value)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === f.value
                   ? 'bg-primary text-white'
@@ -517,6 +538,15 @@ export default function RegistrationsPage({
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={total}
+                pageSize={PAGE_SIZE}
+                onPageChange={handlePageChange}
+              />
+            )}
           </GlassPanel>
         )}
       </div>

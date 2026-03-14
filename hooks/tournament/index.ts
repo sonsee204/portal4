@@ -25,6 +25,7 @@ export {
   useBulkRegistrationActions,
   useUpdatePaymentStatus,
   useBulkImportRegistrations,
+  usePreviewBulkImport,
   useExportRegistrations,
 } from './useRegistrations';
 export {
