@@ -91,6 +91,15 @@ export const DELETE_TOURNAMENT = gql`
   }
 `;
 
+export const DUPLICATE_TOURNAMENT = gql`
+  mutation DuplicateTournament($id: ID!) {
+    duplicateTournament(id: $id) {
+      ...TournamentDetail
+    }
+  }
+  ${TOURNAMENT_DETAIL_FRAGMENT}
+`;
+
 // ==================== CATEGORY ====================
 
 export const CREATE_CATEGORY = gql`
@@ -182,6 +191,15 @@ export const BULK_IMPORT_REGISTRATIONS = gql`
       }
     }
   }
+`;
+
+export const UPDATE_REGISTRATION_BIB_NUMBER = gql`
+  mutation UpdateRegistrationBibNumber($input: UpdateBibNumberInput!) {
+    updateRegistrationBibNumber(input: $input) {
+      ...RegistrationCore
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
 `;
 
 // ==================== BRACKET & DRAW ====================

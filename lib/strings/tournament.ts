@@ -8,6 +8,7 @@ export const TOURNAMENT = {
   SUCCESS_COMPLETE: 'Kết thúc giải đấu thành công.',
   SUCCESS_CANCEL: 'Huỷ giải đấu thành công.',
   SUCCESS_DELETE: 'Xoá giải đấu thành công.',
+  SUCCESS_DUPLICATE: 'Nhân bản giải đấu thành công.',
 
   SUCCESS_CREATE_CATEGORY: 'Tạo nội dung thi đấu thành công.',
   SUCCESS_UPDATE_CATEGORY: 'Cập nhật nội dung thi đấu thành công.',
@@ -91,6 +92,8 @@ export const TOURNAMENT = {
   CONFIRM_COMPLETE_TOURNAMENT: 'Bạn có chắc muốn kết thúc giải đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_DELETE_TOURNAMENT: 'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
+  CONFIRM_DUPLICATE_TOURNAMENT:
+    'Nhân bản giải đấu này? Một bản sao mới sẽ được tạo ở trạng thái Bản nháp. Bạn có thể chỉnh sửa thông tin trước khi đăng.',
 
   IMPORT_TITLE: 'Import VĐV từ file',
   IMPORT_STEP_UPLOAD: 'Tải file lên',
@@ -104,6 +107,8 @@ export const TOURNAMENT = {
   IMPORT_PARTIAL: (ok: number, fail: number) =>
     `Thành công ${ok} VĐV • Thất bại ${fail} dòng`,
   IMPORT_CONFIRM: (n: number) => `Xác nhận import ${n} VĐV`,
+  IMPORT_DISABLED_REASON:
+    'Không thể import VĐV khi đã đóng đăng ký hoặc đã bốc thăm',
 
   EXPORT_BUTTON: 'Xuất Excel',
   EXPORT_FILENAME: (name: string, date: string) =>

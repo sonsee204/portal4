@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { Controller, type Control } from 'react-hook-form';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/atoms/Input';
-import { Textarea } from '@/components/atoms/Textarea';
+import { MarkdownEditor } from '@/components/atoms/MarkdownEditor';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import type { TournamentFormData } from '@/types/tournament-form';
 
@@ -15,16 +14,21 @@ interface RuleEditorProps {
   canRemove: boolean;
 }
 
-export function RuleEditor({ index, control, onRemove, canRemove }: RuleEditorProps) {
+export function RuleEditor({
+  index,
+  control,
+  onRemove,
+  canRemove,
+}: RuleEditorProps) {
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="rounded-xl border border-surface-border bg-surface/50 transition-shadow hover:shadow-sm">
+    <div className="border-surface-border bg-surface/50 rounded-xl border transition-shadow hover:shadow-sm">
       <div className="flex items-center gap-3 p-4">
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="shrink-0 text-muted transition-colors hover:text-heading"
+          className="text-muted hover:text-heading shrink-0 transition-colors"
         >
           <IonIcon
             name={expanded ? 'chevron-down-outline' : 'chevron-forward-outline'}
@@ -50,7 +54,7 @@ export function RuleEditor({ index, control, onRemove, canRemove }: RuleEditorPr
           <button
             type="button"
             onClick={onRemove}
-            className="shrink-0 rounded-lg p-1 text-faint transition-colors hover:bg-danger/10 hover:text-danger"
+            className="text-faint hover:bg-danger/10 hover:text-danger shrink-0 rounded-lg p-1 transition-colors"
           >
             <IonIcon name="trash-outline" size="sm" />
           </button>
@@ -58,15 +62,17 @@ export function RuleEditor({ index, control, onRemove, canRemove }: RuleEditorPr
       </div>
 
       {expanded && (
-        <div className="border-t border-surface-border px-4 pb-4 pt-3">
+        <div className="border-surface-border border-t px-4 pt-3 pb-4">
           <Controller
             name={`rules.${index}.content`}
             control={control}
             render={({ field }) => (
-              <Textarea
-                {...field}
-                placeholder="Nội dung chi tiết..."
-                rows={3}
+              <MarkdownEditor
+                value={field.value}
+                onChange={field.onChange}
+                label="Nội dung chi tiết"
+                placeholder="Nội dung thể lệ. Hỗ trợ **in đậm**, *nghiêng*, danh sách..."
+                minHeight={120}
               />
             )}
           />

@@ -12,6 +12,7 @@ import {
   useStartTournament,
   useCompleteTournament,
   useCancelTournament,
+  useDuplicateTournament,
   useDeleteTournament,
 } from '@/hooks/tournament';
 import { TOURNAMENT } from '@/lib/strings';
@@ -30,6 +31,7 @@ type DialogType =
   | 'start'
   | 'complete'
   | 'cancel'
+  | 'duplicate'
   | 'delete'
   | null;
 
@@ -53,6 +55,11 @@ export function TournamentStatusActions({
     useCompleteTournament(onStatusChange);
   const { execute: cancel, loading: cancelling } =
     useCancelTournament(onStatusChange);
+  const { execute: duplicate, loading: duplicating } = useDuplicateTournament(
+    (newTournament) => {
+      router.push(`/tournaments/${newTournament._id}/edit`);
+    }
+  );
   const { execute: deleteTournament, loading: deleting } = useDeleteTournament(
     () => {
       router.push('/tournaments');
@@ -66,6 +73,7 @@ export function TournamentStatusActions({
     starting ||
     completing ||
     cancelling ||
+    duplicating ||
     deleting;
 
   const handleConfirm = async () => {
@@ -89,6 +97,9 @@ export function TournamentStatusActions({
       case 'cancel':
         await cancel(tournamentId);
         break;
+      case 'duplicate':
+        await duplicate(tournamentId);
+        break;
       case 'delete':
         await deleteTournament(tournamentId);
         break;
@@ -107,6 +118,16 @@ export function TournamentStatusActions({
             Quản lý đăng ký
           </Button>
         </Link>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isLoading}
+          iconLeft="copy-outline"
+          onClick={() => setOpenDialog('duplicate')}
+        >
+          Nhân bản
+        </Button>
 
         {status === 'DRAFT' && (
           <Button
@@ -185,6 +206,17 @@ export function TournamentStatusActions({
           </Button>
         )}
       </div>
+
+      {/* Duplicate confirmation */}
+      <ConfirmDialog
+        open={openDialog === 'duplicate'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Nhân bản giải đấu"
+        description={TOURNAMENT.CONFIRM_DUPLICATE_TOURNAMENT}
+        confirmLabel="Nhân bản"
+        loading={duplicating}
+      />
 
       {/* Status change confirmations */}
       <ConfirmDialog

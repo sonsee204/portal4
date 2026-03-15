@@ -14,8 +14,9 @@ import {
   useDeleteRegistration,
   useBulkRegistrationActions,
   useUpdatePaymentStatus,
+  useUpdateBibNumber,
 } from '@/hooks/tournament';
-import { useTournamentCategories } from '@/hooks/tournament';
+import { useTournament, useTournamentCategories } from '@/hooks/tournament';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { ExportButton } from './_components/ExportButton';
 import { ImportModal } from './_components/ImportModal';
@@ -27,6 +28,8 @@ const PAGE_SIZE = 20;
 import {
   RegistrationStatus,
   TournamentPaymentStatus,
+  TournamentStatus,
+  CategoryStatus,
   type TournamentRegistration,
 } from '@/graphql/generated';
 
@@ -118,7 +121,18 @@ export default function RegistrationsPage({
     null
   );
 
+  const { tournament } = useTournament(tournamentId);
   const { categories } = useTournamentCategories(tournamentId);
+  const canImport = useMemo(() => {
+    if (!tournament) return false;
+    if (tournament.status !== TournamentStatus.RegistrationOpen) return false;
+    const drawnStatuses = [
+      CategoryStatus.DrawCompleted,
+      CategoryStatus.InProgress,
+      CategoryStatus.Completed,
+    ];
+    return !categories.some((c) => drawnStatuses.includes(c.status));
+  }, [tournament, categories]);
   const categoryMap = useMemo(
     () => new Map(categories?.map((c) => [c._id, c.title]) ?? []),
     [categories]
@@ -176,9 +190,37 @@ export default function RegistrationsPage({
     tournamentId,
     { onSuccess }
   );
+  const { updateBibNumber, loading: bibUpdating } =
+    useUpdateBibNumber(tournamentId);
+
+  const [editingBibId, setEditingBibId] = useState<string | null>(null);
+  const [bibInputValue, setBibInputValue] = useState<string>('');
+
+  const handleBibEdit = (reg: TournamentRegistration) => {
+    setEditingBibId(reg._id);
+    setBibInputValue(reg.bibNumber != null ? String(reg.bibNumber) : '');
+  };
+
+  const handleBibSave = async (registrationId: string) => {
+    const val = bibInputValue.trim();
+    const num = val === '' ? undefined : parseInt(val, 10);
+    if (val !== '' && (isNaN(num!) || num! < 1)) return;
+    await updateBibNumber(registrationId, num);
+    setEditingBibId(null);
+  };
+
+  const handleBibCancel = () => {
+    setEditingBibId(null);
+    setBibInputValue('');
+  };
 
   const isActionLoading =
-    approving || rejecting || deleting || bulkLoading || paymentUpdating;
+    approving ||
+    rejecting ||
+    deleting ||
+    bulkLoading ||
+    paymentUpdating ||
+    bibUpdating;
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -235,7 +277,9 @@ export default function RegistrationsPage({
           variant="outline"
           size="sm"
           iconLeft="cloud-upload-outline"
-          onClick={() => setImportOpen(true)}
+          disabled={!canImport}
+          title={!canImport ? TOURNAMENT.IMPORT_DISABLED_REASON : undefined}
+          onClick={() => canImport && setImportOpen(true)}
         >
           Import VĐV
         </Button>
@@ -368,6 +412,9 @@ export default function RegistrationsPage({
                     Vận động viên
                   </th>
                   <th className="text-secondary p-3 text-left font-medium">
+                    SBD
+                  </th>
+                  <th className="text-secondary p-3 text-left font-medium">
                     Nội dung đăng ký
                   </th>
                   <th className="text-secondary p-3 text-left font-medium">
@@ -427,6 +474,61 @@ export default function RegistrationsPage({
                           </div>
                         )}
                       </button>
+                    </td>
+                    <td className="p-3">
+                      {editingBibId === reg._id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={1}
+                            value={bibInputValue}
+                            onChange={(e) => setBibInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter')
+                                void handleBibSave(reg._id);
+                              if (e.key === 'Escape') handleBibCancel();
+                            }}
+                            className="border-surface-border bg-surface text-heading focus:border-primary w-16 rounded border px-1.5 py-0.5 text-xs focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void handleBibSave(reg._id)}
+                            className="text-primary hover:text-primary/80 text-xs"
+                            disabled={bibUpdating}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleBibCancel}
+                            className="text-secondary hover:text-heading text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-heading text-xs font-medium">
+                            {reg.bibNumber != null ? `#${reg.bibNumber}` : '—'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleBibEdit(reg)}
+                            className="text-faint hover:text-primary transition-colors"
+                            title="Sửa SBD"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className="h-3 w-3"
+                            >
+                              <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="text-secondary p-3 text-xs">
                       {categoryMap.get(reg.categoryId) ?? reg.categoryId}

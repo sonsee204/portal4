@@ -144,24 +144,32 @@ export const MATCH_CORE_FRAGMENT = gql`
       registrationId
       userId
       name
+      club
       avatarUrl
       seed
+      dateOfBirth
+      bibNumber
       members {
         userId
         name
         avatarUrl
+        club
       }
     }
     player2 {
       registrationId
       userId
       name
+      club
       avatarUrl
       seed
+      dateOfBirth
+      bibNumber
       members {
         userId
         name
         avatarUrl
+        club
       }
     }
     scoreSummary {
@@ -209,6 +217,7 @@ export const REGISTRATION_CORE_FRAGMENT = gql`
     phone
     notes
     seed
+    bibNumber
     members {
       userId
       name
