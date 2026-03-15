@@ -109,6 +109,11 @@ export function RegistrationDetailModal({
       <div className="space-y-4">
         <Section title="Thông tin VĐV">
           <DetailRow
+            icon="barcode-outline"
+            label="Số báo danh (SBD)"
+            value={reg.bibNumber != null ? `#${reg.bibNumber}` : 'Chưa gán'}
+          />
+          <DetailRow
             icon="person-outline"
             label="Họ tên"
             value={reg.athleteName}

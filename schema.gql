@@ -1022,6 +1022,25 @@ type BookmarkList {
   total: Int!
 }
 
+type BracketDrawPreview {
+  """Kích thước nhánh đấu hiện tại (cấu hình)"""
+  currentBracketSize: Int!
+
+  """Số VĐV đã duyệt trong nội dung"""
+  playerCount: Int!
+
+  """Kích thước nhánh đấu đề xuất (lũy thừa 2 tối thiểu cho số VĐV)"""
+  suggestedBracketSize: Int!
+
+  """Thông báo cảnh báo khi willAutoAdjust"""
+  warningMessage: String
+
+  """
+  True khi currentBracketSize > suggestedBracketSize — bốc thăm sẽ tự động giảm để tránh BYE vs BYE
+  """
+  willAutoAdjust: Boolean!
+}
+
 type BracketSizeAdjustment {
   """ID hạng mục cần điều chỉnh"""
   categoryId: String!
@@ -3910,12 +3929,24 @@ type MatchList {
 
 type MatchMember {
   avatarUrl: String
+
+  """CLB / Đội"""
+  club: String
   name: String
   userId: ID
 }
 
 type MatchPlayer {
   avatarUrl: String
+
+  """Số báo danh (SBD)"""
+  bibNumber: Int
+
+  """CLB / Đội"""
+  club: String
+
+  """Năm sinh (YYYY) — phân biệt VĐV trùng tên"""
+  dateOfBirth: String
 
   """Individual members (1 for singles, 2 for doubles)"""
   members: [MatchMember!]
@@ -4604,6 +4635,9 @@ type Mutation {
   """Duplicate product"""
   duplicateProduct(productId: ID!): Product!
 
+  """Duplicate a tournament (creates a copy in DRAFT with categories)"""
+  duplicateTournament(id: ID!): Tournament!
+
   """
   Execute full draw: clear seeds, assign new seeds, generate bracket — all in one transaction
   """
@@ -5017,6 +5051,9 @@ type Mutation {
 
   """Update an existing referral code (Admin only)"""
   updateReferralCode(id: ID!, input: UpdateReferralCodeInput!): ReferralCode!
+
+  """Update bib number (SBD) for a registration (organizer only)"""
+  updateRegistrationBibNumber(input: UpdateBibNumberInput!): TournamentRegistration!
 
   """Update report status (Admin only)"""
   updateReportStatus(input: UpdateReportStatusInput!): PostReport!
@@ -7568,6 +7605,11 @@ type Query {
   """Get booking statistics"""
   bookingStats(fromDate: String, toDate: String, venueId: ID!): BookingStats!
 
+  """
+  Preview trước khi bốc thăm: kiểm tra nếu cần tự động giảm kích thước nhánh đấu (organizer only)
+  """
+  bracketDrawPreview(categoryId: ID!): BracketDrawPreview!
+
   """Calculate discount for a booking"""
   calculateBookingDiscount(input: ApplyPromotionInput!): DiscountCalculationResult!
 
@@ -10020,6 +10062,9 @@ type TournamentRegistration {
   """Athlete full name"""
   athleteName: String!
   avatarUrl: String
+
+  """Số báo danh (SBD) — unique per (tournamentId, categoryId)"""
+  bibNumber: Int
   category: TournamentCategory
   categoryId: ID!
   club: String
@@ -10168,6 +10213,12 @@ input UnpinMessageInput {
 
   """Message ID to unpin"""
   messageId: ID!
+}
+
+input UpdateBibNumberInput {
+  """null = clear SBD"""
+  bibNumber: Int
+  registrationId: ID!
 }
 
 input UpdateCategoryInput {

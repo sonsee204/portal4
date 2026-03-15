@@ -9,6 +9,7 @@ export {
   useStartTournament,
   useCompleteTournament,
   useCancelTournament,
+  useDuplicateTournament,
   useDeleteTournament,
 } from './useTournamentStatus';
 export {
@@ -27,6 +28,7 @@ export {
   useBulkImportRegistrations,
   usePreviewBulkImport,
   useExportRegistrations,
+  useUpdateBibNumber,
 } from './useRegistrations';
 export {
   useTournamentBracket,

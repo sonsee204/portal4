@@ -16,6 +16,7 @@ import {
   UPDATE_PAYMENT_STATUS,
   DELETE_REGISTRATION,
   BULK_IMPORT_REGISTRATIONS,
+  UPDATE_REGISTRATION_BIB_NUMBER,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
@@ -232,6 +233,25 @@ export function useBulkImportRegistrations(
   );
 
   return { bulkImport, loading };
+}
+
+export function useUpdateBibNumber(tournamentId: string) {
+  const [mutation, { loading }] = useMutation<{
+    updateRegistrationBibNumber: TournamentRegistration;
+  }>(UPDATE_REGISTRATION_BIB_NUMBER, {
+    refetchQueries: [
+      { query: GET_TOURNAMENT_REGISTRATIONS, variables: { tournamentId } },
+    ],
+    ...createMutationOptions('UpdateRegistrationBibNumber', 'Cập nhật SBD thành công.'),
+  });
+
+  const updateBibNumber = useCallback(
+    (registrationId: string, bibNumber?: number) =>
+      mutation({ variables: { input: { registrationId, bibNumber } } }),
+    [mutation],
+  );
+
+  return { updateBibNumber, loading };
 }
 
 export function useExportRegistrations(tournamentId: string) {
