@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useMutation } from '@apollo/client/react';
+import { GET_MY_TOURNAMENTS } from '@/graphql/queries/tournament';
 import {
   PUBLISH_TOURNAMENT,
   OPEN_REGISTRATION,
@@ -10,6 +11,7 @@ import {
   COMPLETE_TOURNAMENT,
   CANCEL_TOURNAMENT,
   DELETE_TOURNAMENT,
+  DUPLICATE_TOURNAMENT,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
@@ -56,6 +58,27 @@ export function useCompleteTournament(onSuccess?: () => void) {
 
 export function useCancelTournament(onSuccess?: () => void) {
   return useStatusMutation(CANCEL_TOURNAMENT, 'CancelTournament', TOURNAMENT.SUCCESS_CANCEL, onSuccess);
+}
+
+export function useDuplicateTournament(
+  onSuccess?: (tournament: Tournament) => void,
+) {
+  const [mutation, { loading }] = useMutation<{
+    duplicateTournament: Tournament;
+  }>(DUPLICATE_TOURNAMENT, {
+    refetchQueries: [{ query: GET_MY_TOURNAMENTS }],
+    ...createMutationOptions('DuplicateTournament', TOURNAMENT.SUCCESS_DUPLICATE),
+    onCompleted: (data) => {
+      onSuccess?.(data.duplicateTournament);
+    },
+  });
+
+  const execute = useCallback(
+    (id: string) => mutation({ variables: { id } }),
+    [mutation],
+  );
+
+  return { execute, loading };
 }
 
 export function useDeleteTournament(onSuccess?: () => void) {

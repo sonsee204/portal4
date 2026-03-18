@@ -8,6 +8,7 @@ export const TOURNAMENT = {
   SUCCESS_COMPLETE: 'Kết thúc giải đấu thành công.',
   SUCCESS_CANCEL: 'Huỷ giải đấu thành công.',
   SUCCESS_DELETE: 'Xoá giải đấu thành công.',
+  SUCCESS_DUPLICATE: 'Nhân bản giải đấu thành công.',
 
   SUCCESS_CREATE_CATEGORY: 'Tạo nội dung thi đấu thành công.',
   SUCCESS_UPDATE_CATEGORY: 'Cập nhật nội dung thi đấu thành công.',
@@ -18,6 +19,7 @@ export const TOURNAMENT = {
   SUCCESS_BULK_APPROVE: 'Duyệt hàng loạt thành công.',
   SUCCESS_BULK_REJECT: 'Từ chối hàng loạt thành công.',
   SUCCESS_PAYMENT_UPDATE: 'Cập nhật thanh toán thành công.',
+  SUCCESS_DELETE_REGISTRATION: 'Xoá đăng ký thành công.',
 
   SUCCESS_GENERATE_BRACKET: 'Tạo nhánh đấu thành công.',
   SUCCESS_RESET_BRACKET: 'Xoá nhánh đấu thành công.',
@@ -83,6 +85,32 @@ export const TOURNAMENT = {
 
   CONFIRM_DELETE_CATEGORY: 'Bạn có chắc muốn xoá nội dung thi đấu này?',
   CONFIRM_RESET_BRACKET: 'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_PUBLISH: 'Bạn có chắc muốn đăng giải đấu? Giải đấu sẽ hiển thị công khai.',
+  CONFIRM_OPEN_REGISTRATION: 'Bạn có chắc muốn mở đăng ký? Người chơi có thể đăng ký tham gia.',
+  CONFIRM_CLOSE_REGISTRATION: 'Bạn có chắc muốn đóng đăng ký? Người chơi sẽ không thể đăng ký thêm.',
+  CONFIRM_START_TOURNAMENT: 'Bạn có chắc muốn bắt đầu giải đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_COMPLETE_TOURNAMENT: 'Bạn có chắc muốn kết thúc giải đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
   CONFIRM_DELETE_TOURNAMENT: 'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
+  CONFIRM_DUPLICATE_TOURNAMENT:
+    'Nhân bản giải đấu này? Một bản sao mới sẽ được tạo ở trạng thái Bản nháp. Bạn có thể chỉnh sửa thông tin trước khi đăng.',
+
+  IMPORT_TITLE: 'Import VĐV từ file',
+  IMPORT_STEP_UPLOAD: 'Tải file lên',
+  IMPORT_STEP_PREVIEW: 'Xem trước & kiểm tra',
+  IMPORT_STEP_RESULT: 'Kết quả',
+  IMPORT_DROP_HINT: 'Kéo thả file vào đây hoặc nhấn để chọn',
+  IMPORT_ACCEPT_FORMATS: 'Hỗ trợ: .xlsx, .xls, .csv',
+  IMPORT_DOWNLOAD_TEMPLATE: 'Tải file mẫu',
+  IMPORT_PARSE_ERROR: 'Không thể đọc file. Vui lòng kiểm tra định dạng.',
+  IMPORT_SUCCESS: (n: number) => `Nhập thành công ${n} VĐV`,
+  IMPORT_PARTIAL: (ok: number, fail: number) =>
+    `Thành công ${ok} VĐV • Thất bại ${fail} dòng`,
+  IMPORT_CONFIRM: (n: number) => `Xác nhận import ${n} VĐV`,
+  IMPORT_DISABLED_REASON:
+    'Không thể import VĐV khi đã đóng đăng ký hoặc đã bốc thăm',
+
+  EXPORT_BUTTON: 'Xuất Excel',
+  EXPORT_FILENAME: (name: string, date: string) =>
+    `${name}-dang-ky-${date}.xlsx`,
 } as const;

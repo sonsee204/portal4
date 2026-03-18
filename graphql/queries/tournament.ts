@@ -43,6 +43,20 @@ export const GET_TOURNAMENT_CATEGORIES = gql`
   ${TOURNAMENT_CATEGORY_FRAGMENT}
 `;
 
+export const PREVIEW_BULK_IMPORT = gql`
+  query PreviewBulkImport($input: PreviewBulkImportInput!) {
+    previewBulkImport(input: $input) {
+      adjustmentsNeeded {
+        categoryId
+        categoryTitle
+        currentBracketSize
+        newRegistrationCount
+        suggestedBracketSize
+      }
+    }
+  }
+`;
+
 export const GET_TOURNAMENT_REGISTRATIONS = gql`
   query GetTournamentRegistrations(
     $tournamentId: ID!
@@ -170,4 +184,13 @@ export const GET_TOURNAMENT_STATS = gql`
       completedMatches
     }
   }
+`;
+
+export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
+  query ExportTournamentRegistrations($tournamentId: ID!, $filter: RegistrationFilterInput) {
+    exportTournamentRegistrations(tournamentId: $tournamentId, filter: $filter) {
+      ...RegistrationCore
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
 `;

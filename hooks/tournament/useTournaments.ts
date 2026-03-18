@@ -17,7 +17,7 @@ interface UseMyTournamentsOptions {
 export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
   const { filter, pagination, skip } = options;
 
-  const { data, loading, error, refetch } = useQuery<{
+  const { data, loading, error, refetch, subscribeToMore } = useQuery<{
     myTournaments: TournamentList;
   }>(GET_MY_TOURNAMENTS, {
     variables: { filter, pagination },
@@ -26,9 +26,10 @@ export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
   });
 
   const result = data?.myTournaments;
+  const tournaments = result?.tournaments ?? [];
 
   return {
-    tournaments: result?.tournaments ?? [],
+    tournaments,
     total: result?.total ?? 0,
     page: result?.page ?? 1,
     totalPages: result?.totalPages ?? 1,
@@ -37,5 +38,6 @@ export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
     loading,
     error,
     refetch,
+    subscribeToMore,
   };
 }

@@ -13,6 +13,7 @@ import {
   ASSIGN_REFEREE,
 } from '@/graphql/mutations/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
+import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';
 import type {
   TournamentMatch,
@@ -32,7 +33,7 @@ interface UseTournamentMatchesOptions {
 export function useTournamentMatches(options: UseTournamentMatchesOptions) {
   const { tournamentId, filter, pagination, skip } = options;
 
-  const { data, loading, error, refetch } = useQuery<{
+  const { data, loading, error, refetch, subscribeToMore } = useQuery<{
     tournamentMatches: MatchList;
   }>(GET_TOURNAMENT_MATCHES, {
     variables: { tournamentId, filter, pagination },
@@ -42,6 +43,11 @@ export function useTournamentMatches(options: UseTournamentMatchesOptions) {
 
   const result = data?.tournamentMatches;
 
+  const subscribeToMatchUpdates = useCallback(
+    () => createMatchSubscription(subscribeToMore, refetch, tournamentId),
+    [subscribeToMore, refetch, tournamentId],
+  );
+
   return {
     matches: result?.matches ?? [],
     total: result?.total ?? 0,
@@ -50,6 +56,7 @@ export function useTournamentMatches(options: UseTournamentMatchesOptions) {
     loading,
     error,
     refetch,
+    subscribeToMatchUpdates,
   };
 }
 

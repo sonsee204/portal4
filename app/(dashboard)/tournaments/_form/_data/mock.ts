@@ -28,6 +28,8 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối tiểu học, mới bắt đầu làm quen với thi đấu.',
       popular: true,
       maxRegistrations: 32,
+      bracketSize: 32,
+      sharedThirdPlace: false,
       prizes: [],
     },
     {
@@ -38,6 +40,8 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh nữ khối tiểu học.',
       popular: false,
       maxRegistrations: 24,
+      bracketSize: 32,
+      sharedThirdPlace: false,
       prizes: [],
     },
     {
@@ -48,6 +52,8 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối 6, 7. Cạnh tranh cao và kỹ thuật cơ bản tốt.',
       popular: false,
       maxRegistrations: 32,
+      bracketSize: 32,
+      sharedThirdPlace: false,
       prizes: [],
     },
     {
@@ -58,6 +64,8 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Nội dung đôi nam nữ cho học sinh khối 6, 7.',
       popular: false,
       maxRegistrations: 16,
+      bracketSize: 16,
+      sharedThirdPlace: false,
       prizes: [],
     },
     {
@@ -68,6 +76,8 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh khối 8, 9. Trình độ chuyên môn và thể lực cao.',
       popular: false,
       maxRegistrations: 32,
+      bracketSize: 32,
+      sharedThirdPlace: false,
       prizes: [],
     },
     {
@@ -78,12 +88,13 @@ export const mockTournamentFormData: TournamentFormData = {
       description: 'Dành cho học sinh nữ khối 8, 9.',
       popular: false,
       maxRegistrations: 24,
+      bracketSize: 32,
+      sharedThirdPlace: false,
       prizes: [],
     },
   ],
 
   format: 'single_elim',
-  totalSlots: 128,
   schedule: [
     { label: 'Đăng ký', date: '01/08 - 30/08', startTime: '00:00', endTime: '23:59', status: 'completed' },
     { label: 'Bốc thăm', date: '02/09', startTime: '08:00', endTime: '12:00', status: 'active' },
@@ -92,8 +103,6 @@ export const mockTournamentFormData: TournamentFormData = {
     { label: 'Bán kết', date: '07/09 (sáng)', startTime: '08:00', endTime: '12:00', status: 'upcoming' },
     { label: 'Chung kết', date: '07/09 (chiều)', startTime: '14:00', endTime: '18:00', status: 'upcoming' },
   ],
-  venueName: 'Nhà thi đấu Đa năng Thanh Trì',
-  venueAddress: 'Xã Nhị Khê, Huyện Thường Tín, TP. Hà Nội',
   facilities: [
     { icon: 'car-outline', label: 'Bãi đỗ xe miễn phí' },
     { icon: 'wifi-outline', label: 'Wi-Fi miễn phí' },

@@ -3,56 +3,59 @@
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { Booking, BookingStatus } from '@/types/mock';
+import {
+  BOOKING_STATUS_VARIANT,
+  BOOKING_STATUS_LABEL,
+} from '@/lib/constants/booking-status';
 
-const statusVariant: Record<
-  BookingStatus,
-  'success' | 'danger' | 'warning' | 'info'
-> = {
-  completed: 'success',
-  cancelled: 'danger',
-  pending: 'warning',
-  paid: 'info',
-};
+interface BookingCardProps {
+  booking: {
+    _id: string;
+    venue: string;
+    location: string;
+    date: string;
+    time: string;
+    status: string;
+    courtName?: string;
+  };
+}
 
-const sportIcon: Record<string, string> = {
-  badminton: 'tennisball-outline',
-  football: 'football-outline',
-  tennis: 'tennisball-outline',
-  pickleball: 'baseball-outline',
-};
-
-export function BookingCard({ booking }: { booking: Booking }) {
+export function BookingCard({ booking }: BookingCardProps) {
   return (
     <GlassPanel
       card
       className="hover:bg-surface-hover flex gap-4 transition-colors"
     >
       <div className="bg-primary/20 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
-        <IonIcon
-          name={sportIcon[booking.sport] ?? 'fitness-outline'}
-          size="md"
-        />
+        <IonIcon name="calendar-outline" size="md" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-sm font-medium text-heading">{booking.venue}</p>
-            <p className="text-xs text-faint">{booking.location}</p>
+            <p className="text-heading text-sm font-medium">{booking.venue}</p>
+            <p className="text-faint text-xs">{booking.location}</p>
           </div>
-          <Badge variant={statusVariant[booking.status]}>
-            {booking.status}
+          <Badge variant={BOOKING_STATUS_VARIANT[booking.status] ?? 'neutral'}>
+            {BOOKING_STATUS_LABEL[booking.status] ?? booking.status}
           </Badge>
         </div>
-        <div className="mt-2 flex items-center gap-4 text-xs text-muted">
+        <div className="text-muted mt-2 flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1">
             <IonIcon name="calendar-outline" size="xs" />
             {booking.date}
           </span>
-          <span className="flex items-center gap-1">
-            <IonIcon name="time-outline" size="xs" />
-            {booking.time}
-          </span>
+          {booking.time && (
+            <span className="flex items-center gap-1">
+              <IonIcon name="time-outline" size="xs" />
+              {booking.time}
+            </span>
+          )}
+          {booking.courtName && (
+            <span className="flex items-center gap-1">
+              <IonIcon name="location-outline" size="xs" />
+              {booking.courtName}
+            </span>
+          )}
         </div>
       </div>
     </GlassPanel>

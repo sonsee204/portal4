@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useMyTournaments } from '@/hooks/tournament';
+import { createTournamentStatusSubscriptions } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';
 import type { TournamentStatus } from '@/graphql/generated';
 import { TournamentListCard } from './_components/TournamentListCard';
@@ -35,13 +36,34 @@ const STATUS_TABS: { label: string; value: TournamentStatus | 'ALL' }[] = [
 export default function TournamentsPage() {
   const [activeTab, setActiveTab] = useState<TournamentStatus | 'ALL'>('ALL');
 
-  const { tournaments, loading, refetch } = useMyTournaments({
+  const {
+    tournaments,
+    loading,
+    refetch,
+    subscribeToMore,
+  } = useMyTournaments({
     filter:
       activeTab === 'ALL'
         ? undefined
         : { status: activeTab as TournamentStatus },
     pagination: { page: 1, limit: 20 },
   });
+
+  const tournamentIds = useMemo(
+    () => tournaments.map((t) => t._id).filter(Boolean),
+    [tournaments],
+  );
+  const tournamentIdsKey = tournamentIds.join(',');
+
+  useEffect(() => {
+    if (tournamentIds.length === 0) return;
+    const unsubscribe = createTournamentStatusSubscriptions(
+      subscribeToMore,
+      refetch,
+      tournamentIds,
+    );
+    return () => unsubscribe();
+  }, [tournamentIdsKey, subscribeToMore, refetch]);
 
   const handleStatusChange = useCallback(() => {
     void refetch();

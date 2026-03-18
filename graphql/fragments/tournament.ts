@@ -102,6 +102,7 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
     groupCount
     advancingPerGroup
     bracketSize
+    sharedThirdPlace
     prizes {
       rank
       title
@@ -143,15 +144,33 @@ export const MATCH_CORE_FRAGMENT = gql`
       registrationId
       userId
       name
+      club
       avatarUrl
       seed
+      dateOfBirth
+      bibNumber
+      members {
+        userId
+        name
+        avatarUrl
+        club
+      }
     }
     player2 {
       registrationId
       userId
       name
+      club
       avatarUrl
       seed
+      dateOfBirth
+      bibNumber
+      members {
+        userId
+        name
+        avatarUrl
+        club
+      }
     }
     scoreSummary {
       sets {
@@ -198,6 +217,17 @@ export const REGISTRATION_CORE_FRAGMENT = gql`
     phone
     notes
     seed
+    bibNumber
+    members {
+      userId
+      name
+      avatarUrl
+      phone
+      email
+      dateOfBirth
+      club
+      school
+    }
     paymentAmount
     paymentProofUrl
     identityProofUrl

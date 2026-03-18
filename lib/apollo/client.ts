@@ -29,8 +29,21 @@ const getGraphqlUrl = (): string => {
   return '/graphql';
 };
 
-const getGraphqlWsUrl = (): string =>
-  process.env.NEXT_PUBLIC_GRAPHQL_WS_URL ?? 'ws://localhost:3000/graphql';
+const getGraphqlWsUrl = (): string => {
+  const explicit = process.env.NEXT_PUBLIC_GRAPHQL_WS_URL;
+  if (explicit) return explicit;
+
+  const httpUrl = getGraphqlUrl();
+  if (httpUrl.startsWith('http://') || httpUrl.startsWith('https://')) {
+    return httpUrl.replace(/^http/, 'ws');
+  }
+  // Relative /graphql - derive from current origin (client-side only)
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}${httpUrl}`;
+  }
+  return 'ws://localhost:4000/graphql';
+};
 
 /**
  * Token storage for client-side Apollo Client.

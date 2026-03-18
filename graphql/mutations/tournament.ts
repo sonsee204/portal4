@@ -91,6 +91,15 @@ export const DELETE_TOURNAMENT = gql`
   }
 `;
 
+export const DUPLICATE_TOURNAMENT = gql`
+  mutation DuplicateTournament($id: ID!) {
+    duplicateTournament(id: $id) {
+      ...TournamentDetail
+    }
+  }
+  ${TOURNAMENT_DETAIL_FRAGMENT}
+`;
+
 // ==================== CATEGORY ====================
 
 export const CREATE_CATEGORY = gql`
@@ -155,6 +164,38 @@ export const BULK_REJECT_REGISTRATIONS = gql`
 export const UPDATE_PAYMENT_STATUS = gql`
   mutation UpdatePaymentStatus($input: UpdatePaymentStatusInput!) {
     updatePaymentStatus(input: $input) {
+      ...RegistrationCore
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
+`;
+
+export const DELETE_REGISTRATION = gql`
+  mutation DeleteRegistration($input: DeleteRegistrationInput!) {
+    deleteRegistration(input: $input) {
+      success
+      message
+    }
+  }
+`;
+
+export const BULK_IMPORT_REGISTRATIONS = gql`
+  mutation BulkImportRegistrations($input: BulkImportRegistrationsInput!) {
+    bulkImportRegistrations(input: $input) {
+      successCount
+      failedCount
+      errors {
+        row
+        athleteName
+        reason
+      }
+    }
+  }
+`;
+
+export const UPDATE_REGISTRATION_BIB_NUMBER = gql`
+  mutation UpdateRegistrationBibNumber($input: UpdateBibNumberInput!) {
+    updateRegistrationBibNumber(input: $input) {
       ...RegistrationCore
     }
   }

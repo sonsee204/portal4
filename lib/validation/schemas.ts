@@ -49,6 +49,24 @@ export const emailOrPhoneValidation = z
     VALIDATION.EMAIL_OR_PHONE_INVALID,
   );
 
+export const displayNameValidation = z
+  .string()
+  .min(1, 'Tên hiển thị là bắt buộc');
+
+// ==================== Profile ====================
+
+export const profileSchema = z.object({
+  fullName: fullNameValidation,
+  displayName: displayNameValidation,
+  bio: z.string().max(500).optional(),
+  club: z.string().max(100).optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER', '']).optional(),
+  dateOfBirth: z.string().optional(),
+  locationDisplayText: z.string().optional(),
+});
+
+export type ProfileFormData = z.infer<typeof profileSchema>;
+
 // ==================== Form Schemas ====================
 
 /** Admin creates a new user */

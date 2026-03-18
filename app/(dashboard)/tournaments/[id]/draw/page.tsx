@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useMemo, useCallback } from 'react';
+import { use, useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
@@ -12,7 +12,10 @@ import {
   useTournamentBracket,
   useGenerateBracket,
   useResetBracket,
+  useRegistrations,
 } from '@/hooks/tournament';
+import { RegistrationStatus } from '@/graphql/generated';
+import { IonIcon } from '@/components/atoms/IonIcon';
 
 function categoryStatusLabel(status?: string): {
   text: string;
@@ -65,7 +68,41 @@ export default function DrawPage({
     matches,
     loading: bLoading,
     refetch,
+    subscribeToMatchUpdates,
   } = useTournamentBracket(activeCategoryId, !activeCategoryId);
+
+  const { total: totalRegs } = useRegistrations({
+    tournamentId,
+    filter: { categoryId: activeCategoryId || undefined },
+    pagination: { page: 1, limit: 1 },
+    skip: !activeCategoryId,
+  });
+  const { total: approvedCount } = useRegistrations({
+    tournamentId,
+    filter: {
+      categoryId: activeCategoryId || undefined,
+      registrationStatus: RegistrationStatus.Approved,
+    },
+    pagination: { page: 1, limit: 1 },
+    skip: !activeCategoryId,
+  });
+  const pendingCount = (totalRegs ?? 0) - (approvedCount ?? 0);
+
+  const categoryBracketSize = activeCategory?.bracketSize ?? 0;
+  const effectiveBracketSize = (() => {
+    if (!approvedCount || approvedCount < 2) return 0;
+    let p = 1;
+    while (p < approvedCount) p *= 2;
+    return categoryBracketSize ? Math.max(categoryBracketSize, p) : p;
+  })();
+  const expectedByes =
+    effectiveBracketSize > 0 ? effectiveBracketSize - (approvedCount ?? 0) : 0;
+
+  useEffect(() => {
+    if (!tournamentId || !activeCategoryId) return;
+    const unsubscribe = subscribeToMatchUpdates(tournamentId);
+    return () => unsubscribe();
+  }, [subscribeToMatchUpdates, tournamentId, activeCategoryId]);
 
   const onSuccess = useCallback(() => {
     void refetch();
@@ -158,10 +195,43 @@ export default function DrawPage({
         </div>
       )}
 
+      {activeCategoryId && (approvedCount ?? 0) > 0 && matches.length === 0 && (
+        <div className="mt-4 flex flex-wrap gap-4 text-xs">
+          <div className="bg-surface-elevated rounded-lg px-3 py-2">
+            <span className="text-secondary">VĐV đã duyệt:</span>{' '}
+            <span className="text-heading font-semibold">{approvedCount}</span>
+          </div>
+          <div className="bg-surface-elevated rounded-lg px-3 py-2">
+            <span className="text-secondary">Nhánh đấu:</span>{' '}
+            <span className="text-heading font-semibold">
+              {effectiveBracketSize} slot
+            </span>
+          </div>
+          <div className="bg-surface-elevated rounded-lg px-3 py-2">
+            <span className="text-secondary">Số BYE dự kiến:</span>{' '}
+            <span className="text-heading font-semibold">{expectedByes}</span>
+          </div>
+        </div>
+      )}
+
+      {pendingCount > 0 && matches.length === 0 && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 px-4 py-2">
+          <IonIcon
+            name="warning-outline"
+            size="sm"
+            className="mt-0.5 shrink-0 text-amber-500"
+          />
+          <span className="text-xs text-amber-600 dark:text-amber-400">
+            Có {pendingCount} đăng ký chưa duyệt. Chỉ những VĐV đã duyệt mới
+            được xếp vào bảng đấu.
+          </span>
+        </div>
+      )}
+
       <div className="mt-4 flex items-center gap-3">
         <Button
           size="sm"
-          disabled={isLoading || !activeCategoryId}
+          disabled={isLoading || !activeCategoryId || matches.length > 0}
           onClick={() => void generateBracket(activeCategoryId)}
         >
           {generating ? 'Đang tạo...' : 'Tạo nhánh đấu'}

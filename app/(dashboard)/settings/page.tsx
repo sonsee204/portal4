@@ -11,13 +11,33 @@ import { Button } from '@/components/atoms/Button';
 import { AppearanceSettings } from './_components/AppearanceSettings';
 import { PermissionMatrix } from './_components/PermissionMatrix';
 import { ApiKeyCard } from './_components/ApiKeyCard';
-import { mockApiKeys } from '@/lib/mock-data';
+import { ProfileSettings } from './_components/ProfileSettings';
 
 const settingsTabs = [
+  { label: 'Hồ sơ cá nhân', value: 'profile' },
   { label: 'Cài đặt chung', value: 'general' },
   { label: 'Giao diện', value: 'appearance' },
   { label: 'Vai trò & Quyền', value: 'rbac' },
   { label: 'API Keys', value: 'api' },
+];
+
+const API_KEYS = [
+  {
+    _id: 'ak1',
+    name: 'Mobile App (Production)',
+    clientId: 'cli_prod_8f3a2b1c',
+    secret: 'sk_live_••••••••••••••••',
+    status: 'active' as const,
+    createdAt: '15/08/2023',
+  },
+  {
+    _id: 'ak2',
+    name: 'Web Dashboard (Staging)',
+    clientId: 'cli_stg_4d7e9f0a',
+    secret: 'sk_test_••••••••••••••••',
+    status: 'test' as const,
+    createdAt: '01/10/2023',
+  },
 ];
 
 export default function SettingsPage() {
@@ -42,16 +62,18 @@ export default function SettingsPage() {
       />
 
       <div className="mt-6">
+        {tab === 'profile' && <ProfileSettings />}
+
         {tab === 'general' && (
           <GlassPanel card className="max-w-2xl space-y-5">
             <Input
               label="Tên hệ thống"
-              defaultValue="HITRI TECH Portal"
+              defaultValue="NALee Sports Portal"
               leftIcon="business-outline"
             />
             <Input
               label="URL hệ thống"
-              defaultValue="https://portal.hitritech.com"
+              defaultValue="https://portal.naleesports.com"
               leftIcon="globe-outline"
             />
             <Select
@@ -99,7 +121,7 @@ export default function SettingsPage() {
 
         {tab === 'api' && (
           <div className="max-w-2xl space-y-4">
-            {mockApiKeys.map((k) => (
+            {API_KEYS.map((k) => (
               <ApiKeyCard key={k._id} apiKey={k} />
             ))}
             <Button

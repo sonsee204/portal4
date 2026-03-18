@@ -156,6 +156,9 @@ export function StepRegistration({
             Lệ phí được tự động tạo theo các nội dung thi đấu đã cấu hình.
           </p>
         )}
+        <p className="text-muted mb-3 text-xs">
+          Nội dung đơn: phí theo 1 VĐV. Nội dung đôi: phí theo 2 VĐV (cả đội).
+        </p>
         <div className="space-y-3">
           {feeFields.map((field, i) => (
             <FeeRow

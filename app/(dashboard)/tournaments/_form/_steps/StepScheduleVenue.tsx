@@ -98,22 +98,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
               />
             )}
           />
-          <Controller
-            name="totalSlots"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                value={field.value || ''}
-                onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-                label="Số slot tối đa"
-                type="number"
-                placeholder="32"
-                leftIcon="people-outline"
-                error={fieldState.error?.message}
-              />
-            )}
-          />
         </div>
       </GlassPanel>
 
@@ -151,40 +135,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
               canRemove={scheduleFields.length > 1}
             />
           ))}
-        </div>
-      </GlassPanel>
-
-      {/* Venue */}
-      <GlassPanel card>
-        <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">
-          <IonIcon name="location-outline" size="sm" className="text-primary" />
-          Địa điểm thi đấu
-        </h3>
-        <div className="space-y-4">
-          <Controller
-            name="venueName"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                label="Tên nhà thi đấu / sân"
-                placeholder="VD: Nhà thi đấu Đa năng Thanh Trì"
-                leftIcon="business-outline"
-              />
-            )}
-          />
-          <Controller
-            name="venueAddress"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                label="Địa chỉ"
-                placeholder="Địa chỉ chi tiết..."
-                leftIcon="navigate-outline"
-              />
-            )}
-          />
         </div>
       </GlassPanel>
 

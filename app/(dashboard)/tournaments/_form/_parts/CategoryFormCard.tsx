@@ -25,6 +25,16 @@ const iconOptions = [
   { label: 'Cúp', value: 'trophy-outline' },
 ];
 
+const bracketSizeOptions = [
+  { label: 'Tự động', value: '0' },
+  { label: '4', value: '4' },
+  { label: '8', value: '8' },
+  { label: '16', value: '16' },
+  { label: '32', value: '32' },
+  { label: '64', value: '64' },
+  { label: '128', value: '128' },
+];
+
 const accentColors = [
   'from-orange-400/20 to-amber-500/10 border-orange-300/30 dark:border-orange-500/20',
   'from-violet-400/20 to-purple-500/10 border-violet-300/30 dark:border-violet-500/20',
@@ -64,6 +74,8 @@ export function CategoryFormCard({
   });
 
   const prizes = useWatch({ control, name: `categories.${index}.prizes` }) ?? [];
+  const sharedThirdPlace =
+    useWatch({ control, name: `categories.${index}.sharedThirdPlace` }) ?? false;
 
   return (
     <div
@@ -146,7 +158,7 @@ export function CategoryFormCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Controller
             name={`categories.${index}.maxRegistrations`}
             control={control}
@@ -161,6 +173,19 @@ export function CategoryFormCard({
                 onChange={(e) =>
                   field.onChange(parseInt(e.target.value, 10) || 0)
                 }
+              />
+            )}
+          />
+          <Controller
+            name={`categories.${index}.bracketSize`}
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                value={String(field.value ?? 0)}
+                onChange={(e) => field.onChange(Number(e.target.value))}
+                label="Kích thước nhánh đấu"
+                options={bracketSizeOptions}
               />
             )}
           />
@@ -192,6 +217,35 @@ export function CategoryFormCard({
               )}
             />
           </div>
+        </div>
+
+        <div className="flex items-end pb-1">
+          <Controller
+            name={`categories.${index}.sharedThirdPlace`}
+            control={control}
+            render={({ field }) => (
+              <label className="flex cursor-pointer items-center gap-2.5">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={field.value}
+                  onClick={() => field.onChange(!field.value)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                    field.value ? 'bg-primary' : 'bg-surface-border'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                      field.value ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-heading text-sm">
+                  Đồng giải ba (không đánh trận tranh hạng 3-4)
+                </span>
+              </label>
+            )}
+          />
         </div>
 
         <Controller
@@ -238,6 +292,7 @@ export function CategoryFormCard({
                 control={control}
                 rank={prizes[pi]?.rank ?? 'gold'}
                 basePath={basePath}
+                sharedThirdPlace={sharedThirdPlace}
                 onRemove={() => removePrize(pi)}
                 canRemove={prizeFields.length > 1}
               />

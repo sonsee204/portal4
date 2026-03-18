@@ -191,6 +191,36 @@ input AdjustStockInput {
   variantId: ID
 }
 
+type AdminAllBookingList {
+  bookings: [AdminBookingItem!]!
+
+  """JSON map of bookingId -> customerName"""
+  customerNamesJson: String!
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+type AdminBookingItem {
+  _id: ID!
+  courtName: String!
+  date: String!
+  status: String!
+  timeSlots: String!
+  totalPrice: Int!
+  venueAddress: String!
+  venueName: String!
+}
+
+type AdminBookingList {
+  bookings: [AdminBookingItem!]!
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
 input AdminCreateUserInput {
   email: String!
   fullName: String!
@@ -992,6 +1022,50 @@ type BookmarkList {
   total: Int!
 }
 
+type BracketDrawPreview {
+  """Kích thước nhánh đấu hiện tại (cấu hình)"""
+  currentBracketSize: Int!
+
+  """Số VĐV đã duyệt trong nội dung"""
+  playerCount: Int!
+
+  """Kích thước nhánh đấu đề xuất (lũy thừa 2 tối thiểu cho số VĐV)"""
+  suggestedBracketSize: Int!
+
+  """Thông báo cảnh báo khi willAutoAdjust"""
+  warningMessage: String
+
+  """
+  True khi currentBracketSize > suggestedBracketSize — bốc thăm sẽ tự động giảm để tránh BYE vs BYE
+  """
+  willAutoAdjust: Boolean!
+}
+
+type BracketSizeAdjustment {
+  """ID hạng mục cần điều chỉnh"""
+  categoryId: String!
+
+  """Tên nội dung thi đấu"""
+  categoryTitle: String!
+
+  """Kích thước nhánh đấu hiện tại"""
+  currentBracketSize: Int!
+
+  """Số VĐV sau khi import"""
+  newRegistrationCount: Int!
+
+  """Kích thước nhánh đấu đề xuất (lũy thừa 2 phù hợp)"""
+  suggestedBracketSize: Int!
+}
+
+input BracketSizeAdjustmentInput {
+  """ID hạng mục"""
+  categoryId: ID!
+
+  """Kích thước nhánh đấu mới (lũy thừa 2)"""
+  newBracketSize: Int!
+}
+
 input BulkCheckInInput {
   """ID kèo"""
   gameId: ID!
@@ -1009,6 +1083,80 @@ input BulkDeleteProductsInput {
 
   """Venue ID (for validation)"""
   venueId: ID
+}
+
+type BulkImportError {
+  """Tên vận động viên (nếu có)"""
+  athleteName: String
+
+  """Lý do thất bại"""
+  reason: String!
+
+  """Số thứ tự dòng (1-based)"""
+  row: Int!
+}
+
+input BulkImportRegistrationItemInput {
+  """Tên vận động viên (bắt buộc)"""
+  athleteName: String!
+
+  """ID hạng mục thi đấu (bắt buộc)"""
+  categoryId: ID!
+
+  """CLB / Đội"""
+  club: String
+
+  """Ngày sinh (YYYY-MM-DD)"""
+  dateOfBirth: String
+
+  """Email"""
+  email: String
+
+  """Tên phụ huynh / người giám hộ"""
+  guardianName: String
+
+  """SĐT phụ huynh / người giám hộ"""
+  guardianPhone: String
+
+  """Ghi chú"""
+  notes: String
+
+  """Tên đồng đội (dùng cho nội dung đôi)"""
+  partnerName: String
+
+  """SĐT đồng đội (dùng cho nội dung đôi)"""
+  partnerPhone: String
+
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
+  paymentAmount: Float
+
+  """Số điện thoại"""
+  phone: String
+
+  """Trường / Đơn vị"""
+  school: String
+}
+
+input BulkImportRegistrationsInput {
+  """Điều chỉnh kích thước nhánh đấu (khi user đồng ý từ preview)"""
+  bracketSizeAdjustments: [BracketSizeAdjustmentInput!]
+
+  """Danh sách đăng ký (tối đa 500)"""
+  registrations: [BulkImportRegistrationItemInput!]!
+
+  """ID giải đấu"""
+  tournamentId: ID!
+}
+
+type BulkImportResult {
+  """Chi tiết các dòng thất bại"""
+  errors: [BulkImportError!]!
+
+  """Số lượng đăng ký thất bại"""
+  failedCount: Int!
+
+  """Số lượng đăng ký thành công"""
+  successCount: Int!
 }
 
 type BulkOperationResult {
@@ -1711,6 +1859,9 @@ input CreateCategoryInput {
   """Players advancing per group"""
   advancingPerGroup: Int
   ageLabel: String
+
+  """Bracket size (power of 2). 0 or null = auto-calculate."""
+  bracketSize: Int
   description: String
   displayOrder: Int
   format: TournamentFormat! = SINGLE_ELIMINATION
@@ -1725,6 +1876,11 @@ input CreateCategoryInput {
   prizes: [TournamentPrizeInput!]
   scoringConfig: ScoringConfigInput!
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean = false
   title: String!
   tournamentId: ID!
 }
@@ -2662,6 +2818,10 @@ input DayScheduleInput {
   slots: [BookedSlotInput!]!
 }
 
+input DeleteRegistrationInput {
+  registrationId: ID!
+}
+
 type DepositConfig {
   """Số tiền cọc"""
   amount: Int
@@ -2757,6 +2917,32 @@ type EmailUpdateRequestResponse {
   message: String!
   success: Boolean!
   verificationId: String!
+}
+
+type EntryMember {
+  avatarUrl: String
+  club: String
+  dateOfBirth: String
+  email: String
+  name: String!
+  phone: String
+  school: String
+  userId: ID
+}
+
+"""A single member within a registration entry"""
+input EntryMemberInput {
+  club: String
+  dateOfBirth: String
+  email: String
+
+  """Existing user ID (if member has an account)"""
+  forUserId: ID
+
+  """Member full name"""
+  name: String!
+  phone: String
+  school: String
 }
 
 type EquipmentItem {
@@ -3741,8 +3927,29 @@ type MatchList {
   totalPages: Int!
 }
 
+type MatchMember {
+  avatarUrl: String
+
+  """CLB / Đội"""
+  club: String
+  name: String
+  userId: ID
+}
+
 type MatchPlayer {
   avatarUrl: String
+
+  """Số báo danh (SBD)"""
+  bibNumber: Int
+
+  """CLB / Đội"""
+  club: String
+
+  """Năm sinh (YYYY) — phân biệt VĐV trùng tên"""
+  dateOfBirth: String
+
+  """Individual members (1 for singles, 2 for doubles)"""
+  members: [MatchMember!]
   name: String
   registrationId: ID
   seed: Int
@@ -4151,6 +4358,9 @@ type Mutation {
   """Bulk delete products"""
   bulkDeleteProducts(input: BulkDeleteProductsInput!): BulkOperationResult!
 
+  """Bulk import registrations from file (organizer only)"""
+  bulkImportRegistrations(input: BulkImportRegistrationsInput!): BulkImportResult!
+
   """Bulk reject registrations"""
   bulkRejectRegistrations(input: BulkRegistrationActionInput!): Int!
 
@@ -4410,6 +4620,9 @@ type Mutation {
   """Delete a promotion"""
   deletePromotion(promotionId: ID!): Boolean!
 
+  """Delete registration (organizer only)"""
+  deleteRegistration(input: DeleteRegistrationInput!): SuccessResponse!
+
   """Permanently delete a DRAFT tournament"""
   deleteTournament(id: ID!): SuccessResponse!
 
@@ -4421,6 +4634,9 @@ type Mutation {
 
   """Duplicate product"""
   duplicateProduct(productId: ID!): Product!
+
+  """Duplicate a tournament (creates a copy in DRAFT with categories)"""
+  duplicateTournament(id: ID!): Tournament!
 
   """
   Execute full draw: clear seeds, assign new seeds, generate bracket — all in one transaction
@@ -4447,6 +4663,9 @@ type Mutation {
 
   """Invite a user to join a group (admin/mod only)"""
   inviteMember(groupId: ID!, message: String, userId: ID!): GroupMember!
+
+  """Mời người chơi vào kèo"""
+  inviteToGame(gameId: ID!, userIds: [ID!]!): Boolean!
 
   """Kick người chơi"""
   kickParticipant(input: KickParticipantInput!): Boolean!
@@ -4520,6 +4739,9 @@ type Mutation {
   Process refund - mark order as refunded after actual refund is done (Owner only). Pass base64 images for refund proof.
   """
   processRefund(orderId: ID!, refundNote: String, refundProofBase64Images: [String!]): Order!
+
+  """Host đôn người chơi từ danh sách chờ"""
+  promoteFromWaitlist(gameId: ID!, participantId: ID): Boolean!
 
   """Publish kèo nháp"""
   publishPickupGame(gameId: ID!): PickupGame!
@@ -4779,6 +5001,9 @@ type Mutation {
   """Update court"""
   updateCourt(input: UpdateCourtInput!): Court!
 
+  """Cập nhật template"""
+  updateGameTemplate(input: UpdateTemplateInput!): GameTemplate!
+
   """Update a group (admin only)"""
   updateGroup(input: UpdateGroupInput!): Group!
 
@@ -4826,6 +5051,9 @@ type Mutation {
 
   """Update an existing referral code (Admin only)"""
   updateReferralCode(id: ID!, input: UpdateReferralCodeInput!): ReferralCode!
+
+  """Update bib number (SBD) for a registration (organizer only)"""
+  updateRegistrationBibNumber(input: UpdateBibNumberInput!): TournamentRegistration!
 
   """Update report status (Admin only)"""
   updateReportStatus(input: UpdateReportStatusInput!): PostReport!
@@ -6412,6 +6640,19 @@ enum PostVisibility {
   PUBLIC
 }
 
+input PreviewBulkImportInput {
+  """Danh sách đăng ký cần preview"""
+  registrations: [BulkImportRegistrationItemInput!]!
+
+  """ID giải đấu"""
+  tournamentId: ID!
+}
+
+type PreviewBulkImportResult {
+  """Các nội dung cần điều chỉnh kích thước nhánh đấu (nếu vượt quá)"""
+  adjustmentsNeeded: [BracketSizeAdjustment!]!
+}
+
 type PriceRange {
   """Currency (VND, USD, etc.)"""
   currency: String
@@ -7319,11 +7560,17 @@ type Query {
   """
   activeVenuePromotions(userId: ID, venueId: ID!): [Promotion!]!
 
+  """Get all bookings (Admin only)"""
+  adminGetAllBookings(fromDate: String, pagination: PaginationInput, statuses: [String!], toDate: String): AdminAllBookingList!
+
   """Get pending venue requests (Admin only)"""
   adminGetPendingVenues(pagination: PaginationInput): PendingVenueList!
 
   """Get system statistics (Admin only)"""
   adminGetSystemStats: SystemStats!
+
+  """Get bookings for a specific user (Admin only)"""
+  adminGetUserBookings(pagination: PaginationInput, statuses: [String!], userId: ID!): AdminBookingList!
 
   """Get all users (Admin only)"""
   adminGetUsers(isActive: Boolean, isSuspended: Boolean, pagination: PaginationInput, role: UserRole, searchQuery: String): UserList!
@@ -7357,6 +7604,11 @@ type Query {
 
   """Get booking statistics"""
   bookingStats(fromDate: String, toDate: String, venueId: ID!): BookingStats!
+
+  """
+  Preview trước khi bốc thăm: kiểm tra nếu cần tự động giảm kích thước nhánh đấu (organizer only)
+  """
+  bracketDrawPreview(categoryId: ID!): BracketDrawPreview!
 
   """Calculate discount for a booking"""
   calculateBookingDiscount(input: ApplyPromotionInput!): DiscountCalculationResult!
@@ -7407,6 +7659,9 @@ type Query {
 
   """Get current active legal documents (ToS and Privacy Policy)"""
   currentLegalDocuments: CurrentLegalDocuments!
+
+  """Export all registrations without pagination (organizer only, max 2000)"""
+  exportTournamentRegistrations(filter: RegistrationFilterInput, tournamentId: ID!): [TournamentRegistration!]!
 
   """Get my favorite venues"""
   favoriteVenues(pagination: PaginationInput): VenueList!
@@ -7734,6 +7989,11 @@ type Query {
 
   """Get popular/featured sports"""
   popularSports: [Sport!]!
+
+  """
+  Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only)
+  """
+  previewBulkImport(input: PreviewBulkImportInput!): PreviewBulkImportResult!
 
   """Get product by ID"""
   product(productId: ID!): Product!
@@ -8161,7 +8421,14 @@ input RegisterTournamentInput {
 
   """true = self, false = other"""
   isForSelf: Boolean! = true
+
+  """
+  Entry members for doubles/team. When provided, takes precedence over flat athlete fields.
+  """
+  members: [EntryMemberInput!]
   notes: String
+
+  """Phí đăng ký (VND). Nội dung đơn: 1 VĐV. Nội dung đôi: 2 VĐV (cả đội)."""
   paymentAmount: Float
   paymentProofUrl: String
 
@@ -9280,6 +9547,11 @@ type Subscription {
   """Real-time notification for a specific user"""
   notificationCreated(userId: ID!): Notification!
 
+  """
+  Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list.
+  """
+  tournamentListUpdated: String!
+
   """Any match updated in tournament"""
   tournamentMatchesUpdated(tournamentId: ID!): String!
 
@@ -9524,6 +9796,11 @@ type TournamentCategory {
 
   """Number of seeded players"""
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean
   status: CategoryStatus!
 
   """Category title (e.g. Nam Đơn U15)"""
@@ -9785,6 +10062,10 @@ type TournamentRegistration {
   """Athlete full name"""
   athleteName: String!
   avatarUrl: String
+
+  """Số báo danh (SBD) — unique per (tournamentId, categoryId)"""
+  bibNumber: Int
+  category: TournamentCategory
   categoryId: ID!
   club: String
   createdAt: DateTime!
@@ -9793,6 +10074,11 @@ type TournamentRegistration {
   guardianName: String
   guardianPhone: String
   identityProofUrl: String
+
+  """
+  Entry members: 1 for singles, 2 for doubles, N for team. Empty for legacy data.
+  """
+  members: [EntryMember!]
   notes: String
 
   """Payment amount in VND"""
@@ -9813,6 +10099,7 @@ type TournamentRegistration {
 
   """Seed number (set after draw)"""
   seed: Int
+  tournament: Tournament
   tournamentId: ID!
   updatedAt: DateTime!
 
@@ -9928,9 +10215,18 @@ input UnpinMessageInput {
   messageId: ID!
 }
 
+input UpdateBibNumberInput {
+  """null = clear SBD"""
+  bibNumber: Int
+  registrationId: ID!
+}
+
 input UpdateCategoryInput {
   advancingPerGroup: Int
   ageLabel: String
+
+  """Bracket size (power of 2). 0 or null = auto-calculate."""
+  bracketSize: Int
   description: String
   displayOrder: Int
   format: TournamentFormat
@@ -9944,6 +10240,11 @@ input UpdateCategoryInput {
   prizes: [TournamentPrizeInput!]
   scoringConfig: ScoringConfigInput
   seedCount: Int
+
+  """
+  Đồng giải ba - không đánh trận tranh hạng 3-4 (SINGLE_ELIMINATION only)
+  """
+  sharedThirdPlace: Boolean
   title: String
 }
 
@@ -10280,6 +10581,7 @@ input UpdateProductInput {
 
 input UpdateProfileInput {
   bio: String
+  club: String
   coverPhotoURL: String
   dateOfBirth: String
   displayName: String
@@ -10398,6 +10700,56 @@ input UpdateReportStatusInput {
 
   """New status for the report"""
   status: PostReportStatus!
+}
+
+input UpdateTemplateInput {
+  """Chế độ duyệt"""
+  approvalMode: ApprovalMode
+
+  """Cấu hình chi phí"""
+  costConfig: CostConfigInput
+
+  """Địa điểm tùy chỉnh"""
+  customLocation: CustomLocationInput
+
+  """Cấu hình đặt cọc"""
+  depositConfig: DepositConfigInput
+
+  """Mô tả"""
+  description: String
+
+  """Dụng cụ cần mang"""
+  equipment: [EquipmentItemInput!]
+
+  """Loại hình chơi"""
+  gameType: GameType
+
+  """Cấu hình giới tính"""
+  genderConfig: GenderConfigInput
+
+  """Tên template"""
+  name: String
+
+  """Yêu cầu trình độ"""
+  skillRequirement: SkillRequirementInput
+
+  """Cấu hình số người"""
+  slotConfig: SlotConfigInput
+
+  """Môn thể thao"""
+  sportType: SportType
+
+  """Tags"""
+  tags: [String!]
+
+  """ID template"""
+  templateId: ID!
+
+  """ID sân"""
+  venueId: ID
+
+  """Độ hiển thị"""
+  visibility: GameVisibility
 }
 
 input UpdateTournamentInput {
@@ -10636,6 +10988,7 @@ type User {
   """How the user discovered the platform (collected via onboarding survey)"""
   acquisitionSource: AcquisitionSource
   bio: String
+  club: String
   coverPhotoURL: String
   createdAt: DateTime!
 

@@ -73,6 +73,8 @@ export function mapCategoryEntryToInput(
     scoringConfig: DEFAULT_SCORING_CONFIG[sport] ?? DEFAULT_SCORING_CONFIG.badminton,
     popular: entry.popular,
     maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
+    bracketSize: entry.bracketSize > 0 ? entry.bracketSize : undefined,
+    sharedThirdPlace: entry.sharedThirdPlace,
     prizes: (entry.prizes ?? [])
       .filter((p) => p.title)
       .map((p, i) => ({
@@ -185,7 +187,6 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
     categories: [],
 
     format: 'single_elim',
-    totalSlots: 32,
     schedule: (tournament.schedule?.length
       ? tournament.schedule.map((s) => ({
         label: s.label,
@@ -195,8 +196,6 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
         status: (s.status as 'upcoming' | 'active' | 'completed') ?? 'upcoming',
       }))
       : [{ label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' as const }]),
-    venueName: tournament.location?.name ?? '',
-    venueAddress: tournament.location?.address ?? '',
     facilities: tournament.facilities?.map((f) => ({ icon: f.icon ?? '', label: f.label })) ?? [],
     courts: tournament.courts?.map((c) => ({
       name: c.name,

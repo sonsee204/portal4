@@ -347,10 +347,25 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
             me {
               _id
               email
+              phone
               fullName
               displayName
+              userName
               role
               photoURL
+              bio
+              club
+              gender
+              dateOfBirth
+              location {
+                city
+                country
+                displayText
+                coordinates {
+                  latitude
+                  longitude
+                }
+              }
             }
           }
         `,

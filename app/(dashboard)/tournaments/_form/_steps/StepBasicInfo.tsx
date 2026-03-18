@@ -5,7 +5,7 @@ import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useAuthStore } from '@/stores/auth';
 import { Input } from '@/components/atoms/Input';
-import { Textarea } from '@/components/atoms/Textarea';
+import { MarkdownEditor } from '@/components/atoms/MarkdownEditor';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { SportRadioCard } from '../../create/_components/SportRadioCard';
@@ -188,11 +188,12 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
             name="description"
             control={control}
             render={({ field }) => (
-              <Textarea
-                {...field}
+              <MarkdownEditor
+                value={field.value}
+                onChange={field.onChange}
                 label="Mô tả ngắn (trang landing)"
-                placeholder="Mô tả ngắn gọn hiển thị trên trang landing..."
-                rows={3}
+                placeholder="Mô tả ngắn gọn hiển thị trên trang landing. Hỗ trợ **in đậm**, *nghiêng*, danh sách..."
+                minHeight={120}
               />
             )}
           />
@@ -200,11 +201,12 @@ export function StepBasicInfo({ form, tournamentId }: StepBasicInfoProps) {
             name="introduction"
             control={control}
             render={({ field }) => (
-              <Textarea
-                {...field}
+              <MarkdownEditor
+                value={field.value}
+                onChange={field.onChange}
                 label="Giới thiệu chi tiết (trang tổng quan)"
-                placeholder="Nội dung giới thiệu chi tiết hiển thị trên tab Tổng quan..."
-                rows={5}
+                placeholder="Nội dung giới thiệu chi tiết hiển thị trên tab Tổng quan. Hỗ trợ định dạng Markdown đầy đủ..."
+                minHeight={280}
               />
             )}
           />

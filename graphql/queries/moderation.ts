@@ -113,3 +113,41 @@ export const GET_USER_REPORT_STATS = gql`
     }
   }
 `;
+
+export const GET_MESSAGE_REPORTS_FOR_ADMIN = gql`
+  query GetMessageReportsForAdmin(
+    $filter: MessageReportFilterInput
+    $pagination: PaginationInput
+  ) {
+    getMessageReportsForAdmin(filter: $filter, pagination: $pagination) {
+      reports {
+        _id
+        messageId
+        reporterId
+        reason
+        status
+        notes
+        createdAt
+        updatedAt
+        reviewedAt
+        reviewedBy
+      }
+      total
+      page
+      limit
+      hasMore
+    }
+  }
+`;
+
+export const GET_MESSAGE_REPORT_STATS = gql`
+  query GetMessageReportStats {
+    getMessageReportStats {
+      totalReports
+      pendingReports
+      reviewedReports
+      resolvedReports
+      dismissedReports
+    }
+  }
+`;

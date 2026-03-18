@@ -61,6 +61,8 @@ interface PrizeEditorProps {
   canRemove?: boolean;
   /** Base path for nested prizes (e.g. "categories.0" for category prizes) */
   basePath?: string;
+  /** When true and rank is bronze, show "×2" badge (đồng giải ba) */
+  sharedThirdPlace?: boolean;
 }
 
 export function PrizeEditor({
@@ -70,6 +72,7 @@ export function PrizeEditor({
   onRemove,
   canRemove,
   basePath = 'prizes',
+  sharedThirdPlace = false,
 }: PrizeEditorProps) {
   const config = getRankConfig(rank, index + 1);
   const perksPath = basePath === 'prizes' ? `prizes.${index}.perks` : `${basePath}.prizes.${index}.perks`;
@@ -100,7 +103,17 @@ export function PrizeEditor({
           >
             <IonIcon name={config.icon} size="md" />
           </div>
-          <h4 className="text-heading text-sm font-bold">{config.label}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-heading text-sm font-bold">{config.label}</h4>
+            {sharedThirdPlace && rank === 'bronze' && (
+              <span
+                className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-600 dark:text-orange-400"
+                title="Đồng giải ba - 2 VĐV"
+              >
+                ×2
+              </span>
+            )}
+          </div>
         </div>
         {canRemove && onRemove && (
           <button

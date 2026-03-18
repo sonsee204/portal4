@@ -12,6 +12,7 @@ import {
   useStartTournament,
   useCompleteTournament,
   useCancelTournament,
+  useDuplicateTournament,
   useDeleteTournament,
 } from '@/hooks/tournament';
 import { TOURNAMENT } from '@/lib/strings';
@@ -23,7 +24,16 @@ interface TournamentStatusActionsProps {
   onStatusChange: () => void;
 }
 
-type DialogType = 'cancel' | 'delete' | null;
+type DialogType =
+  | 'publish'
+  | 'openReg'
+  | 'closeReg'
+  | 'start'
+  | 'complete'
+  | 'cancel'
+  | 'duplicate'
+  | 'delete'
+  | null;
 
 export function TournamentStatusActions({
   tournamentId,
@@ -45,6 +55,11 @@ export function TournamentStatusActions({
     useCompleteTournament(onStatusChange);
   const { execute: cancel, loading: cancelling } =
     useCancelTournament(onStatusChange);
+  const { execute: duplicate, loading: duplicating } = useDuplicateTournament(
+    (newTournament) => {
+      router.push(`/tournaments/${newTournament._id}/edit`);
+    }
+  );
   const { execute: deleteTournament, loading: deleting } = useDeleteTournament(
     () => {
       router.push('/tournaments');
@@ -58,13 +73,36 @@ export function TournamentStatusActions({
     starting ||
     completing ||
     cancelling ||
+    duplicating ||
     deleting;
 
   const handleConfirm = async () => {
-    if (openDialog === 'cancel') {
-      await cancel(tournamentId);
-    } else if (openDialog === 'delete') {
-      await deleteTournament(tournamentId);
+    if (!openDialog) return;
+    switch (openDialog) {
+      case 'publish':
+        await publish(tournamentId);
+        break;
+      case 'openReg':
+        await openReg(tournamentId);
+        break;
+      case 'closeReg':
+        await closeReg(tournamentId);
+        break;
+      case 'start':
+        await start(tournamentId);
+        break;
+      case 'complete':
+        await complete(tournamentId);
+        break;
+      case 'cancel':
+        await cancel(tournamentId);
+        break;
+      case 'duplicate':
+        await duplicate(tournamentId);
+        break;
+      case 'delete':
+        await deleteTournament(tournamentId);
+        break;
     }
     setOpenDialog(null);
   };
@@ -81,12 +119,22 @@ export function TournamentStatusActions({
           </Button>
         </Link>
 
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isLoading}
+          iconLeft="copy-outline"
+          onClick={() => setOpenDialog('duplicate')}
+        >
+          Nhân bản
+        </Button>
+
         {status === 'DRAFT' && (
           <Button
             size="sm"
             variant="outline"
             disabled={isLoading}
-            onClick={() => void publish(tournamentId)}
+            onClick={() => setOpenDialog('publish')}
           >
             Đăng giải đấu
           </Button>
@@ -97,7 +145,7 @@ export function TournamentStatusActions({
             size="sm"
             variant="outline"
             disabled={isLoading}
-            onClick={() => void openReg(tournamentId)}
+            onClick={() => setOpenDialog('openReg')}
           >
             Mở đăng ký
           </Button>
@@ -108,7 +156,7 @@ export function TournamentStatusActions({
             size="sm"
             variant="outline"
             disabled={isLoading}
-            onClick={() => void closeReg(tournamentId)}
+            onClick={() => setOpenDialog('closeReg')}
           >
             Đóng đăng ký
           </Button>
@@ -118,7 +166,7 @@ export function TournamentStatusActions({
           <Button
             size="sm"
             disabled={isLoading}
-            onClick={() => void start(tournamentId)}
+            onClick={() => setOpenDialog('start')}
           >
             Bắt đầu giải đấu
           </Button>
@@ -128,7 +176,7 @@ export function TournamentStatusActions({
           <Button
             size="sm"
             disabled={isLoading}
-            onClick={() => void complete(tournamentId)}
+            onClick={() => setOpenDialog('complete')}
           >
             Kết thúc giải đấu
           </Button>
@@ -159,7 +207,67 @@ export function TournamentStatusActions({
         )}
       </div>
 
-      {/* Cancel confirmation — for non-DRAFT statuses */}
+      {/* Duplicate confirmation */}
+      <ConfirmDialog
+        open={openDialog === 'duplicate'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Nhân bản giải đấu"
+        description={TOURNAMENT.CONFIRM_DUPLICATE_TOURNAMENT}
+        confirmLabel="Nhân bản"
+        loading={duplicating}
+      />
+
+      {/* Status change confirmations */}
+      <ConfirmDialog
+        open={openDialog === 'publish'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Đăng giải đấu"
+        description={TOURNAMENT.CONFIRM_PUBLISH}
+        confirmLabel="Đăng"
+        loading={publishing}
+      />
+      <ConfirmDialog
+        open={openDialog === 'openReg'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Mở đăng ký"
+        description={TOURNAMENT.CONFIRM_OPEN_REGISTRATION}
+        confirmLabel="Mở đăng ký"
+        loading={openingReg}
+      />
+      <ConfirmDialog
+        open={openDialog === 'closeReg'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Đóng đăng ký"
+        description={TOURNAMENT.CONFIRM_CLOSE_REGISTRATION}
+        confirmLabel="Đóng đăng ký"
+        loading={closingReg}
+      />
+      <ConfirmDialog
+        open={openDialog === 'start'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Bắt đầu giải đấu"
+        description={TOURNAMENT.CONFIRM_START_TOURNAMENT}
+        confirmLabel="Bắt đầu"
+        variant="warning"
+        loading={starting}
+      />
+      <ConfirmDialog
+        open={openDialog === 'complete'}
+        onClose={() => setOpenDialog(null)}
+        onConfirm={() => void handleConfirm()}
+        title="Kết thúc giải đấu"
+        description={TOURNAMENT.CONFIRM_COMPLETE_TOURNAMENT}
+        confirmLabel="Kết thúc"
+        variant="warning"
+        loading={completing}
+      />
+
+      {/* Cancel confirmation */}
       <ConfirmDialog
         open={openDialog === 'cancel'}
         onClose={() => setOpenDialog(null)}
@@ -171,7 +279,7 @@ export function TournamentStatusActions({
         loading={cancelling}
       />
 
-      {/* Delete confirmation — for DRAFT only */}
+      {/* Delete confirmation */}
       <ConfirmDialog
         open={openDialog === 'delete'}
         onClose={() => setOpenDialog(null)}
