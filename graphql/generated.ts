@@ -853,6 +853,20 @@ export type BookmarkList = {
   total: Scalars['Int']['output'];
 };
 
+export type BracketDrawPreview = {
+  __typename?: 'BracketDrawPreview';
+  /** Kích thước nhánh đấu hiện tại (cấu hình) */
+  currentBracketSize: Scalars['Int']['output'];
+  /** Số VĐV đã duyệt trong nội dung */
+  playerCount: Scalars['Int']['output'];
+  /** Kích thước nhánh đấu đề xuất (lũy thừa 2 tối thiểu cho số VĐV) */
+  suggestedBracketSize: Scalars['Int']['output'];
+  /** Thông báo cảnh báo khi willAutoAdjust */
+  warningMessage?: Maybe<Scalars['String']['output']>;
+  /** True khi currentBracketSize > suggestedBracketSize — bốc thăm sẽ tự động giảm để tránh BYE vs BYE */
+  willAutoAdjust: Scalars['Boolean']['output'];
+};
+
 export type BracketSizeAdjustment = {
   __typename?: 'BracketSizeAdjustment';
   /** ID hạng mục cần điều chỉnh */
@@ -7350,6 +7364,8 @@ export type Query = {
   bookingPass: BookingPass;
   /** Get booking statistics */
   bookingStats: BookingStats;
+  /** Preview trước khi bốc thăm: kiểm tra nếu cần tự động giảm kích thước nhánh đấu (organizer only) */
+  bracketDrawPreview: BracketDrawPreview;
   /** Calculate discount for a booking */
   calculateBookingDiscount: DiscountCalculationResult;
   /** Calculate discount for a product order */
@@ -7791,6 +7807,11 @@ export type QueryBookingStatsArgs = {
   fromDate?: InputMaybe<Scalars['String']['input']>;
   toDate?: InputMaybe<Scalars['String']['input']>;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryBracketDrawPreviewArgs = {
+  categoryId: Scalars['ID']['input'];
 };
 
 

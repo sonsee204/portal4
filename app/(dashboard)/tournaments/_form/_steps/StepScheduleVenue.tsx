@@ -10,12 +10,6 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { SchedulePhaseRow } from '../_parts/SchedulePhaseRow';
 import type { TournamentFormData } from '@/types/tournament-form';
 
-const formatOptions = [
-  { label: 'Loại trực tiếp (Single Elimination)', value: 'single_elim' },
-  { label: 'Vòng tròn (Round Robin)', value: 'round_robin' },
-  { label: 'Thụy Sĩ (Swiss)', value: 'swiss' },
-];
-
 const facilityPresets = [
   { icon: 'car-outline', label: 'Bãi đỗ xe' },
   { icon: 'wifi-outline', label: 'Wi-Fi' },
@@ -75,32 +69,6 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
 
   return (
     <div className="space-y-6">
-      {/* Format & Slots */}
-      <GlassPanel card>
-        <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">
-          <IonIcon
-            name="git-branch-outline"
-            size="sm"
-            className="text-primary"
-          />
-          Thể thức thi đấu
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            name="format"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Select
-                {...field}
-                label="Thể thức"
-                options={formatOptions}
-                error={!!fieldState.error}
-              />
-            )}
-          />
-        </div>
-      </GlassPanel>
-
       {/* Schedule Phases */}
       <GlassPanel card>
         <div className="mb-4 flex items-center justify-between">
