@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TournamentFormat } from '@/graphql/generated';
 
 /* ------------------------------------------------------------------ */
 /* Sport type                                                          */
@@ -21,6 +22,7 @@ export interface CategoryFormEntry {
   title: string;
   ageLabel: string;
   matchType: 'single' | 'double' | 'mixed';
+  format: TournamentFormat;
   icon: string;
   description: string;
   popular: boolean;
@@ -91,7 +93,6 @@ export interface TournamentFormData {
 
   categories: CategoryFormEntry[];
 
-  format: string;
   schedule: SchedulePhaseEntry[];
   facilities: FacilityEntry[];
   courts: CourtEntry[];
@@ -124,6 +125,7 @@ const categorySchema = z.object({
   title: z.string().min(1, 'Tên nội dung là bắt buộc'),
   ageLabel: z.string().min(1, 'Nhóm tuổi là bắt buộc'),
   matchType: z.enum(['single', 'double', 'mixed']),
+  format: z.nativeEnum(TournamentFormat),
   icon: z.string().min(1),
   description: z.string(),
   popular: z.boolean(),
@@ -186,7 +188,6 @@ export const tournamentFormSchema = z
 
     categories: z.array(categorySchema).min(1, 'Cần ít nhất 1 nội dung thi đấu'),
 
-    format: z.string().min(1, 'Thể thức là bắt buộc'),
     schedule: z.array(schedulePhaseSchema),
     facilities: z.array(facilitySchema),
     courts: z.array(courtSchema),
@@ -226,7 +227,7 @@ export const tournamentFormSchema = z
 export const STEP_FIELDS: Record<number, (keyof TournamentFormData)[]> = {
   0: ['name', 'organizerName', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'introduction', 'coverImageUrl', 'highlights'],
   1: ['categories'],
-  2: ['format', 'schedule', 'facilities', 'courts'],
+  2: ['schedule', 'facilities', 'courts'],
   3: ['rules'],
   4: ['registrationDeadline', 'fees', 'contacts', 'paymentBank', 'paymentAccountNumber', 'paymentAccountName', 'paymentQrImage'],
   5: [],
@@ -267,6 +268,7 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       title: '',
       ageLabel: '',
       matchType: 'single',
+      format: TournamentFormat.SingleElimination,
       icon: 'person-outline',
       description: '',
       popular: false,
@@ -281,7 +283,6 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
     },
   ],
 
-  format: 'single_elim',
   schedule: [
     { label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' },
   ],

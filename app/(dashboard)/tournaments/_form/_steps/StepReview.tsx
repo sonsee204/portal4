@@ -31,12 +31,6 @@ const matchTypeLabels: Record<string, string> = {
   TEAM: 'Đồng đội',
 };
 
-const formatLabels: Record<string, string> = {
-  single_elim: 'Loại trực tiếp',
-  round_robin: 'Vòng tròn',
-  swiss: 'Thụy Sĩ',
-};
-
 const courtStatusLabels: Record<string, string> = {
   available: 'Sẵn sàng',
   maintenance: 'Bảo trì',
@@ -172,10 +166,6 @@ export function StepReview({
         stepIndex={2}
         onEdit={onGoToStep}
       >
-        <ReviewField
-          label="Thể thức"
-          value={formatLabels[data.format] ?? data.format}
-        />
         {data.schedule.length > 0 && (
           <div className="mt-2">
             <span className="text-muted text-xs font-medium">Lịch trình:</span>

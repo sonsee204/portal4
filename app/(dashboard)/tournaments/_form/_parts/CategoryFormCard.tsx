@@ -1,6 +1,11 @@
 'use client';
 
-import { Controller, useFieldArray, useWatch, type Control } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useWatch,
+  type Control,
+} from 'react-hook-form';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/atoms/Input';
 import { Select } from '@/components/atoms/Select';
@@ -8,6 +13,7 @@ import { Textarea } from '@/components/atoms/Textarea';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { PrizeEditor, getNextPrizeRank } from './PrizeEditor';
+import { TournamentFormat } from '@/graphql/generated';
 import type { TournamentFormData } from '@/types/tournament-form';
 
 const matchTypeOptions = [
@@ -33,6 +39,13 @@ const bracketSizeOptions = [
   { label: '32', value: '32' },
   { label: '64', value: '64' },
   { label: '128', value: '128' },
+];
+
+const formatOptions = [
+  { label: 'Loại trực tiếp', value: TournamentFormat.SingleElimination },
+  { label: 'Loại kép', value: TournamentFormat.DoubleElimination },
+  { label: 'Vòng tròn', value: TournamentFormat.RoundRobin },
+  { label: 'Bảng + Loại trực tiếp', value: TournamentFormat.GroupKnockout },
 ];
 
 const accentColors = [
@@ -73,9 +86,15 @@ export function CategoryFormCard({
     name: `${basePath}.prizes` as never,
   });
 
-  const prizes = useWatch({ control, name: `categories.${index}.prizes` }) ?? [];
+  const prizes =
+    useWatch({ control, name: `categories.${index}.prizes` }) ?? [];
   const sharedThirdPlace =
-    useWatch({ control, name: `categories.${index}.sharedThirdPlace` }) ?? false;
+    useWatch({ control, name: `categories.${index}.sharedThirdPlace` }) ??
+    false;
+  const selectedFormat =
+    useWatch({ control, name: `categories.${index}.format` }) ??
+    TournamentFormat.SingleElimination;
+  const isRoundRobin = selectedFormat === TournamentFormat.RoundRobin;
 
   return (
     <div
@@ -137,7 +156,7 @@ export function CategoryFormCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Controller
             name={`categories.${index}.matchType`}
             control={control}
@@ -150,6 +169,13 @@ export function CategoryFormCard({
             )}
           />
           <Controller
+            name={`categories.${index}.format`}
+            control={control}
+            render={({ field }) => (
+              <Select {...field} label="Thể thức" options={formatOptions} />
+            )}
+          />
+          <Controller
             name={`categories.${index}.icon`}
             control={control}
             render={({ field }) => (
@@ -158,7 +184,12 @@ export function CategoryFormCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div
+          className={cn(
+            'grid gap-4',
+            isRoundRobin ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
+          )}
+        >
           <Controller
             name={`categories.${index}.maxRegistrations`}
             control={control}
@@ -176,19 +207,21 @@ export function CategoryFormCard({
               />
             )}
           />
-          <Controller
-            name={`categories.${index}.bracketSize`}
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                value={String(field.value ?? 0)}
-                onChange={(e) => field.onChange(Number(e.target.value))}
-                label="Kích thước nhánh đấu"
-                options={bracketSizeOptions}
-              />
-            )}
-          />
+          {!isRoundRobin && (
+            <Controller
+              name={`categories.${index}.bracketSize`}
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  value={String(field.value ?? 0)}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  label="Kích thước nhánh đấu"
+                  options={bracketSizeOptions}
+                />
+              )}
+            />
+          )}
           <div className="flex items-end pb-1">
             <Controller
               name={`categories.${index}.popular`}
@@ -219,34 +252,36 @@ export function CategoryFormCard({
           </div>
         </div>
 
-        <div className="flex items-end pb-1">
-          <Controller
-            name={`categories.${index}.sharedThirdPlace`}
-            control={control}
-            render={({ field }) => (
-              <label className="flex cursor-pointer items-center gap-2.5">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={field.value}
-                  onClick={() => field.onChange(!field.value)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                    field.value ? 'bg-primary' : 'bg-surface-border'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                      field.value ? 'translate-x-6' : 'translate-x-1'
+        {selectedFormat === TournamentFormat.SingleElimination && (
+          <div className="flex items-end pb-1">
+            <Controller
+              name={`categories.${index}.sharedThirdPlace`}
+              control={control}
+              render={({ field }) => (
+                <label className="flex cursor-pointer items-center gap-2.5">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={field.value}
+                    onClick={() => field.onChange(!field.value)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                      field.value ? 'bg-primary' : 'bg-surface-border'
                     }`}
-                  />
-                </button>
-                <span className="text-heading text-sm">
-                  Đồng giải ba (không đánh trận tranh hạng 3-4)
-                </span>
-              </label>
-            )}
-          />
-        </div>
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                        field.value ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-heading text-sm">
+                    Đồng giải ba (không đánh trận tranh hạng 3-4)
+                  </span>
+                </label>
+              )}
+            />
+          </div>
+        )}
 
         <Controller
           name={`categories.${index}.description`}
@@ -264,7 +299,11 @@ export function CategoryFormCard({
         <div className="border-surface-border mt-4 rounded-lg border-t pt-4">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-heading flex items-center gap-2 text-xs font-semibold">
-              <IonIcon name="medal-outline" size="sm" className="text-primary" />
+              <IonIcon
+                name="medal-outline"
+                size="sm"
+                className="text-primary"
+              />
               Giải thưởng
             </h4>
             <Button

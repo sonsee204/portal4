@@ -71,6 +71,7 @@ interface EditState {
   title: string;
   ageLabel: string;
   matchType: MatchType;
+  format: TournamentFormat;
   icon: string;
   description: string;
   popular: boolean;
@@ -79,6 +80,13 @@ interface EditState {
   sharedThirdPlace: boolean;
   prizes: PrizeDraft[];
 }
+
+const FORMAT_OPTIONS = [
+  { label: 'Loại trực tiếp', value: TournamentFormat.SingleElimination },
+  { label: 'Loại kép', value: TournamentFormat.DoubleElimination },
+  { label: 'Vòng tròn', value: TournamentFormat.RoundRobin },
+  { label: 'Bảng + Loại trực tiếp', value: TournamentFormat.GroupKnockout },
+];
 
 function CategoryApiCard({
   category,
@@ -96,40 +104,16 @@ function CategoryApiCard({
     title: category.title,
     ageLabel: category.ageLabel ?? '',
     matchType: category.matchType,
+    format: category.format ?? TournamentFormat.SingleElimination,
     icon: category.icon ?? 'trophy-outline',
     description: category.description ?? '',
     popular: category.popular ?? false,
     maxRegistrations: category.maxRegistrations ?? 0,
     bracketSize: category.bracketSize ?? 0,
-    sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
-    prizes: (category.prizes ?? []).length > 0
-      ? (category.prizes ?? []).map((p) => ({
-          rank: p.rank ?? 'gold',
-          title: p.title ?? '',
-          amount: p.amount ?? '',
-          perks: p.perks?.length ? p.perks : [''],
-        }))
-      : [
-          { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
-          { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
-          { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
-        ],
-  }));
-
-  const { updateCategory, loading: updating } = useUpdateCategory(tournamentId);
-
-  const handleOpen = useCallback(() => {
-    setDraft({
-      title: category.title,
-      ageLabel: category.ageLabel ?? '',
-      matchType: category.matchType,
-      icon: category.icon ?? 'trophy-outline',
-      description: category.description ?? '',
-      popular: category.popular ?? false,
-      maxRegistrations: category.maxRegistrations ?? 0,
-      bracketSize: category.bracketSize ?? 0,
-      sharedThirdPlace: (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
-      prizes: (category.prizes ?? []).length > 0
+    sharedThirdPlace:
+      (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
+    prizes:
+      (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
             rank: p.rank ?? 'gold',
             title: p.title ?? '',
@@ -141,30 +125,73 @@ function CategoryApiCard({
             { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
             { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
           ],
+  }));
+
+  const { updateCategory, loading: updating } = useUpdateCategory(tournamentId);
+
+  const handleOpen = useCallback(() => {
+    setDraft({
+      title: category.title,
+      ageLabel: category.ageLabel ?? '',
+      matchType: category.matchType,
+      format: category.format ?? TournamentFormat.SingleElimination,
+      icon: category.icon ?? 'trophy-outline',
+      description: category.description ?? '',
+      popular: category.popular ?? false,
+      maxRegistrations: category.maxRegistrations ?? 0,
+      bracketSize: category.bracketSize ?? 0,
+      sharedThirdPlace:
+        (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
+      prizes:
+        (category.prizes ?? []).length > 0
+          ? (category.prizes ?? []).map((p) => ({
+              rank: p.rank ?? 'gold',
+              title: p.title ?? '',
+              amount: p.amount ?? '',
+              perks: p.perks?.length ? p.perks : [''],
+            }))
+          : [
+              { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
+              { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
+              { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
+            ],
     });
     setEditing(true);
   }, [category]);
 
   const handleSave = useCallback(async () => {
     if (!draft.title.trim()) return;
+    const isRoundRobinDraft = draft.format === TournamentFormat.RoundRobin;
     const input: UpdateCategoryInput = {
       id: category._id,
       title: draft.title,
       ageLabel: draft.ageLabel || undefined,
       matchType: draft.matchType,
+      format: draft.format,
       icon: draft.icon || undefined,
       description: draft.description || undefined,
       popular: draft.popular,
       maxRegistrations: draft.maxRegistrations,
-      bracketSize: draft.bracketSize > 0 ? draft.bracketSize : undefined,
-      sharedThirdPlace: draft.sharedThirdPlace,
+      bracketSize: isRoundRobinDraft
+        ? undefined
+        : draft.bracketSize > 0
+          ? draft.bracketSize
+          : undefined,
+      sharedThirdPlace:
+        draft.format === TournamentFormat.SingleElimination
+          ? draft.sharedThirdPlace
+          : undefined,
       prizes: draft.prizes
         .filter((p) => p.title)
         .map((p, i) => ({
-          rank: p.rank || (i < 3 ? ['gold', 'silver', 'bronze'][i] : String(i + 1)),
+          rank:
+            p.rank || (i < 3 ? ['gold', 'silver', 'bronze'][i] : String(i + 1)),
           title: p.title,
           amount: p.amount || undefined,
-          perks: p.perks.filter(Boolean).length > 0 ? p.perks.filter(Boolean) : undefined,
+          perks:
+            p.perks.filter(Boolean).length > 0
+              ? p.perks.filter(Boolean)
+              : undefined,
         })),
     };
     await updateCategory(input);
@@ -222,12 +249,20 @@ function CategoryApiCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Select
             label="Loại thi đấu"
             options={MATCH_TYPE_OPTIONS}
             value={draft.matchType}
             onChange={(e) => update({ matchType: e.target.value as MatchType })}
+          />
+          <Select
+            label="Thể thức"
+            options={FORMAT_OPTIONS}
+            value={draft.format}
+            onChange={(e) =>
+              update({ format: e.target.value as TournamentFormat })
+            }
           />
           <Select
             label="Icon"
@@ -237,7 +272,9 @@ function CategoryApiCard({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div
+          className={`grid gap-4 ${draft.format === TournamentFormat.RoundRobin ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
+        >
           <Input
             label="Số VĐV tối đa"
             placeholder="0 = Không giới hạn"
@@ -248,20 +285,22 @@ function CategoryApiCard({
               update({ maxRegistrations: parseInt(e.target.value, 10) || 0 })
             }
           />
-          <Select
-            label="Kích thước nhánh đấu"
-            value={String(draft.bracketSize)}
-            onChange={(e) => update({ bracketSize: Number(e.target.value) })}
-            options={[
-              { label: 'Tự động', value: '0' },
-              { label: '4', value: '4' },
-              { label: '8', value: '8' },
-              { label: '16', value: '16' },
-              { label: '32', value: '32' },
-              { label: '64', value: '64' },
-              { label: '128', value: '128' },
-            ]}
-          />
+          {draft.format !== TournamentFormat.RoundRobin && (
+            <Select
+              label="Kích thước nhánh đấu"
+              value={String(draft.bracketSize)}
+              onChange={(e) => update({ bracketSize: Number(e.target.value) })}
+              options={[
+                { label: 'Tự động', value: '0' },
+                { label: '4', value: '4' },
+                { label: '8', value: '8' },
+                { label: '16', value: '16' },
+                { label: '32', value: '32' },
+                { label: '64', value: '64' },
+                { label: '128', value: '128' },
+              ]}
+            />
+          )}
           <div className="flex items-end pb-1">
             <label className="flex cursor-pointer items-center gap-2.5">
               <button
@@ -286,28 +325,32 @@ function CategoryApiCard({
           </div>
         </div>
 
-        <div className="flex items-end pb-1">
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={draft.sharedThirdPlace}
-              onClick={() => update({ sharedThirdPlace: !draft.sharedThirdPlace })}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                draft.sharedThirdPlace ? 'bg-primary' : 'bg-surface-border'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                  draft.sharedThirdPlace ? 'translate-x-6' : 'translate-x-1'
+        {draft.format === TournamentFormat.SingleElimination && (
+          <div className="flex items-end pb-1">
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={draft.sharedThirdPlace}
+                onClick={() =>
+                  update({ sharedThirdPlace: !draft.sharedThirdPlace })
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                  draft.sharedThirdPlace ? 'bg-primary' : 'bg-surface-border'
                 }`}
-              />
-            </button>
-            <span className="text-heading text-sm">
-              Đồng giải ba (không đánh trận tranh hạng 3-4)
-            </span>
-          </label>
-        </div>
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                    draft.sharedThirdPlace ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="text-heading text-sm">
+                Đồng giải ba (không đánh trận tranh hạng 3-4)
+              </span>
+            </label>
+          </div>
+        )}
 
         <Textarea
           label="Mô tả"
@@ -320,7 +363,11 @@ function CategoryApiCard({
         <div className="border-surface-border mt-4 rounded-lg border-t pt-4">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-heading flex items-center gap-2 text-xs font-semibold">
-              <IonIcon name="medal-outline" size="sm" className="text-primary" />
+              <IonIcon
+                name="medal-outline"
+                size="sm"
+                className="text-primary"
+              />
               Giải thưởng
             </h4>
             <Button
@@ -558,6 +605,7 @@ function StepCategoriesEditMode({
       title: '',
       ageLabel: '',
       matchType: 'single',
+      format: TournamentFormat.SingleElimination,
       icon: 'person-outline',
       description: '',
       popular: false,
@@ -716,6 +764,7 @@ function StepCategoriesCreateMode({
               title: '',
               ageLabel: '',
               matchType: 'single',
+              format: TournamentFormat.SingleElimination,
               icon: 'person-outline',
               description: '',
               popular: false,
@@ -778,6 +827,7 @@ function StepCategoriesCreateMode({
                 title: '',
                 ageLabel: '',
                 matchType: 'single',
+                format: TournamentFormat.SingleElimination,
                 icon: 'person-outline',
                 description: '',
                 popular: false,
@@ -786,7 +836,12 @@ function StepCategoriesCreateMode({
                 sharedThirdPlace: false,
                 prizes: [
                   { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
-                  { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
+                  {
+                    rank: 'silver',
+                    title: 'Giải Nhì',
+                    amount: '',
+                    perks: [''],
+                  },
                   { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
                 ],
               })
