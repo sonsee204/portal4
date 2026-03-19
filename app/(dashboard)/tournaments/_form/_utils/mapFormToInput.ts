@@ -61,6 +61,9 @@ export function mapCategoryEntryToInput(
   tournamentId: string,
   sport: TournamentFormData['sport'],
 ): CreateCategoryInput {
+  const format = entry.format ?? TournamentFormat.SingleElimination;
+  const isRoundRobin = format === TournamentFormat.RoundRobin;
+  const isGroupKnockout = format === TournamentFormat.GroupKnockout;
   return {
     tournamentId,
     title: entry.title,
@@ -68,13 +71,13 @@ export function mapCategoryEntryToInput(
     description: entry.description || undefined,
     icon: entry.icon || undefined,
     matchType: MATCH_TYPE_MAP[entry.matchType] ?? MatchType.Singles,
-    format: TournamentFormat.SingleElimination,
+    format,
     gender: TournamentGender.Open,
     scoringConfig: DEFAULT_SCORING_CONFIG[sport] ?? DEFAULT_SCORING_CONFIG.badminton,
     popular: entry.popular,
     maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
-    bracketSize: entry.bracketSize > 0 ? entry.bracketSize : undefined,
-    sharedThirdPlace: entry.sharedThirdPlace,
+    bracketSize: isRoundRobin || isGroupKnockout ? undefined : (entry.bracketSize > 0 ? entry.bracketSize : undefined),
+    sharedThirdPlace: format === TournamentFormat.SingleElimination ? entry.sharedThirdPlace : undefined,
     prizes: (entry.prizes ?? [])
       .filter((p) => p.title)
       .map((p, i) => ({
@@ -186,7 +189,6 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
     // Categories are separate entities — loaded via useTournamentCategories in StepCategories
     categories: [],
 
-    format: 'single_elim',
     schedule: (tournament.schedule?.length
       ? tournament.schedule.map((s) => ({
         label: s.label,

@@ -2,6 +2,7 @@
 
 import { use, useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
@@ -14,22 +15,34 @@ import {
   useResetBracket,
   useRegistrations,
 } from '@/hooks/tournament';
-import { RegistrationStatus } from '@/graphql/generated';
+import { RegistrationStatus, TournamentFormat } from '@/graphql/generated';
+import { GET_TOURNAMENT_RANKINGS } from '@/graphql/queries/tournament';
 import { IonIcon } from '@/components/atoms/IonIcon';
+import type {
+  GetTournamentRankingsQuery,
+  GetTournamentRankingsQueryVariables,
+} from '@/graphql/generated';
 
 function categoryStatusLabel(status?: string): {
   text: string;
   className: string;
 } | null {
   switch (status) {
+    case 'PENDING':
+      return { text: 'Chưa mở', className: 'bg-slate-500/10 text-slate-400' };
+    case 'REGISTRATION_OPEN':
+      return {
+        text: 'Đang đăng ký',
+        className: 'bg-green-500/10 text-green-400',
+      };
     case 'DRAW_PENDING':
       return {
-        text: 'Chờ bốc thăm',
+        text: 'Chờ lên lịch',
         className: 'bg-amber-500/10 text-amber-400',
       };
     case 'DRAW_COMPLETED':
       return {
-        text: 'Đã bốc thăm',
+        text: 'Đã lên lịch',
         className: 'bg-blue-500/10 text-blue-400',
       };
     case 'IN_PROGRESS':
@@ -121,6 +134,17 @@ export default function DrawPage({
     void resetBracket(activeCategoryId);
   };
 
+  const isRoundRobin = activeCategory?.format === TournamentFormat.RoundRobin;
+
+  const { data: rankingsData } = useQuery<
+    GetTournamentRankingsQuery,
+    GetTournamentRankingsQueryVariables
+  >(GET_TOURNAMENT_RANKINGS, {
+    variables: { categoryId: activeCategoryId },
+    skip: !activeCategoryId || !isRoundRobin || matches.length === 0,
+  });
+  const standings = rankingsData?.tournamentRankings ?? [];
+
   const roundsMap = useMemo(() => {
     const map = new Map<number, typeof matches>();
     for (const m of matches) {
@@ -201,16 +225,31 @@ export default function DrawPage({
             <span className="text-secondary">VĐV đã duyệt:</span>{' '}
             <span className="text-heading font-semibold">{approvedCount}</span>
           </div>
-          <div className="bg-surface-elevated rounded-lg px-3 py-2">
-            <span className="text-secondary">Nhánh đấu:</span>{' '}
-            <span className="text-heading font-semibold">
-              {effectiveBracketSize} slot
-            </span>
-          </div>
-          <div className="bg-surface-elevated rounded-lg px-3 py-2">
-            <span className="text-secondary">Số BYE dự kiến:</span>{' '}
-            <span className="text-heading font-semibold">{expectedByes}</span>
-          </div>
+          {isRoundRobin ? (
+            <div className="bg-surface-elevated rounded-lg px-3 py-2">
+              <span className="text-secondary">Tổng số trận:</span>{' '}
+              <span className="text-heading font-semibold">
+                {Math.floor(
+                  ((approvedCount ?? 0) * ((approvedCount ?? 0) - 1)) / 2
+                )}
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                <span className="text-secondary">Nhánh đấu:</span>{' '}
+                <span className="text-heading font-semibold">
+                  {effectiveBracketSize} slot
+                </span>
+              </div>
+              <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                <span className="text-secondary">Số BYE dự kiến:</span>{' '}
+                <span className="text-heading font-semibold">
+                  {expectedByes}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -234,7 +273,11 @@ export default function DrawPage({
           disabled={isLoading || !activeCategoryId || matches.length > 0}
           onClick={() => void generateBracket(activeCategoryId)}
         >
-          {generating ? 'Đang tạo...' : 'Tạo nhánh đấu'}
+          {generating
+            ? 'Đang tạo...'
+            : isRoundRobin
+              ? 'Tạo lịch đấu vòng tròn'
+              : 'Tạo nhánh đấu'}
         </Button>
         {matches.length > 0 && (
           <Button
@@ -244,12 +287,12 @@ export default function DrawPage({
             onClick={handleReset}
             className="text-red-400"
           >
-            Xoá nhánh đấu
+            {isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
           </Button>
         )}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
         {bLoading ? (
           <GlassPanel card>
             <div className="flex items-center justify-center py-12">
@@ -260,46 +303,138 @@ export default function DrawPage({
           <GlassPanel card>
             <div className="py-12 text-center">
               <p className="text-secondary">
-                Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.
+                {isRoundRobin
+                  ? 'Chưa có lịch đấu. Hãy tạo lịch đấu vòng tròn để bắt đầu.'
+                  : 'Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.'}
               </p>
             </div>
           </GlassPanel>
         ) : (
-          <div className="space-y-4">
-            {roundsMap.map(([roundNum, roundMatches]) => (
-              <GlassPanel key={roundNum} card>
-                <h3 className="text-heading mb-3 text-sm font-bold">
-                  {roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`}
-                </h3>
-                <div className="space-y-2">
-                  {roundMatches.map((m) => (
-                    <div
-                      key={m._id}
-                      className="bg-bg-secondary flex items-center justify-between rounded-lg px-4 py-3"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-secondary font-mono text-xs">
-                          #{m.matchNumber}
-                        </span>
-                        <span className="text-heading text-sm font-medium">
-                          {m.player1?.name ?? 'TBD'}
-                        </span>
-                        <span className="text-secondary text-xs">vs</span>
-                        <span className="text-heading text-sm font-medium">
-                          {m.player2?.name ?? 'TBD'}
+          <>
+            <div className="space-y-4">
+              {roundsMap.map(([roundNum, roundMatches]) => (
+                <GlassPanel key={roundNum} card>
+                  <h3 className="text-heading mb-3 text-sm font-bold">
+                    {isRoundRobin
+                      ? (roundMatches[0]?.roundLabel ?? `Lượt ${roundNum}`)
+                      : (roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`)}
+                  </h3>
+                  <div className="space-y-2">
+                    {roundMatches.map((m) => (
+                      <div
+                        key={m._id}
+                        className="bg-bg-secondary flex items-center justify-between rounded-lg px-4 py-3"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-secondary font-mono text-xs">
+                            #{m.matchNumber}
+                          </span>
+                          <span className="text-heading text-sm font-medium">
+                            {m.player1?.name ?? 'TBD'}
+                          </span>
+                          <span className="text-secondary text-xs">vs</span>
+                          <span className="text-heading text-sm font-medium">
+                            {m.player2?.name ?? 'TBD'}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-xs font-medium ${m.isBye ? 'text-yellow-400' : 'text-secondary'}`}
+                        >
+                          {m.isBye ? 'BYE' : m.status}
                         </span>
                       </div>
-                      <span
-                        className={`text-xs font-medium ${m.isBye ? 'text-yellow-400' : 'text-secondary'}`}
-                      >
-                        {m.isBye ? 'BYE' : m.status}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </GlassPanel>
+              ))}
+            </div>
+
+            {isRoundRobin && standings.length > 0 && (
+              <GlassPanel card>
+                <h3 className="text-heading mb-3 flex items-center gap-2 text-sm font-bold">
+                  <IonIcon
+                    name="podium-outline"
+                    size="sm"
+                    className="text-primary"
+                  />
+                  Bảng xếp hạng tạm thời
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-surface-border border-b">
+                        <th className="text-secondary py-2 pr-3 text-left font-medium">
+                          #
+                        </th>
+                        <th className="text-secondary py-2 pr-3 text-left font-medium">
+                          VĐV
+                        </th>
+                        <th className="text-secondary py-2 pr-3 text-center font-medium">
+                          ĐT
+                        </th>
+                        <th className="text-secondary py-2 pr-3 text-center font-medium">
+                          T
+                        </th>
+                        <th className="text-secondary py-2 pr-3 text-center font-medium">
+                          B
+                        </th>
+                        <th className="text-secondary py-2 pr-3 text-center font-medium">
+                          Điểm
+                        </th>
+                        <th className="text-secondary py-2 text-center font-medium">
+                          Tỉ lệ T
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {standings.map((row, i) => (
+                        <tr
+                          key={row.registrationId}
+                          className={`border-surface-border border-b last:border-0 ${i < 3 ? 'font-medium' : ''}`}
+                        >
+                          <td className="py-2 pr-3">
+                            <span
+                              className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                                i === 0
+                                  ? 'bg-yellow-500/20 text-yellow-500'
+                                  : i === 1
+                                    ? 'bg-slate-400/20 text-slate-400'
+                                    : i === 2
+                                      ? 'bg-orange-600/20 text-orange-500'
+                                      : 'text-secondary'
+                              }`}
+                            >
+                              {row.rank}
+                            </span>
+                          </td>
+                          <td className="text-heading py-2 pr-3">
+                            {row.playerName}
+                          </td>
+                          <td className="text-secondary py-2 pr-3 text-center">
+                            {row.matchesPlayed}
+                          </td>
+                          <td className="py-2 pr-3 text-center text-emerald-500">
+                            {row.matchesWon}
+                          </td>
+                          <td className="py-2 pr-3 text-center text-red-400">
+                            {row.matchesLost}
+                          </td>
+                          <td className="text-heading py-2 pr-3 text-center font-semibold">
+                            {row.groupPoints}
+                          </td>
+                          <td className="text-secondary py-2 text-center">
+                            {row.winRate != null
+                              ? `${Math.round(row.winRate * 100)}%`
+                              : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </GlassPanel>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
@@ -307,9 +442,9 @@ export default function DrawPage({
         open={resetDialogOpen}
         onClose={() => setResetDialogOpen(false)}
         onConfirm={handleConfirmReset}
-        title="Xoá nhánh đấu"
+        title={isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
         description={TOURNAMENT.CONFIRM_RESET_BRACKET}
-        confirmLabel="Xoá nhánh đấu"
+        confirmLabel={isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
         variant="danger"
         loading={resetting}
       />
