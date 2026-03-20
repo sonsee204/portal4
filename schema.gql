@@ -4864,6 +4864,11 @@ type Mutation {
   """Score a point"""
   scorePoint(input: ScorePointInput!): MatchScorecard!
 
+  """
+  Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only)
+  """
+  seedKnockoutBracket(categoryId: ID!): [TournamentMatch!]!
+
   """Seed players in category"""
   seedPlayers(input: SeedPlayersInput!): SuccessResponse!
 
@@ -8060,6 +8065,9 @@ type Query {
 
   """Categories for a tournament"""
   tournamentCategories(tournamentId: ID!): [TournamentCategory!]!
+
+  """Rankings for a specific group in a GROUP_KNOCKOUT category"""
+  tournamentGroupRankings(categoryId: ID!, groupId: String!): [PlayerRanking!]!
 
   """Tournament matches with filters"""
   tournamentMatches(filter: MatchFilterInput, pagination: PaginationInput, tournamentId: ID!): MatchList!
