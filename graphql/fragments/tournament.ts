@@ -76,6 +76,10 @@ export const TOURNAMENT_DETAIL_FRAGMENT = gql`
       endTime
       status
     }
+    scheduleConfig {
+      minRestMinutes
+      courtBufferMinutes
+    }
   }
   ${TOURNAMENT_CORE_FRAGMENT}
 `;
@@ -102,6 +106,7 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
     groupCount
     advancingPerGroup
     bracketSize
+    defaultMatchDurationMinutes
     sharedThirdPlace
     prizes {
       rank
@@ -190,6 +195,8 @@ export const MATCH_CORE_FRAGMENT = gql`
     refereeId
     refereeName
     refereeInviteStatus
+    hasConflictWarning
+    matchStartedAt
     nextMatchId
     nextMatchSlot
     losersNextMatchId

@@ -8,8 +8,11 @@ import { useExportRegistrations } from '@/hooks/tournament';
 import {
   RegistrationStatus,
   TournamentPaymentStatus,
+  MatchType,
+  TournamentFormat,
+  TournamentGender,
   type RegistrationFilterInput,
-  type TournamentRegistration,
+  type ExportTournamentRegistrationsQuery,
 } from '@/graphql/generated';
 
 interface ExportButtonProps {
@@ -17,6 +20,9 @@ interface ExportButtonProps {
   tournamentName?: string;
   filter?: RegistrationFilterInput;
 }
+
+type RegistrationExportRow =
+  ExportTournamentRegistrationsQuery['exportTournamentRegistrations'][number];
 
 const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   [RegistrationStatus.Pending]: 'Chờ duyệt',
@@ -32,6 +38,26 @@ const PAYMENT_STATUS_LABELS: Record<TournamentPaymentStatus, string> = {
   [TournamentPaymentStatus.Refunded]: 'Đã hoàn tiền',
 };
 
+const MATCH_TYPE_LABELS: Record<MatchType, string> = {
+  [MatchType.Singles]: 'Đơn',
+  [MatchType.Doubles]: 'Đôi',
+  [MatchType.Team]: 'Đội',
+};
+
+const FORMAT_LABELS: Record<TournamentFormat, string> = {
+  [TournamentFormat.SingleElimination]: 'Loại trực tiếp',
+  [TournamentFormat.DoubleElimination]: 'Loại kép',
+  [TournamentFormat.RoundRobin]: 'Vòng tròn',
+  [TournamentFormat.GroupKnockout]: 'Bảng + Loại trực tiếp',
+};
+
+const GENDER_LABELS: Record<TournamentGender, string> = {
+  [TournamentGender.Male]: 'Nam',
+  [TournamentGender.Female]: 'Nữ',
+  [TournamentGender.Mixed]: 'Hỗn hợp',
+  [TournamentGender.Open]: 'Không giới hạn',
+};
+
 function formatDateVN(dateStr?: string | null): string {
   if (!dateStr) return '';
   try {
@@ -45,11 +71,25 @@ function formatDateVN(dateStr?: string | null): string {
   }
 }
 
-function toExcelRows(registrations: TournamentRegistration[]) {
+function toExcelRows(registrations: RegistrationExportRow[]) {
   return registrations.map((r, i) => {
     const partner = r.members && r.members.length > 1 ? r.members[1] : null;
+    const cat = r.category;
     return {
       STT: i + 1,
+      'Nội dung': cat?.title ?? '',
+      'Nhóm tuổi': cat?.ageLabel ?? '',
+      'Giới tính (nội dung)': cat?.gender
+        ? (GENDER_LABELS[cat.gender] ?? cat.gender)
+        : '',
+      'Thể thức': cat?.matchType
+        ? (MATCH_TYPE_LABELS[cat.matchType] ?? cat.matchType)
+        : '',
+      'Thể loại giải': cat?.format
+        ? (FORMAT_LABELS[cat.format] ?? cat.format)
+        : '',
+      'Hạt giống': r.seed ?? '',
+      'Số báo danh': r.bibNumber ?? '',
       'Tên VĐV': r.athleteName,
       SĐT: r.phone ?? '',
       Email: r.email ?? '',
@@ -66,6 +106,7 @@ function toExcelRows(registrations: TournamentRegistration[]) {
       'Thanh toán': PAYMENT_STATUS_LABELS[r.paymentStatus] ?? r.paymentStatus,
       'Phí đăng ký': r.paymentAmount ?? 0,
       'Ghi chú': r.notes ?? '',
+      'Lý do từ chối': r.rejectionReason ?? '',
       'Ngày đăng ký': formatDateVN(r.createdAt),
     };
   });
@@ -95,8 +136,8 @@ export function ExportButton({
         wch: Math.max(
           key.length,
           ...rows.map(
-            (r) => String((r as Record<string, unknown>)[key] ?? '').length
-          )
+            (r) => String((r as Record<string, unknown>)[key] ?? '').length,
+          ),
         ),
       }));
       ws['!cols'] = colWidths;

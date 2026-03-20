@@ -80,6 +80,7 @@ interface EditState {
   sharedThirdPlace: boolean;
   groupCount: number;
   advancingPerGroup: number;
+  defaultMatchDurationMinutes: number;
   prizes: PrizeDraft[];
 }
 
@@ -117,6 +118,9 @@ function CategoryApiCard({
     groupCount: (category as { groupCount?: number }).groupCount ?? 4,
     advancingPerGroup:
       (category as { advancingPerGroup?: number }).advancingPerGroup ?? 2,
+    defaultMatchDurationMinutes:
+      (category as { defaultMatchDurationMinutes?: number })
+        .defaultMatchDurationMinutes ?? 30,
     prizes:
       (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
@@ -150,6 +154,9 @@ function CategoryApiCard({
       groupCount: (category as { groupCount?: number }).groupCount ?? 4,
       advancingPerGroup:
         (category as { advancingPerGroup?: number }).advancingPerGroup ?? 2,
+      defaultMatchDurationMinutes:
+        (category as { defaultMatchDurationMinutes?: number })
+          .defaultMatchDurationMinutes ?? 30,
       prizes:
         (category.prizes ?? []).length > 0
           ? (category.prizes ?? []).map((p) => ({
@@ -202,6 +209,10 @@ function CategoryApiCard({
           ? draft.advancingPerGroup
           : 2
         : undefined,
+      defaultMatchDurationMinutes:
+        draft.defaultMatchDurationMinutes > 0
+          ? draft.defaultMatchDurationMinutes
+          : 30,
       prizes: draft.prizes
         .filter((p) => p.title)
         .map((p, i) => ({
@@ -403,8 +414,7 @@ function CategoryApiCard({
               />
             </div>
             <p className="text-muted text-xs">
-              {draft.groupCount} bảng × {draft.advancingPerGroup} VĐV đi tiếp
-              ={' '}
+              {draft.groupCount} bảng × {draft.advancingPerGroup} VĐV đi tiếp ={' '}
               <strong className="text-heading">
                 {draft.groupCount * draft.advancingPerGroup} VĐV
               </strong>{' '}
@@ -675,6 +685,7 @@ function StepCategoriesEditMode({
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      defaultMatchDurationMinutes: 30,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -836,6 +847,7 @@ function StepCategoriesCreateMode({
               sharedThirdPlace: false,
               groupCount: 4,
               advancingPerGroup: 2,
+              defaultMatchDurationMinutes: 30,
               prizes: [
                 { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                 { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -901,6 +913,7 @@ function StepCategoriesCreateMode({
                 sharedThirdPlace: false,
                 groupCount: 4,
                 advancingPerGroup: 2,
+                defaultMatchDurationMinutes: 30,
                 prizes: [
                   { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                   {

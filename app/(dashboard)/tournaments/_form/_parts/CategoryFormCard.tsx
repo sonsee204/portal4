@@ -345,6 +345,25 @@ export function CategoryFormCard({
         )}
 
         <Controller
+          name={`categories.${index}.defaultMatchDurationMinutes`}
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Thời lượng dự kiến mỗi trận (phút)"
+              placeholder="30"
+              type="number"
+              min={5}
+              step={5}
+              value={field.value === undefined ? '' : String(field.value)}
+              onChange={(e) =>
+                field.onChange(parseInt(e.target.value, 10) || 30)
+              }
+            />
+          )}
+        />
+
+        <Controller
           name={`categories.${index}.description`}
           control={control}
           render={({ field }) => (

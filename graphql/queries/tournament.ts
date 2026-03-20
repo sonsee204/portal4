@@ -212,6 +212,14 @@ export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
   query ExportTournamentRegistrations($tournamentId: ID!, $filter: RegistrationFilterInput) {
     exportTournamentRegistrations(tournamentId: $tournamentId, filter: $filter) {
       ...RegistrationCore
+      category {
+        _id
+        title
+        ageLabel
+        gender
+        matchType
+        format
+      }
     }
   }
   ${REGISTRATION_CORE_FRAGMENT}

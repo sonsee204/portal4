@@ -386,6 +386,15 @@ input AssignRefereeInput {
   refereeName: String
 }
 
+input AssignRefereeToCourtInput {
+  courtName: String!
+
+  """YYYY-MM-DD. Null = all dates."""
+  date: String
+  tournamentId: ID!
+  tournamentRefereeId: ID!
+}
+
 """Types of auditable actions in the system"""
 enum AuditAction {
   ACCOUNT_REGISTER
@@ -484,6 +493,59 @@ type AuthResponse {
   message: String!
   refreshToken: String!
   user: User!
+}
+
+input AutoAssignRefereesInput {
+  strategy: AutoAssignStrategy!
+  tournamentId: ID!
+}
+
+type AutoAssignRefereesResult {
+  assignedCount: Int!
+  warnings: [String!]!
+}
+
+"""Strategy for auto-assigning referees to matches"""
+enum AutoAssignStrategy {
+  COURT_PREFERRED
+  ROUND_ROBIN
+  WORKLOAD_BALANCED
+}
+
+input AutoScheduleInput {
+  """Category IDs (null = all)"""
+  categoryIds: [String!]
+
+  """Override courtBufferMinutes from tournament config"""
+  courtBufferMinutes: Int
+
+  """Court names (null = all)"""
+  courtNames: [String!]
+
+  """Schedule date (YYYY-MM-DD)"""
+  date: String!
+
+  """
+  Override estimated match duration in minutes (overrides per-match estimatedDurationMinutes)
+  """
+  defaultMatchDurationMinutes: Int
+
+  """End time HH:mm (default 22:00)"""
+  endTime: String
+
+  """Override minRestMinutes from tournament config"""
+  minRestMinutes: Int
+
+  """Start time HH:mm (default 06:00)"""
+  startTime: String
+  tournamentId: ID!
+}
+
+"""Result of auto-schedule operation"""
+type AutoScheduleResult {
+  scheduledMatches: [TournamentMatch!]!
+  totalScheduled: Int!
+  warnings: [String!]!
 }
 
 input AvailablePassesFilterInput {
@@ -1066,6 +1128,17 @@ input BracketSizeAdjustmentInput {
   newBracketSize: Int!
 }
 
+input BulkAssignRefereeInput {
+  matchIds: [ID!]!
+  tournamentRefereeId: ID!
+}
+
+type BulkAssignRefereeResult {
+  assignedCount: Int!
+  skippedCount: Int!
+  warnings: [String!]!
+}
+
 input BulkCheckInInput {
   """ID kèo"""
   gameId: ID!
@@ -1220,6 +1293,21 @@ input CancelPickupGameInput {
 
   """Lý do hủy"""
   reason: String
+}
+
+input CascadeRescheduleInput {
+  """Anchor match (the one that finished early/late)"""
+  matchId: ID!
+
+  """Shift in minutes (+push later, -pull earlier)"""
+  shiftMinutes: Int!
+}
+
+"""Result of cascade reschedule operation"""
+type CascadeRescheduleResult {
+  affectedMatches: [TournamentMatch!]!
+  totalAffected: Int!
+  warnings: [String!]!
 }
 
 input CategoryFilterInput {
@@ -1862,6 +1950,9 @@ input CreateCategoryInput {
 
   """Bracket size (power of 2). 0 or null = auto-calculate."""
   bracketSize: Int
+
+  """Default match duration in minutes (default 30)"""
+  defaultMatchDurationMinutes: Int
   description: String
   displayOrder: Int
   format: TournamentFormat! = SINGLE_ELIMINATION
@@ -2555,6 +2646,7 @@ input CreateTournamentInput {
   prizes: [TournamentPrizeInput!]
   rules: [TournamentRuleInput!]
   schedule: [TournamentSchedulePhaseInput!]
+  scheduleConfig: ScheduleConfigInput
   sportType: SportType!
   title: String!
 }
@@ -3753,6 +3845,20 @@ type InventoryStatus {
   totalRetailValue: Int!
 }
 
+input InviteRefereeInput {
+  email: String
+  maxMatchesPerDay: Int
+  name: String!
+  notes: String
+  phone: String
+  preferredCourts: [String!]
+  role: RefereeRole
+  tournamentId: ID!
+
+  """System user ID. Omit for external referees."""
+  userId: ID
+}
+
 """Arbitrary JSON value"""
 scalar JSON
 
@@ -4340,6 +4446,17 @@ type Mutation {
   """Assign referee to match"""
   assignReferee(input: AssignRefereeInput!): TournamentMatch!
 
+  """Assign referee to all matches on a specific court"""
+  assignRefereeToCourt(input: AssignRefereeToCourtInput!): BulkAssignRefereeResult!
+
+  """Auto-assign referees from pool to unassigned matches"""
+  autoAssignReferees(input: AutoAssignRefereesInput!): AutoAssignRefereesResult!
+
+  """
+  Auto-schedule unscheduled matches using a greedy algorithm with round dependency, rest-time, and court buffer
+  """
+  autoScheduleMatches(input: AutoScheduleInput!): AutoScheduleResult!
+
   """Auto-seed top players in category"""
   autoSeedPlayers(categoryId: ID!, count: Int!): SuccessResponse!
 
@@ -4351,6 +4468,9 @@ type Mutation {
 
   """Bulk approve registrations"""
   bulkApproveRegistrations(input: BulkRegistrationActionInput!): Int!
+
+  """Assign one referee to multiple matches from pool"""
+  bulkAssignReferee(input: BulkAssignRefereeInput!): BulkAssignRefereeResult!
 
   """Check-in nhiều người"""
   bulkCheckIn(input: BulkCheckInInput!): [PickupGameParticipant!]!
@@ -4421,6 +4541,11 @@ type Mutation {
   """Cancel a pending request"""
   cancelVenueRequest(requestId: ID!): VenueRequest!
 
+  """
+  Cascade reschedule: shift all subsequent matches on the same court after anchor match
+  """
+  cascadeReschedule(input: CascadeRescheduleInput!): CascadeRescheduleResult!
+
   """Change password"""
   changePassword(input: ChangePasswordInput!): SuccessResponse!
 
@@ -4441,6 +4566,9 @@ type Mutation {
 
   """Clear referee from match"""
   clearReferee(matchId: ID!): TournamentMatch!
+
+  """Clear referee from multiple matches"""
+  clearRefereeFromMatches(matchIds: [ID!]!, tournamentId: ID!): Int!
 
   """Clear all seeds for a category"""
   clearSeeds(categoryId: ID!): SuccessResponse!
@@ -4664,6 +4792,9 @@ type Mutation {
   """Invite a user to join a group (admin/mod only)"""
   inviteMember(groupId: ID!, message: String, userId: ID!): GroupMember!
 
+  """Invite a referee to the tournament (pool-level invite)"""
+  inviteRefereeToTournament(input: InviteRefereeInput!): TournamentReferee!
+
   """Mời người chơi vào kèo"""
   inviteToGame(gameId: ID!, userIds: [ID!]!): Boolean!
 
@@ -4797,6 +4928,11 @@ type Mutation {
   """Remove reaction from a message"""
   removeReaction(input: RemoveReactionInput!): Message!
 
+  """
+  Remove referee from tournament (cascades to unassign from NOT_STARTED matches)
+  """
+  removeTournamentReferee(id: ID!): TournamentReferee!
+
   """Remove staff member"""
   removeVenueStaff(userId: ID!, venueId: ID!): Boolean!
 
@@ -4843,6 +4979,9 @@ type Mutation {
   """Referee responds to invite (accept or decline)"""
   respondRefereeInvite(input: RespondRefereeInviteInput!): TournamentMatch!
 
+  """Referee responds to tournament-level invite"""
+  respondTournamentRefereeInvite(input: RespondTournamentRefereeInviteInput!): TournamentReferee!
+
   """Process customer return"""
   returnStock(input: ReturnStockInput!, venueId: ID!): StockMovement!
 
@@ -4858,8 +4997,8 @@ type Mutation {
   """Lưu kèo"""
   saveGame(gameId: ID!): SavedGame!
 
-  """Schedule a match"""
-  scheduleMatch(input: ScheduleMatchInput!): TournamentMatch!
+  """Schedule a match (returns match + conflict warnings)"""
+  scheduleMatch(input: ScheduleMatchInput!): ScheduleMatchResult!
 
   """Score a point"""
   scorePoint(input: ScorePointInput!): MatchScorecard!
@@ -5065,6 +5204,9 @@ type Mutation {
 
   """Update tournament details"""
   updateTournament(input: UpdateTournamentInput!): Tournament!
+
+  """Update tournament referee settings"""
+  updateTournamentReferee(input: UpdateTournamentRefereeInput!): TournamentReferee!
 
   """Update user report status (Admin only)"""
   updateUserReportStatus(input: UpdateUserReportStatusInput!): UserReport!
@@ -7659,6 +7801,9 @@ type Query {
   """Get claim requests with filters - Admin only"""
   claimRequests(filter: ClaimRequestFilterInput, pagination: PaginationInput): ClaimRequestList!
 
+  """Public list of referees who confirmed participation (name + role only)"""
+  confirmedTournamentReferees(tournamentId: ID!): [TournamentRefereePublic!]!
+
   """Get court by ID"""
   court(courtId: ID!): Court!
 
@@ -8030,6 +8175,9 @@ type Query {
   """Matches assigned to current user as referee"""
   refereeMatches(tournamentId: ID!): [TournamentMatch!]!
 
+  """Get referee workload statistics for a tournament"""
+  refereeWorkload(tournamentId: ID!): RefereeWorkloadResult!
+
   """Search messages in a conversation"""
   searchMessages(input: SearchMessagesInput!, pagination: PaginationInput): MessageList!
 
@@ -8074,6 +8222,12 @@ type Query {
 
   """Rankings for a category"""
   tournamentRankings(categoryId: ID!): [PlayerRanking!]!
+
+  """Get a single tournament referee by ID"""
+  tournamentReferee(id: ID!): TournamentReferee!
+
+  """List all referees in the tournament pool"""
+  tournamentReferees(filter: TournamentRefereeFilterInput, tournamentId: ID!): [TournamentReferee!]!
 
   """List registrations for a tournament (organizer)"""
   tournamentRegistrations(filter: RegistrationFilterInput, pagination: PaginationInput, tournamentId: ID!): RegistrationList!
@@ -8330,6 +8484,26 @@ enum RefereeInviteStatus {
   CONFIRMED
   DECLINED
   PENDING
+}
+
+"""Role of a referee in a tournament"""
+enum RefereeRole {
+  HEAD_REFEREE
+  LINE_JUDGE
+  REFEREE
+}
+
+type RefereeWorkloadEntry {
+  date: String!
+  matchCount: Int!
+  refereeId: ID!
+  refereeName: String!
+}
+
+type RefereeWorkloadResult {
+  entries: [RefereeWorkloadEntry!]!
+  totalUnassigned: Int!
+  warnings: [String!]!
 }
 
 type ReferralCode {
@@ -8741,6 +8915,12 @@ input RespondRefereeInviteInput {
   notificationId: ID!
 }
 
+input RespondTournamentRefereeInviteInput {
+  accept: Boolean!
+  notificationId: ID!
+  tournamentRefereeId: ID!
+}
+
 input ReturnStockInput {
   """Return reason/notes"""
   note: String
@@ -8855,11 +9035,35 @@ type SavedGameList {
   totalPages: Int!
 }
 
+"""Scheduling configuration for the tournament"""
+type ScheduleConfig {
+  """
+  Buffer minutes between matches on the same court for cleanup/warmup (default 5)
+  """
+  courtBufferMinutes: Int!
+
+  """Minimum rest minutes between 2 matches of the same player (default 30)"""
+  minRestMinutes: Int!
+}
+
+input ScheduleConfigInput {
+  courtBufferMinutes: Int = 5
+  minRestMinutes: Int = 30
+}
+
 input ScheduleMatchInput {
   courtName: String
   estimatedDurationMinutes: Int
   matchId: ID!
   scheduledAt: String
+}
+
+"""Result of scheduling with conflict warnings"""
+type ScheduleMatchResult {
+  match: TournamentMatch!
+
+  """Conflict warnings (empty if none)"""
+  warnings: [String!]!
 }
 
 input ScorePointInput {
@@ -9563,6 +9767,9 @@ type Subscription {
   """Any match updated in tournament"""
   tournamentMatchesUpdated(tournamentId: ID!): String!
 
+  """Tournament referee pool changed (invite, respond, update, remove)"""
+  tournamentRefereesUpdated(tournamentId: ID!): String!
+
   """Tournament status changed"""
   tournamentStatusChanged(tournamentId: ID!): String!
 
@@ -9748,6 +9955,7 @@ type Tournament {
   prizes: [TournamentPrize!]
   rules: [TournamentRule!]
   schedule: [TournamentSchedulePhase!]
+  scheduleConfig: ScheduleConfig
 
   """Primary sport"""
   sportType: SportType!
@@ -9774,6 +9982,9 @@ type TournamentCategory {
   bracketSize: Int
   completedMatchCount: Int!
   createdAt: DateTime!
+
+  """Default match duration in minutes for this category"""
+  defaultMatchDurationMinutes: Int
 
   """Short description for landing page"""
   description: String
@@ -9970,6 +10181,9 @@ type TournamentMatch {
   """Group ID (for GROUP_KNOCKOUT format)"""
   groupId: String
 
+  """True when the match was force-scheduled despite conflict warnings"""
+  hasConflictWarning: Boolean
+
   """Is this a BYE match (auto-advance)"""
   isBye: Boolean!
 
@@ -10062,6 +10276,51 @@ input TournamentPrizeInput {
   perks: [String!]
   rank: String!
   title: String!
+}
+
+type TournamentReferee {
+  _id: ID!
+  createdAt: DateTime!
+  email: String
+
+  """Max matches per day (0 = unlimited)"""
+  maxMatchesPerDay: Int!
+
+  """Display name"""
+  name: String!
+  notes: String
+  phone: String
+
+  """Preferred court names from tournament.courts"""
+  preferredCourts: [String!]
+  role: RefereeRole!
+  status: TournamentRefereeStatus!
+
+  """Tournament this referee belongs to"""
+  tournamentId: ID!
+  updatedAt: DateTime!
+
+  """System user ID (null for external referees)"""
+  userId: ID
+}
+
+input TournamentRefereeFilterInput {
+  role: String
+  status: String
+}
+
+type TournamentRefereePublic {
+  _id: ID!
+  name: String!
+  role: RefereeRole!
+}
+
+"""Status of a referee in the tournament referee pool"""
+enum TournamentRefereeStatus {
+  CONFIRMED
+  DECLINED
+  INVITED
+  REMOVED
 }
 
 type TournamentRegistration {
@@ -10235,6 +10494,9 @@ input UpdateCategoryInput {
 
   """Bracket size (power of 2). 0 or null = auto-calculate."""
   bracketSize: Int
+
+  """Default match duration in minutes (default 30)"""
+  defaultMatchDurationMinutes: Int
   description: String
   displayOrder: Int
   format: TournamentFormat
@@ -10776,7 +11038,17 @@ input UpdateTournamentInput {
   prizes: [TournamentPrizeInput!]
   rules: [TournamentRuleInput!]
   schedule: [TournamentSchedulePhaseInput!]
+  scheduleConfig: ScheduleConfigInput
   title: String
+}
+
+input UpdateTournamentRefereeInput {
+  id: ID!
+  maxMatchesPerDay: Int
+  name: String
+  notes: String
+  preferredCourts: [String!]
+  role: RefereeRole
 }
 
 input UpdateUserReportStatusInput {

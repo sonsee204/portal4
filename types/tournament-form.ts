@@ -31,6 +31,7 @@ export interface CategoryFormEntry {
   sharedThirdPlace: boolean;
   groupCount: number;
   advancingPerGroup: number;
+  defaultMatchDurationMinutes: number;
   prizes: PrizeEntry[];
 }
 
@@ -95,6 +96,9 @@ export interface TournamentFormData {
 
   categories: CategoryFormEntry[];
 
+  minRestMinutes: number;
+  courtBufferMinutes: number;
+
   schedule: SchedulePhaseEntry[];
   facilities: FacilityEntry[];
   courts: CourtEntry[];
@@ -136,6 +140,7 @@ const categorySchema = z.object({
   sharedThirdPlace: z.boolean(),
   groupCount: z.number().min(2),
   advancingPerGroup: z.number().min(1),
+  defaultMatchDurationMinutes: z.number().min(5),
   prizes: z.array(prizeSchema),
 });
 
@@ -192,6 +197,9 @@ export const tournamentFormSchema = z
 
     categories: z.array(categorySchema).min(1, 'Cần ít nhất 1 nội dung thi đấu'),
 
+    minRestMinutes: z.number().min(0),
+    courtBufferMinutes: z.number().min(0),
+
     schedule: z.array(schedulePhaseSchema),
     facilities: z.array(facilitySchema),
     courts: z.array(courtSchema),
@@ -231,7 +239,7 @@ export const tournamentFormSchema = z
 export const STEP_FIELDS: Record<number, (keyof TournamentFormData)[]> = {
   0: ['name', 'organizerName', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'introduction', 'coverImageUrl', 'highlights'],
   1: ['categories'],
-  2: ['schedule', 'facilities', 'courts'],
+  2: ['schedule', 'facilities', 'courts', 'minRestMinutes', 'courtBufferMinutes'],
   3: ['rules'],
   4: ['registrationDeadline', 'fees', 'contacts', 'paymentBank', 'paymentAccountNumber', 'paymentAccountName', 'paymentQrImage'],
   5: [],
@@ -281,6 +289,7 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      defaultMatchDurationMinutes: 30,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -288,6 +297,9 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       ],
     },
   ],
+
+  minRestMinutes: 30,
+  courtBufferMinutes: 5,
 
   schedule: [
     { label: 'Đăng ký', date: '', startTime: '', endTime: '', status: 'upcoming' },
