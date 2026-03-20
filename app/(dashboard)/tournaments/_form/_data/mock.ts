@@ -32,6 +32,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 32,
       bracketSize: 32,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
     {
@@ -45,6 +47,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 24,
       bracketSize: 32,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
     {
@@ -58,6 +62,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 32,
       bracketSize: 32,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
     {
@@ -71,6 +77,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 16,
       bracketSize: 16,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
     {
@@ -84,6 +92,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 32,
       bracketSize: 32,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
     {
@@ -97,6 +107,8 @@ export const mockTournamentFormData: TournamentFormData = {
       maxRegistrations: 24,
       bracketSize: 32,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [],
     },
   ],

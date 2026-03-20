@@ -78,6 +78,8 @@ interface EditState {
   maxRegistrations: number;
   bracketSize: number;
   sharedThirdPlace: boolean;
+  groupCount: number;
+  advancingPerGroup: number;
   prizes: PrizeDraft[];
 }
 
@@ -112,6 +114,9 @@ function CategoryApiCard({
     bracketSize: category.bracketSize ?? 0,
     sharedThirdPlace:
       (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
+    groupCount: (category as { groupCount?: number }).groupCount ?? 4,
+    advancingPerGroup:
+      (category as { advancingPerGroup?: number }).advancingPerGroup ?? 2,
     prizes:
       (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
@@ -142,6 +147,9 @@ function CategoryApiCard({
       bracketSize: category.bracketSize ?? 0,
       sharedThirdPlace:
         (category as { sharedThirdPlace?: boolean }).sharedThirdPlace ?? false,
+      groupCount: (category as { groupCount?: number }).groupCount ?? 4,
+      advancingPerGroup:
+        (category as { advancingPerGroup?: number }).advancingPerGroup ?? 2,
       prizes:
         (category.prizes ?? []).length > 0
           ? (category.prizes ?? []).map((p) => ({
@@ -162,6 +170,8 @@ function CategoryApiCard({
   const handleSave = useCallback(async () => {
     if (!draft.title.trim()) return;
     const isRoundRobinDraft = draft.format === TournamentFormat.RoundRobin;
+    const isGroupKnockoutDraft =
+      draft.format === TournamentFormat.GroupKnockout;
     const input: UpdateCategoryInput = {
       id: category._id,
       title: draft.title,
@@ -172,15 +182,26 @@ function CategoryApiCard({
       description: draft.description || undefined,
       popular: draft.popular,
       maxRegistrations: draft.maxRegistrations,
-      bracketSize: isRoundRobinDraft
-        ? undefined
-        : draft.bracketSize > 0
-          ? draft.bracketSize
-          : undefined,
+      bracketSize:
+        isRoundRobinDraft || isGroupKnockoutDraft
+          ? undefined
+          : draft.bracketSize > 0
+            ? draft.bracketSize
+            : undefined,
       sharedThirdPlace:
         draft.format === TournamentFormat.SingleElimination
           ? draft.sharedThirdPlace
           : undefined,
+      groupCount: isGroupKnockoutDraft
+        ? draft.groupCount > 0
+          ? draft.groupCount
+          : 4
+        : undefined,
+      advancingPerGroup: isGroupKnockoutDraft
+        ? draft.advancingPerGroup > 0
+          ? draft.advancingPerGroup
+          : 2
+        : undefined,
       prizes: draft.prizes
         .filter((p) => p.title)
         .map((p, i) => ({
@@ -273,7 +294,7 @@ function CategoryApiCard({
         </div>
 
         <div
-          className={`grid gap-4 ${draft.format === TournamentFormat.RoundRobin ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
+          className={`grid gap-4 ${draft.format === TournamentFormat.RoundRobin || draft.format === TournamentFormat.GroupKnockout ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
         >
           <Input
             label="Số VĐV tối đa"
@@ -285,22 +306,25 @@ function CategoryApiCard({
               update({ maxRegistrations: parseInt(e.target.value, 10) || 0 })
             }
           />
-          {draft.format !== TournamentFormat.RoundRobin && (
-            <Select
-              label="Kích thước nhánh đấu"
-              value={String(draft.bracketSize)}
-              onChange={(e) => update({ bracketSize: Number(e.target.value) })}
-              options={[
-                { label: 'Tự động', value: '0' },
-                { label: '4', value: '4' },
-                { label: '8', value: '8' },
-                { label: '16', value: '16' },
-                { label: '32', value: '32' },
-                { label: '64', value: '64' },
-                { label: '128', value: '128' },
-              ]}
-            />
-          )}
+          {draft.format !== TournamentFormat.RoundRobin &&
+            draft.format !== TournamentFormat.GroupKnockout && (
+              <Select
+                label="Kích thước nhánh đấu"
+                value={String(draft.bracketSize)}
+                onChange={(e) =>
+                  update({ bracketSize: Number(e.target.value) })
+                }
+                options={[
+                  { label: 'Tự động', value: '0' },
+                  { label: '4', value: '4' },
+                  { label: '8', value: '8' },
+                  { label: '16', value: '16' },
+                  { label: '32', value: '32' },
+                  { label: '64', value: '64' },
+                  { label: '128', value: '128' },
+                ]}
+              />
+            )}
           <div className="flex items-end pb-1">
             <label className="flex cursor-pointer items-center gap-2.5">
               <button
@@ -349,6 +373,43 @@ function CategoryApiCard({
                 Đồng giải ba (không đánh trận tranh hạng 3-4)
               </span>
             </label>
+          </div>
+        )}
+
+        {draft.format === TournamentFormat.GroupKnockout && (
+          <div className="space-y-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Số bảng"
+                placeholder="VD: 4"
+                type="number"
+                min={2}
+                value={String(draft.groupCount)}
+                onChange={(e) =>
+                  update({ groupCount: parseInt(e.target.value, 10) || 4 })
+                }
+              />
+              <Input
+                label="VĐV đi tiếp / bảng"
+                placeholder="VD: 2"
+                type="number"
+                min={1}
+                value={String(draft.advancingPerGroup)}
+                onChange={(e) =>
+                  update({
+                    advancingPerGroup: parseInt(e.target.value, 10) || 2,
+                  })
+                }
+              />
+            </div>
+            <p className="text-muted text-xs">
+              {draft.groupCount} bảng × {draft.advancingPerGroup} VĐV đi tiếp
+              ={' '}
+              <strong className="text-heading">
+                {draft.groupCount * draft.advancingPerGroup} VĐV
+              </strong>{' '}
+              vào vòng loại trực tiếp
+            </p>
           </div>
         )}
 
@@ -612,6 +673,8 @@ function StepCategoriesEditMode({
       maxRegistrations: 0,
       bracketSize: 0,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -771,6 +834,8 @@ function StepCategoriesCreateMode({
               maxRegistrations: 0,
               bracketSize: 0,
               sharedThirdPlace: false,
+              groupCount: 4,
+              advancingPerGroup: 2,
               prizes: [
                 { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                 { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
@@ -834,6 +899,8 @@ function StepCategoriesCreateMode({
                 maxRegistrations: 0,
                 bracketSize: 0,
                 sharedThirdPlace: false,
+                groupCount: 4,
+                advancingPerGroup: 2,
                 prizes: [
                   { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
                   {

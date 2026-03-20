@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
@@ -16,11 +16,20 @@ import {
   useRegistrations,
 } from '@/hooks/tournament';
 import { RegistrationStatus, TournamentFormat } from '@/graphql/generated';
-import { GET_TOURNAMENT_RANKINGS } from '@/graphql/queries/tournament';
+import {
+  GET_TOURNAMENT_RANKINGS,
+  GET_TOURNAMENT_GROUP_RANKINGS,
+} from '@/graphql/queries/tournament';
+import { SEED_KNOCKOUT_BRACKET } from '@/graphql/mutations/tournament';
 import { IonIcon } from '@/components/atoms/IonIcon';
+import { showError } from '@/lib/toast';
 import type {
   GetTournamentRankingsQuery,
   GetTournamentRankingsQueryVariables,
+  GetTournamentGroupRankingsQuery,
+  GetTournamentGroupRankingsQueryVariables,
+  SeedKnockoutBracketMutation,
+  SeedKnockoutBracketMutationVariables,
 } from '@/graphql/generated';
 
 function categoryStatusLabel(status?: string): {
@@ -135,7 +144,83 @@ export default function DrawPage({
   };
 
   const isRoundRobin = activeCategory?.format === TournamentFormat.RoundRobin;
+  const isGroupKnockout =
+    activeCategory?.format === TournamentFormat.GroupKnockout;
 
+  // GROUP_KNOCKOUT derived state
+  const [selectedGroupTab, setSelectedGroupTab] = useState<string>('');
+  const groupMatches = useMemo(
+    () => matches.filter((m) => m.round < 100),
+    [matches]
+  );
+  const knockoutMatches = useMemo(
+    () => matches.filter((m) => m.round >= 100),
+    [matches]
+  );
+  const uniqueGroupIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          groupMatches
+            .map((m) => m.groupId)
+            .filter((g): g is string => Boolean(g))
+        ),
+      ].sort(),
+    [groupMatches]
+  );
+  const activeGroupTab = selectedGroupTab || uniqueGroupIds[0] || '';
+
+  const allGroupMatchesDone = useMemo(() => {
+    if (groupMatches.length === 0) return false;
+    return groupMatches.every(
+      (m) =>
+        m.isBye ||
+        ['FINISHED', 'WALKOVER', 'RETIREMENT'].includes(m.status as string)
+    );
+  }, [groupMatches]);
+
+  const knockoutSeeded = useMemo(() => {
+    const r1 = knockoutMatches.filter((m) => m.round === 101);
+    return r1.length > 0 && r1.some((m) => m.player1 || m.player2);
+  }, [knockoutMatches]);
+
+  const [seedKnockout, { loading: seeding }] = useMutation<
+    SeedKnockoutBracketMutation,
+    SeedKnockoutBracketMutationVariables
+  >(SEED_KNOCKOUT_BRACKET, {
+    onCompleted: () => {
+      void refetch();
+    },
+    onError: (err) => showError(err.message),
+  });
+
+  // Per-group standings (GROUP_KNOCKOUT)
+  const { data: groupRankingsData, refetch: refetchGroupRankings } = useQuery<
+    GetTournamentGroupRankingsQuery,
+    GetTournamentGroupRankingsQueryVariables
+  >(GET_TOURNAMENT_GROUP_RANKINGS, {
+    variables: { categoryId: activeCategoryId, groupId: activeGroupTab },
+    skip:
+      !activeCategoryId ||
+      !isGroupKnockout ||
+      !activeGroupTab ||
+      groupMatches.length === 0,
+  });
+  const groupStandings = groupRankingsData?.tournamentGroupRankings ?? [];
+
+  // Refetch group rankings when active group tab changes or matches update
+  useEffect(() => {
+    if (isGroupKnockout && activeGroupTab && groupMatches.length > 0) {
+      void refetchGroupRankings();
+    }
+  }, [
+    isGroupKnockout,
+    activeGroupTab,
+    groupMatches.length,
+    refetchGroupRankings,
+  ]);
+
+  // Round-robin standings
   const { data: rankingsData } = useQuery<
     GetTournamentRankingsQuery,
     GetTournamentRankingsQueryVariables
@@ -154,6 +239,39 @@ export default function DrawPage({
     }
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   }, [matches]);
+
+  // GROUP_KNOCKOUT: matches for the active group tab
+  const activeGroupMatches = useMemo(
+    () =>
+      groupMatches
+        .filter((m) => m.groupId === activeGroupTab)
+        .sort(
+          (a, b) => a.round - b.round || a.bracketPosition! - b.bracketPosition!
+        ),
+    [groupMatches, activeGroupTab]
+  );
+
+  const knockoutRoundsMap = useMemo(() => {
+    const map = new Map<number, typeof matches>();
+    for (const m of knockoutMatches) {
+      const arr = map.get(m.round) ?? [];
+      arr.push(m);
+      map.set(m.round, arr);
+    }
+    return [...map.entries()].sort((a, b) => a[0] - b[0]);
+  }, [knockoutMatches]);
+
+  // Expected group-stage matches for GROUP_KNOCKOUT stats
+  const groupCount =
+    (activeCategory as { groupCount?: number })?.groupCount ?? 4;
+  const advancingPerGroup =
+    (activeCategory as { advancingPerGroup?: number })?.advancingPerGroup ?? 2;
+  const groupMatchesPerGroup = Math.floor(
+    (Math.ceil((approvedCount ?? 0) / groupCount) *
+      (Math.ceil((approvedCount ?? 0) / groupCount) - 1)) /
+      2
+  );
+  const totalGroupMatches = groupMatchesPerGroup * groupCount;
 
   const statusBadge = categoryStatusLabel(activeCategory?.status as string);
 
@@ -225,7 +343,26 @@ export default function DrawPage({
             <span className="text-secondary">VĐV đã duyệt:</span>{' '}
             <span className="text-heading font-semibold">{approvedCount}</span>
           </div>
-          {isRoundRobin ? (
+          {isGroupKnockout ? (
+            <>
+              <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                <span className="text-secondary">Số bảng:</span>{' '}
+                <span className="text-heading font-semibold">{groupCount}</span>
+              </div>
+              <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                <span className="text-secondary">VĐV đi tiếp / bảng:</span>{' '}
+                <span className="text-heading font-semibold">
+                  {advancingPerGroup}
+                </span>
+              </div>
+              <div className="bg-surface-elevated rounded-lg px-3 py-2">
+                <span className="text-secondary">Tổng trận vòng bảng:</span>{' '}
+                <span className="text-heading font-semibold">
+                  ~{totalGroupMatches}
+                </span>
+              </div>
+            </>
+          ) : isRoundRobin ? (
             <div className="bg-surface-elevated rounded-lg px-3 py-2">
               <span className="text-secondary">Tổng số trận:</span>{' '}
               <span className="text-heading font-semibold">
@@ -267,7 +404,7 @@ export default function DrawPage({
         </div>
       )}
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <Button
           size="sm"
           disabled={isLoading || !activeCategoryId || matches.length > 0}
@@ -275,10 +412,32 @@ export default function DrawPage({
         >
           {generating
             ? 'Đang tạo...'
-            : isRoundRobin
-              ? 'Tạo lịch đấu vòng tròn'
-              : 'Tạo nhánh đấu'}
+            : isGroupKnockout
+              ? 'Tạo bảng đấu'
+              : isRoundRobin
+                ? 'Tạo lịch đấu vòng tròn'
+                : 'Tạo nhánh đấu'}
         </Button>
+
+        {isGroupKnockout &&
+          allGroupMatchesDone &&
+          !knockoutSeeded &&
+          matches.length > 0 && (
+            <Button
+              size="sm"
+              variant="primary"
+              iconLeft="git-branch-outline"
+              disabled={seeding}
+              onClick={() =>
+                void seedKnockout({
+                  variables: { categoryId: activeCategoryId },
+                })
+              }
+            >
+              {seeding ? 'Đang xếp...' : 'Xếp VĐV vào vòng loại trực tiếp'}
+            </Button>
+          )}
+
         {matches.length > 0 && (
           <Button
             size="sm"
@@ -287,7 +446,11 @@ export default function DrawPage({
             onClick={handleReset}
             className="text-red-400"
           >
-            {isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
+            {isGroupKnockout
+              ? 'Xoá bảng đấu'
+              : isRoundRobin
+                ? 'Xoá lịch đấu'
+                : 'Xoá nhánh đấu'}
           </Button>
         )}
       </div>
@@ -303,13 +466,261 @@ export default function DrawPage({
           <GlassPanel card>
             <div className="py-12 text-center">
               <p className="text-secondary">
-                {isRoundRobin
-                  ? 'Chưa có lịch đấu. Hãy tạo lịch đấu vòng tròn để bắt đầu.'
-                  : 'Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.'}
+                {isGroupKnockout
+                  ? 'Chưa có bảng đấu. Hãy tạo bảng đấu để bắt đầu.'
+                  : isRoundRobin
+                    ? 'Chưa có lịch đấu. Hãy tạo lịch đấu vòng tròn để bắt đầu.'
+                    : 'Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.'}
               </p>
             </div>
           </GlassPanel>
+        ) : isGroupKnockout ? (
+          // ── GROUP_KNOCKOUT: two-phase display ──
+          <>
+            {/* Phase 1: Group Stage */}
+            <GlassPanel card>
+              <div className="mb-4 flex items-center gap-2">
+                <div className="bg-primary/10 flex h-7 w-7 items-center justify-center rounded-lg">
+                  <IonIcon
+                    name="grid-outline"
+                    size="sm"
+                    className="text-primary"
+                  />
+                </div>
+                <h3 className="text-heading text-sm font-bold">Vòng bảng</h3>
+                {allGroupMatchesDone && (
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-500">
+                    Hoàn thành
+                  </span>
+                )}
+              </div>
+
+              {/* Group tabs */}
+              {uniqueGroupIds.length > 0 && (
+                <div className="mb-4 flex gap-2">
+                  {uniqueGroupIds.map((gId) => (
+                    <button
+                      key={gId}
+                      onClick={() => setSelectedGroupTab(gId)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        activeGroupTab === gId
+                          ? 'bg-primary text-white'
+                          : 'bg-surface-elevated text-secondary hover:text-primary'
+                      }`}
+                    >
+                      Bảng {gId}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Active group matches */}
+              {activeGroupMatches.length > 0 ? (
+                <div className="space-y-2">
+                  {activeGroupMatches.map((m) => (
+                    <div
+                      key={m._id}
+                      className="bg-bg-secondary flex items-center justify-between rounded-lg px-4 py-3"
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-secondary font-mono text-xs">
+                          #{m.matchNumber}
+                        </span>
+                        <span className="text-heading text-sm font-medium">
+                          {m.player1?.name ?? 'TBD'}
+                        </span>
+                        <span className="text-secondary text-xs">vs</span>
+                        <span className="text-heading text-sm font-medium">
+                          {m.player2?.name ?? 'TBD'}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs font-medium ${
+                          ['FINISHED', 'WALKOVER', 'RETIREMENT'].includes(
+                            m.status as string
+                          )
+                            ? 'text-emerald-500'
+                            : m.status === 'LIVE'
+                              ? 'text-primary'
+                              : 'text-secondary'
+                        }`}
+                      >
+                        {m.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-secondary text-sm">
+                  Không có trận nào trong Bảng {activeGroupTab}
+                </p>
+              )}
+
+              {/* Per-group standings */}
+              {groupStandings.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-heading mb-2 flex items-center gap-2 text-xs font-semibold">
+                    <IonIcon
+                      name="podium-outline"
+                      size="sm"
+                      className="text-primary"
+                    />
+                    Bảng xếp hạng — Bảng {activeGroupTab}
+                    <span className="text-muted font-normal">
+                      (top {advancingPerGroup} đi tiếp)
+                    </span>
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-surface-border border-b">
+                          <th className="text-secondary py-2 pr-3 text-left font-medium">
+                            #
+                          </th>
+                          <th className="text-secondary py-2 pr-3 text-left font-medium">
+                            VĐV
+                          </th>
+                          <th className="text-secondary py-2 pr-3 text-center font-medium">
+                            ĐT
+                          </th>
+                          <th className="text-secondary py-2 pr-3 text-center font-medium">
+                            T
+                          </th>
+                          <th className="text-secondary py-2 pr-3 text-center font-medium">
+                            B
+                          </th>
+                          <th className="text-secondary py-2 pr-3 text-center font-medium">
+                            Điểm
+                          </th>
+                          <th className="text-secondary py-2 text-center font-medium">
+                            Hiệu set
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupStandings.map((row, i) => (
+                          <tr
+                            key={row.registrationId}
+                            className={`border-surface-border border-b last:border-0 ${
+                              i < advancingPerGroup ? 'bg-emerald-500/5' : ''
+                            }`}
+                          >
+                            <td className="py-2 pr-3">
+                              <span
+                                className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                                  i < advancingPerGroup
+                                    ? 'bg-emerald-500/20 text-emerald-500'
+                                    : 'text-secondary'
+                                }`}
+                              >
+                                {i + 1}
+                              </span>
+                            </td>
+                            <td className="text-heading py-2 pr-3">
+                              {row.playerName}
+                            </td>
+                            <td className="text-secondary py-2 pr-3 text-center">
+                              {row.matchesPlayed}
+                            </td>
+                            <td className="py-2 pr-3 text-center text-emerald-500">
+                              {row.matchesWon}
+                            </td>
+                            <td className="py-2 pr-3 text-center text-red-400">
+                              {row.matchesLost}
+                            </td>
+                            <td className="text-heading py-2 pr-3 text-center font-semibold">
+                              {row.groupPoints}
+                            </td>
+                            <td className="text-secondary py-2 text-center">
+                              {row.setsWon - row.setsLost >= 0 ? '+' : ''}
+                              {row.setsWon - row.setsLost}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </GlassPanel>
+
+            {/* Phase 2: Knockout Stage */}
+            {knockoutMatches.length > 0 && (
+              <GlassPanel card>
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="bg-primary/10 flex h-7 w-7 items-center justify-center rounded-lg">
+                    <IonIcon
+                      name="git-branch-outline"
+                      size="sm"
+                      className="text-primary"
+                    />
+                  </div>
+                  <h3 className="text-heading text-sm font-bold">
+                    Vòng loại trực tiếp
+                  </h3>
+                  {knockoutSeeded ? (
+                    <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+                      Đã xếp VĐV
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                      Chờ xếp VĐV
+                    </span>
+                  )}
+                </div>
+
+                {!knockoutSeeded && !allGroupMatchesDone && (
+                  <p className="text-secondary text-sm">
+                    Hoàn thành tất cả trận vòng bảng để xếp VĐV vào vòng loại
+                    trực tiếp.
+                  </p>
+                )}
+
+                {knockoutSeeded && (
+                  <div className="space-y-4">
+                    {knockoutRoundsMap.map(([roundNum, roundMatches]) => (
+                      <div key={roundNum}>
+                        <h4 className="text-secondary mb-2 text-xs font-semibold">
+                          {roundMatches[0]?.roundLabel ??
+                            `Vòng ${roundNum - 100}`}
+                        </h4>
+                        <div className="space-y-2">
+                          {roundMatches.map((m) => (
+                            <div
+                              key={m._id}
+                              className="bg-bg-secondary flex items-center justify-between rounded-lg px-4 py-3"
+                            >
+                              <div className="flex items-center gap-4">
+                                <span className="text-secondary font-mono text-xs">
+                                  #{m.matchNumber}
+                                </span>
+                                <span className="text-heading text-sm font-medium">
+                                  {m.player1?.name ?? 'TBD'}
+                                </span>
+                                <span className="text-secondary text-xs">
+                                  vs
+                                </span>
+                                <span className="text-heading text-sm font-medium">
+                                  {m.player2?.name ?? 'TBD'}
+                                </span>
+                              </div>
+                              <span
+                                className={`text-xs font-medium ${m.isBye ? 'text-yellow-400' : 'text-secondary'}`}
+                              >
+                                {m.isBye ? 'BYE' : m.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </GlassPanel>
+            )}
+          </>
         ) : (
+          // ── ROUND_ROBIN / SINGLE_ELIMINATION ──
           <>
             <div className="space-y-4">
               {roundsMap.map(([roundNum, roundMatches]) => (
@@ -442,9 +853,21 @@ export default function DrawPage({
         open={resetDialogOpen}
         onClose={() => setResetDialogOpen(false)}
         onConfirm={handleConfirmReset}
-        title={isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
+        title={
+          isGroupKnockout
+            ? 'Xoá bảng đấu'
+            : isRoundRobin
+              ? 'Xoá lịch đấu'
+              : 'Xoá nhánh đấu'
+        }
         description={TOURNAMENT.CONFIRM_RESET_BRACKET}
-        confirmLabel={isRoundRobin ? 'Xoá lịch đấu' : 'Xoá nhánh đấu'}
+        confirmLabel={
+          isGroupKnockout
+            ? 'Xoá bảng đấu'
+            : isRoundRobin
+              ? 'Xoá lịch đấu'
+              : 'Xoá nhánh đấu'
+        }
         variant="danger"
         loading={resetting}
       />

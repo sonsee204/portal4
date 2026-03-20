@@ -29,6 +29,8 @@ export interface CategoryFormEntry {
   maxRegistrations: number;
   bracketSize: number;
   sharedThirdPlace: boolean;
+  groupCount: number;
+  advancingPerGroup: number;
   prizes: PrizeEntry[];
 }
 
@@ -132,6 +134,8 @@ const categorySchema = z.object({
   maxRegistrations: z.number().min(0),
   bracketSize: z.number().min(0),
   sharedThirdPlace: z.boolean(),
+  groupCount: z.number().min(2),
+  advancingPerGroup: z.number().min(1),
   prizes: z.array(prizeSchema),
 });
 
@@ -275,6 +279,8 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       maxRegistrations: 0,
       bracketSize: 0,
       sharedThirdPlace: false,
+      groupCount: 4,
+      advancingPerGroup: 2,
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },
