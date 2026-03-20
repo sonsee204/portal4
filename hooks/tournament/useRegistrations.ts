@@ -28,6 +28,7 @@ import type {
   TournamentPaymentStatus,
   BulkImportResult,
   BulkImportRegistrationsInput,
+  ExportTournamentRegistrationsQuery,
 } from '@/graphql/generated';
 import type { BulkImportItem } from '@/lib/utils/registration-import';
 import type { BracketSizeAdjustmentInput } from '@/graphql/generated';
@@ -255,13 +256,14 @@ export function useUpdateBibNumber(tournamentId: string) {
 }
 
 export function useExportRegistrations(tournamentId: string) {
-  const { data, loading, refetch } = useQuery<{
-    exportTournamentRegistrations: TournamentRegistration[];
-  }>(EXPORT_TOURNAMENT_REGISTRATIONS, {
-    variables: { tournamentId },
-    skip: true,
-    fetchPolicy: 'network-only',
-  });
+  const { data, loading, refetch } = useQuery<ExportTournamentRegistrationsQuery>(
+    EXPORT_TOURNAMENT_REGISTRATIONS,
+    {
+      variables: { tournamentId },
+      skip: true,
+      fetchPolicy: 'network-only',
+    },
+  );
 
   const fetchForExport = useCallback(
     (filter?: RegistrationFilterInput) =>
