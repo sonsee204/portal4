@@ -78,6 +78,8 @@ export function mapCategoryEntryToInput(
     maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
     bracketSize: isRoundRobin || isGroupKnockout ? undefined : (entry.bracketSize > 0 ? entry.bracketSize : undefined),
     sharedThirdPlace: format === TournamentFormat.SingleElimination ? entry.sharedThirdPlace : undefined,
+    groupCount: isGroupKnockout ? (entry.groupCount > 0 ? entry.groupCount : 4) : undefined,
+    advancingPerGroup: isGroupKnockout ? (entry.advancingPerGroup > 0 ? entry.advancingPerGroup : 2) : undefined,
     prizes: (entry.prizes ?? [])
       .filter((p) => p.title)
       .map((p, i) => ({
