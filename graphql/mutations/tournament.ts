@@ -231,6 +231,15 @@ export const SEED_PLAYERS = gql`
   }
 `;
 
+export const SEED_KNOCKOUT_BRACKET = gql`
+  mutation SeedKnockoutBracket($categoryId: ID!) {
+    seedKnockoutBracket(categoryId: $categoryId) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 // ==================== MATCH SCHEDULING ====================
 
 export const SCHEDULE_MATCH = gql`

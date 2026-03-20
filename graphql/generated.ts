@@ -3849,6 +3849,8 @@ export type Mutation = {
   scheduleMatch: TournamentMatch;
   /** Score a point */
   scorePoint: MatchScorecard;
+  /** Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only) */
+  seedKnockoutBracket: Array<TournamentMatch>;
   /** Seed players in category */
   seedPlayers: SuccessResponse;
   /** Select interested user for pass (owner action) */
@@ -5017,6 +5019,11 @@ export type MutationScheduleMatchArgs = {
 
 export type MutationScorePointArgs = {
   input: ScorePointInput;
+};
+
+
+export type MutationSeedKnockoutBracketArgs = {
+  categoryId: Scalars['ID']['input'];
 };
 
 
@@ -7656,6 +7663,8 @@ export type Query = {
   tournamentBracket: Array<TournamentMatch>;
   /** Categories for a tournament */
   tournamentCategories: Array<TournamentCategory>;
+  /** Rankings for a specific group in a GROUP_KNOCKOUT category */
+  tournamentGroupRankings: Array<PlayerRanking>;
   /** Tournament matches with filters */
   tournamentMatches: MatchList;
   /** Rankings for a category */
@@ -8494,6 +8503,12 @@ export type QueryTournamentBracketArgs = {
 
 export type QueryTournamentCategoriesArgs = {
   tournamentId: Scalars['ID']['input'];
+};
+
+
+export type QueryTournamentGroupRankingsArgs = {
+  categoryId: Scalars['ID']['input'];
+  groupId: Scalars['String']['input'];
 };
 
 
@@ -12245,6 +12260,13 @@ export type SeedPlayersMutationVariables = Exact<{
 
 export type SeedPlayersMutation = { __typename?: 'Mutation', seedPlayers: { __typename?: 'SuccessResponse', success: boolean, message: string } };
 
+export type SeedKnockoutBracketMutationVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+}>;
+
+
+export type SeedKnockoutBracketMutation = { __typename?: 'Mutation', seedKnockoutBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+
 export type ScheduleMatchMutationVariables = Exact<{
   input: ScheduleMatchInput;
 }>;
@@ -12659,6 +12681,14 @@ export type GetTournamentRankingsQueryVariables = Exact<{
 
 
 export type GetTournamentRankingsQuery = { __typename?: 'Query', tournamentRankings: Array<{ __typename?: 'PlayerRanking', rank: number, registrationId: string, playerName?: string | null, matchesPlayed: number, matchesWon: number, matchesLost: number, setsWon: number, setsLost: number, pointsWon: number, pointsLost: number, winRate: number, groupPoints?: number | null }> };
+
+export type GetTournamentGroupRankingsQueryVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+  groupId: Scalars['String']['input'];
+}>;
+
+
+export type GetTournamentGroupRankingsQuery = { __typename?: 'Query', tournamentGroupRankings: Array<{ __typename?: 'PlayerRanking', registrationId: string, playerName?: string | null, avatarUrl?: string | null, club?: string | null, seed?: number | null, rank: number, matchesPlayed: number, matchesWon: number, matchesLost: number, setsWon: number, setsLost: number, pointsWon: number, pointsLost: number, winRate: number, groupPoints?: number | null }> };
 
 export type GetTournamentResultsQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];

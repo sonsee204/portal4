@@ -163,6 +163,28 @@ export const GET_TOURNAMENT_RANKINGS = gql`
   }
 `;
 
+export const GET_TOURNAMENT_GROUP_RANKINGS = gql`
+  query GetTournamentGroupRankings($categoryId: ID!, $groupId: String!) {
+    tournamentGroupRankings(categoryId: $categoryId, groupId: $groupId) {
+      registrationId
+      playerName
+      avatarUrl
+      club
+      seed
+      rank
+      matchesPlayed
+      matchesWon
+      matchesLost
+      setsWon
+      setsLost
+      pointsWon
+      pointsLost
+      winRate
+      groupPoints
+    }
+  }
+`;
+
 export const GET_TOURNAMENT_RESULTS = gql`
   query GetTournamentResults($tournamentId: ID!) {
     tournamentResults(tournamentId: $tournamentId) {

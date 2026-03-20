@@ -95,6 +95,11 @@ export function CategoryFormCard({
     useWatch({ control, name: `categories.${index}.format` }) ??
     TournamentFormat.SingleElimination;
   const isRoundRobin = selectedFormat === TournamentFormat.RoundRobin;
+  const isGroupKnockout = selectedFormat === TournamentFormat.GroupKnockout;
+  const groupCount =
+    useWatch({ control, name: `categories.${index}.groupCount` }) ?? 4;
+  const advancingPerGroup =
+    useWatch({ control, name: `categories.${index}.advancingPerGroup` }) ?? 2;
 
   return (
     <div
@@ -187,7 +192,9 @@ export function CategoryFormCard({
         <div
           className={cn(
             'grid gap-4',
-            isRoundRobin ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
+            isRoundRobin || isGroupKnockout
+              ? 'sm:grid-cols-2'
+              : 'sm:grid-cols-3'
           )}
         >
           <Controller
@@ -207,7 +214,7 @@ export function CategoryFormCard({
               />
             )}
           />
-          {!isRoundRobin && (
+          {!isRoundRobin && !isGroupKnockout && (
             <Controller
               name={`categories.${index}.bracketSize`}
               control={control}
@@ -251,6 +258,60 @@ export function CategoryFormCard({
             />
           </div>
         </div>
+
+        {isGroupKnockout && (
+          <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Controller
+                name={`categories.${index}.groupCount`}
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    label="Số bảng"
+                    placeholder="VD: 4"
+                    type="number"
+                    min={2}
+                    value={field.value === undefined ? '' : String(field.value)}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value, 10) || 4)
+                    }
+                  />
+                )}
+              />
+              <Controller
+                name={`categories.${index}.advancingPerGroup`}
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    label="VĐV đi tiếp / bảng"
+                    placeholder="VD: 2"
+                    type="number"
+                    min={1}
+                    value={field.value === undefined ? '' : String(field.value)}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value, 10) || 2)
+                    }
+                  />
+                )}
+              />
+            </div>
+            <p className="text-muted text-xs">
+              {groupCount} bảng × {advancingPerGroup} VĐV đi tiếp ={' '}
+              <strong className="text-heading">
+                {groupCount * advancingPerGroup} VĐV
+              </strong>{' '}
+              vào vòng loại trực tiếp
+            </p>
+          </div>
+        )}
+
+        {isRoundRobin && (
+          <p className="text-muted text-xs">
+            Tổng số trận vòng tròn tính theo công thức N×(N−1)/2
+          </p>
+        )}
 
         {selectedFormat === TournamentFormat.SingleElimination && (
           <div className="flex items-end pb-1">
