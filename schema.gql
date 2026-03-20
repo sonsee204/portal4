@@ -5090,6 +5090,9 @@ type Mutation {
   """Subscribe user to a notification topic"""
   subscribeUserToTopic(topic: String!, userId: String!): TopicSubscriptionResponse!
 
+  """Đảo bên trái/phải trên màn chấm điểm (trọng tài)"""
+  swapCourtSides(input: SwapCourtSidesInput!): MatchScorecard!
+
   """Toggle favorite venue"""
   toggleFavoriteVenue(venueId: ID!): FavoriteResult!
 
@@ -9800,6 +9803,10 @@ type Subscription {
 type SuccessResponse {
   message: String!
   success: Boolean!
+}
+
+input SwapCourtSidesInput {
+  matchId: ID!
 }
 
 type SystemStats {
