@@ -86,7 +86,13 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
             size="sm"
             iconLeft="add-outline"
             onClick={() =>
-              appendSchedule({ label: '', date: '', startTime: '', endTime: '', status: 'upcoming' })
+              appendSchedule({
+                label: '',
+                date: '',
+                startTime: '',
+                endTime: '',
+                status: 'upcoming',
+              })
             }
           >
             Thêm giai đoạn
@@ -156,6 +162,46 @@ export function StepScheduleVenue({ form }: StepScheduleVenueProps) {
             defaultValue={facilities[i]?.label}
           />
         ))}
+      </GlassPanel>
+
+      {/* Schedule Config */}
+      <GlassPanel card>
+        <h3 className="text-heading mb-4 flex items-center gap-2 text-sm font-bold">
+          <IonIcon name="timer-outline" size="sm" className="text-primary" />
+          Cấu hình xếp lịch
+        </h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Controller
+            name="minRestMinutes"
+            control={control}
+            render={({ field: f }) => (
+              <Input
+                {...f}
+                type="number"
+                label="Thời gian nghỉ tối thiểu giữa 2 trận của 1 VĐV (phút)"
+                placeholder="30"
+                min={0}
+                step={5}
+                onChange={(e) => f.onChange(Number(e.target.value))}
+              />
+            )}
+          />
+          <Controller
+            name="courtBufferMinutes"
+            control={control}
+            render={({ field: f }) => (
+              <Input
+                {...f}
+                type="number"
+                label="Thời gian chuyển sân giữa 2 trận (phút)"
+                placeholder="5"
+                min={0}
+                step={5}
+                onChange={(e) => f.onChange(Number(e.target.value))}
+              />
+            )}
+          />
+        </div>
       </GlassPanel>
 
       {/* Courts */}

@@ -80,6 +80,7 @@ export function mapCategoryEntryToInput(
     sharedThirdPlace: format === TournamentFormat.SingleElimination ? entry.sharedThirdPlace : undefined,
     groupCount: isGroupKnockout ? (entry.groupCount > 0 ? entry.groupCount : 4) : undefined,
     advancingPerGroup: isGroupKnockout ? (entry.advancingPerGroup > 0 ? entry.advancingPerGroup : 2) : undefined,
+    defaultMatchDurationMinutes: entry.defaultMatchDurationMinutes > 0 ? entry.defaultMatchDurationMinutes : 30,
     prizes: (entry.prizes ?? [])
       .filter((p) => p.title)
       .map((p, i) => ({
@@ -146,6 +147,10 @@ export function mapFormToCreateInput(data: TournamentFormData): CreateTournament
         endTime: s.endTime?.trim() || undefined,
         status: s.status || undefined,
       })),
+    scheduleConfig: {
+      minRestMinutes: data.minRestMinutes ?? 30,
+      courtBufferMinutes: data.courtBufferMinutes ?? 5,
+    },
     paymentInfo: (data.paymentBank || data.paymentAccountNumber || data.fees.some((f) => f.label && f.amount))
       ? {
         bank: data.paymentBank || undefined,
@@ -190,6 +195,9 @@ export function mapTournamentToFormData(tournament: Tournament): TournamentFormD
 
     // Categories are separate entities — loaded via useTournamentCategories in StepCategories
     categories: [],
+
+    minRestMinutes: (tournament as unknown as { scheduleConfig?: { minRestMinutes?: number } }).scheduleConfig?.minRestMinutes ?? 30,
+    courtBufferMinutes: (tournament as unknown as { scheduleConfig?: { courtBufferMinutes?: number } }).scheduleConfig?.courtBufferMinutes ?? 5,
 
     schedule: (tournament.schedule?.length
       ? tournament.schedule.map((s) => ({

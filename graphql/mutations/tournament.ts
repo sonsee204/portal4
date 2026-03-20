@@ -245,7 +245,10 @@ export const SEED_KNOCKOUT_BRACKET = gql`
 export const SCHEDULE_MATCH = gql`
   mutation ScheduleMatch($input: ScheduleMatchInput!) {
     scheduleMatch(input: $input) {
-      ...MatchCore
+      match {
+        ...MatchCore
+      }
+      warnings
     }
   }
   ${MATCH_CORE_FRAGMENT}
@@ -264,6 +267,32 @@ export const UNSCHEDULE_MATCH = gql`
   mutation UnscheduleMatch($matchId: ID!) {
     unscheduleMatch(matchId: $matchId) {
       ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const CASCADE_RESCHEDULE = gql`
+  mutation CascadeReschedule($input: CascadeRescheduleInput!) {
+    cascadeReschedule(input: $input) {
+      affectedMatches {
+        ...MatchCore
+      }
+      totalAffected
+      warnings
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const AUTO_SCHEDULE_MATCHES = gql`
+  mutation AutoScheduleMatches($input: AutoScheduleInput!) {
+    autoScheduleMatches(input: $input) {
+      scheduledMatches {
+        ...MatchCore
+      }
+      totalScheduled
+      warnings
     }
   }
   ${MATCH_CORE_FRAGMENT}
