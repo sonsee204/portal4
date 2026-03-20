@@ -1543,6 +1543,13 @@ type CommentList {
   total: Int!
 }
 
+input CompleteSetInput {
+  matchId: ID!
+
+  """Winning player: 1 or 2"""
+  winner: Int!
+}
+
 input ConfirmEmailUpdateInput {
   code: String!
   newEmail: String!
@@ -4585,6 +4592,9 @@ type Mutation {
   """Kết thúc kèo thủ công"""
   completePickupGame(gameId: ID!): PickupGame!
 
+  """Kết thúc set hiện tại (trọng tài xác nhận người thắng)"""
+  completeSet(input: CompleteSetInput!): MatchScorecard!
+
   """Complete tournament"""
   completeTournament(id: ID!): Tournament!
 
@@ -5038,6 +5048,9 @@ type Mutation {
   """VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE)"""
   setRetirement(input: SetRetirementInput!): TournamentMatch!
 
+  """Đặt lại người giao cầu (trọng tài)"""
+  setServingPlayer(input: SetServingPlayerInput!): MatchScorecard!
+
   """Login with email/phone and password"""
   signIn(input: SignInInput!): AuthResponse!
 
@@ -5076,6 +5089,9 @@ type Mutation {
 
   """Subscribe user to a notification topic"""
   subscribeUserToTopic(topic: String!, userId: String!): TopicSubscriptionResponse!
+
+  """Đảo bên trái/phải trên màn chấm điểm (trọng tài)"""
+  swapCourtSides(input: SwapCourtSidesInput!): MatchScorecard!
 
   """Toggle favorite venue"""
   toggleFavoriteVenue(venueId: ID!): FavoriteResult!
@@ -9348,6 +9364,13 @@ type SetScoreSummary {
   player2: Int!
 }
 
+input SetServingPlayerInput {
+  matchId: ID!
+
+  """Player who has serve: 1 or 2"""
+  servingPlayer: Int!
+}
+
 input SignInInput {
   emailOrPhone: String!
   password: String!
@@ -9780,6 +9803,10 @@ type Subscription {
 type SuccessResponse {
   message: String!
   success: Boolean!
+}
+
+input SwapCourtSidesInput {
+  matchId: ID!
 }
 
 type SystemStats {
