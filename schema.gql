@@ -3085,6 +3085,10 @@ type FavoriteResult {
   isFavorite: Boolean!
 }
 
+input FinishMatchEarlyInput {
+  matchId: ID!
+}
+
 input FirebaseSignInInput {
   idToken: String!
 }
@@ -4783,6 +4787,11 @@ type Mutation {
 
   """Express interest in a public pass"""
   expressInterest(message: String, passId: ID!): BookingPass!
+
+  """
+  Kết thúc trận sớm: người dẫn điểm trong set hiện tại thắng trận, giữ nguyên tỷ số (không pad BO)
+  """
+  finishMatchEarly(input: FinishMatchEarlyInput!): MatchScorecard!
 
   """Theo dõi host"""
   followHost(hostId: ID!): FollowedHost!
@@ -10230,7 +10239,15 @@ type TournamentMatch {
   """Slot in next match (1 or 2)"""
   nextMatchSlot: Int
   player1: MatchPlayer
+
+  """
+  Nhãn ô đấu khi chưa có VĐV (GROUP_KNOCKOUT knockout), ví dụ: Nhất bảng A
+  """
+  player1SlotLabel: String
   player2: MatchPlayer
+
+  """Nhãn ô đấu khi chưa có VĐV (ví dụ: Nhì bảng B, Thắng trận #12)"""
+  player2SlotLabel: String
   refereeId: ID
 
   """
