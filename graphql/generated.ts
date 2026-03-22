@@ -338,6 +338,14 @@ export type AssignRefereeInput = {
   refereeName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AssignRefereeToCourtInput = {
+  courtName: Scalars['String']['input'];
+  /** YYYY-MM-DD. Null = all dates. */
+  date?: InputMaybe<Scalars['String']['input']>;
+  tournamentId: Scalars['ID']['input'];
+  tournamentRefereeId: Scalars['ID']['input'];
+};
+
 /** Types of auditable actions in the system */
 export enum AuditAction {
   AccountRegister = 'ACCOUNT_REGISTER',
@@ -440,6 +448,24 @@ export type AuthResponse = {
   user: User;
 };
 
+export type AutoAssignRefereesInput = {
+  strategy: AutoAssignStrategy;
+  tournamentId: Scalars['ID']['input'];
+};
+
+export type AutoAssignRefereesResult = {
+  __typename?: 'AutoAssignRefereesResult';
+  assignedCount: Scalars['Int']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
+
+/** Strategy for auto-assigning referees to matches */
+export enum AutoAssignStrategy {
+  CourtPreferred = 'COURT_PREFERRED',
+  RoundRobin = 'ROUND_ROBIN',
+  WorkloadBalanced = 'WORKLOAD_BALANCED'
+}
+
 export type AutoScheduleInput = {
   /** Category IDs (null = all) */
   categoryIds?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -455,6 +481,8 @@ export type AutoScheduleInput = {
   endTime?: InputMaybe<Scalars['String']['input']>;
   /** Override minRestMinutes from tournament config */
   minRestMinutes?: InputMaybe<Scalars['Int']['input']>;
+  /** Ghi đè khoảng nghỉ trong ngày (HH:mm). Bỏ qua nếu không gửi — dùng theo cấu hình giải. */
+  restBreakWindows?: InputMaybe<Array<ScheduleRestBreakWindowInput>>;
   /** Start time HH:mm (default 06:00) */
   startTime?: InputMaybe<Scalars['String']['input']>;
   tournamentId: Scalars['ID']['input'];
@@ -916,6 +944,18 @@ export type BracketSizeAdjustmentInput = {
   newBracketSize: Scalars['Int']['input'];
 };
 
+export type BulkAssignRefereeInput = {
+  matchIds: Array<Scalars['ID']['input']>;
+  tournamentRefereeId: Scalars['ID']['input'];
+};
+
+export type BulkAssignRefereeResult = {
+  __typename?: 'BulkAssignRefereeResult';
+  assignedCount: Scalars['Int']['output'];
+  skippedCount: Scalars['Int']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
+
 export type BulkCheckInInput = {
   /** ID kèo */
   gameId: Scalars['ID']['input'];
@@ -1256,6 +1296,12 @@ export type CommentList = {
   hasMore: Scalars['Boolean']['output'];
   /** Total number of comments */
   total: Scalars['Int']['output'];
+};
+
+export type CompleteSetInput = {
+  matchId: Scalars['ID']['input'];
+  /** Winning player: 1 or 2 */
+  winner: Scalars['Int']['input'];
 };
 
 export type ConfirmEmailUpdateInput = {
@@ -2441,6 +2487,10 @@ export type FavoriteResult = {
   isFavorite: Scalars['Boolean']['output'];
 };
 
+export type FinishMatchEarlyInput = {
+  matchId: Scalars['ID']['input'];
+};
+
 export type FirebaseSignInInput = {
   idToken: Scalars['String']['input'];
 };
@@ -3073,6 +3123,19 @@ export type InventoryStatus = {
   totalRetailValue: Scalars['Int']['output'];
 };
 
+export type InviteRefereeInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  maxMatchesPerDay?: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  preferredCourts?: InputMaybe<Array<Scalars['String']['input']>>;
+  role?: InputMaybe<RefereeRole>;
+  tournamentId: Scalars['ID']['input'];
+  /** System user ID. Omit for external referees. */
+  userId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type JoinGameInput = {
   /** ID kèo */
   gameId: Scalars['ID']['input'];
@@ -3561,6 +3624,10 @@ export type Mutation = {
   archiveConversation: Conversation;
   /** Assign referee to match */
   assignReferee: TournamentMatch;
+  /** Assign referee to all matches on a specific court */
+  assignRefereeToCourt: BulkAssignRefereeResult;
+  /** Auto-assign referees from pool to unassigned matches */
+  autoAssignReferees: AutoAssignRefereesResult;
   /** Auto-schedule unscheduled matches using a greedy algorithm with round dependency, rest-time, and court buffer */
   autoScheduleMatches: AutoScheduleResult;
   /** Auto-seed top players in category */
@@ -3571,6 +3638,8 @@ export type Mutation = {
   bookmarkPost: PostBookmark;
   /** Bulk approve registrations */
   bulkApproveRegistrations: Scalars['Int']['output'];
+  /** Assign one referee to multiple matches from pool */
+  bulkAssignReferee: BulkAssignRefereeResult;
   /** Check-in nhiều người */
   bulkCheckIn: Array<PickupGameParticipant>;
   /** Bulk delete products */
@@ -3627,6 +3696,8 @@ export type Mutation = {
   clearReadNotifications: Scalars['Int']['output'];
   /** Clear referee from match */
   clearReferee: TournamentMatch;
+  /** Clear referee from multiple matches */
+  clearRefereeFromMatches: Scalars['Int']['output'];
   /** Clear all seeds for a category */
   clearSeeds: SuccessResponse;
   /** Close registration */
@@ -3637,6 +3708,8 @@ export type Mutation = {
   completeOrder: Order;
   /** Kết thúc kèo thủ công */
   completePickupGame: PickupGame;
+  /** Kết thúc set hiện tại (trọng tài xác nhận người thắng) */
+  completeSet: MatchScorecard;
   /** Complete tournament */
   completeTournament: Tournament;
   /** Confirm booking */
@@ -3759,6 +3832,8 @@ export type Mutation = {
   executeDraw: Array<TournamentMatch>;
   /** Express interest in a public pass */
   expressInterest: BookingPass;
+  /** Kết thúc trận sớm: người dẫn điểm trong set hiện tại thắng trận, giữ nguyên tỷ số (không pad BO) */
+  finishMatchEarly: MatchScorecard;
   /** Theo dõi host */
   followHost: FollowedHost;
   /** Follow a user */
@@ -3771,6 +3846,8 @@ export type Mutation = {
   importStock: StockMovement;
   /** Invite a user to join a group (admin/mod only) */
   inviteMember: GroupMember;
+  /** Invite a referee to the tournament (pool-level invite) */
+  inviteRefereeToTournament: TournamentReferee;
   /** Mời người chơi vào kèo */
   inviteToGame: Scalars['Boolean']['output'];
   /** Kick người chơi */
@@ -3857,6 +3934,8 @@ export type Mutation = {
   removePaymentProofImage: Order;
   /** Remove reaction from a message */
   removeReaction: Message;
+  /** Remove referee from tournament (cascades to unassign from NOT_STARTED matches) */
+  removeTournamentReferee: TournamentReferee;
   /** Remove staff member */
   removeVenueStaff: Scalars['Boolean']['output'];
   /** Reply to review */
@@ -3885,6 +3964,8 @@ export type Mutation = {
   resetPassword: SuccessResponse;
   /** Referee responds to invite (accept or decline) */
   respondRefereeInvite: TournamentMatch;
+  /** Referee responds to tournament-level invite */
+  respondTournamentRefereeInvite: TournamentReferee;
   /** Process customer return */
   returnStock: StockMovement;
   /** Review (approve/reject) a claim request - Admin only */
@@ -3921,6 +4002,8 @@ export type Mutation = {
   setGroupTypingStatus: Scalars['Boolean']['output'];
   /** VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE) */
   setRetirement: TournamentMatch;
+  /** Đặt lại người giao cầu (trọng tài) */
+  setServingPlayer: MatchScorecard;
   /** Login with email/phone and password */
   signIn: AuthResponse;
   /** Sign in with Firebase Phone Authentication */
@@ -3947,6 +4030,8 @@ export type Mutation = {
   submitPromotionForApproval: Promotion;
   /** Subscribe user to a notification topic */
   subscribeUserToTopic: TopicSubscriptionResponse;
+  /** Đảo bên trái/phải trên màn chấm điểm (trọng tài) */
+  swapCourtSides: MatchScorecard;
   /** Toggle favorite venue */
   toggleFavoriteVenue: FavoriteResult;
   /** Toggle referral code active state (Admin only) */
@@ -4031,6 +4116,8 @@ export type Mutation = {
   updateReportStatus: PostReport;
   /** Update tournament details */
   updateTournament: Tournament;
+  /** Update tournament referee settings */
+  updateTournamentReferee: TournamentReferee;
   /** Update user report status (Admin only) */
   updateUserReportStatus: UserReport;
   /** Update venue */
@@ -4213,6 +4300,16 @@ export type MutationAssignRefereeArgs = {
 };
 
 
+export type MutationAssignRefereeToCourtArgs = {
+  input: AssignRefereeToCourtInput;
+};
+
+
+export type MutationAutoAssignRefereesArgs = {
+  input: AutoAssignRefereesInput;
+};
+
+
 export type MutationAutoScheduleMatchesArgs = {
   input: AutoScheduleInput;
 };
@@ -4236,6 +4333,11 @@ export type MutationBookmarkPostArgs = {
 
 export type MutationBulkApproveRegistrationsArgs = {
   input: BulkRegistrationActionInput;
+};
+
+
+export type MutationBulkAssignRefereeArgs = {
+  input: BulkAssignRefereeInput;
 };
 
 
@@ -4383,6 +4485,12 @@ export type MutationClearRefereeArgs = {
 };
 
 
+export type MutationClearRefereeFromMatchesArgs = {
+  matchIds: Array<Scalars['ID']['input']>;
+  tournamentId: Scalars['ID']['input'];
+};
+
+
 export type MutationClearSeedsArgs = {
   categoryId: Scalars['ID']['input'];
 };
@@ -4405,6 +4513,11 @@ export type MutationCompleteOrderArgs = {
 
 export type MutationCompletePickupGameArgs = {
   gameId: Scalars['ID']['input'];
+};
+
+
+export type MutationCompleteSetArgs = {
+  input: CompleteSetInput;
 };
 
 
@@ -4720,6 +4833,11 @@ export type MutationExpressInterestArgs = {
 };
 
 
+export type MutationFinishMatchEarlyArgs = {
+  input: FinishMatchEarlyInput;
+};
+
+
 export type MutationFollowHostArgs = {
   hostId: Scalars['ID']['input'];
 };
@@ -4750,6 +4868,11 @@ export type MutationInviteMemberArgs = {
   groupId: Scalars['ID']['input'];
   message?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['ID']['input'];
+};
+
+
+export type MutationInviteRefereeToTournamentArgs = {
+  input: InviteRefereeInput;
 };
 
 
@@ -4973,6 +5096,11 @@ export type MutationRemoveReactionArgs = {
 };
 
 
+export type MutationRemoveTournamentRefereeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationRemoveVenueStaffArgs = {
   userId: Scalars['ID']['input'];
   venueId: Scalars['ID']['input'];
@@ -5043,6 +5171,11 @@ export type MutationResetPasswordArgs = {
 
 export type MutationRespondRefereeInviteArgs = {
   input: RespondRefereeInviteInput;
+};
+
+
+export type MutationRespondTournamentRefereeInviteArgs = {
+  input: RespondTournamentRefereeInviteInput;
 };
 
 
@@ -5134,6 +5267,11 @@ export type MutationSetRetirementArgs = {
 };
 
 
+export type MutationSetServingPlayerArgs = {
+  input: SetServingPlayerInput;
+};
+
+
 export type MutationSignInArgs = {
   input: SignInInput;
 };
@@ -5187,6 +5325,11 @@ export type MutationSubmitPromotionForApprovalArgs = {
 export type MutationSubscribeUserToTopicArgs = {
   topic: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+};
+
+
+export type MutationSwapCourtSidesArgs = {
+  input: SwapCourtSidesInput;
 };
 
 
@@ -5406,6 +5549,11 @@ export type MutationUpdateReportStatusArgs = {
 
 export type MutationUpdateTournamentArgs = {
   input: UpdateTournamentInput;
+};
+
+
+export type MutationUpdateTournamentRefereeArgs = {
+  input: UpdateTournamentRefereeInput;
 };
 
 
@@ -7461,6 +7609,8 @@ export type Query = {
   claimRequestStats: ClaimRequestStats;
   /** Get claim requests with filters - Admin only */
   claimRequests: ClaimRequestList;
+  /** Public list of referees who confirmed participation (name + role only) */
+  confirmedTournamentReferees: Array<TournamentRefereePublic>;
   /** Get court by ID */
   court: Court;
   /** Get current active legal documents (ToS and Privacy Policy) */
@@ -7699,6 +7849,8 @@ export type Query = {
   recurringBookingDetails: RecurringBookingDetails;
   /** Matches assigned to current user as referee */
   refereeMatches: Array<TournamentMatch>;
+  /** Get referee workload statistics for a tournament */
+  refereeWorkload: RefereeWorkloadResult;
   /** Search messages in a conversation */
   searchMessages: MessageList;
   /** Search user by phone number (for staff booking) */
@@ -7729,6 +7881,10 @@ export type Query = {
   tournamentMatches: MatchList;
   /** Rankings for a category */
   tournamentRankings: Array<PlayerRanking>;
+  /** Get a single tournament referee by ID */
+  tournamentReferee: TournamentReferee;
+  /** List all referees in the tournament pool */
+  tournamentReferees: Array<TournamentReferee>;
   /** List registrations for a tournament (organizer) */
   tournamentRegistrations: RegistrationList;
   /** Tournament results/champions */
@@ -7958,6 +8114,11 @@ export type QueryClaimRequestArgs = {
 export type QueryClaimRequestsArgs = {
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryConfirmedTournamentRefereesArgs = {
+  tournamentId: Scalars['ID']['input'];
 };
 
 
@@ -8524,6 +8685,11 @@ export type QueryRefereeMatchesArgs = {
 };
 
 
+export type QueryRefereeWorkloadArgs = {
+  tournamentId: Scalars['ID']['input'];
+};
+
+
 export type QuerySearchMessagesArgs = {
   input: SearchMessagesInput;
   pagination?: InputMaybe<PaginationInput>;
@@ -8581,6 +8747,17 @@ export type QueryTournamentMatchesArgs = {
 
 export type QueryTournamentRankingsArgs = {
   categoryId: Scalars['ID']['input'];
+};
+
+
+export type QueryTournamentRefereeArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTournamentRefereesArgs = {
+  filter?: InputMaybe<TournamentRefereeFilterInput>;
+  tournamentId: Scalars['ID']['input'];
 };
 
 
@@ -8879,6 +9056,28 @@ export enum RefereeInviteStatus {
   Declined = 'DECLINED',
   Pending = 'PENDING'
 }
+
+/** Role of a referee in a tournament */
+export enum RefereeRole {
+  HeadReferee = 'HEAD_REFEREE',
+  LineJudge = 'LINE_JUDGE',
+  Referee = 'REFEREE'
+}
+
+export type RefereeWorkloadEntry = {
+  __typename?: 'RefereeWorkloadEntry';
+  date: Scalars['String']['output'];
+  matchCount: Scalars['Int']['output'];
+  refereeId: Scalars['ID']['output'];
+  refereeName: Scalars['String']['output'];
+};
+
+export type RefereeWorkloadResult = {
+  __typename?: 'RefereeWorkloadResult';
+  entries: Array<RefereeWorkloadEntry>;
+  totalUnassigned: Scalars['Int']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
 
 export type ReferralCode = {
   __typename?: 'ReferralCode';
@@ -9219,6 +9418,12 @@ export type RespondRefereeInviteInput = {
   notificationId: Scalars['ID']['input'];
 };
 
+export type RespondTournamentRefereeInviteInput = {
+  accept: Scalars['Boolean']['input'];
+  notificationId: Scalars['ID']['input'];
+  tournamentRefereeId: Scalars['ID']['input'];
+};
+
 export type ReturnStockInput = {
   /** Return reason/notes */
   note?: InputMaybe<Scalars['String']['input']>;
@@ -9318,11 +9523,15 @@ export type ScheduleConfig = {
   courtBufferMinutes: Scalars['Int']['output'];
   /** Minimum rest minutes between 2 matches of the same player (default 30) */
   minRestMinutes: Scalars['Int']['output'];
+  /** Khoảng thời gian nghỉ trong ngày (HH:mm). Tự động xếp lịch không đặt trận trùng các khoảng này. */
+  restBreakWindows?: Maybe<Array<ScheduleRestBreakWindow>>;
 };
 
 export type ScheduleConfigInput = {
   courtBufferMinutes?: InputMaybe<Scalars['Int']['input']>;
   minRestMinutes?: InputMaybe<Scalars['Int']['input']>;
+  /** Khoảng nghỉ trong ngày (HH:mm). Tự động xếp lịch bỏ qua, không đặt trận trùng. */
+  restBreakWindows?: InputMaybe<Array<ScheduleRestBreakWindowInput>>;
 };
 
 export type ScheduleMatchInput = {
@@ -9338,6 +9547,19 @@ export type ScheduleMatchResult = {
   match: TournamentMatch;
   /** Conflict warnings (empty if none) */
   warnings: Array<Scalars['String']['output']>;
+};
+
+export type ScheduleRestBreakWindow = {
+  __typename?: 'ScheduleRestBreakWindow';
+  /** Kết thúc khoảng nghỉ (HH:mm, local) */
+  endTime: Scalars['String']['output'];
+  /** Bắt đầu khoảng nghỉ (HH:mm, local) */
+  startTime: Scalars['String']['output'];
+};
+
+export type ScheduleRestBreakWindowInput = {
+  endTime: Scalars['String']['input'];
+  startTime: Scalars['String']['input'];
 };
 
 export type ScorePointInput = {
@@ -9576,6 +9798,12 @@ export type SetScoreSummary = {
   __typename?: 'SetScoreSummary';
   player1: Scalars['Int']['output'];
   player2: Scalars['Int']['output'];
+};
+
+export type SetServingPlayerInput = {
+  matchId: Scalars['ID']['input'];
+  /** Player who has serve: 1 or 2 */
+  servingPlayer: Scalars['Int']['input'];
 };
 
 export type SignInInput = {
@@ -9915,6 +10143,8 @@ export type Subscription = {
   tournamentListUpdated: Scalars['String']['output'];
   /** Any match updated in tournament */
   tournamentMatchesUpdated: Scalars['String']['output'];
+  /** Tournament referee pool changed (invite, respond, update, remove) */
+  tournamentRefereesUpdated: Scalars['String']['output'];
   /** Tournament status changed */
   tournamentStatusChanged: Scalars['String']['output'];
   /** Subscribe to typing indicators */
@@ -9977,6 +10207,11 @@ export type SubscriptionTournamentMatchesUpdatedArgs = {
 };
 
 
+export type SubscriptionTournamentRefereesUpdatedArgs = {
+  tournamentId: Scalars['ID']['input'];
+};
+
+
 export type SubscriptionTournamentStatusChangedArgs = {
   tournamentId: Scalars['ID']['input'];
 };
@@ -9990,6 +10225,10 @@ export type SuccessResponse = {
   __typename?: 'SuccessResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type SwapCourtSidesInput = {
+  matchId: Scalars['ID']['input'];
 };
 
 export type SystemStats = {
@@ -10354,7 +10593,11 @@ export type TournamentMatch = {
   /** Slot in next match (1 or 2) */
   nextMatchSlot?: Maybe<Scalars['Int']['output']>;
   player1?: Maybe<MatchPlayer>;
+  /** Nhãn ô đấu khi chưa có VĐV (GROUP_KNOCKOUT knockout), ví dụ: Nhất bảng A */
+  player1SlotLabel?: Maybe<Scalars['String']['output']>;
   player2?: Maybe<MatchPlayer>;
+  /** Nhãn ô đấu khi chưa có VĐV (ví dụ: Nhì bảng B, Thắng trận #12) */
+  player2SlotLabel?: Maybe<Scalars['String']['output']>;
   refereeId?: Maybe<Scalars['ID']['output']>;
   /** Invite status when referee has a system account (PENDING/CONFIRMED/DECLINED) */
   refereeInviteStatus?: Maybe<RefereeInviteStatus>;
@@ -10419,6 +10662,48 @@ export type TournamentPrizeInput = {
   rank: Scalars['String']['input'];
   title: Scalars['String']['input'];
 };
+
+export type TournamentReferee = {
+  __typename?: 'TournamentReferee';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  /** Max matches per day (0 = unlimited) */
+  maxMatchesPerDay: Scalars['Int']['output'];
+  /** Display name */
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
+  /** Preferred court names from tournament.courts */
+  preferredCourts?: Maybe<Array<Scalars['String']['output']>>;
+  role: RefereeRole;
+  status: TournamentRefereeStatus;
+  /** Tournament this referee belongs to */
+  tournamentId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  /** System user ID (null for external referees) */
+  userId?: Maybe<Scalars['ID']['output']>;
+};
+
+export type TournamentRefereeFilterInput = {
+  role?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type TournamentRefereePublic = {
+  __typename?: 'TournamentRefereePublic';
+  _id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  role: RefereeRole;
+};
+
+/** Status of a referee in the tournament referee pool */
+export enum TournamentRefereeStatus {
+  Confirmed = 'CONFIRMED',
+  Declined = 'DECLINED',
+  Invited = 'INVITED',
+  Removed = 'REMOVED'
+}
 
 export type TournamentRegistration = {
   __typename?: 'TournamentRegistration';
@@ -10985,6 +11270,15 @@ export type UpdateTournamentInput = {
   schedule?: InputMaybe<Array<TournamentSchedulePhaseInput>>;
   scheduleConfig?: InputMaybe<ScheduleConfigInput>;
   title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTournamentRefereeInput = {
+  id: Scalars['ID']['input'];
+  maxMatchesPerDay?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  preferredCourts?: InputMaybe<Array<Scalars['String']['input']>>;
+  role?: InputMaybe<RefereeRole>;
 };
 
 export type UpdateUserReportStatusInput = {
@@ -12029,7 +12323,7 @@ export type NotificationFieldsFragment = { __typename?: 'Notification', _id: str
 
 export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
 
-export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
+export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
 
 export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
 
@@ -12187,14 +12481,14 @@ export type CreateTournamentMutationVariables = Exact<{
 }>;
 
 
-export type CreateTournamentMutation = { __typename?: 'Mutation', createTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type CreateTournamentMutation = { __typename?: 'Mutation', createTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type UpdateTournamentMutationVariables = Exact<{
   input: UpdateTournamentInput;
 }>;
 
 
-export type UpdateTournamentMutation = { __typename?: 'Mutation', updateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type UpdateTournamentMutation = { __typename?: 'Mutation', updateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type PublishTournamentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -12250,7 +12544,7 @@ export type DuplicateTournamentMutationVariables = Exact<{
 }>;
 
 
-export type DuplicateTournamentMutation = { __typename?: 'Mutation', duplicateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type DuplicateTournamentMutation = { __typename?: 'Mutation', duplicateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type CreateCategoryMutationVariables = Exact<{
   input: CreateCategoryInput;
@@ -12710,7 +13004,7 @@ export type GetTournamentQueryVariables = Exact<{
 }>;
 
 
-export type GetTournamentQuery = { __typename?: 'Query', tournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
+export type GetTournamentQuery = { __typename?: 'Query', tournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
 export type GetTournamentCategoriesQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
