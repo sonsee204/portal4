@@ -536,6 +536,11 @@ input AutoScheduleInput {
   """Override minRestMinutes from tournament config"""
   minRestMinutes: Int
 
+  """
+  Ghi đè khoảng nghỉ trong ngày (HH:mm). Bỏ qua nếu không gửi — dùng theo cấu hình giải.
+  """
+  restBreakWindows: [ScheduleRestBreakWindowInput!]
+
   """Start time HH:mm (default 06:00)"""
   startTime: String
   tournamentId: ID!
@@ -9069,11 +9074,21 @@ type ScheduleConfig {
 
   """Minimum rest minutes between 2 matches of the same player (default 30)"""
   minRestMinutes: Int!
+
+  """
+  Khoảng thời gian nghỉ trong ngày (HH:mm). Tự động xếp lịch không đặt trận trùng các khoảng này.
+  """
+  restBreakWindows: [ScheduleRestBreakWindow!]
 }
 
 input ScheduleConfigInput {
   courtBufferMinutes: Int = 5
   minRestMinutes: Int = 30
+
+  """
+  Khoảng nghỉ trong ngày (HH:mm). Tự động xếp lịch bỏ qua, không đặt trận trùng.
+  """
+  restBreakWindows: [ScheduleRestBreakWindowInput!]
 }
 
 input ScheduleMatchInput {
@@ -9089,6 +9104,19 @@ type ScheduleMatchResult {
 
   """Conflict warnings (empty if none)"""
   warnings: [String!]!
+}
+
+type ScheduleRestBreakWindow {
+  """Kết thúc khoảng nghỉ (HH:mm, local)"""
+  endTime: String!
+
+  """Bắt đầu khoảng nghỉ (HH:mm, local)"""
+  startTime: String!
+}
+
+input ScheduleRestBreakWindowInput {
+  endTime: String!
+  startTime: String!
 }
 
 input ScorePointInput {
