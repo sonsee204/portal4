@@ -79,6 +79,10 @@ export const TOURNAMENT_DETAIL_FRAGMENT = gql`
     scheduleConfig {
       minRestMinutes
       courtBufferMinutes
+      restBreakWindows {
+        startTime
+        endTime
+      }
     }
   }
   ${TOURNAMENT_CORE_FRAGMENT}
