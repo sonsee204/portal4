@@ -334,6 +334,9 @@ input ApplyPromotionInput {
   """Per-slot price info (required for PER_HOUR promotions)"""
   slots: [SlotPriceInfoInput!]
 
+  """Sport types of the courts being booked (for SPECIFIC_SPORT scope)"""
+  sportTypes: [SportType!]
+
   """Time slots being booked (HH:mm)"""
   timeSlots: [String!]!
 
@@ -1292,6 +1295,14 @@ type CanPassBookingResult {
   reasons: [String!]
 }
 
+input CancelHoldBookingInput {
+  """Booking ID to cancel"""
+  bookingId: ID!
+
+  """Cancellation reason (optional)"""
+  reason: String
+}
+
 input CancelPickupGameInput {
   """ID kèo"""
   gameId: ID!
@@ -1849,8 +1860,14 @@ type CourtAvailability {
   """Court name"""
   courtName: String!
 
+  """Court status (active/maintenance/inactive)"""
+  courtStatus: CourtStatus
+
   """Time slots"""
   slots: [TimeSlotAvailability!]!
+
+  """Sport type for this court"""
+  sportType: SportType!
 }
 
 type CourtList {
@@ -2111,6 +2128,9 @@ input CreateHoldBookingInput {
 
   """Booking date (YYYY-MM-DD)"""
   date: String!
+
+  """Discount/promo code to apply when hold is confirmed"""
+  discountCode: String
 
   """Hold duration in minutes chosen by customer"""
   holdDurationMinutes: Int!
@@ -2430,6 +2450,9 @@ input CreatePromotionInput {
 
   """Priority for application order (higher = applied first)"""
   priority: Int = 0
+
+  """Specific product category IDs (when scope is PRODUCTS)"""
+  productCategoryIds: [ID!]
 
   """Where promotion applies"""
   scope: PromotionScope = ALL_COURTS
@@ -4476,6 +4499,9 @@ type Mutation {
   """Auto-seed top players in category"""
   autoSeedPlayers(categoryId: ID!, count: Int!): SuccessResponse!
 
+  """Ban a member from a group (creator only)"""
+  banMember(groupId: ID!, targetUserId: ID!): Boolean!
+
   """Block a user"""
   blockUser(input: BlockUserInput!): UserBlock!
 
@@ -4520,6 +4546,9 @@ type Mutation {
 
   """Cancel a pending claim request - by the claiming user"""
   cancelClaimRequest(claimRequestId: ID!): VenueClaimRequest!
+
+  """Cancel a hold booking (customer only - own bookings)"""
+  cancelHoldBooking(input: CancelHoldBookingInput!): Booking!
 
   """Cancel a pending invitation (admin/mod only)"""
   cancelInvitation(groupId: ID!, userId: ID!): Boolean!
@@ -4573,6 +4602,9 @@ type Mutation {
 
   """Nhận mang dụng cụ"""
   claimEquipment(input: ClaimEquipmentInput!): PickupGame!
+
+  """Cleanup orphan Firebase user after failed registration"""
+  cleanupOrphanFirebaseUser(idToken: String!): SuccessResponse!
 
   """Clear conversation history"""
   clearConversationHistory(conversationId: ID!): Boolean!
@@ -4822,6 +4854,9 @@ type Mutation {
   """Mời người chơi vào kèo"""
   inviteToGame(gameId: ID!, userIds: [ID!]!): Boolean!
 
+  """Kick a member from a group (creator only)"""
+  kickMember(groupId: ID!, targetUserId: ID!): Boolean!
+
   """Kick người chơi"""
   kickParticipant(input: KickParticipantInput!): Boolean!
 
@@ -4830,6 +4865,9 @@ type Mutation {
 
   """Leave a group"""
   leaveGroup(groupId: ID!): Boolean!
+
+  """Like a comment"""
+  likeComment(commentId: ID!): PostComment!
 
   """Like a post"""
   likePost(postId: ID!): Post!
@@ -4909,6 +4947,9 @@ type Mutation {
 
   """Đánh giá người tham gia"""
   rateParticipants(input: RateParticipantsInput!): Boolean!
+
+  """Record one venue detail view"""
+  recordVenueView(venueId: ID!): Boolean!
 
   """Refresh access token"""
   refreshToken: AuthResponse!
@@ -5133,6 +5174,9 @@ type Mutation {
 
   """Unfollow a user"""
   unfollowUser(userId: String!): User!
+
+  """Unlike a comment"""
+  unlikeComment(commentId: ID!): PostComment!
 
   """Unlike a post"""
   unlikePost(postId: ID!): Post!
@@ -7995,6 +8039,9 @@ type Query {
 
   """Check if current user has bookmarked a post"""
   hasBookmarkedPost(postId: ID!): Boolean!
+
+  """Check if current user has liked a comment"""
+  hasLikedComment(commentId: ID!): Boolean!
 
   """Check if current user has liked a post"""
   hasLikedPost(postId: ID!): Boolean!
@@ -10967,10 +11014,12 @@ input UpdatePromotionInput {
   """Promotion end date (ISO string)"""
   endDate: String
 
-  """Maximum discount amount (for percentage type)"""
+  """
+  Maximum discount amount (for percentage type). Pass null to remove the cap.
+  """
   maxDiscountAmount: Int
 
-  """Minimum booking amount required"""
+  """Minimum booking amount required. Pass null to remove the requirement."""
   minBookingAmount: Int
 
   """Promotion name"""
@@ -10981,6 +11030,9 @@ input UpdatePromotionInput {
 
   """Priority for application order (higher = applied first)"""
   priority: Int
+
+  """Specific product category IDs (when scope is PRODUCTS)"""
+  productCategoryIds: [ID!]
 
   """Promotion ID to update"""
   promotionId: ID!
@@ -11179,6 +11231,12 @@ input UpdateVenueInput {
 
   """Min total spending (VND) to become loyal customer"""
   loyaltyMinSpending: Int
+
+  """Maximum concurrent hold requests per customer (1-10)"""
+  maxConcurrentHoldsPerCustomer: Int
+
+  """Maximum hold duration in minutes (15-180)"""
+  maxHoldDurationMinutes: Int
 
   """Minimum time before slot to allow hold (minutes)"""
   minTimeBeforeSlotForHold: Int
@@ -11539,8 +11597,26 @@ input ValidateOrderPromoCodeInput {
 }
 
 input ValidatePromoCodeInput {
+  """Booking date YYYY-MM-DD (for context validation)"""
+  bookingDate: String
+
   """Promo code to validate"""
   code: String!
+
+  """Court IDs being booked (for scope validation)"""
+  courtIds: [ID!]
+
+  """Is first booking at this venue"""
+  isFirstBooking: Boolean
+
+  """Is this a recurring booking"""
+  isRecurring: Boolean
+
+  """Slot duration in minutes (for PER_HOUR calculation)"""
+  slotDurationMinutes: Int
+
+  """Per-slot price info for accurate PER_HOUR discount estimation"""
+  slots: [SlotPriceInfoInput!]
 
   """Total booking amount for discount estimation"""
   totalAmount: Int
@@ -11663,6 +11739,12 @@ type Venue {
 
   """Min total spending (VND) to become loyal customer"""
   loyaltyMinSpending: Int
+
+  """Maximum number of concurrent hold requests per customer (default: 1)"""
+  maxConcurrentHoldsPerCustomer: Int
+
+  """Maximum hold duration in minutes (default: 120)"""
+  maxHoldDurationMinutes: Int
 
   """Minimum time before slot to allow hold (minutes, default: 60)"""
   minTimeBeforeSlotForHold: Int

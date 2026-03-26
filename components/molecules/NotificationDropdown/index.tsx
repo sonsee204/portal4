@@ -254,11 +254,6 @@ const notificationTypeConfig: Record<
     bgClass: 'bg-slate-500/10',
     iconClass: 'text-slate-500',
   },
-  new_message: {
-    icon: 'chatbubble-outline',
-    bgClass: 'bg-cyan-500/10',
-    iconClass: 'text-cyan-500',
-  },
   group_invite: {
     icon: 'people-circle-outline',
     bgClass: 'bg-violet-500/10',
