@@ -2,6 +2,7 @@ export * from './shared';
 export * from './admin';
 export * from './audit';
 export * from './contact';
+export * from './qr-campaign';
 export * from './referral';
 export * from './sport';
 export * from './tournament';
