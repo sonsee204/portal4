@@ -2198,6 +2198,11 @@ input CreateOrderInput {
   """Payment method"""
   paymentMethod: PaymentMethod
 
+  """
+  Ngày dịch vụ thực tế (YYYY-MM-DD). Staff có thể đặt ngược quá khứ. Mặc định = ngày tạo đơn.
+  """
+  serviceDate: String
+
   """Table number"""
   tableNumber: String
 
@@ -2494,6 +2499,20 @@ input CreatePromotionInput {
   venueId: ID!
 }
 
+input CreateQrCampaignInput {
+  """Optional campaign description"""
+  description: String
+
+  """Campaign expiry date"""
+  expiresAt: DateTime
+
+  """Physical or digital location of the QR code"""
+  location: String
+
+  """Human-readable campaign name"""
+  name: String!
+}
+
 input CreateRecurringBookingInput {
   """Customer note"""
   customerNote: String
@@ -2594,6 +2613,9 @@ input CreateStaffRecurringBookingInput {
   Days of week to book (0=Sunday, 6=Saturday). Required when booking multiple days with same slots.
   """
   daysOfWeek: [Int!]
+
+  """Promo code to apply"""
+  discountCode: String
 
   """Duration in months (1, 2, or 3)"""
   durationMonths: Int!
@@ -4717,6 +4739,9 @@ type Mutation {
   """Create a new promotion"""
   createPromotion(input: CreatePromotionInput!): Promotion!
 
+  """Create a new QR campaign (Admin only)"""
+  createQrCampaign(input: CreateQrCampaignInput!): QrCampaign!
+
   """
   Create recurring booking (customer). Supports single-day and multi-day bookings.
   """
@@ -4948,6 +4973,9 @@ type Mutation {
   """Đánh giá người tham gia"""
   rateParticipants(input: RateParticipantsInput!): Boolean!
 
+  """Record a QR code scan event (Public - called by landing page)"""
+  recordQrScan(input: RecordQrScanInput!, redirectedTo: QrRedirectTarget!): SuccessResponse!
+
   """Record one venue detail view"""
   recordVenueView(venueId: ID!): Boolean!
 
@@ -5151,6 +5179,9 @@ type Mutation {
   """Toggle favorite venue"""
   toggleFavoriteVenue(venueId: ID!): FavoriteResult!
 
+  """Toggle QR campaign active state (Admin only)"""
+  toggleQrCampaign(id: ID!, isActive: Boolean!): QrCampaign!
+
   """Toggle referral code active state (Admin only)"""
   toggleReferralCode(id: ID!, isActive: Boolean!): ReferralCode!
 
@@ -5266,6 +5297,9 @@ type Mutation {
 
   """Update a promotion"""
   updatePromotion(input: UpdatePromotionInput!): Promotion!
+
+  """Update an existing QR campaign (Admin only)"""
+  updateQrCampaign(id: ID!, input: UpdateQrCampaignInput!): QrCampaign!
 
   """Update an existing referral code (Admin only)"""
   updateReferralCode(id: ID!, input: UpdateReferralCodeInput!): ReferralCode!
@@ -5674,6 +5708,11 @@ type Order {
   """Staff who requested refund"""
   refundRequestedByUser: User
 
+  """
+  Ngày dịch vụ thực tế (staff có thể đặt ngược quá khứ). Mặc định = ngày tạo đơn.
+  """
+  serviceDate: DateTime
+
   """Service fee"""
   serviceFee: Int
 
@@ -5811,6 +5850,12 @@ input OrderFilterInput {
 
   """Search by customer name or order code"""
   searchQuery: String
+
+  """Từ ngày dịch vụ (YYYY-MM-DD)"""
+  serviceDateFrom: String
+
+  """Đến ngày dịch vụ (YYYY-MM-DD)"""
+  serviceDateTo: String
 
   """Filter by status"""
   statuses: [OrderStatus!]
@@ -7775,6 +7820,146 @@ type PromotionUsageRecord {
   userId: ID!
 }
 
+type QrAnalyticsSummary {
+  """Total active campaigns"""
+  activeCampaigns: Int!
+
+  """Overall Android percentage"""
+  androidPercentage: Float!
+
+  """Overall iOS percentage"""
+  iosPercentage: Float!
+
+  """Total scans across all campaigns"""
+  totalScans: Int!
+
+  """Daily scan trend across all campaigns"""
+  trend: [QrScanTrendPoint!]!
+
+  """Total unique devices (estimated)"""
+  uniqueDevices: Int!
+}
+
+type QrCampaign {
+  _id: ID!
+
+  """Scans from Android devices"""
+  androidScans: Int!
+  createdAt: DateTime!
+
+  """Admin user who created this campaign"""
+  createdBy: ID!
+
+  """Optional campaign description"""
+  description: String
+
+  """Campaign expiry date"""
+  expiresAt: DateTime
+
+  """Scans from iOS devices"""
+  iosScans: Int!
+
+  """Whether this campaign is active"""
+  isActive: Boolean!
+
+  """Location where the QR code is placed"""
+  location: String
+
+  """JSON metadata for flexible data"""
+  metadata: String
+
+  """Human-readable campaign name"""
+  name: String!
+
+  """URL-safe unique slug for this campaign"""
+  slug: String!
+
+  """Total number of QR scans"""
+  totalScans: Int!
+
+  """Estimated unique devices (by session ID)"""
+  uniqueDevices: Int!
+
+  """Scans from unknown OS devices"""
+  unknownScans: Int!
+  updatedAt: DateTime!
+}
+
+input QrCampaignFilterInput {
+  """Filter scans from date"""
+  from: DateTime
+
+  """Filter by active status"""
+  isActive: Boolean
+
+  """Search by name, slug, or location"""
+  search: String
+
+  """Filter scans to date"""
+  to: DateTime
+}
+
+type QrCampaignStats {
+  """Android percentage of total scans"""
+  androidPercentage: Float!
+
+  """Android scans"""
+  androidScans: Int!
+
+  """iOS percentage of total scans"""
+  iosPercentage: Float!
+
+  """iOS scans"""
+  iosScans: Int!
+
+  """Top cities by scan count"""
+  topCities: [QrTopCity!]!
+
+  """Total scans"""
+  totalScans: Int!
+
+  """Daily scan trend for chart"""
+  trend: [QrScanTrendPoint!]!
+
+  """Unique devices (estimated)"""
+  uniqueDevices: Int!
+
+  """Unknown OS scans"""
+  unknownScans: Int!
+}
+
+"""Where the user was redirected after scanning"""
+enum QrRedirectTarget {
+  APP_STORE
+  FALLBACK
+  PLAY_STORE
+}
+
+type QrScanTrendPoint {
+  """Android scans on this date"""
+  android: Int!
+
+  """iOS scans on this date"""
+  ios: Int!
+
+  """Date label (YYYY-MM-DD)"""
+  label: String!
+
+  """Total scans on this date"""
+  total: Int!
+}
+
+type QrTopCity {
+  """City name"""
+  city: String!
+
+  """Country code"""
+  country: String
+
+  """Number of scans from this city"""
+  scans: Int!
+}
+
 type Query {
   """
   Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit.
@@ -7896,6 +8081,9 @@ type Query {
   """Danh sách người tham gia kèo"""
   gameParticipants(gameId: ID!, pagination: PaginationInput, status: ParticipantStatus): ParticipantList!
 
+  """Generate branded SVG QR code for a campaign (Admin only)"""
+  generateQrCode(campaignId: ID!): String!
+
   """Get available promotions for product orders"""
   getAvailableOrderPromotions(productCategoryIds: [ID!], venueId: ID!): [Promotion!]!
 
@@ -8003,6 +8191,18 @@ type Query {
 
   """Get profit report by product"""
   getProductProfitReport(dateFrom: DateTime!, dateTo: DateTime!, venueId: ID!): [ProductProfitItem!]!
+
+  """Get aggregated QR analytics summary across all campaigns (Admin only)"""
+  getQrAnalyticsSummary(filter: QrCampaignFilterInput): QrAnalyticsSummary!
+
+  """Get a single QR campaign by ID (Admin only)"""
+  getQrCampaign(id: ID!): QrCampaign!
+
+  """Get detailed analytics for a specific QR campaign (Admin only)"""
+  getQrCampaignStats(filter: QrCampaignFilterInput, id: ID!): QrCampaignStats!
+
+  """List all QR campaigns with optional filtering (Admin only)"""
+  getQrCampaigns(filter: QrCampaignFilterInput, pagination: PaginationInput): [QrCampaign!]!
 
   """Get referral code detail by ID (Admin only)"""
   getReferralCodeDetail(id: ID!): ReferralCode!
@@ -8422,6 +8622,23 @@ input RateParticipantsInput {
 
   """Danh sách đánh giá"""
   ratings: [ParticipantRatingInput!]!
+}
+
+input RecordQrScanInput {
+  """Campaign slug from the QR URL (?c=SLUG)"""
+  campaignSlug: String!
+
+  """Client IP address"""
+  ip: String!
+
+  """Referral code if present in URL"""
+  ref: String
+
+  """Session ID for unique device estimation"""
+  sessionId: String!
+
+  """User-Agent string from the browser"""
+  userAgent: String!
 }
 
 type RecurringAvailabilityCheck {
@@ -10729,6 +10946,14 @@ input UpdateLegalDocumentInput {
   title: String
 }
 
+input UpdateMarginThresholdsInput {
+  """Margin % below which shows red danger"""
+  dangerMargin: Float
+
+  """Margin % below which shows yellow warning"""
+  warningMargin: Float
+}
+
 input UpdateMessageInput {
   """Message ID to update"""
   messageId: ID!
@@ -11071,6 +11296,14 @@ input UpdatePromotionInput {
   value: Int
 }
 
+input UpdateQrCampaignInput {
+  description: String
+  expiresAt: DateTime
+  isActive: Boolean
+  location: String
+  name: String
+}
+
 input UpdateReferralCodeInput {
   """Expiry date for this code"""
   expiresAt: DateTime
@@ -11231,6 +11464,9 @@ input UpdateVenueInput {
 
   """Min total spending (VND) to become loyal customer"""
   loyaltyMinSpending: Int
+
+  """Profit margin thresholds for inventory management"""
+  marginThresholds: UpdateMarginThresholdsInput
 
   """Maximum concurrent hold requests per customer (1-10)"""
   maxConcurrentHoldsPerCustomer: Int
@@ -11740,6 +11976,9 @@ type Venue {
   """Min total spending (VND) to become loyal customer"""
   loyaltyMinSpending: Int
 
+  """Profit margin thresholds for inventory management"""
+  marginThresholds: VenueMarginThresholds
+
   """Maximum number of concurrent hold requests per customer (default: 1)"""
   maxConcurrentHoldsPerCustomer: Int
 
@@ -12075,6 +12314,14 @@ input VenueLocationInput {
 
   """Ward"""
   ward: String
+}
+
+type VenueMarginThresholds {
+  """Margin % below which shows red danger (default 10)"""
+  dangerMargin: Float!
+
+  """Margin % below which shows yellow warning (default 20)"""
+  warningMargin: Float!
 }
 
 type VenueOrderTypeConfig {

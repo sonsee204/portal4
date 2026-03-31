@@ -295,6 +295,8 @@ export type ApplyPromotionInput = {
   slotDurationMinutes?: InputMaybe<Scalars['Int']['input']>;
   /** Per-slot price info (required for PER_HOUR promotions) */
   slots?: InputMaybe<Array<SlotPriceInfoInput>>;
+  /** Sport types of the courts being booked (for SPECIFIC_SPORT scope) */
+  sportTypes?: InputMaybe<Array<SportType>>;
   /** Time slots being booked (HH:mm) */
   timeSlots: Array<Scalars['String']['input']>;
   /** Total booking amount before discount */
@@ -1080,6 +1082,13 @@ export type CanPassBookingResult = {
   reasons?: Maybe<Array<Scalars['String']['output']>>;
 };
 
+export type CancelHoldBookingInput = {
+  /** Booking ID to cancel */
+  bookingId: Scalars['ID']['input'];
+  /** Cancellation reason (optional) */
+  reason?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CancelPickupGameInput = {
   /** ID kèo */
   gameId: Scalars['ID']['input'];
@@ -1545,8 +1554,12 @@ export type CourtAvailability = {
   courtId: Scalars['String']['output'];
   /** Court name */
   courtName: Scalars['String']['output'];
+  /** Court status (active/maintenance/inactive) */
+  courtStatus?: Maybe<CourtStatus>;
   /** Time slots */
   slots: Array<TimeSlotAvailability>;
+  /** Sport type for this court */
+  sportType: SportType;
 };
 
 export type CourtList = {
@@ -1752,6 +1765,8 @@ export type CreateHoldBookingInput = {
   customerNote?: InputMaybe<Scalars['String']['input']>;
   /** Booking date (YYYY-MM-DD) */
   date: Scalars['String']['input'];
+  /** Discount/promo code to apply when hold is confirmed */
+  discountCode?: InputMaybe<Scalars['String']['input']>;
   /** Hold duration in minutes chosen by customer */
   holdDurationMinutes: Scalars['Int']['input'];
   /** Slots to hold */
@@ -1804,6 +1819,8 @@ export type CreateOrderInput = {
   orderType: OrderType;
   /** Payment method */
   paymentMethod?: InputMaybe<PaymentMethod>;
+  /** Ngày dịch vụ thực tế (YYYY-MM-DD). Staff có thể đặt ngược quá khứ. Mặc định = ngày tạo đơn. */
+  serviceDate?: InputMaybe<Scalars['String']['input']>;
   /** Table number */
   tableNumber?: InputMaybe<Scalars['String']['input']>;
   /** Tax amount */
@@ -1978,6 +1995,8 @@ export type CreatePromotionInput = {
   perUserLimit?: InputMaybe<Scalars['Int']['input']>;
   /** Priority for application order (higher = applied first) */
   priority?: InputMaybe<Scalars['Int']['input']>;
+  /** Specific product category IDs (when scope is PRODUCTS) */
+  productCategoryIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Where promotion applies */
   scope?: InputMaybe<PromotionScope>;
   /** Short description for display */
@@ -2004,6 +2023,17 @@ export type CreatePromotionInput = {
   value: Scalars['Int']['input'];
   /** Venue ID */
   venueId: Scalars['ID']['input'];
+};
+
+export type CreateQrCampaignInput = {
+  /** Optional campaign description */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Campaign expiry date */
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Physical or digital location of the QR code */
+  location?: InputMaybe<Scalars['String']['input']>;
+  /** Human-readable campaign name */
+  name: Scalars['String']['input'];
 };
 
 export type CreateRecurringBookingInput = {
@@ -2072,6 +2102,8 @@ export type CreateStaffRecurringBookingInput = {
   daySchedules?: InputMaybe<Array<DayScheduleInput>>;
   /** Days of week to book (0=Sunday, 6=Saturday). Required when booking multiple days with same slots. */
   daysOfWeek?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** Promo code to apply */
+  discountCode?: InputMaybe<Scalars['String']['input']>;
   /** Duration in months (1, 2, or 3) */
   durationMonths: Scalars['Int']['input'];
   /** Internal note */
@@ -3632,6 +3664,8 @@ export type Mutation = {
   autoScheduleMatches: AutoScheduleResult;
   /** Auto-seed top players in category */
   autoSeedPlayers: SuccessResponse;
+  /** Ban a member from a group (creator only) */
+  banMember: Scalars['Boolean']['output'];
   /** Block a user */
   blockUser: UserBlock;
   /** Bookmark a post */
@@ -3662,6 +3696,8 @@ export type Mutation = {
   cancelBookingPass: BookingPass;
   /** Cancel a pending claim request - by the claiming user */
   cancelClaimRequest: VenueClaimRequest;
+  /** Cancel a hold booking (customer only - own bookings) */
+  cancelHoldBooking: Booking;
   /** Cancel a pending invitation (admin/mod only) */
   cancelInvitation: Scalars['Boolean']['output'];
   /** Cancel order */
@@ -3690,6 +3726,8 @@ export type Mutation = {
   checkInParticipant: PickupGameParticipant;
   /** Nhận mang dụng cụ */
   claimEquipment: PickupGame;
+  /** Cleanup orphan Firebase user after failed registration */
+  cleanupOrphanFirebaseUser: SuccessResponse;
   /** Clear conversation history */
   clearConversationHistory: Scalars['Boolean']['output'];
   /** Clear all read notifications */
@@ -3764,6 +3802,8 @@ export type Mutation = {
   createProduct: Product;
   /** Create a new promotion */
   createPromotion: Promotion;
+  /** Create a new QR campaign (Admin only) */
+  createQrCampaign: QrCampaign;
   /** Create recurring booking (customer). Supports single-day and multi-day bookings. */
   createRecurringBooking: Booking;
   /** Create a new referral code (Admin only) */
@@ -3850,12 +3890,16 @@ export type Mutation = {
   inviteRefereeToTournament: TournamentReferee;
   /** Mời người chơi vào kèo */
   inviteToGame: Scalars['Boolean']['output'];
+  /** Kick a member from a group (creator only) */
+  kickMember: Scalars['Boolean']['output'];
   /** Kick người chơi */
   kickParticipant: Scalars['Boolean']['output'];
   /** Rời kèo */
   leaveGame: Scalars['Boolean']['output'];
   /** Leave a group */
   leaveGroup: Scalars['Boolean']['output'];
+  /** Like a comment */
+  likeComment: PostComment;
   /** Like a post */
   likePost: Post;
   /** Mark all notifications as read (optionally filter by type) */
@@ -3906,6 +3950,10 @@ export type Mutation = {
   publishTournament: Tournament;
   /** Đánh giá người tham gia */
   rateParticipants: Scalars['Boolean']['output'];
+  /** Record a QR code scan event (Public - called by landing page) */
+  recordQrScan: SuccessResponse;
+  /** Record one venue detail view */
+  recordVenueView: Scalars['Boolean']['output'];
   /** Refresh access token */
   refreshToken: AuthResponse;
   /** Register interest in a hold booking to get notified when it expires */
@@ -4034,6 +4082,8 @@ export type Mutation = {
   swapCourtSides: MatchScorecard;
   /** Toggle favorite venue */
   toggleFavoriteVenue: FavoriteResult;
+  /** Toggle QR campaign active state (Admin only) */
+  toggleQrCampaign: QrCampaign;
   /** Toggle referral code active state (Admin only) */
   toggleReferralCode: ReferralCode;
   /** Unarchive a conversation */
@@ -4050,6 +4100,8 @@ export type Mutation = {
   unfollowHost: Scalars['Boolean']['output'];
   /** Unfollow a user */
   unfollowUser: User;
+  /** Unlike a comment */
+  unlikeComment: PostComment;
   /** Unlike a post */
   unlikePost: Post;
   /** Unmute a conversation */
@@ -4108,6 +4160,8 @@ export type Mutation = {
   updateProfile: User;
   /** Update a promotion */
   updatePromotion: Promotion;
+  /** Update an existing QR campaign (Admin only) */
+  updateQrCampaign: QrCampaign;
   /** Update an existing referral code (Admin only) */
   updateReferralCode: ReferralCode;
   /** Update bib number (SBD) for a registration (organizer only) */
@@ -4321,6 +4375,12 @@ export type MutationAutoSeedPlayersArgs = {
 };
 
 
+export type MutationBanMemberArgs = {
+  groupId: Scalars['ID']['input'];
+  targetUserId: Scalars['ID']['input'];
+};
+
+
 export type MutationBlockUserArgs = {
   input: BlockUserInput;
 };
@@ -4398,6 +4458,11 @@ export type MutationCancelClaimRequestArgs = {
 };
 
 
+export type MutationCancelHoldBookingArgs = {
+  input: CancelHoldBookingInput;
+};
+
+
 export type MutationCancelInvitationArgs = {
   groupId: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
@@ -4472,6 +4537,11 @@ export type MutationCheckInParticipantArgs = {
 
 export type MutationClaimEquipmentArgs = {
   input: ClaimEquipmentInput;
+};
+
+
+export type MutationCleanupOrphanFirebaseUserArgs = {
+  idToken: Scalars['String']['input'];
 };
 
 
@@ -4654,6 +4724,11 @@ export type MutationCreateProductArgs = {
 
 export type MutationCreatePromotionArgs = {
   input: CreatePromotionInput;
+};
+
+
+export type MutationCreateQrCampaignArgs = {
+  input: CreateQrCampaignInput;
 };
 
 
@@ -4882,6 +4957,12 @@ export type MutationInviteToGameArgs = {
 };
 
 
+export type MutationKickMemberArgs = {
+  groupId: Scalars['ID']['input'];
+  targetUserId: Scalars['ID']['input'];
+};
+
+
 export type MutationKickParticipantArgs = {
   input: KickParticipantInput;
 };
@@ -4894,6 +4975,11 @@ export type MutationLeaveGameArgs = {
 
 export type MutationLeaveGroupArgs = {
   groupId: Scalars['ID']['input'];
+};
+
+
+export type MutationLikeCommentArgs = {
+  commentId: Scalars['ID']['input'];
 };
 
 
@@ -5023,6 +5109,17 @@ export type MutationPublishTournamentArgs = {
 
 export type MutationRateParticipantsArgs = {
   input: RateParticipantsInput;
+};
+
+
+export type MutationRecordQrScanArgs = {
+  input: RecordQrScanInput;
+  redirectedTo: QrRedirectTarget;
+};
+
+
+export type MutationRecordVenueViewArgs = {
+  venueId: Scalars['ID']['input'];
 };
 
 
@@ -5338,6 +5435,12 @@ export type MutationToggleFavoriteVenueArgs = {
 };
 
 
+export type MutationToggleQrCampaignArgs = {
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+};
+
+
 export type MutationToggleReferralCodeArgs = {
   id: Scalars['ID']['input'];
   isActive: Scalars['Boolean']['input'];
@@ -5376,6 +5479,11 @@ export type MutationUnfollowHostArgs = {
 
 export type MutationUnfollowUserArgs = {
   userId: Scalars['String']['input'];
+};
+
+
+export type MutationUnlikeCommentArgs = {
+  commentId: Scalars['ID']['input'];
 };
 
 
@@ -5528,6 +5636,12 @@ export type MutationUpdateProfileArgs = {
 
 export type MutationUpdatePromotionArgs = {
   input: UpdatePromotionInput;
+};
+
+
+export type MutationUpdateQrCampaignArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateQrCampaignInput;
 };
 
 
@@ -5914,6 +6028,8 @@ export type Order = {
   refundProcessedByUser?: Maybe<User>;
   /** Staff who requested refund */
   refundRequestedByUser?: Maybe<User>;
+  /** Ngày dịch vụ thực tế (staff có thể đặt ngược quá khứ). Mặc định = ngày tạo đơn. */
+  serviceDate?: Maybe<Scalars['DateTime']['output']>;
   /** Service fee */
   serviceFee?: Maybe<Scalars['Int']['output']>;
   /** Order status */
@@ -6016,6 +6132,10 @@ export type OrderFilterInput = {
   paymentStatuses?: InputMaybe<Array<OrderPaymentStatus>>;
   /** Search by customer name or order code */
   searchQuery?: InputMaybe<Scalars['String']['input']>;
+  /** Từ ngày dịch vụ (YYYY-MM-DD) */
+  serviceDateFrom?: InputMaybe<Scalars['String']['input']>;
+  /** Đến ngày dịch vụ (YYYY-MM-DD) */
+  serviceDateTo?: InputMaybe<Scalars['String']['input']>;
   /** Filter by status */
   statuses?: InputMaybe<Array<OrderStatus>>;
   /** To date (YYYY-MM-DD) */
@@ -7545,6 +7665,117 @@ export type PromotionUsageRecord = {
   userId: Scalars['ID']['output'];
 };
 
+export type QrAnalyticsSummary = {
+  __typename?: 'QrAnalyticsSummary';
+  /** Total active campaigns */
+  activeCampaigns: Scalars['Int']['output'];
+  /** Overall Android percentage */
+  androidPercentage: Scalars['Float']['output'];
+  /** Overall iOS percentage */
+  iosPercentage: Scalars['Float']['output'];
+  /** Total scans across all campaigns */
+  totalScans: Scalars['Int']['output'];
+  /** Daily scan trend across all campaigns */
+  trend: Array<QrScanTrendPoint>;
+  /** Total unique devices (estimated) */
+  uniqueDevices: Scalars['Int']['output'];
+};
+
+export type QrCampaign = {
+  __typename?: 'QrCampaign';
+  _id: Scalars['ID']['output'];
+  /** Scans from Android devices */
+  androidScans: Scalars['Int']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Admin user who created this campaign */
+  createdBy: Scalars['ID']['output'];
+  /** Optional campaign description */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Campaign expiry date */
+  expiresAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Scans from iOS devices */
+  iosScans: Scalars['Int']['output'];
+  /** Whether this campaign is active */
+  isActive: Scalars['Boolean']['output'];
+  /** Location where the QR code is placed */
+  location?: Maybe<Scalars['String']['output']>;
+  /** JSON metadata for flexible data */
+  metadata?: Maybe<Scalars['String']['output']>;
+  /** Human-readable campaign name */
+  name: Scalars['String']['output'];
+  /** URL-safe unique slug for this campaign */
+  slug: Scalars['String']['output'];
+  /** Total number of QR scans */
+  totalScans: Scalars['Int']['output'];
+  /** Estimated unique devices (by session ID) */
+  uniqueDevices: Scalars['Int']['output'];
+  /** Scans from unknown OS devices */
+  unknownScans: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type QrCampaignFilterInput = {
+  /** Filter scans from date */
+  from?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter by active status */
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search by name, slug, or location */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter scans to date */
+  to?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type QrCampaignStats = {
+  __typename?: 'QrCampaignStats';
+  /** Android percentage of total scans */
+  androidPercentage: Scalars['Float']['output'];
+  /** Android scans */
+  androidScans: Scalars['Int']['output'];
+  /** iOS percentage of total scans */
+  iosPercentage: Scalars['Float']['output'];
+  /** iOS scans */
+  iosScans: Scalars['Int']['output'];
+  /** Top cities by scan count */
+  topCities: Array<QrTopCity>;
+  /** Total scans */
+  totalScans: Scalars['Int']['output'];
+  /** Daily scan trend for chart */
+  trend: Array<QrScanTrendPoint>;
+  /** Unique devices (estimated) */
+  uniqueDevices: Scalars['Int']['output'];
+  /** Unknown OS scans */
+  unknownScans: Scalars['Int']['output'];
+};
+
+/** Where the user was redirected after scanning */
+export enum QrRedirectTarget {
+  AppStore = 'APP_STORE',
+  Fallback = 'FALLBACK',
+  PlayStore = 'PLAY_STORE'
+}
+
+export type QrScanTrendPoint = {
+  __typename?: 'QrScanTrendPoint';
+  /** Android scans on this date */
+  android: Scalars['Int']['output'];
+  /** iOS scans on this date */
+  ios: Scalars['Int']['output'];
+  /** Date label (YYYY-MM-DD) */
+  label: Scalars['String']['output'];
+  /** Total scans on this date */
+  total: Scalars['Int']['output'];
+};
+
+export type QrTopCity = {
+  __typename?: 'QrTopCity';
+  /** City name */
+  city: Scalars['String']['output'];
+  /** Country code */
+  country?: Maybe<Scalars['String']['output']>;
+  /** Number of scans from this city */
+  scans: Scalars['Int']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit. */
@@ -7623,6 +7854,8 @@ export type Query = {
   followedHosts: FollowedHostList;
   /** Danh sách người tham gia kèo */
   gameParticipants: ParticipantList;
+  /** Generate branded SVG QR code for a campaign (Admin only) */
+  generateQrCode: Scalars['String']['output'];
   /** Get available promotions for product orders */
   getAvailableOrderPromotions: Array<Promotion>;
   /** Get list of blocked users */
@@ -7695,6 +7928,14 @@ export type Query = {
   getProductImportHistory: Array<StockMovement>;
   /** Get profit report by product */
   getProductProfitReport: Array<ProductProfitItem>;
+  /** Get aggregated QR analytics summary across all campaigns (Admin only) */
+  getQrAnalyticsSummary: QrAnalyticsSummary;
+  /** Get a single QR campaign by ID (Admin only) */
+  getQrCampaign: QrCampaign;
+  /** Get detailed analytics for a specific QR campaign (Admin only) */
+  getQrCampaignStats: QrCampaignStats;
+  /** List all QR campaigns with optional filtering (Admin only) */
+  getQrCampaigns: Array<QrCampaign>;
   /** Get referral code detail by ID (Admin only) */
   getReferralCodeDetail: ReferralCode;
   /** Get all referral codes (Admin only) */
@@ -7719,6 +7960,8 @@ export type Query = {
   getUserReportsForAdmin: UserReportList;
   /** Check if current user has bookmarked a post */
   hasBookmarkedPost: Scalars['Boolean']['output'];
+  /** Check if current user has liked a comment */
+  hasLikedComment: Scalars['Boolean']['output'];
   /** Check if current user has liked a post */
   hasLikedPost: Scalars['Boolean']['output'];
   /** Check if current user has reported a post */
@@ -8150,6 +8393,11 @@ export type QueryGameParticipantsArgs = {
 };
 
 
+export type QueryGenerateQrCodeArgs = {
+  campaignId: Scalars['ID']['input'];
+};
+
+
 export type QueryGetAvailableOrderPromotionsArgs = {
   productCategoryIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   venueId: Scalars['ID']['input'];
@@ -8330,6 +8578,28 @@ export type QueryGetProductProfitReportArgs = {
 };
 
 
+export type QueryGetQrAnalyticsSummaryArgs = {
+  filter?: InputMaybe<QrCampaignFilterInput>;
+};
+
+
+export type QueryGetQrCampaignArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetQrCampaignStatsArgs = {
+  filter?: InputMaybe<QrCampaignFilterInput>;
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetQrCampaignsArgs = {
+  filter?: InputMaybe<QrCampaignFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
 export type QueryGetReferralCodeDetailArgs = {
   id: Scalars['ID']['input'];
 };
@@ -8376,6 +8646,11 @@ export type QueryGetUserReportsForAdminArgs = {
 
 export type QueryHasBookmarkedPostArgs = {
   postId: Scalars['ID']['input'];
+};
+
+
+export type QueryHasLikedCommentArgs = {
+  commentId: Scalars['ID']['input'];
 };
 
 
@@ -8942,6 +9217,19 @@ export type RateParticipantsInput = {
   mvpUserId?: InputMaybe<Scalars['ID']['input']>;
   /** Danh sách đánh giá */
   ratings: Array<ParticipantRatingInput>;
+};
+
+export type RecordQrScanInput = {
+  /** Campaign slug from the QR URL (?c=SLUG) */
+  campaignSlug: Scalars['String']['input'];
+  /** Client IP address */
+  ip: Scalars['String']['input'];
+  /** Referral code if present in URL */
+  ref?: InputMaybe<Scalars['String']['input']>;
+  /** Session ID for unique device estimation */
+  sessionId: Scalars['String']['input'];
+  /** User-Agent string from the browser */
+  userAgent: Scalars['String']['input'];
 };
 
 export type RecurringAvailabilityCheck = {
@@ -10953,6 +11241,13 @@ export type UpdateLegalDocumentInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateMarginThresholdsInput = {
+  /** Margin % below which shows red danger */
+  dangerMargin?: InputMaybe<Scalars['Float']['input']>;
+  /** Margin % below which shows yellow warning */
+  warningMargin?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type UpdateMessageInput = {
   /** Message ID to update */
   messageId: Scalars['ID']['input'];
@@ -11161,9 +11456,9 @@ export type UpdatePromotionInput = {
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
   /** Promotion end date (ISO string) */
   endDate?: InputMaybe<Scalars['String']['input']>;
-  /** Maximum discount amount (for percentage type) */
+  /** Maximum discount amount (for percentage type). Pass null to remove the cap. */
   maxDiscountAmount?: InputMaybe<Scalars['Int']['input']>;
-  /** Minimum booking amount required */
+  /** Minimum booking amount required. Pass null to remove the requirement. */
   minBookingAmount?: InputMaybe<Scalars['Int']['input']>;
   /** Promotion name */
   name?: InputMaybe<Scalars['String']['input']>;
@@ -11171,6 +11466,8 @@ export type UpdatePromotionInput = {
   perUserLimit?: InputMaybe<Scalars['Int']['input']>;
   /** Priority for application order (higher = applied first) */
   priority?: InputMaybe<Scalars['Int']['input']>;
+  /** Specific product category IDs (when scope is PRODUCTS) */
+  productCategoryIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Promotion ID to update */
   promotionId: Scalars['ID']['input'];
   /** Where promotion applies */
@@ -11195,6 +11492,14 @@ export type UpdatePromotionInput = {
   type?: InputMaybe<PromotionType>;
   /** Discount value (percentage 0-100 or fixed amount) */
   value?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateQrCampaignInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateReferralCodeInput = {
@@ -11321,6 +11626,12 @@ export type UpdateVenueInput = {
   loyaltyMinBookings?: InputMaybe<Scalars['Int']['input']>;
   /** Min total spending (VND) to become loyal customer */
   loyaltyMinSpending?: InputMaybe<Scalars['Int']['input']>;
+  /** Profit margin thresholds for inventory management */
+  marginThresholds?: InputMaybe<UpdateMarginThresholdsInput>;
+  /** Maximum concurrent hold requests per customer (1-10) */
+  maxConcurrentHoldsPerCustomer?: InputMaybe<Scalars['Int']['input']>;
+  /** Maximum hold duration in minutes (15-180) */
+  maxHoldDurationMinutes?: InputMaybe<Scalars['Int']['input']>;
   /** Minimum time before slot to allow hold (minutes) */
   minTimeBeforeSlotForHold?: InputMaybe<Scalars['Int']['input']>;
   /** Venue name */
@@ -11625,8 +11936,20 @@ export type ValidateOrderPromoCodeInput = {
 };
 
 export type ValidatePromoCodeInput = {
+  /** Booking date YYYY-MM-DD (for context validation) */
+  bookingDate?: InputMaybe<Scalars['String']['input']>;
   /** Promo code to validate */
   code: Scalars['String']['input'];
+  /** Court IDs being booked (for scope validation) */
+  courtIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Is first booking at this venue */
+  isFirstBooking?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Is this a recurring booking */
+  isRecurring?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Slot duration in minutes (for PER_HOUR calculation) */
+  slotDurationMinutes?: InputMaybe<Scalars['Int']['input']>;
+  /** Per-slot price info for accurate PER_HOUR discount estimation */
+  slots?: InputMaybe<Array<SlotPriceInfoInput>>;
   /** Total booking amount for discount estimation */
   totalAmount?: InputMaybe<Scalars['Int']['input']>;
   /** User ID (for usage check) */
@@ -11715,6 +12038,12 @@ export type Venue = {
   loyaltyMinBookings?: Maybe<Scalars['Int']['output']>;
   /** Min total spending (VND) to become loyal customer */
   loyaltyMinSpending?: Maybe<Scalars['Int']['output']>;
+  /** Profit margin thresholds for inventory management */
+  marginThresholds?: Maybe<VenueMarginThresholds>;
+  /** Maximum number of concurrent hold requests per customer (default: 1) */
+  maxConcurrentHoldsPerCustomer?: Maybe<Scalars['Int']['output']>;
+  /** Maximum hold duration in minutes (default: 120) */
+  maxHoldDurationMinutes?: Maybe<Scalars['Int']['output']>;
   /** Minimum time before slot to allow hold (minutes, default: 60) */
   minTimeBeforeSlotForHold?: Maybe<Scalars['Int']['output']>;
   /** Current user permissions for this venue */
@@ -11980,6 +12309,14 @@ export type VenueLocationInput = {
   longitude?: InputMaybe<Scalars['Float']['input']>;
   /** Ward */
   ward?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type VenueMarginThresholds = {
+  __typename?: 'VenueMarginThresholds';
+  /** Margin % below which shows red danger (default 10) */
+  dangerMargin: Scalars['Float']['output'];
+  /** Margin % below which shows yellow warning (default 20) */
+  warningMargin: Scalars['Float']['output'];
 };
 
 export type VenueOrderTypeConfig = {
@@ -12476,6 +12813,29 @@ export type RemoveFcmTokenMutationVariables = Exact<{
 
 export type RemoveFcmTokenMutation = { __typename?: 'Mutation', removeFcmToken: boolean };
 
+export type CreateQrCampaignMutationVariables = Exact<{
+  input: CreateQrCampaignInput;
+}>;
+
+
+export type CreateQrCampaignMutation = { __typename?: 'Mutation', createQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, expiresAt?: string | null, createdAt: string } };
+
+export type UpdateQrCampaignMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateQrCampaignInput;
+}>;
+
+
+export type UpdateQrCampaignMutation = { __typename?: 'Mutation', updateQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, expiresAt?: string | null, updatedAt: string } };
+
+export type ToggleQrCampaignMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleQrCampaignMutation = { __typename?: 'Mutation', toggleQrCampaign: { __typename?: 'QrCampaign', _id: string, isActive: boolean, updatedAt: string } };
+
 export type CreateTournamentMutationVariables = Exact<{
   input: CreateTournamentInput;
 }>;
@@ -12934,6 +13294,43 @@ export type GetNotificationQueryVariables = Exact<{
 
 
 export type GetNotificationQuery = { __typename?: 'Query', getNotification: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
+
+export type GetQrCampaignsQueryVariables = Exact<{
+  filter?: InputMaybe<QrCampaignFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+}>;
+
+
+export type GetQrCampaignsQuery = { __typename?: 'Query', getQrCampaigns: Array<{ __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
+
+export type GetQrCampaignQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetQrCampaignQuery = { __typename?: 'Query', getQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string } };
+
+export type GetQrCampaignStatsQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  filter?: InputMaybe<QrCampaignFilterInput>;
+}>;
+
+
+export type GetQrCampaignStatsQuery = { __typename?: 'Query', getQrCampaignStats: { __typename?: 'QrCampaignStats', totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }>, topCities: Array<{ __typename?: 'QrTopCity', city: string, country?: string | null, scans: number }> } };
+
+export type GetQrAnalyticsSummaryQueryVariables = Exact<{
+  filter?: InputMaybe<QrCampaignFilterInput>;
+}>;
+
+
+export type GetQrAnalyticsSummaryQuery = { __typename?: 'Query', getQrAnalyticsSummary: { __typename?: 'QrAnalyticsSummary', totalScans: number, activeCampaigns: number, uniqueDevices: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }> } };
+
+export type GenerateQrCodeQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type GenerateQrCodeQuery = { __typename?: 'Query', generateQrCode: string };
 
 export type GetGrowthStatsQueryVariables = Exact<{
   filter?: InputMaybe<ReferralFilterInput>;
