@@ -47,6 +47,20 @@ export type {
 } from './referral';
 export { ReferralEventEnum } from './referral';
 
+// QR Campaigns & Analytics
+export type {
+  QrCampaign,
+  QrCampaignStats,
+  QrAnalyticsSummary,
+  QrScanTrendPoint,
+  QrTopCity,
+  QrCampaignFilterInput,
+  CreateQrCampaignInput,
+  UpdateQrCampaignInput,
+  RecordQrScanInput,
+} from './qr-campaign';
+export { QrRedirectTarget } from './qr-campaign';
+
 // Contact Inquiries
 export type {
   ContactInquiry,

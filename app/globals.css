@@ -178,24 +178,34 @@ body {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-/* Hide native date/time picker icon — use custom icon instead for alignment */
+/*
+ * Hide native date/time picker icon (custom UI can show its own).
+ * Stretch the invisible hit target across the full input so clicks anywhere
+ * open the picker — a narrow right-edge-only zone made the field feel "dead".
+ */
+input[type='date'],
+input[type='time'] {
+  position: relative;
+}
+
 input[type='date']::-webkit-calendar-picker-indicator,
 input[type='time']::-webkit-calendar-picker-indicator {
   background: none;
   opacity: 0;
   position: absolute;
-  right: 0;
-  width: 2.5rem;
+  inset: 0;
+  width: 100%;
   height: 100%;
   cursor: pointer;
 }
+
 input[type='date']::-moz-calendar-picker-indicator,
 input[type='time']::-moz-calendar-picker-indicator {
   background: none;
   opacity: 0;
   position: absolute;
-  right: 0;
-  width: 2.5rem;
+  inset: 0;
+  width: 100%;
   height: 100%;
   cursor: pointer;
 }
