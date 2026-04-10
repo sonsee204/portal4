@@ -49,3 +49,89 @@ export interface VenueListResult {
   page: number;
   limit: number;
 }
+
+// ==================== PICKUP GAME CAMPAIGN ====================
+
+export interface CampaignGoals {
+  targetCheckIns?: number;
+  targetUniqueUsers?: number;
+  targetFillRate?: number;
+}
+
+export interface PickupGameCampaign {
+  _id: string;
+  name: string;
+  description?: string;
+  hostId: string;
+  venueIds: string[];
+  sportTypes: string[];
+  targetSkillLevels: string[];
+  gameIds: string[];
+  startDate?: string;
+  endDate?: string;
+  isActive: boolean;
+  goals?: CampaignGoals;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CheckInByDate {
+  date: string;
+  count: number;
+}
+
+export interface CheckInByGame {
+  gameId: string;
+  gameName: string;
+  sportType?: string;
+  date?: string;
+  venueName?: string;
+  maxSlots: number;
+  checkIns: number;
+  fillRate: number;
+  qrScanCount: number;
+  manualCount: number;
+  bulkCount: number;
+}
+
+export interface TopCampaignParticipant {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  gamesJoined: number;
+  gamesCheckedIn: number;
+  attendanceRate: number;
+}
+
+export interface CampaignStats {
+  totalGames: number;
+  totalSlots: number;
+  totalCheckIns: number;
+  uniqueParticipants: number;
+  avgFillRate: number;
+  returnRate: number;
+  avgCheckInDeltaMinutes?: number;
+  qrScanCount: number;
+  manualCount: number;
+  bulkCount: number;
+  checkInsByGame: CheckInByGame[];
+  checkInsByDate: CheckInByDate[];
+  topParticipants: TopCampaignParticipant[];
+}
+
+export interface CreatePickupGameCampaignInput {
+  name: string;
+  description?: string;
+  venueIds?: string[];
+  sportTypes?: string[];
+  targetSkillLevels?: string[];
+  gameIds?: string[];
+  startDate?: string;
+  endDate?: string;
+  goals?: CampaignGoals;
+}
+
+export interface UpdatePickupGameCampaignInput
+  extends Partial<CreatePickupGameCampaignInput> {
+  isActive?: boolean;
+}
