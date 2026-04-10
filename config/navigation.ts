@@ -6,7 +6,7 @@
 import type { PortalFeature } from '@/lib/permissions';
 
 /** Routes that are currently enabled (not dimmed/disabled). All others show as disabled. */
-export const ENABLED_SIDEBAR_ROUTES = ['/profile', '/users', '/audit', '/growth', '/qr-campaigns', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests'] as const;
+export const ENABLED_SIDEBAR_ROUTES = ['/profile', '/users', '/audit', '/growth', '/qr-campaigns', '/pickup-campaigns', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests'] as const;
 
 export interface NavItem {
   href: string;
@@ -67,6 +67,12 @@ export const sidebarNav: SidebarNavSection[] = [
         href: '/qr-campaigns',
         label: 'QR Code Download',
         icon: 'qr-code-outline',
+        requiredFeature: 'growth',
+      },
+      {
+        href: '/pickup-campaigns',
+        label: 'Campaign Giao Lưu',
+        icon: 'flag-outline',
         requiredFeature: 'growth',
       },
     ],
