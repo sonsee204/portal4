@@ -1,8 +1,17 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { CodegenConfig } from '@graphql-codegen/cli';
+
+const localSchema = resolve(process.cwd(), 'schema.gql');
+const backendSchema = resolve(process.cwd(), '../nalee-sports-backend/src/schema.gql');
 
 const schemaPath =
   process.env.GRAPHQL_SCHEMA_PATH ||
-  '../nalee-sports-backend/src/schema.gql';
+  (existsSync(localSchema)
+    ? localSchema
+    : existsSync(backendSchema)
+      ? backendSchema
+      : localSchema);
 
 const config: CodegenConfig = {
   overwrite: true,
@@ -15,10 +24,7 @@ const config: CodegenConfig = {
   ignoreNoDocuments: true,
   generates: {
     'graphql/generated.ts': {
-      plugins: [
-        'typescript',
-        'typescript-operations',
-      ],
+      plugins: ['typescript', 'typescript-operations'],
       config: {
         enumsAsTypes: false,
         scalars: {

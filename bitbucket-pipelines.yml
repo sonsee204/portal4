@@ -12,7 +12,6 @@ pipelines:
             - corepack enable
             - corepack prepare pnpm@10.26.2 --activate
             - pnpm install
-            - scp $SERVER_USER@$SERVER_IP:~/hitri/nalee-sports-backend/src/schema.gql ./schema.gql
             - pnpm run build
             - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml pnpm-workspace.yaml next.config.mjs
             - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
@@ -29,7 +28,6 @@ pipelines:
             - corepack enable
             - corepack prepare pnpm@10.26.2 --activate
             - pnpm install
-            - scp $SERVER_USER@$SERVER_IP:~/hitri-staging/nalee-sports-backend/src/schema.gql ./schema.gql
             - pnpm run build
             - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml pnpm-workspace.yaml next.config.mjs
             - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_STAGING/

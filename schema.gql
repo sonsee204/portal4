@@ -417,6 +417,10 @@ enum AuditAction {
   OTP_CHANNEL_FALLBACK
   OTP_DELIVERY_UPDATE
   OTP_REQUESTED
+  OTP_TEST_PHONE_CREATED
+  OTP_TEST_PHONE_DISABLED
+  OTP_TEST_PHONE_ENABLED
+  OTP_TEST_PHONE_UPDATED
   OTP_THROTTLED
   OTP_VERIFIED
   OTP_VERIFY_FAILED
@@ -2561,6 +2565,21 @@ input CreateOrderInput {
 
   """Venue ID"""
   venueId: ID!
+}
+
+input CreateOtpTestPhoneInput {
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  expiresAt: DateTime
+
+  """Human-readable label for QA / ops"""
+  label: String!
+
+  """Vietnamese phone number (E.164 after normalisation)"""
+  phone: String!
+
+  """Fixed 6-digit OTP code"""
+  testCode: String!
 }
 
 input CreatePickupGameCampaignInput {
@@ -5306,6 +5325,9 @@ type Mutation {
   """Create order (customer)"""
   createOrder(input: CreateOrderInput!): Order!
 
+  """Create OTP test phone (SUPER_ADMIN only)"""
+  createOtpTestPhone(input: CreateOtpTestPhoneInput!): OtpTestPhone!
+
   """Tạo kèo mới"""
   createPickupGame(input: CreatePickupGameInput!): PickupGame!
 
@@ -5739,6 +5761,9 @@ type Mutation {
   """Set typing status in a group"""
   setGroupTypingStatus(groupId: ID!, isTyping: Boolean!): Boolean!
 
+  """Enable or disable OTP test phone (SUPER_ADMIN only)"""
+  setOtpTestPhoneEnabled(enabled: Boolean!, id: ID!): OtpTestPhone!
+
   """VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE)"""
   setRetirement(input: SetRetirementInput!): TournamentMatch!
 
@@ -5891,6 +5916,9 @@ type Mutation {
 
   """Update order status"""
   updateOrderStatus(orderId: ID!, reason: String, status: OrderStatus!): Order!
+
+  """Update OTP test phone (SUPER_ADMIN only)"""
+  updateOtpTestPhone(id: ID!, input: UpdateOtpTestPhoneInput!): OtpTestPhone!
 
   """Cập nhật trạng thái đặt cọc"""
   updateParticipantDeposit(input: UpdateParticipantDepositInput!): PickupGameParticipant!
@@ -6749,6 +6777,43 @@ type OtpResponse {
   message: String!
   success: Boolean!
   verificationId: String
+}
+
+type OtpTestPhone {
+  _id: ID!
+
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  createdAt: DateTime!
+  createdBy: ID
+  enabled: Boolean!
+  expiresAt: DateTime
+
+  """Human-readable label for QA / ops"""
+  label: String!
+
+  """E.164 phone number"""
+  phone: String!
+
+  """Fixed 6-digit OTP code (SUPER_ADMIN only)"""
+  testCode: String!
+  updatedAt: DateTime!
+  updatedBy: ID
+}
+
+input OtpTestPhoneFilterInput {
+  enabled: Boolean
+
+  """Search phone or label (partial match)"""
+  search: String
+}
+
+type OtpTestPhoneList {
+  hasMore: Boolean!
+  items: [OtpTestPhone!]!
+  limit: Float!
+  page: Float!
+  total: Float!
 }
 
 type PageInfo {
@@ -9312,6 +9377,12 @@ type Query {
 
   """Get orders pending refund for a venue (Owner only)"""
   ordersPendingRefund(pagination: PaginationInput, venueId: ID!): OrderList!
+
+  """Get OTP test phone by id (SUPER_ADMIN only)"""
+  otpTestPhone(id: ID!): OtpTestPhone!
+
+  """List OTP test phones (SUPER_ADMIN only)"""
+  otpTestPhones(filter: OtpTestPhoneFilterInput, pagination: PaginationInput): OtpTestPhoneList!
 
   """Get pending claim requests - Admin only"""
   pendingClaimRequests(pagination: PaginationInput): ClaimRequestList!
@@ -12143,6 +12214,14 @@ input UpdateMessageReportStatusInput {
 
   """New status"""
   status: ReportStatus!
+}
+
+input UpdateOtpTestPhoneInput {
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  expiresAt: DateTime
+  label: String
+  testCode: String
 }
 
 input UpdateParticipantDepositInput {
