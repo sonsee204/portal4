@@ -151,6 +151,13 @@ export enum ActorType {
   System = 'SYSTEM'
 }
 
+export type AddGamesToCampaignInput = {
+  /** ID campaign */
+  campaignId: Scalars['ID']['input'];
+  /** Danh sách ID kèo cần thêm vào campaign */
+  gameIds: Array<Scalars['ID']['input']>;
+};
+
 export type AddGroupMessageReactionInput = {
   /** Emoji reaction (e.g., 👍, ❤️, 😂) */
   emoji: Scalars['String']['input'];
@@ -621,8 +628,14 @@ export type Booking = {
   invoice: BookingInvoice;
   /** Is booking currently being passed */
   isBeingPassed: Scalars['Boolean']['output'];
+  /** Whether price was manually overridden by staff/owner */
+  isManualPrice: Scalars['Boolean']['output'];
   /** Is recurring booking */
   isRecurring: Scalars['Boolean']['output'];
+  /** Manual final amount set by staff/owner (original system price stored in totalPrice) */
+  manualFinalAmount?: Maybe<Scalars['Int']['output']>;
+  /** Reason for manual price override */
+  manualPriceNote?: Maybe<Scalars['String']['output']>;
   /** Main order for this booking */
   order?: Maybe<Order>;
   /** All orders related to this booking */
@@ -1074,6 +1087,55 @@ export type BulkUpdateStatusInput = {
   venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type CampaignGoals = {
+  __typename?: 'CampaignGoals';
+  /** Mục tiêu tổng lượt check-in */
+  targetCheckIns?: Maybe<Scalars['Int']['output']>;
+  /** Mục tiêu fill rate (0-1) */
+  targetFillRate?: Maybe<Scalars['Float']['output']>;
+  /** Mục tiêu số người chơi unique */
+  targetUniqueUsers?: Maybe<Scalars['Int']['output']>;
+};
+
+export type CampaignGoalsInput = {
+  /** Mục tiêu tổng lượt check-in */
+  targetCheckIns?: InputMaybe<Scalars['Int']['input']>;
+  /** Mục tiêu fill rate (0-1) */
+  targetFillRate?: InputMaybe<Scalars['Float']['input']>;
+  /** Mục tiêu số người chơi unique */
+  targetUniqueUsers?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type CampaignStats = {
+  __typename?: 'CampaignStats';
+  /** Check-in delta trung bình (phút so với giờ bắt đầu) */
+  avgCheckInDeltaMinutes?: Maybe<Scalars['Float']['output']>;
+  /** Fill rate trung bình (totalCheckIns / totalSlots) */
+  avgFillRate: Scalars['Float']['output'];
+  /** Số lượt bulk check-in */
+  bulkCount: Scalars['Int']['output'];
+  /** Check-in theo ngày */
+  checkInsByDate: Array<CheckInByDate>;
+  /** Check-in theo từng kèo */
+  checkInsByGame: Array<CheckInByGame>;
+  /** Số lượt check-in thủ công */
+  manualCount: Scalars['Int']['output'];
+  /** Số lượt quét QR */
+  qrScanCount: Scalars['Int']['output'];
+  /** Retention rate: % người chơi join >= 2 kèo */
+  returnRate: Scalars['Float']['output'];
+  /** Top người chơi tích cực nhất */
+  topParticipants: Array<TopCampaignParticipant>;
+  /** Tổng lượt check-in */
+  totalCheckIns: Scalars['Int']['output'];
+  /** Tổng số kèo trong campaign */
+  totalGames: Scalars['Int']['output'];
+  /** Tổng số slot (maxParticipants) */
+  totalSlots: Scalars['Int']['output'];
+  /** Số người chơi unique đã check-in */
+  uniqueParticipants: Scalars['Int']['output'];
+};
+
 export type CanPassBookingResult = {
   __typename?: 'CanPassBookingResult';
   /** Whether booking can be passed */
@@ -1233,7 +1295,52 @@ export type ChatMediaUploadResult = {
   url: Scalars['String']['output'];
 };
 
+export type CheckInByDate = {
+  __typename?: 'CheckInByDate';
+  /** Số lượt check-in */
+  count: Scalars['Int']['output'];
+  /** Ngày (YYYY-MM-DD) */
+  date: Scalars['String']['output'];
+};
+
+export type CheckInByGame = {
+  __typename?: 'CheckInByGame';
+  /** Số lượt bulk check-in */
+  bulkCount: Scalars['Int']['output'];
+  /** Số lượt check-in */
+  checkIns: Scalars['Int']['output'];
+  /** Ngày diễn ra */
+  date?: Maybe<Scalars['String']['output']>;
+  /** Fill rate (0-1) */
+  fillRate: Scalars['Float']['output'];
+  /** ID kèo */
+  gameId: Scalars['ID']['output'];
+  /** Tên kèo */
+  gameName: Scalars['String']['output'];
+  /** Số lượt check-in thủ công */
+  manualCount: Scalars['Int']['output'];
+  /** Số slot tối đa */
+  maxSlots: Scalars['Int']['output'];
+  /** Số lượt quét QR */
+  qrScanCount: Scalars['Int']['output'];
+  /** Môn thể thao */
+  sportType?: Maybe<Scalars['String']['output']>;
+  /** Tên sân */
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
+/** Phương thức check-in người chơi */
+export enum CheckInMethod {
+  Bulk = 'BULK',
+  Manual = 'MANUAL',
+  QrScan = 'QR_SCAN'
+}
+
 export type CheckInParticipantInput = {
+  /** Phương thức check-in */
+  checkInMethod?: InputMaybe<CheckInMethod>;
+  /** Timestamp từ mã QR (ISO string) */
+  clientTimestamp?: InputMaybe<Scalars['String']['input']>;
   /** ID kèo */
   gameId: Scalars['ID']['input'];
   /** ID người chơi */
@@ -1296,6 +1403,15 @@ export enum ClaimRequestStatus {
   Pending = 'PENDING',
   Rejected = 'REJECTED'
 }
+
+/** Payload for the commentDeleted subscription. */
+export type CommentDeletedPayload = {
+  __typename?: 'CommentDeletedPayload';
+  _id: Scalars['ID']['output'];
+  commentId: Scalars['ID']['output'];
+  parentId?: Maybe<Scalars['ID']['output']>;
+  postId: Scalars['ID']['output'];
+};
 
 export type CommentList = {
   __typename?: 'CommentList';
@@ -1417,6 +1533,8 @@ export type Conversation = {
   name?: Maybe<Scalars['String']['output']>;
   /** Array of participant user IDs */
   participantIds: Array<Scalars['ID']['output']>;
+  /** Venue staff badges for participants who are active venue staff */
+  participantStaffBadges?: Maybe<Array<StaffBadge>>;
   /** Participant user details */
   participants?: Maybe<Array<Maybe<User>>>;
   type: ConversationType;
@@ -1477,10 +1595,18 @@ export type CostConfig = {
   __typename?: 'CostConfig';
   /** Ghi chú chi phí */
   costNote?: Maybe<Scalars['String']['output']>;
+  /** Giá cố định nữ (FEMALE_FIXED_MALE_SPLIT) */
+  femalePriceFixed?: Maybe<Scalars['Int']['output']>;
   /** Giá cố định/người */
   fixedPrice?: Maybe<Scalars['Int']['output']>;
-  /** Giá theo giới tính */
+  /** Giá theo giới tính (FIXED: nam/nữ khác nhau) */
   genderPricing?: Maybe<GenderPricing>;
+  /** Tổng tiền sân để tính phần nam chia (FEMALE_FIXED_MALE_SPLIT) */
+  maleSplitTotalCost?: Maybe<Scalars['Int']['output']>;
+  /** Giá tối đa/người */
+  priceMax?: Maybe<Scalars['Int']['output']>;
+  /** Giá tối thiểu/người */
+  priceMin?: Maybe<Scalars['Int']['output']>;
   /** Tổng chi phí sân */
   totalVenueCost?: Maybe<Scalars['Int']['output']>;
   /** Hình thức chia tiền */
@@ -1490,10 +1616,18 @@ export type CostConfig = {
 export type CostConfigInput = {
   /** Ghi chú chi phí */
   costNote?: InputMaybe<Scalars['String']['input']>;
+  /** Giá cố định nữ phải trả (FEMALE_FIXED_MALE_SPLIT) */
+  femalePriceFixed?: InputMaybe<Scalars['Int']['input']>;
   /** Giá cố định/người */
   fixedPrice?: InputMaybe<Scalars['Int']['input']>;
-  /** Giá theo giới tính */
+  /** Giá theo giới tính (FIXED) */
   genderPricing?: InputMaybe<GenderPricingInput>;
+  /** Tổng tiền sân để tính phần nam chia (FEMALE_FIXED_MALE_SPLIT) */
+  maleSplitTotalCost?: InputMaybe<Scalars['Int']['input']>;
+  /** Giá tối đa/người (khoảng giá) */
+  priceMax?: InputMaybe<Scalars['Int']['input']>;
+  /** Giá tối thiểu/người (khoảng giá) */
+  priceMin?: InputMaybe<Scalars['Int']['input']>;
   /** Tổng chi phí sân */
   totalVenueCost?: InputMaybe<Scalars['Int']['input']>;
   /** Hình thức chia tiền */
@@ -1502,6 +1636,7 @@ export type CostConfigInput = {
 
 /** Hình thức chia tiền */
 export enum CostSharingType {
+  FemaleFixedMaleSplit = 'FEMALE_FIXED_MALE_SPLIT',
   Fixed = 'FIXED',
   Free = 'FREE',
   SplitEvenly = 'SPLIT_EVENLY'
@@ -1735,6 +1870,8 @@ export type CreateCourtInput = {
 };
 
 export type CreateGameFromTemplateInput = {
+  /** Override: Host cũng tham gia chơi (mặc định theo mẫu) */
+  hostPlaying?: InputMaybe<Scalars['Boolean']['input']>;
   /** Ghi chú bổ sung */
   notes?: InputMaybe<Scalars['String']['input']>;
   /** ID template */
@@ -1811,8 +1948,12 @@ export type CreateOrderInput = {
   discountCode?: InputMaybe<Scalars['String']['input']>;
   /** Internal/admin note */
   internalNote?: InputMaybe<Scalars['String']['input']>;
+  /** Enable manual price override (use item unitPrice, skip promotion) */
+  isManualPrice?: InputMaybe<Scalars['Boolean']['input']>;
   /** Order items */
   items: Array<OrderItemInput>;
+  /** Reason for manual price adjustment */
+  manualPriceNote?: InputMaybe<Scalars['String']['input']>;
   /** Customer note */
   note?: InputMaybe<Scalars['String']['input']>;
   /** Order type */
@@ -1827,6 +1968,27 @@ export type CreateOrderInput = {
   tax?: InputMaybe<Scalars['Int']['input']>;
   /** Venue ID */
   venueId: Scalars['ID']['input'];
+};
+
+export type CreatePickupGameCampaignInput = {
+  /** Mô tả campaign */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Ngày kết thúc (ISO string) */
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  /** Kèo thuộc campaign */
+  gameIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Mục tiêu campaign */
+  goals?: InputMaybe<CampaignGoalsInput>;
+  /** Tên campaign */
+  name: Scalars['String']['input'];
+  /** Môn thể thao của campaign */
+  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Ngày bắt đầu (ISO string) */
+  startDate?: InputMaybe<Scalars['String']['input']>;
+  /** Trình độ mục tiêu */
+  targetSkillLevels?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Danh sách sân mục tiêu */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type CreatePickupGameInput = {
@@ -1844,8 +2006,8 @@ export type CreatePickupGameInput = {
   depositConfig?: InputMaybe<DepositConfigInput>;
   /** Dụng cụ cần mang */
   equipment?: InputMaybe<Array<EquipmentItemInput>>;
-  /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) */
-  gameFormat?: InputMaybe<Scalars['String']['input']>;
+  /** Thể thức thi đấu — multi-select (VD: SINGLES, DOUBLES) */
+  gameFormats?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Loại hình chơi */
   gameType: GameType;
   /** Cấu hình giới tính */
@@ -2083,6 +2245,12 @@ export type CreateStaffBookingInput = {
   discountCode?: InputMaybe<Scalars['String']['input']>;
   /** Internal note */
   internalNote?: InputMaybe<Scalars['String']['input']>;
+  /** Enable manual price override (skip all pricing rules) */
+  isManualPrice?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Manual final amount (required when isManualPrice = true) */
+  manualFinalAmount?: InputMaybe<Scalars['Int']['input']>;
+  /** Reason for manual price adjustment */
+  manualPriceNote?: InputMaybe<Scalars['String']['input']>;
   /** Selected payment method */
   paymentMethod?: InputMaybe<PaymentMethod>;
   /** Slots to book */
@@ -2106,8 +2274,16 @@ export type CreateStaffRecurringBookingInput = {
   discountCode?: InputMaybe<Scalars['String']['input']>;
   /** Duration in months (1, 2, or 3) */
   durationMonths: Scalars['Int']['input'];
+  /** Dates to exclude from the recurring schedule (YYYY-MM-DD) */
+  excludeDates?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Internal note */
   internalNote?: InputMaybe<Scalars['String']['input']>;
+  /** Enable manual price override (skip all pricing rules) */
+  isManualPrice?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Manual final amount (required when isManualPrice = true) */
+  manualFinalAmount?: InputMaybe<Scalars['Int']['input']>;
+  /** Reason for manual price adjustment */
+  manualPriceNote?: InputMaybe<Scalars['String']['input']>;
   /** Selected payment method */
   paymentMethod?: InputMaybe<PaymentMethod>;
   /** Slots to book (same slots for all days). Use this for single-day or multi-day with same slots. */
@@ -2133,10 +2309,14 @@ export type CreateTemplateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** Dụng cụ cần mang */
   equipment?: InputMaybe<Array<EquipmentItemInput>>;
+  /** Thể thức thi đấu */
+  gameFormats?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Loại hình chơi */
   gameType: GameType;
   /** Cấu hình giới tính */
   genderConfig?: InputMaybe<GenderConfigInput>;
+  /** Host cũng tham gia chơi */
+  hostPlaying?: InputMaybe<Scalars['Boolean']['input']>;
   /** Tên template */
   name: Scalars['String']['input'];
   /** Yêu cầu trình độ */
@@ -2257,6 +2437,17 @@ export type CurrentLegalDocuments = {
   privacyPolicy?: Maybe<LegalDocumentSummary>;
   /** Current Terms of Service */
   termsOfService?: Maybe<LegalDocumentSummary>;
+};
+
+export type CursorPaginationInput = {
+  /** Opaque cursor pointing at the last item of the previous page. */
+  after?: InputMaybe<Scalars['String']['input']>;
+  /** Reserved for backwards pagination. */
+  before?: InputMaybe<Scalars['String']['input']>;
+  /** Number of items to return after the cursor (1..50). */
+  first?: InputMaybe<Scalars['Int']['input']>;
+  /** Reserved for backwards pagination (1..50). */
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CustomLocation = {
@@ -2590,10 +2781,14 @@ export type GameTemplate = {
   description?: Maybe<Scalars['String']['output']>;
   /** Dụng cụ cần mang */
   equipment?: Maybe<Array<EquipmentItem>>;
+  /** Thể thức thi đấu (đơn/đôi/...) */
+  gameFormats?: Maybe<Array<Scalars['String']['output']>>;
   /** Loại hình chơi */
   gameType: GameType;
   /** Cấu hình giới tính */
   genderConfig?: Maybe<GenderConfig>;
+  /** Host cũng tham gia chơi */
+  hostPlaying?: Maybe<Scalars['Boolean']['output']>;
   /** Lần sử dụng cuối */
   lastUsedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Tên template */
@@ -2879,6 +3074,10 @@ export type GroupMessage = {
   sender?: Maybe<User>;
   /** Sender user ID */
   senderId: Scalars['ID']['output'];
+  /** Shared pickup game data (for GAME_SHARE messages) */
+  sharedGame?: Maybe<PickupGame>;
+  /** ID of shared pickup game (for GAME_SHARE type) */
+  sharedGameId?: Maybe<Scalars['ID']['output']>;
   /** Type of message */
   type: GroupMessageType;
   updatedAt: Scalars['DateTime']['output'];
@@ -2945,6 +3144,7 @@ export type GroupMessageReadPayload = {
 /** Type of group message */
 export enum GroupMessageType {
   File = 'FILE',
+  GameShare = 'GAME_SHARE',
   Image = 'IMAGE',
   System = 'SYSTEM',
   Text = 'TEXT',
@@ -3616,6 +3816,8 @@ export type Mutation = {
   activateLegalDocumentVersion: LegalDocument;
   /** Activate promotion directly (owner action) */
   activatePromotion: Promotion;
+  /** Thêm kèo vào campaign */
+  addGamesToCampaign: PickupGameCampaign;
   /** Add reaction to a group message */
   addGroupMessageReaction: GroupMessage;
   /** Add items to a booking (F&B order during play) */
@@ -3796,6 +3998,8 @@ export type Mutation = {
   createOrder: Order;
   /** Tạo kèo mới */
   createPickupGame: PickupGame;
+  /** Tạo campaign mới */
+  createPickupGameCampaign: PickupGameCampaign;
   /** Create a new post */
   createPost: Post;
   /** Create product */
@@ -3884,6 +4088,8 @@ export type Mutation = {
   generateBracket: Array<TournamentMatch>;
   /** Import stock for a product */
   importStock: StockMovement;
+  /** Atomically bump a post view count. Fire-and-forget from the client; returns the new view count or null if the post does not exist. */
+  incrementPostView?: Maybe<Scalars['Int']['output']>;
   /** Invite a user to join a group (admin/mod only) */
   inviteMember: GroupMember;
   /** Invite a referee to the tournament (pool-level invite) */
@@ -3976,6 +4182,8 @@ export type Mutation = {
   removeFcmToken: Scalars['Boolean']['output'];
   /** Bỏ chặn người dùng */
   removeFromBlacklist: Scalars['Boolean']['output'];
+  /** Xoá kèo khỏi campaign */
+  removeGamesFromCampaign: PickupGameCampaign;
   /** Remove reaction from a group message */
   removeGroupMessageReaction: GroupMessage;
   /** Remove payment proof image from order */
@@ -4052,6 +4260,8 @@ export type Mutation = {
   setRetirement: TournamentMatch;
   /** Đặt lại người giao cầu (trọng tài) */
   setServingPlayer: MatchScorecard;
+  /** Share a pickup game to multiple groups */
+  shareGameToGroups: Scalars['Boolean']['output'];
   /** Login with email/phone and password */
   signIn: AuthResponse;
   /** Sign in with Firebase Phone Authentication */
@@ -4152,6 +4362,8 @@ export type Mutation = {
   updatePaymentStatus: TournamentRegistration;
   /** Cập nhật kèo */
   updatePickupGame: PickupGame;
+  /** Cập nhật campaign */
+  updatePickupGameCampaign: PickupGameCampaign;
   /** Update a post */
   updatePost: Post;
   /** Update product */
@@ -4239,6 +4451,11 @@ export type MutationActivateLegalDocumentVersionArgs = {
 
 export type MutationActivatePromotionArgs = {
   promotionId: Scalars['ID']['input'];
+};
+
+
+export type MutationAddGamesToCampaignArgs = {
+  input: AddGamesToCampaignInput;
 };
 
 
@@ -4712,6 +4929,11 @@ export type MutationCreatePickupGameArgs = {
 };
 
 
+export type MutationCreatePickupGameCampaignArgs = {
+  input: CreatePickupGameCampaignInput;
+};
+
+
 export type MutationCreatePostArgs = {
   input: CreatePostInput;
 };
@@ -4936,6 +5158,11 @@ export type MutationGenerateBracketArgs = {
 export type MutationImportStockArgs = {
   input: ImportStockInput;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type MutationIncrementPostViewArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -5177,6 +5404,11 @@ export type MutationRemoveFromBlacklistArgs = {
 };
 
 
+export type MutationRemoveGamesFromCampaignArgs = {
+  input: RemoveGamesFromCampaignInput;
+};
+
+
 export type MutationRemoveGroupMessageReactionArgs = {
   input: RemoveGroupMessageReactionInput;
 };
@@ -5366,6 +5598,11 @@ export type MutationSetRetirementArgs = {
 
 export type MutationSetServingPlayerArgs = {
   input: SetServingPlayerInput;
+};
+
+
+export type MutationShareGameToGroupsArgs = {
+  input: ShareGameToGroupsInput;
 };
 
 
@@ -5615,6 +5852,12 @@ export type MutationUpdatePaymentStatusArgs = {
 
 export type MutationUpdatePickupGameArgs = {
   input: UpdatePickupGameInput;
+};
+
+
+export type MutationUpdatePickupGameCampaignArgs = {
+  campaignId: Scalars['ID']['input'];
+  input: UpdatePickupGameCampaignInput;
 };
 
 
@@ -6000,8 +6243,12 @@ export type Order = {
   inProgressAt?: Maybe<Scalars['DateTime']['output']>;
   /** Internal/admin note */
   internalNote?: Maybe<Scalars['String']['output']>;
+  /** Whether price was manually overridden by staff */
+  isManualPrice: Scalars['Boolean']['output'];
   /** Order items */
   items: Array<OrderItem>;
+  /** Reason for manual price override */
+  manualPriceNote?: Maybe<Scalars['String']['output']>;
   /** Customer note */
   note?: Maybe<Scalars['String']['output']>;
   /** Order code (e.g., ORD-202412-00001) */
@@ -6187,6 +6434,8 @@ export type OrderItemInput = {
   productId?: InputMaybe<Scalars['ID']['input']>;
   /** Quantity */
   quantity: Scalars['Int']['input'];
+  /** Override unit price (used when isManualPrice = true on order) */
+  unitPrice?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** Type of order item */
@@ -6313,6 +6562,18 @@ export type OtpResponse = {
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verificationId?: Maybe<Scalars['String']['output']>;
+};
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  /** Cursor of the last item in the current page. */
+  endCursor?: Maybe<Scalars['String']['output']>;
+  /** Whether more items exist after the current page. */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether items exist before the current page (reserved). */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** Cursor of the first item in the current page. */
+  startCursor?: Maybe<Scalars['String']['output']>;
 };
 
 export type PaginationInput = {
@@ -6449,8 +6710,8 @@ export type PickupGame = {
   distanceKm?: Maybe<Scalars['Float']['output']>;
   /** Dụng cụ cần mang */
   equipment?: Maybe<Array<EquipmentItem>>;
-  /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) */
-  gameFormat?: Maybe<Scalars['String']['output']>;
+  /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) — multi-select */
+  gameFormats?: Maybe<Array<Scalars['String']['output']>>;
   /** Loại hình chơi */
   gameType: GameType;
   /** Cấu hình giới tính */
@@ -6510,6 +6771,37 @@ export type PickupGame = {
   waitlistCount?: Maybe<Scalars['Int']['output']>;
 };
 
+export type PickupGameCampaign = {
+  __typename?: 'PickupGameCampaign';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Mô tả campaign */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Ngày kết thúc campaign */
+  endDate?: Maybe<Scalars['DateTime']['output']>;
+  /** Danh sách kèo thuộc campaign */
+  gameIds?: Maybe<Array<Scalars['ID']['output']>>;
+  /** Mục tiêu campaign */
+  goals?: Maybe<CampaignGoals>;
+  /** Host tạo campaign */
+  hostId: Scalars['ID']['output'];
+  /** Campaign đang hoạt động */
+  isActive: Scalars['Boolean']['output'];
+  /** JSON metadata mở rộng */
+  metadata?: Maybe<Scalars['String']['output']>;
+  /** Tên campaign */
+  name: Scalars['String']['output'];
+  /** Môn thể thao của campaign */
+  sportTypes?: Maybe<Array<Scalars['String']['output']>>;
+  /** Ngày bắt đầu campaign */
+  startDate?: Maybe<Scalars['DateTime']['output']>;
+  /** Trình độ mục tiêu */
+  targetSkillLevels?: Maybe<Array<Scalars['String']['output']>>;
+  updatedAt: Scalars['DateTime']['output'];
+  /** Danh sách sân mục tiêu */
+  venueIds?: Maybe<Array<Scalars['ID']['output']>>;
+};
+
 export type PickupGameFilterInput = {
   /** Loại chi phí */
   costType?: InputMaybe<CostSharingType>;
@@ -6541,8 +6833,12 @@ export type PickupGameFilterInput = {
   requiresDeposit?: InputMaybe<Scalars['Boolean']['input']>;
   /** Tìm kiếm theo tiêu đề, mô tả */
   searchQuery?: InputMaybe<Scalars['String']['input']>;
-  /** Lọc theo trình độ */
-  skillLevel?: InputMaybe<SkillLevel>;
+  /** Lọc theo thứ tự trình độ đơn (numeric order) — dùng cho single-select */
+  skillLevelOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** Lọc theo nhiều thứ tự trình độ (numeric orders) — dùng cho multi-select */
+  skillLevelOrders?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** Hệ thống xếp hạng để lọc (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING) */
+  skillSystem?: InputMaybe<Scalars['String']['input']>;
   /** Sắp xếp theo */
   sortBy?: InputMaybe<PickupGameSortBy>;
   /** Thứ tự sắp xếp */
@@ -6596,6 +6892,12 @@ export type PickupGameParticipant = {
   approvedBy?: Maybe<Scalars['ID']['output']>;
   /** Thời gian đánh dấu điểm danh */
   attendanceMarkedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Campaign mà kèo này thuộc về */
+  campaignId?: Maybe<Scalars['ID']['output']>;
+  /** Khoảng cách check-in so với giờ bắt đầu kèo (phút, âm = đến sớm) */
+  checkInDeltaMinutes?: Maybe<Scalars['Float']['output']>;
+  /** Phương thức check-in: QR_SCAN, MANUAL, BULK */
+  checkInMethod?: Maybe<CheckInMethod>;
   /** Thời gian check-in */
   checkedInAt?: Maybe<Scalars['DateTime']['output']>;
   /** Thời gian xác nhận */
@@ -6769,6 +7071,18 @@ export type PostBookmark = {
   userId: Scalars['ID']['output'];
 };
 
+export type PostBookmarkConnection = {
+  __typename?: 'PostBookmarkConnection';
+  edges: Array<PostBookmarkEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostBookmarkEdge = {
+  __typename?: 'PostBookmarkEdge';
+  cursor: Scalars['String']['output'];
+  node: PostBookmark;
+};
+
 export type PostComment = {
   __typename?: 'PostComment';
   _id: Scalars['ID']['output'];
@@ -6794,6 +7108,37 @@ export type PostComment = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type PostCommentConnection = {
+  __typename?: 'PostCommentConnection';
+  edges: Array<PostCommentEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostCommentEdge = {
+  __typename?: 'PostCommentEdge';
+  cursor: Scalars['String']['output'];
+  node: PostComment;
+};
+
+export type PostConnection = {
+  __typename?: 'PostConnection';
+  edges: Array<PostEdge>;
+  pageInfo: PageInfo;
+};
+
+/** Payload for the postDeleted subscription. */
+export type PostDeletedPayload = {
+  __typename?: 'PostDeletedPayload';
+  _id: Scalars['ID']['output'];
+  postId: Scalars['ID']['output'];
+};
+
+export type PostEdge = {
+  __typename?: 'PostEdge';
+  cursor: Scalars['String']['output'];
+  node: Post;
+};
+
 export type PostFilterInput = {
   /** Filter by author ID */
   authorId?: InputMaybe<Scalars['ID']['input']>;
@@ -6805,6 +7150,38 @@ export type PostFilterInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter by visibility */
   visibility?: InputMaybe<PostVisibility>;
+};
+
+export type PostLikerEdge = {
+  __typename?: 'PostLikerEdge';
+  cursor: Scalars['String']['output'];
+  node: PostLikerUser;
+};
+
+export type PostLikerUser = {
+  __typename?: 'PostLikerUser';
+  _id: Scalars['ID']['output'];
+  displayName?: Maybe<Scalars['String']['output']>;
+  fullName?: Maybe<Scalars['String']['output']>;
+  /** When this user liked the post */
+  likedAt: Scalars['String']['output'];
+  photoURL?: Maybe<Scalars['String']['output']>;
+  userName?: Maybe<Scalars['String']['output']>;
+};
+
+export type PostLikersConnection = {
+  __typename?: 'PostLikersConnection';
+  edges: Array<PostLikerEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostLikersList = {
+  __typename?: 'PostLikersList';
+  hasMore: Scalars['Boolean']['output'];
+  limit: Scalars['Int']['output'];
+  page: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+  users: Array<PostLikerUser>;
 };
 
 export type PostList = {
@@ -6845,6 +7222,8 @@ export type PostLocationInput = {
 
 export type PostMedia = {
   __typename?: 'PostMedia';
+  /** BlurHash placeholder for instant image preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   duration?: Maybe<Scalars['Float']['output']>;
   height?: Maybe<Scalars['Float']['output']>;
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -6856,6 +7235,8 @@ export type PostMedia = {
 };
 
 export type PostMediaInput = {
+  /** BlurHash placeholder used by the mobile client to render an instant preview while the full image loads. */
+  blurhash?: InputMaybe<Scalars['String']['input']>;
   /** Duration in seconds (for videos) */
   duration?: InputMaybe<Scalars['Float']['input']>;
   /** Height in pixels */
@@ -7461,6 +7842,8 @@ export type Promotion = {
   createdAt: Scalars['DateTime']['output'];
   /** Created by user ID */
   createdBy: Scalars['ID']['output'];
+  /** Staff or owner who created this promotion */
+  createdByUser?: Maybe<User>;
   /** Full description */
   description?: Maybe<Scalars['String']['output']>;
   /** Display order */
@@ -7493,6 +7876,8 @@ export type Promotion = {
   reviewedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Approved/Rejected by user ID */
   reviewedBy?: Maybe<Scalars['ID']['output']>;
+  /** Owner who reviewed (approved/rejected) this promotion */
+  reviewedByUser?: Maybe<User>;
   /** Where promotion applies */
   scope: PromotionScope;
   /** Short description for display */
@@ -7778,7 +8163,7 @@ export type QrTopCity = {
 
 export type Query = {
   __typename?: 'Query';
-  /** Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit. */
+  /** Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit. When the caller is authenticated as venue staff/owner (or admin), all active promotions are returned including those hidden from customers. */
   activeVenuePromotions: Array<Promotion>;
   /** Get all bookings (Admin only) */
   adminGetAllBookings: AdminAllBookingList;
@@ -7816,6 +8201,8 @@ export type Query = {
   calculateBookingDiscount: DiscountCalculationResult;
   /** Calculate discount for a product order */
   calculateOrderDiscount: DiscountCalculationResult;
+  /** Thống kê chi tiết campaign */
+  campaignStats: CampaignStats;
   /** Check if a booking can be passed */
   canPassBooking: CanPassBookingResult;
   /** Get categories with filters */
@@ -7840,6 +8227,8 @@ export type Query = {
   claimRequestStats: ClaimRequestStats;
   /** Get claim requests with filters - Admin only */
   claimRequests: ClaimRequestList;
+  /** Cursor-paginated replies to a parent comment. */
+  commentRepliesConnection: PostCommentConnection;
   /** Public list of referees who confirmed participation (name + role only) */
   confirmedTournamentReferees: Array<TournamentRefereePublic>;
   /** Get court by ID */
@@ -7860,7 +8249,10 @@ export type Query = {
   getAvailableOrderPromotions: Array<Promotion>;
   /** Get list of blocked users */
   getBlockedUsers: Array<UserBlock>;
-  /** Get replies to a comment */
+  /**
+   * Get replies to a comment (offset). DEPRECATED: prefer commentRepliesConnection.
+   * @deprecated Use commentRepliesConnection (cursor pagination).
+   */
   getCommentReplies: CommentList;
   /** Get contact inquiries with filters (Admin only) */
   getContactInquiries: ContactInquiryList;
@@ -7896,13 +8288,19 @@ export type Query = {
   getMessageReportsForAdmin: MessageReportList;
   /** Get messages in a conversation */
   getMessages: MessageList;
-  /** Get current user bookmarked posts */
+  /**
+   * Get current user bookmarked posts (offset). DEPRECATED: prefer myBookmarksConnection.
+   * @deprecated Use myBookmarksConnection (cursor pagination).
+   */
   getMyBookmarks: BookmarkList;
   /** Get groups the current user is a member of */
   getMyGroups: GroupList;
   /** Get pending invitations for the current user */
   getMyInvitations: GroupMemberList;
-  /** Get current user's posts */
+  /**
+   * Get current user's posts (offset). DEPRECATED: prefer myPostsConnection.
+   * @deprecated Use myPostsConnection (cursor pagination).
+   */
   getMyPosts: PostList;
   /** Get a single notification by ID */
   getNotification: Notification;
@@ -7914,15 +8312,26 @@ export type Query = {
   getPinnedMessages: Array<Message>;
   /** Get a single post by ID */
   getPost: Post;
-  /** Get comments for a post */
+  /**
+   * Get comments for a post (offset). DEPRECATED: prefer postCommentsConnection.
+   * @deprecated Use postCommentsConnection (cursor pagination).
+   */
   getPostComments: CommentList;
+  /**
+   * Get paginated list of users who liked a post (offset). DEPRECATED: prefer postLikersConnection.
+   * @deprecated Use postLikersConnection (cursor pagination).
+   */
+  getPostLikers: PostLikersList;
   /** Get a single post report by ID (Admin only) */
   getPostReportById: PostReport;
   /** Get post report statistics (Admin only) */
   getPostReportStats: PostReportStats;
   /** Get all post reports with filters (Admin only) */
   getPostReportsForAdmin: PostReportList;
-  /** Get posts with filters and pagination */
+  /**
+   * Get posts with filters and pagination (offset). DEPRECATED: prefer postsConnection.
+   * @deprecated Use postsConnection (cursor pagination).
+   */
   getPosts: PostList;
   /** Get import history for a product */
   getProductImportHistory: Array<StockMovement>;
@@ -7948,7 +8357,10 @@ export type Query = {
   getUnreadNotificationCount: Scalars['Int']['output'];
   /** Get user by username */
   getUserByUserName: User;
-  /** Get posts by a specific user */
+  /**
+   * Get posts by a specific user (offset). DEPRECATED: prefer userPostsConnection.
+   * @deprecated Use userPostsConnection (cursor pagination).
+   */
   getUserPosts: PostList;
   /** Get user profile by ID */
   getUserProfile: User;
@@ -8004,6 +8416,10 @@ export type Query = {
   myBlacklist: HostBlacklistList;
   /** Get my bookings (as customer) */
   myBookings: BookingList;
+  /** Cursor-paginated current user's bookmarks. */
+  myBookmarksConnection: PostBookmarkConnection;
+  /** Lấy danh sách campaign của host hiện tại */
+  myCampaigns: Array<PickupGameCampaign>;
   /** Get current user claim requests */
   myClaimRequests: ClaimRequestList;
   /** Template của tôi */
@@ -8024,6 +8440,8 @@ export type Query = {
   myPasses: BookingPassList;
   /** Get current user pending staff invitations */
   myPendingInvitations: Array<VenueStaff>;
+  /** Cursor-paginated posts authored by the current user. */
+  myPostsConnection: PostConnection;
   /** Get my recurring bookings (customer) */
   myRecurringBookings: RecurringBookingList;
   /** Current user's registrations */
@@ -8066,10 +8484,18 @@ export type Query = {
   pendingVenueRequests: VenueRequestList;
   /** Lấy chi tiết kèo */
   pickupGame?: Maybe<PickupGame>;
+  /** Lấy chi tiết một campaign */
+  pickupGameCampaign?: Maybe<PickupGameCampaign>;
   /** Lấy danh sách kèo giao lưu */
   pickupGames: PickupGameList;
   /** Get popular/featured sports */
   popularSports: Array<Sport>;
+  /** Cursor-paginated top-level comments of a post. */
+  postCommentsConnection: PostCommentConnection;
+  /** Cursor-paginated likers of a post. */
+  postLikersConnection: PostLikersConnection;
+  /** Cursor-paginated posts feed (Relay-style). */
+  postsConnection: PostConnection;
   /** Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only) */
   previewBulkImport: PreviewBulkImportResult;
   /** Get product by ID */
@@ -8136,6 +8562,8 @@ export type Query = {
   tournamentStats: TournamentStats;
   /** List tournaments with filters */
   tournaments: TournamentList;
+  /** Cursor-paginated posts authored by a specific user. */
+  userPostsConnection: PostConnection;
   /** Get user profile by ID */
   userProfile?: Maybe<User>;
   /** Validate QR code check-in */
@@ -8293,6 +8721,11 @@ export type QueryCalculateOrderDiscountArgs = {
 };
 
 
+export type QueryCampaignStatsArgs = {
+  campaignId: Scalars['ID']['input'];
+};
+
+
 export type QueryCanPassBookingArgs = {
   bookingId: Scalars['ID']['input'];
 };
@@ -8357,6 +8790,13 @@ export type QueryClaimRequestArgs = {
 export type QueryClaimRequestsArgs = {
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryCommentRepliesConnectionArgs = {
+  commentId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -8543,6 +8983,12 @@ export type QueryGetPostArgs = {
 
 
 export type QueryGetPostCommentsArgs = {
+  pagination?: InputMaybe<PaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryGetPostLikersArgs = {
   pagination?: InputMaybe<PaginationInput>;
   postId: Scalars['ID']['input'];
 };
@@ -8748,6 +9194,16 @@ export type QueryMyBookingsArgs = {
 };
 
 
+export type QueryMyBookmarksConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
+export type QueryMyCampaignsArgs = {
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
 export type QueryMyClaimRequestsArgs = {
   pagination?: InputMaybe<PaginationInput>;
 };
@@ -8784,6 +9240,11 @@ export type QueryMyOrdersArgs = {
 export type QueryMyPassesArgs = {
   filter?: InputMaybe<MyPassesFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryMyPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
 };
 
 
@@ -8891,9 +9352,32 @@ export type QueryPickupGameArgs = {
 };
 
 
+export type QueryPickupGameCampaignArgs = {
+  campaignId: Scalars['ID']['input'];
+};
+
+
 export type QueryPickupGamesArgs = {
   filter?: InputMaybe<PickupGameFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryPostCommentsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostLikersConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostsConnectionArgs = {
+  filter?: InputMaybe<PostFilterInput>;
+  pagination?: InputMaybe<CursorPaginationInput>;
 };
 
 
@@ -9056,6 +9540,12 @@ export type QueryTournamentStatsArgs = {
 export type QueryTournamentsArgs = {
   filter?: InputMaybe<TournamentFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryUserPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -9306,6 +9796,8 @@ export type RecurringBookingSummary = {
 
 export type RecurringConfig = {
   __typename?: 'RecurringConfig';
+  /** Discount amount from manually entered voucher code (subset of promoDiscount) */
+  codeDiscount?: Maybe<Scalars['Int']['output']>;
   /**
    * Day of week (0=Sunday, 6=Saturday) - DEPRECATED
    * @deprecated Use daysOfWeek instead for multi-day support
@@ -9321,10 +9813,16 @@ export type RecurringConfig = {
   durationMonths: Scalars['Int']['output'];
   /** End date (YYYY-MM-DD) */
   endDate: Scalars['String']['output'];
+  /** Dates excluded by staff when creating recurring booking */
+  excludedDates?: Maybe<Array<Scalars['String']['output']>>;
   /** Recurring frequency */
   frequency: RecurringFrequency;
   /** Promo code discount amount */
   promoDiscount?: Maybe<Scalars['Int']['output']>;
+  /** Current discount amount from RECURRING category promotions (set to 0 when removed on session cancel) */
+  recurringCategoryDiscount?: Maybe<Scalars['Int']['output']>;
+  /** Promotion IDs of RECURRING category promotions applied to this booking */
+  recurringPromotionIds?: Maybe<Array<Scalars['String']['output']>>;
   /** Sessions per week (number of days) */
   sessionsPerWeek?: Maybe<Scalars['Int']['output']>;
   /** Start date (YYYY-MM-DD) */
@@ -9493,6 +9991,13 @@ export type RejectParticipantInput = {
 export type RejectRegistrationInput = {
   reason?: InputMaybe<Scalars['String']['input']>;
   registrationId: Scalars['ID']['input'];
+};
+
+export type RemoveGamesFromCampaignInput = {
+  /** ID campaign */
+  campaignId: Scalars['ID']['input'];
+  /** Danh sách ID kèo cần xoá khỏi campaign */
+  gameIds: Array<Scalars['ID']['input']>;
 };
 
 export type RemoveGroupMessageReactionInput = {
@@ -9971,6 +10476,8 @@ export type SendGroupMessageInput = {
   media?: InputMaybe<Array<GroupMessageMediaInput>>;
   /** ID of message being replied to */
   replyToId?: InputMaybe<Scalars['ID']['input']>;
+  /** ID of shared pickup game (for GAME_SHARE type) */
+  sharedGameId?: InputMaybe<Scalars['ID']['input']>;
   /** Type of message */
   type?: InputMaybe<GroupMessageType>;
 };
@@ -10094,35 +10601,45 @@ export type SetServingPlayerInput = {
   servingPlayer: Scalars['Int']['input'];
 };
 
+export type ShareGameToGroupsInput = {
+  /** ID of the pickup game to share */
+  gameId: Scalars['ID']['input'];
+  /** IDs of groups to share to */
+  groupIds: Array<Scalars['ID']['input']>;
+  /** Optional message to include */
+  message?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type SignInInput = {
   emailOrPhone: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
 
-/** Trình độ chơi */
-export enum SkillLevel {
-  Advanced = 'ADVANCED',
-  Beginner = 'BEGINNER',
-  Intermediate = 'INTERMEDIATE'
-}
-
 export type SkillRequirement = {
   __typename?: 'SkillRequirement';
   /** Mô tả trình độ */
   description?: Maybe<Scalars['String']['output']>;
-  /** Trình độ tối đa */
-  maxLevel?: Maybe<SkillLevel>;
-  /** Trình độ tối thiểu */
-  minLevel: SkillLevel;
+  /** Thứ tự numeric của các trình độ (dùng cho filter) */
+  levelOrders: Array<Scalars['Int']['output']>;
+  /** Danh sách trình độ được chọn */
+  levels: Array<Scalars['String']['output']>;
+  /** Trình độ tối đa (legacy) */
+  maxLevel?: Maybe<Scalars['String']['output']>;
+  /** Trình độ tối thiểu (legacy) */
+  minLevel?: Maybe<Scalars['String']['output']>;
+  /** Hệ thống xếp hạng (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING) */
+  skillSystem?: Maybe<Scalars['String']['output']>;
 };
 
 export type SkillRequirementInput = {
   /** Mô tả trình độ */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** Trình độ tối đa */
-  maxLevel?: InputMaybe<SkillLevel>;
-  /** Trình độ tối thiểu */
-  minLevel: SkillLevel;
+  /** Thứ tự numeric của các trình độ (dùng cho filter) */
+  levelOrders: Array<Scalars['Int']['input']>;
+  /** Danh sách trình độ được chọn */
+  levels: Array<Scalars['String']['input']>;
+  /** Hệ thống xếp hạng (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING) */
+  skillSystem?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SkuAvailabilityResult = {
@@ -10261,6 +10778,17 @@ export type StackingRulesInput = {
   stackableWithCategories?: InputMaybe<Array<PromotionCategory>>;
   /** Specific promotion IDs that can stack with this */
   stackableWithIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+/** Venue staff badge for chat participants */
+export type StaffBadge = {
+  __typename?: 'StaffBadge';
+  customTitle?: Maybe<Scalars['String']['output']>;
+  isOwner: Scalars['Boolean']['output'];
+  userId: Scalars['ID']['output'];
+  venueId: Scalars['ID']['output'];
+  venueImage?: Maybe<Scalars['String']['output']>;
+  venueName: Scalars['String']['output'];
 };
 
 export type StartMatchInput = {
@@ -10407,6 +10935,12 @@ export type SubmitContactInquiryInput = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Fires when a comment is created on a specific post. Subscribe with `postId` from PostDetail. */
+  commentCreated: PostComment;
+  /** Fires when a comment is deleted on a specific post. Subscribe with `postId` from PostDetail. */
+  commentDeleted: CommentDeletedPayload;
+  /** Fires when a comment is updated on a specific post. Subscribe with `postId` from PostDetail. */
+  commentUpdated: PostComment;
   /** Subscribe to message read receipts in a group */
   groupMessageRead: GroupMessageReadPayload;
   /** Subscribe to new messages in a group */
@@ -10427,6 +10961,12 @@ export type Subscription = {
   messageUpdated: Message;
   /** Real-time notification for a specific user */
   notificationCreated: Notification;
+  /** Fires when a new post is created. Subscribe from the feed to show a "new posts" pill. */
+  postCreated: Post;
+  /** Fires when a specific post is deleted. Subscribe with `postId` from PostDetail. */
+  postDeleted: PostDeletedPayload;
+  /** Fires when a specific post is updated. Subscribe with `postId` from PostDetail. */
+  postUpdated: Post;
   /** Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list. */
   tournamentListUpdated: Scalars['String']['output'];
   /** Any match updated in tournament */
@@ -10437,6 +10977,21 @@ export type Subscription = {
   tournamentStatusChanged: Scalars['String']['output'];
   /** Subscribe to typing indicators */
   typingStatus: TypingStatusPayload;
+};
+
+
+export type SubscriptionCommentCreatedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentUpdatedArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -10487,6 +11042,16 @@ export type SubscriptionMessageUpdatedArgs = {
 
 export type SubscriptionNotificationCreatedArgs = {
   userId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionPostDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionPostUpdatedArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -10592,6 +11157,22 @@ export type TimeSlotAvailability = {
   price: Scalars['Int']['output'];
   /** Start time (HH:mm) */
   startTime: Scalars['String']['output'];
+};
+
+export type TopCampaignParticipant = {
+  __typename?: 'TopCampaignParticipant';
+  /** Tỉ lệ check-in */
+  attendanceRate: Scalars['Float']['output'];
+  /** Avatar URL */
+  avatarUrl?: Maybe<Scalars['String']['output']>;
+  /** Tên hiển thị */
+  displayName: Scalars['String']['output'];
+  /** Số kèo đã check-in */
+  gamesCheckedIn: Scalars['Int']['output'];
+  /** Số kèo đã tham gia trong campaign */
+  gamesJoined: Scalars['Int']['output'];
+  /** ID người dùng */
+  userId: Scalars['ID']['output'];
 };
 
 export type TopParticipant = {
@@ -11294,6 +11875,29 @@ export type UpdatePaymentStatusInput = {
   registrationId: Scalars['ID']['input'];
 };
 
+export type UpdatePickupGameCampaignInput = {
+  /** Mô tả campaign */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Ngày kết thúc (ISO string) */
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  /** Kèo thuộc campaign */
+  gameIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Mục tiêu campaign */
+  goals?: InputMaybe<CampaignGoalsInput>;
+  /** Kích hoạt/tắt */
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Tên campaign */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Môn thể thao của campaign */
+  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Ngày bắt đầu (ISO string) */
+  startDate?: InputMaybe<Scalars['String']['input']>;
+  /** Trình độ mục tiêu */
+  targetSkillLevels?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Danh sách sân mục tiêu */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
 export type UpdatePickupGameInput = {
   /** Chế độ duyệt */
   approvalMode?: InputMaybe<ApprovalMode>;
@@ -11307,8 +11911,8 @@ export type UpdatePickupGameInput = {
   depositConfig?: InputMaybe<DepositConfigInput>;
   /** Dụng cụ cần mang */
   equipment?: InputMaybe<Array<EquipmentItemInput>>;
-  /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) */
-  gameFormat?: InputMaybe<Scalars['String']['input']>;
+  /** Thể thức thi đấu — multi-select */
+  gameFormats?: InputMaybe<Array<Scalars['String']['input']>>;
   /** ID kèo */
   gameId: Scalars['ID']['input'];
   /** Loại hình chơi */
@@ -11535,10 +12139,14 @@ export type UpdateTemplateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** Dụng cụ cần mang */
   equipment?: InputMaybe<Array<EquipmentItemInput>>;
+  /** Thể thức thi đấu */
+  gameFormats?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Loại hình chơi */
   gameType?: InputMaybe<GameType>;
   /** Cấu hình giới tính */
   genderConfig?: InputMaybe<GenderConfigInput>;
+  /** Host cũng tham gia chơi */
+  hostPlaying?: InputMaybe<Scalars['Boolean']['input']>;
   /** Tên template */
   name?: InputMaybe<Scalars['String']['input']>;
   /** Yêu cầu trình độ */
@@ -11707,6 +12315,8 @@ export type UploadPostMediaInput = {
 
 export type UploadPostMediaResponse = {
   __typename?: 'UploadPostMediaResponse';
+  /** BlurHash placeholder for instant image preview on the client. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Height in pixels */
   height?: Maybe<Scalars['Float']['output']>;
   /** File key in storage */
@@ -12116,6 +12726,7 @@ export enum VenueAction {
   Edit = 'EDIT',
   ManageProducts = 'MANAGE_PRODUCTS',
   ManagePromotions = 'MANAGE_PROMOTIONS',
+  OverridePrice = 'OVERRIDE_PRICE',
   View = 'VIEW',
   ViewAnalytics = 'VIEW_ANALYTICS',
   ViewBookings = 'VIEW_BOOKINGS',
@@ -12813,6 +13424,35 @@ export type RemoveFcmTokenMutationVariables = Exact<{
 
 export type RemoveFcmTokenMutation = { __typename?: 'Mutation', removeFcmToken: boolean };
 
+export type CreatePickupGameCampaignMutationVariables = Exact<{
+  input: CreatePickupGameCampaignInput;
+}>;
+
+
+export type CreatePickupGameCampaignMutation = { __typename?: 'Mutation', createPickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type UpdatePickupGameCampaignMutationVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+  input: UpdatePickupGameCampaignInput;
+}>;
+
+
+export type UpdatePickupGameCampaignMutation = { __typename?: 'Mutation', updatePickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type AddGamesToCampaignMutationVariables = Exact<{
+  input: AddGamesToCampaignInput;
+}>;
+
+
+export type AddGamesToCampaignMutation = { __typename?: 'Mutation', addGamesToCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type RemoveGamesFromCampaignMutationVariables = Exact<{
+  input: RemoveGamesFromCampaignInput;
+}>;
+
+
+export type RemoveGamesFromCampaignMutation = { __typename?: 'Mutation', removeGamesFromCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
 export type CreateQrCampaignMutationVariables = Exact<{
   input: CreateQrCampaignInput;
 }>;
@@ -13294,6 +13934,29 @@ export type GetNotificationQueryVariables = Exact<{
 
 
 export type GetNotificationQuery = { __typename?: 'Query', getNotification: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
+
+export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
+
+export type MyCampaignsQueryVariables = Exact<{
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type MyCampaignsQuery = { __typename?: 'Query', myCampaigns: Array<{ __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null }> };
+
+export type PickupGameCampaignQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type PickupGameCampaignQuery = { __typename?: 'Query', pickupGameCampaign?: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } | null };
+
+export type CampaignStatsQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type CampaignStatsQuery = { __typename?: 'Query', campaignStats: { __typename?: 'CampaignStats', totalGames: number, totalSlots: number, totalCheckIns: number, uniqueParticipants: number, avgFillRate: number, returnRate: number, avgCheckInDeltaMinutes?: number | null, qrScanCount: number, manualCount: number, bulkCount: number, checkInsByGame: Array<{ __typename?: 'CheckInByGame', gameId: string, gameName: string, sportType?: string | null, date?: string | null, venueName?: string | null, maxSlots: number, checkIns: number, fillRate: number, qrScanCount: number, manualCount: number, bulkCount: number }>, checkInsByDate: Array<{ __typename?: 'CheckInByDate', date: string, count: number }>, topParticipants: Array<{ __typename?: 'TopCampaignParticipant', userId: string, displayName: string, avatarUrl?: string | null, gamesJoined: number, gamesCheckedIn: number, attendanceRate: number }> } };
 
 export type GetQrCampaignsQueryVariables = Exact<{
   filter?: InputMaybe<QrCampaignFilterInput>;

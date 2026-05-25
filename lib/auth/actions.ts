@@ -273,14 +273,25 @@ export async function requestPasswordResetAction(
   }
 }
 
+export interface ResetPasswordPhoneProof {
+  /** Issued by `verifyPhoneOtp` (ZNS path). */
+  phoneVerificationToken?: string;
+  /** Firebase ID token (fallback path). */
+  firebaseIdToken?: string;
+}
+
 /**
- * Step 3 — reset password using the Firebase ID token obtained after OTP verification.
+ * Step 3 — reset password using EITHER a ZNS proof token or a Firebase
+ * ID token. Mirrors the dual-input shape of the backend resolver.
  */
 export async function resetPasswordAction(
-  idToken: string,
+  proof: ResetPasswordPhoneProof,
   newPassword: string,
 ): Promise<ActionResult> {
-  if (!idToken || !newPassword) {
+  if (
+    (!proof.phoneVerificationToken && !proof.firebaseIdToken) ||
+    !newPassword
+  ) {
     return { success: false, error: AUTH.LOGIN.MISSING_CREDENTIALS };
   }
 
@@ -301,7 +312,13 @@ export async function resetPasswordAction(
             }
           }
         `,
-        variables: { input: { idToken, newPassword } },
+        variables: {
+          input: {
+            phoneVerificationToken: proof.phoneVerificationToken,
+            firebaseIdToken: proof.firebaseIdToken,
+            newPassword,
+          },
+        },
       }),
     });
 
