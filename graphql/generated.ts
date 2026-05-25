@@ -370,6 +370,9 @@ export enum AuditAction {
   OtpTestPhoneDisabled = 'OTP_TEST_PHONE_DISABLED',
   OtpTestPhoneEnabled = 'OTP_TEST_PHONE_ENABLED',
   OtpTestPhoneUpdated = 'OTP_TEST_PHONE_UPDATED',
+  OtpTestUserGrantCreated = 'OTP_TEST_USER_GRANT_CREATED',
+  OtpTestUserGrantReplaced = 'OTP_TEST_USER_GRANT_REPLACED',
+  OtpTestUserGrantRevoked = 'OTP_TEST_USER_GRANT_REVOKED',
   OtpThrottled = 'OTP_THROTTLED',
   OtpVerified = 'OTP_VERIFIED',
   OtpVerifyFailed = 'OTP_VERIFY_FAILED',
@@ -2116,6 +2119,17 @@ export type CreateOtpTestPhoneInput = {
   phone: Scalars['String']['input'];
   /** Fixed 6-digit OTP code */
   testCode: Scalars['String']['input'];
+};
+
+export type CreateOtpTestUserGrantInput = {
+  /** Default SIGN_IN_PHONE only */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  /** Grant expiry (default +24h, max +7d) */
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Reason / ticket reference (min 10 chars) */
+  reason: Scalars['String']['input'];
+  /** User ID to grant test OTP login */
+  userId: Scalars['String']['input'];
 };
 
 export type CreatePickupGameCampaignInput = {
@@ -4256,6 +4270,8 @@ export type Mutation = {
   createOrder: Order;
   /** Create OTP test phone (SUPER_ADMIN only) */
   createOtpTestPhone: OtpTestPhone;
+  /** Create OTP test user login grant (SUPER_ADMIN only) */
+  createOtpTestUserGrant: OtpTestUserGrant;
   /** Tạo kèo mới */
   createPickupGame: PickupGame;
   /** Tạo campaign mới */
@@ -4498,6 +4514,8 @@ export type Mutation = {
   reviewClaimRequest: VenueClaimRequest;
   /** Review promotion (owner approves/rejects) */
   reviewPromotion: Promotion;
+  /** Revoke OTP test user login grant (SUPER_ADMIN only) */
+  revokeOtpTestUserGrant: OtpTestUserGrant;
   /** Save FCM token */
   saveFcmToken: Scalars['Boolean']['output'];
   /** Lưu kèo */
@@ -5207,6 +5225,11 @@ export type MutationCreateOtpTestPhoneArgs = {
 };
 
 
+export type MutationCreateOtpTestUserGrantArgs = {
+  input: CreateOtpTestUserGrantInput;
+};
+
+
 export type MutationCreatePickupGameArgs = {
   input: CreatePickupGameInput;
 };
@@ -5829,6 +5852,11 @@ export type MutationReviewClaimRequestArgs = {
 
 export type MutationReviewPromotionArgs = {
   input: ReviewPromotionInput;
+};
+
+
+export type MutationRevokeOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -6963,6 +6991,49 @@ export type OtpTestPhoneList = {
   __typename?: 'OtpTestPhoneList';
   hasMore: Scalars['Boolean']['output'];
   items: Array<OtpTestPhone>;
+  limit: Scalars['Float']['output'];
+  page: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type OtpTestUserGrant = {
+  __typename?: 'OtpTestUserGrant';
+  _id: Scalars['ID']['output'];
+  /** Allowed OTP purposes (default SIGN_IN_PHONE only) */
+  allowedPurposes: Array<OtpPurpose>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['ID']['output']>;
+  enabled: Scalars['Boolean']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+  /** E.164 phone from user account */
+  phone: Scalars['String']['output'];
+  /** Reason / ticket reference for audit trail */
+  reason: Scalars['String']['output'];
+  revokedAt?: Maybe<Scalars['DateTime']['output']>;
+  revokedBy?: Maybe<Scalars['ID']['output']>;
+  /** Fixed 6-digit OTP code (SUPER_ADMIN only) */
+  testCode: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  /** Denormalized user display name at grant time */
+  userDisplayName: Scalars['String']['output'];
+  /** Linked user account */
+  userId: Scalars['ID']['output'];
+  /** Denormalized user role at grant time */
+  userRole: UserRole;
+};
+
+export type OtpTestUserGrantFilterInput = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search phone, reason, or userId */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by user ID */
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OtpTestUserGrantList = {
+  __typename?: 'OtpTestUserGrantList';
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<OtpTestUserGrant>;
   limit: Scalars['Float']['output'];
   page: Scalars['Float']['output'];
   total: Scalars['Float']['output'];
@@ -8924,6 +8995,10 @@ export type Query = {
   otpTestPhone: OtpTestPhone;
   /** List OTP test phones (SUPER_ADMIN only) */
   otpTestPhones: OtpTestPhoneList;
+  /** Get OTP test user grant by id (SUPER_ADMIN only) */
+  otpTestUserGrant: OtpTestUserGrant;
+  /** List OTP test user grants (SUPER_ADMIN only) */
+  otpTestUserGrants: OtpTestUserGrantList;
   /** Get pending claim requests - Admin only */
   pendingClaimRequests: ClaimRequestList;
   /** Get pending venue requests (Admin only) */
@@ -9832,6 +9907,17 @@ export type QueryOtpTestPhoneArgs = {
 
 export type QueryOtpTestPhonesArgs = {
   filter?: InputMaybe<OtpTestPhoneFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryOtpTestUserGrantsArgs = {
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
 };
 
@@ -14673,6 +14759,28 @@ export type SetOtpTestPhoneEnabledMutationVariables = Exact<{
 
 
 export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTestPhoneEnabled: { __typename?: 'OtpTestPhone', _id: string, enabled: boolean, updatedAt: string } };
+
+export type GetOtpTestUserGrantsQueryVariables = Exact<{
+  pagination?: InputMaybe<PaginationInput>;
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+}>;
+
+
+export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrants: { __typename?: 'OtpTestUserGrantList', total: number, page: number, limit: number, hasMore: boolean, items: Array<{ __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string }> } };
+
+export type CreateOtpTestUserGrantMutationVariables = Exact<{
+  input: CreateOtpTestUserGrantInput;
+}>;
+
+
+export type CreateOtpTestUserGrantMutation = { __typename?: 'Mutation', createOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string } };
+
+export type RevokeOtpTestUserGrantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, enabled: boolean, revokedAt?: string | null, updatedAt: string } };
 
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
