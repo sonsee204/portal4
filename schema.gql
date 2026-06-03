@@ -1255,6 +1255,14 @@ enum BookingTypeFilter {
   SINGLE
 }
 
+type BookingWithOrderPayload {
+  """The confirmed booking"""
+  booking: Booking!
+
+  """Order created for the booking"""
+  order: Order!
+}
+
 type BookmarkList {
   """List of bookmarks"""
   bookmarks: [PostBookmark!]!
@@ -2983,6 +2991,20 @@ input CreateReferralCodeInput {
   ownerRole: String
 }
 
+input CreateScoreboardSessionInput {
+  leftSidePlayer: Int
+  matchFormat: ScoreboardMatchFormat!
+  scheduledAt: DateTime
+  scoringConfig: ScoringConfigInput!
+  servingPlayer: Int
+  side1: ScoreboardSideInput!
+  side2: ScoreboardSideInput!
+  sportType: SportType!
+
+  """If true, start immediately as LIVE"""
+  startImmediately: Boolean
+}
+
 input CreateStaffBookingInput {
   """Customer user ID (if booking for existing user)"""
   customerId: ID
@@ -4006,6 +4028,9 @@ input GroupFilterInput {
   """Filter only groups user is member of"""
   myGroups: Boolean
 
+  """Filter groups where current user has a pending join request"""
+  pendingOnly: Boolean
+
   """Filter by privacy"""
   privacy: GroupPrivacy
 
@@ -4743,6 +4768,11 @@ type MatchScorecard {
   updatedAt: DateTime!
 }
 
+input MatchSetupInput {
+  leftSidePlayer: Int!
+  servingPlayer: Int!
+}
+
 """Status of a tournament match"""
 enum MatchStatus {
   BYE
@@ -5214,6 +5244,7 @@ type Mutation {
 
   """Cancel a single session of recurring booking"""
   cancelRecurringSession(reason: String, sessionBookingId: ID!): Booking!
+  cancelScoreboardSession(sessionId: ID!): ScoreboardSession!
 
   """Cancel tournament"""
   cancelTournament(id: ID!): Tournament!
@@ -5275,7 +5306,7 @@ type Mutation {
   completeTournament(id: ID!): Tournament!
 
   """Confirm booking"""
-  confirmBooking(bookingId: ID!): Booking!
+  confirmBooking(bookingId: ID!): BookingWithOrderPayload!
 
   """Confirm draw and transition category to IN_PROGRESS"""
   confirmDraw(categoryId: ID!): SuccessResponse!
@@ -5284,7 +5315,7 @@ type Mutation {
   confirmEmailUpdate(input: ConfirmEmailUpdateInput!): SuccessResponse!
 
   """Confirm a hold booking (staff)"""
-  confirmHoldBooking(bookingId: ID!, paymentMethod: PaymentMethod): Booking!
+  confirmHoldBooking(bookingId: ID!, paymentMethod: PaymentMethod): BookingWithOrderPayload!
 
   """Confirm order"""
   confirmOrder(orderId: ID!): Order!
@@ -5298,7 +5329,7 @@ type Mutation {
   confirmPhoneUpdate(input: ConfirmPhoneUpdateInput!): SuccessResponse!
 
   """Confirm recurring booking (all sessions)"""
-  confirmRecurringBooking(masterBookingId: ID!): Booking!
+  confirmRecurringBooking(masterBookingId: ID!): BookingWithOrderPayload!
 
   """Create booking (customer)"""
   createBooking(input: CreateBookingInput!): Booking!
@@ -5374,8 +5405,11 @@ type Mutation {
   """Create a new referral code (Admin only)"""
   createReferralCode(input: CreateReferralCodeInput!): ReferralCode!
 
+  """Create scoreboard session"""
+  createScoreboardSession(input: CreateScoreboardSessionInput!): ScoreboardSession!
+
   """Create staff booking"""
-  createStaffBooking(input: CreateStaffBookingInput!): Booking!
+  createStaffBooking(input: CreateStaffBookingInput!): BookingWithOrderPayload!
 
   """Create staff order"""
   createStaffOrder(input: CreateOrderInput!): Order!
@@ -5383,7 +5417,7 @@ type Mutation {
   """
   Create recurring booking by staff. Supports single-day and multi-day bookings.
   """
-  createStaffRecurringBooking(input: CreateStaffRecurringBookingInput!): Booking!
+  createStaffRecurringBooking(input: CreateStaffRecurringBookingInput!): BookingWithOrderPayload!
 
   """Create a new tournament"""
   createTournament(input: CreateTournamentInput!): Tournament!
@@ -5455,6 +5489,7 @@ type Mutation {
 
   """Delete registration (organizer only)"""
   deleteRegistration(input: DeleteRegistrationInput!): SuccessResponse!
+  deleteScoreboardSession(sessionId: ID!): Boolean!
 
   """Permanently delete a DRAFT tournament"""
   deleteTournament(id: ID!): SuccessResponse!
@@ -5751,6 +5786,14 @@ type Mutation {
 
   """Score a point"""
   scorePoint(input: ScorePointInput!): MatchScorecard!
+  scoreboardCompleteSet(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardFinishMatchEarly(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardRetireSession(input: ScoreboardRetireInput!): ScoreboardSession!
+  scoreboardScorePoint(input: ScoreboardScorePointInput!): ScoreboardSession!
+  scoreboardSetServingPlayer(input: ScoreboardSetServingPlayerInput!): ScoreboardSession!
+  scoreboardSwapCourtSides(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardUndoLastPoint(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardUpdateElapsed(input: ScoreboardUpdateElapsedInput!): ScoreboardSession!
 
   """
   Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only)
@@ -5820,6 +5863,9 @@ type Mutation {
 
   """Bắt đầu kèo thủ công"""
   startPickupGame(gameId: ID!): PickupGame!
+
+  """Start a scheduled scoreboard session"""
+  startScoreboardSession(input: StartScoreboardSessionInput!): ScoreboardSession!
 
   """Start tournament"""
   startTournament(id: ID!): Tournament!
@@ -9114,6 +9160,9 @@ type Query {
   """Get contact inquiry stats by status (Admin only)"""
   getContactInquiryStats: ContactInquiryStats!
 
+  """Get a conversation by ID"""
+  getConversation(conversationId: ID!): Conversation!
+
   """Get conversations for current user"""
   getConversations(filter: ConversationFilterInput, pagination: PaginationInput): ConversationList!
 
@@ -9528,11 +9577,26 @@ type Query {
   """Get referee workload statistics for a tournament"""
   refereeWorkload(tournamentId: ID!): RefereeWorkloadResult!
 
+  """Hub header stats"""
+  scoreboardHubStats: ScoreboardHubStats!
+
+  """Default scoring preset for sport"""
+  scoreboardPreset(sportType: SportType!): ScoringConfig!
+
+  """Get scoreboard session by ID"""
+  scoreboardSession(sessionId: ID!): ScoreboardSession!
+
+  """Public viewer access by share token"""
+  scoreboardSessionByViewerToken(viewerToken: String!): ScoreboardSession!
+
+  """List scoreboard sessions for hub tabs"""
+  scoreboardSessions(filter: ScoreboardSessionsFilterInput!, pagination: PaginationInput): ScoreboardSessionList!
+
   """Search messages in a conversation"""
   searchMessages(input: SearchMessagesInput!, pagination: PaginationInput): MessageList!
 
-  """Search user by phone number (for staff booking)"""
-  searchUserByPhone(phone: String!): User
+  """Search user by phone number (venue staff or admin only, for booking)"""
+  searchUserByPhone(phone: String!): UserContactLookup
 
   """Search users by username"""
   searchUsersByUserName(limit: Float = 20, searchTerm: String!): [User!]!
@@ -10248,11 +10312,11 @@ input RequestLocationInput {
   """District"""
   district: String
 
-  """Latitude"""
-  latitude: Float
+  """Latitude (required for map / search)"""
+  latitude: Float!
 
-  """Longitude"""
-  longitude: Float
+  """Longitude (required for map / search)"""
+  longitude: Float!
 
   """Ward"""
   ward: String
@@ -10559,6 +10623,156 @@ type ScoreSummary {
   sets: [SetScoreSummary!]!
 }
 
+enum ScoreboardAbandonReason {
+  EXPIRED
+  INACTIVITY
+}
+
+enum ScoreboardDatePreset {
+  ALL
+  TODAY
+  WEEK
+}
+
+type ScoreboardHubStats {
+  liveCount: Int!
+  todayCount: Int!
+  weekWins: Int!
+}
+
+enum ScoreboardHubTab {
+  HISTORY
+  LIVE
+  MINE
+}
+
+enum ScoreboardMatchFormat {
+  DOUBLES
+  SINGLES
+  TEAM
+}
+
+type ScoreboardPointEvent {
+  id: ID!
+  pointValue: Int
+  scoreAfter: [Int!]!
+  scoringPlayer: Int!
+  servingPlayer: Int!
+  setNumber: Int!
+  timestamp: String!
+}
+
+input ScoreboardRetireInput {
+  retiredPlayer: Int!
+  sessionId: String!
+}
+
+input ScoreboardScorePointInput {
+  pointValue: Int = 1
+  scoringPlayer: Int!
+  sessionId: String!
+}
+
+type ScoreboardScorecard {
+  bestOf: Int!
+  currentPeriod: Int
+  currentSetIndex: Int!
+  elapsedSeconds: Int!
+  isTiebreak: Boolean
+  leftSidePlayer: Int
+  pointHistory: [ScoreboardPointEvent!]!
+  scoringConfig: ScoringConfig!
+  servingPlayer: Int
+  sessionId: ID!
+  sets: [ScoreboardScorecardSet!]!
+  side1Serving: Boolean
+  status: ScorecardStatus!
+}
+
+type ScoreboardScorecardSet {
+  isComplete: Boolean!
+  player1Score: Int!
+  player2Score: Int!
+  setNumber: Int!
+  winner: Int
+}
+
+type ScoreboardSession {
+  _id: ID!
+  abandonReason: ScoreboardAbandonReason
+  createdAt: DateTime!
+  finishedAt: DateTime
+  lastScoringActivityAt: DateTime
+  matchFormat: ScoreboardMatchFormat!
+  ownerId: ID!
+  scheduledAt: DateTime
+  scorecard: ScoreboardScorecard
+  scoringConfig: ScoringConfig!
+  side1: ScoreboardSide!
+  side2: ScoreboardSide!
+  sportType: SportType!
+  startedAt: DateTime
+  status: ScoreboardSessionStatus!
+  updatedAt: DateTime!
+  viewerToken: String!
+  visibility: ScoreboardVisibility!
+  winner: Int
+}
+
+input ScoreboardSessionIdInput {
+  sessionId: String!
+}
+
+type ScoreboardSessionList {
+  hasMore: Boolean!
+  items: [ScoreboardSession!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+enum ScoreboardSessionStatus {
+  ABANDONED
+  CANCELLED
+  DRAFT
+  FINISHED
+  LIVE
+  SCHEDULED
+}
+
+input ScoreboardSessionsFilterInput {
+  datePreset: ScoreboardDatePreset
+  searchQuery: String
+  sportType: SportType
+  status: ScoreboardSessionStatus
+  tab: ScoreboardHubTab!
+}
+
+input ScoreboardSetServingPlayerInput {
+  servingPlayer: Int!
+  sessionId: String!
+}
+
+type ScoreboardSide {
+  label: String!
+  memberLabels: [String!]
+}
+
+input ScoreboardSideInput {
+  label: String!
+  memberLabels: [String!]
+}
+
+input ScoreboardUpdateElapsedInput {
+  seconds: Int!
+  sessionId: String!
+}
+
+enum ScoreboardVisibility {
+  PRIVATE
+  PUBLIC
+}
+
 type ScorecardSet {
   isComplete: Boolean!
   player1Score: Int!
@@ -10589,6 +10803,9 @@ type ScoringConfig {
 
   """Whether deuce rules apply"""
   deuceEnabled: Boolean!
+
+  """Frames to win (billiards / FRAMES scoring system)"""
+  framesToWin: Int
 
   """Max points per set (0 = unlimited, win by margin)"""
   maxPoints: Int!
@@ -10626,11 +10843,14 @@ input ScoringConfigInput {
   bestOf: Int!
   deuceAt: Int! = 0
   deuceEnabled: Boolean! = false
+  framesToWin: Int
   maxPoints: Int! = 0
   periodDurationMinutes: Int! = 0
   periodsCount: Int! = 0
   pointsPerSet: Int!
   scoringSystem: ScoringSystem!
+  serveRotationInterval: Int
+  serveRule: ServeRule
   setsToWin: Int!
   tiebreakEnabled: Boolean! = false
   tiebreakPoints: Int! = 0
@@ -10640,6 +10860,7 @@ input ScoringConfigInput {
 """Type of scoring system used for a sport"""
 enum ScoringSystem {
   CUSTOM
+  FRAMES
   SETS_AND_POINTS
   TIMED_GOALS
   TIMED_POINTS
@@ -10788,6 +11009,7 @@ enum ServeRule {
   NO_SERVE
   RALLY_POINT
   ROTATION
+  SIDE_OUT
 }
 
 type ServerInfo {
@@ -11069,6 +11291,11 @@ input StartMatchInput {
   servingPlayer: Int
 }
 
+input StartScoreboardSessionInput {
+  sessionId: String!
+  setup: MatchSetupInput!
+}
+
 """Reason for stock adjustment"""
 enum StockAdjustmentReason {
   CORRECTION
@@ -11306,6 +11533,9 @@ type Subscription {
   """
   postUpdated(postId: ID!): Post!
 
+  """Realtime scoreboard session updates"""
+  scoreboardSessionUpdated(sessionId: ID!): ScoreboardSession!
+
   """
   Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list.
   """
@@ -11403,6 +11633,9 @@ type TimeSlotAvailability {
 
   """Customer name who booked this slot"""
   customerName: String
+
+  """Customer phone who booked this slot"""
+  customerPhone: String
 
   """End time (HH:mm)"""
   endTime: String!
@@ -13054,7 +13287,7 @@ type User {
   createdBy: ID
   dateOfBirth: DateTime
   displayName: String!
-  email: String!
+  email: String
   emailVerificationDate: DateTime
   emailVerified: Boolean!
   fcmTokens: [String!]!
@@ -13075,7 +13308,7 @@ type User {
   """Total number of ratings received for completed transfers"""
   passRatingCount: Float
   passwordSetAt: DateTime
-  phone: String!
+  phone: String
   phoneVerificationDate: DateTime
   phoneVerified: Boolean!
 
@@ -13121,6 +13354,15 @@ type UserBlock {
   """Reason for blocking"""
   reason: String
   updatedAt: DateTime!
+}
+
+type UserContactLookup {
+  _id: ID!
+  displayName: String!
+  email: String
+  fullName: String!
+  phone: String!
+  photoURL: String
 }
 
 type UserList {
