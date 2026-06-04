@@ -3867,8 +3867,11 @@ type GameTemplateList {
 }
 
 type GameTimeSlot {
-  """Ngày chơi (YYYY-MM-DD)"""
+  """Ngày bắt đầu chơi (YYYY-MM-DD)"""
   date: String!
+
+  """Ngày kết thúc (YYYY-MM-DD). Mặc định cùng ngày bắt đầu."""
+  endDate: String!
 
   """Giờ kết thúc (HH:mm)"""
   endTime: String!
@@ -3880,6 +3883,11 @@ type GameTimeSlot {
 input GameTimeSlotInput {
   """Ngày chơi (YYYY-MM-DD)"""
   date: String!
+
+  """
+  Ngày kết thúc (YYYY-MM-DD). Bỏ trống = cùng ngày bắt đầu hoặc tự suy ra khi kết thúc qua đêm.
+  """
+  endDate: String
 
   """Giờ kết thúc (HH:mm)"""
   endTime: String!
@@ -7112,6 +7120,9 @@ type PickupGame {
   """Khoảng cách (km)"""
   distanceKm: Float
 
+  """Thời điểm kết thúc kèo (Asia/Ho_Chi_Minh)"""
+  endsAt: DateTime!
+
   """Dụng cụ cần mang"""
   equipment: [EquipmentItem!]
 
@@ -7177,6 +7188,9 @@ type PickupGame {
 
   """Môn thể thao"""
   sportType: SportType!
+
+  """Thời điểm bắt đầu kèo (Asia/Ho_Chi_Minh)"""
+  startsAt: DateTime!
 
   """Trạng thái kèo"""
   status: PickupGameStatus!
@@ -7326,10 +7340,10 @@ input PickupGameFilterInput {
   """Lọc theo tags"""
   tags: [String!]
 
-  """Từ giờ (HH:mm)"""
+  """Lọc theo giờ bắt đầu (HH:mm) trên startsAt; kết hợp dateFrom/dateTo"""
   timeFrom: String
 
-  """Đến giờ (HH:mm)"""
+  """Giới hạn trên startsAt (HH:mm) trong ngày dateTo hoặc dateFrom"""
   timeTo: String
 
   """Giới tính của user (để lọc kèo phù hợp)"""
