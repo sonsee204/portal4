@@ -35,7 +35,7 @@ export interface ResolvedAuthSession {
 
 function readTokens(
   request: NextRequest,
-  cookieNames: SessionCookieNames,
+  cookieNames: SessionCookieNames
 ): { accessToken?: string; refreshToken?: string; userRole?: string } {
   return {
     accessToken: request.cookies.get(cookieNames.ACCESS_TOKEN)?.value,
@@ -48,26 +48,26 @@ function applySessionCookies(
   response: NextResponse,
   tokens: { accessToken: string; refreshToken: string },
   role: string,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): void {
   const options = buildSessionCookieOptions(tokens, config.cookieBaseOptions);
 
   response.cookies.set(
     config.cookieNames.ACCESS_TOKEN,
     tokens.accessToken,
-    options.access,
+    options.access
   );
   response.cookies.set(
     config.cookieNames.REFRESH_TOKEN,
     tokens.refreshToken,
-    options.refresh,
+    options.refresh
   );
   response.cookies.set(config.cookieNames.USER_ROLE, role, options.role);
 }
 
 export function clearAuthCookies(
   response: NextResponse,
-  cookieNames: SessionCookieNames,
+  cookieNames: SessionCookieNames
 ): void {
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
@@ -76,28 +76,30 @@ export function clearAuthCookies(
 
 export async function resolveAuthSession(
   request: NextRequest,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): Promise<ResolvedAuthSession> {
   const { accessToken, refreshToken, userRole } = readTokens(
     request,
-    config.cookieNames,
+    config.cookieNames
   );
 
   if (accessToken) {
     try {
-      const { payload } = await jwtVerify(accessToken, config.jwtSecret);
-      const tokenPayload = payload as { sub?: string; role?: string };
-
-      if (!isJwtExpired(accessToken, 0)) {
-        return {
-          accessToken,
-          userId: tokenPayload.sub ?? null,
-          role: tokenPayload.role ?? userRole ?? null,
-          refreshed: false,
-          authFailure: false,
-          networkFailure: false,
-        };
+      const payload = JSON.parse(
+        Buffer.from(accessToken.split('.')[1], 'base64').toString()
+      );
+      // Kiểm tra expired nếu cần
+      if (payload.exp && Date.now() >= payload.exp * 1000) {
+        throw new Error('expired');
       }
+      return {
+        accessToken,
+        userId: payload.sub ?? null,
+        role: payload.role ?? userRole ?? null,
+        refreshed: false,
+        authFailure: false,
+        networkFailure: false,
+      };
     } catch (error) {
       if (!(error instanceof joseErrors.JWTExpired)) {
         return {
@@ -126,13 +128,13 @@ export async function resolveAuthSession(
   const refreshResult = await performTokenRefresh(
     config.graphqlUrl,
     refreshToken,
-    config.clientSource,
+    config.clientSource
   );
 
   if (refreshResult.kind === 'success') {
     const { payload } = await jwtVerify(
       refreshResult.accessToken,
-      config.jwtSecret,
+      config.jwtSecret
     );
     const tokenPayload = payload as { sub?: string; role?: string };
 
@@ -175,7 +177,7 @@ export async function resolveAuthSession(
 export function enrichAuthResponse(
   response: NextResponse,
   session: ResolvedAuthSession,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): NextResponse {
   if (session.refreshTokens) {
     applySessionCookies(
@@ -185,7 +187,7 @@ export function enrichAuthResponse(
         refreshToken: session.refreshTokens.refreshToken,
       },
       session.refreshTokens.role,
-      config,
+      config
     );
   }
 

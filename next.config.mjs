@@ -14,6 +14,14 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   compress: true,
+  async rewrites() {
+    return [
+      {
+        source: '/api/graphql',
+        destination: 'https://staging-api.hitri.vn/graphql',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

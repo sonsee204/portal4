@@ -87,8 +87,11 @@ export function LoginForm() {
         setInitialized(true);
       }
 
-      router.push(redirectTo || '/');
-      router.refresh();
+      // Đợi cookie được ghi xong rồi mới chuyển trang
+      setTimeout(() => {
+        router.push(redirectTo || '/');
+        router.refresh();
+      }, 50);
     } else if (result?.error) {
       setBackendError(result.error);
     }

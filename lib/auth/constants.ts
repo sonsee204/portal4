@@ -29,7 +29,11 @@ export const TOKEN_EXPIRY = {
 /**
  * Public routes that don't require authentication
  */
-export const PUBLIC_ROUTES = ['/login', '/forgot-password', '/maintenance'] as const;
+export const PUBLIC_ROUTES = [
+  '/login',
+  '/forgot-password',
+  '/maintenance',
+] as const;
 
 /**
  * Routes prefixes to skip in middleware
@@ -46,5 +50,5 @@ export const SKIP_MIDDLEWARE_PREFIXES = [
 /**
  * GraphQL API URL (server-side)
  */
-export const GRAPHQL_URL =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
+
+export const GRAPHQL_URL = 'https://staging-api.hitri.vn/graphql';

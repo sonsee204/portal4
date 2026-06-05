@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
   const session = await resolveAuthSession(request, middlewareAuthConfig);
