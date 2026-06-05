@@ -193,6 +193,26 @@ export const BULK_IMPORT_REGISTRATIONS = gql`
   }
 `;
 
+export const ADD_LATE_ENTRY_TO_BYE_SLOT = gql`
+  mutation AddLateEntryToByeSlot($input: AddLateEntryToByeSlotInput!) {
+    addLateEntryToByeSlot(input: $input) {
+      action
+      message
+      opponentName
+      selectedFromCount
+      scheduleNeedsUpdate
+      registration {
+        ...RegistrationCore
+      }
+      match {
+        ...MatchCore
+      }
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 export const UPDATE_REGISTRATION_BIB_NUMBER = gql`
   mutation UpdateRegistrationBibNumber($input: UpdateBibNumberInput!) {
     updateRegistrationBibNumber(input: $input) {

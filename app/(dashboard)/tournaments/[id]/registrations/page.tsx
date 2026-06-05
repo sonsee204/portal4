@@ -20,6 +20,8 @@ import { useTournament, useTournamentCategories } from '@/hooks/tournament';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { ExportButton } from './_components/ExportButton';
 import { ImportModal } from './_components/ImportModal';
+import { LateEntryModal } from './_components/LateEntryModal';
+import { useAuthStore, selectIsSuperAdmin } from '@/stores/auth';
 import { RegistrationDetailModal } from './_components/RegistrationDetailModal';
 import { RejectModal } from './_components/RejectModal';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
@@ -112,6 +114,8 @@ export default function RegistrationsPage({
     setSelectedIds(new Set());
   }, []);
   const [importOpen, setImportOpen] = useState(false);
+  const [lateEntryOpen, setLateEntryOpen] = useState(false);
+  const isSuperAdmin = useAuthStore(selectIsSuperAdmin);
   const [detailReg, setDetailReg] = useState<TournamentRegistration | null>(
     null
   );
@@ -283,6 +287,16 @@ export default function RegistrationsPage({
         >
           Import VĐV
         </Button>
+        {isSuperAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            iconLeft="person-add-outline"
+            onClick={() => setLateEntryOpen(true)}
+          >
+            {TOURNAMENT.LATE_ENTRY_BUTTON}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -300,6 +314,16 @@ export default function RegistrationsPage({
         categories={categories}
         onSuccess={onSuccess}
       />
+
+      {isSuperAdmin && (
+        <LateEntryModal
+          open={lateEntryOpen}
+          onClose={() => setLateEntryOpen(false)}
+          tournamentId={tournamentId}
+          categories={categories}
+          onSuccess={onSuccess}
+        />
+      )}
 
       <RegistrationDetailModal
         registration={detailReg}
