@@ -1,18 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { useMutation } from '@apollo/client/react';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
+import { PermissionGate } from '@/components/atoms/PermissionGate';
+import { ROLE_DISPLAY_NAMES, isSuperAdminRole } from '@/lib/permissions';
 import {
   ADMIN_SUSPEND_USER,
   ADMIN_UNSUSPEND_USER,
 } from '@/graphql/mutations/admin';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
+import { useAuthStore } from '@/stores/auth';
+import { USERS } from '@/lib/strings';
 import type { User } from '@/types';
+import { ResetPlayerPasswordDialog } from '../../_components/ResetPlayerPasswordDialog';
 
 interface ProfileCardProps {
   user: User;
@@ -36,6 +41,8 @@ function getInitials(user: User): string {
 }
 
 export function ProfileCard({ user }: ProfileCardProps) {
+  const viewerRole = useAuthStore((s) => s.user?.role);
+  const [resetOpen, setResetOpen] = useState(false);
   const displayName = getDisplayName(user);
   const initials = getInitials(user);
   const status = user.isSuspended
@@ -55,6 +62,8 @@ export function ProfileCard({ user }: ProfileCardProps) {
   );
 
   const actionLoading = suspending || unsuspending;
+  const canResetPassword =
+    user.role === 'PLAYER' && isSuperAdminRole(viewerRole);
 
   const handleToggleSuspend = () => {
     if (user.isSuspended) {
@@ -71,85 +80,113 @@ export function ProfileCard({ user }: ProfileCardProps) {
   };
 
   return (
-    <GlassPanel card className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col items-center text-center">
-        <Avatar
-          fallback={initials}
-          src={user.photoURL}
-          status={status}
-          size="lg"
-        />
-        <h2 className="text-heading mt-3 text-lg font-bold">{displayName}</h2>
-        <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="info">
-            {ROLE_DISPLAY_NAMES[user.role] ?? user.role}
-          </Badge>
-          {user.isActive && !user.isSuspended && (
-            <Badge variant="success">Hoạt động</Badge>
-          )}
-          {user.isSuspended && <Badge variant="danger">Bị khóa</Badge>}
-        </div>
-      </div>
-
-      {/* Contact info */}
-      <div className="border-surface-border space-y-3 border-t pt-4">
-        <div className="flex items-center gap-3 text-sm">
-          <IonIcon name="mail-outline" className="text-faint" />
-          <span className="text-body">{user.email}</span>
-        </div>
-        {user.phone && (
-          <div className="flex items-center gap-3 text-sm">
-            <IonIcon name="call-outline" className="text-faint" />
-            <span className="text-body">{user.phone}</span>
+    <>
+      <GlassPanel card className="space-y-6">
+        <div className="flex flex-col items-center text-center">
+          <Avatar
+            fallback={initials}
+            src={user.photoURL}
+            status={status}
+            size="lg"
+          />
+          <h2 className="text-heading mt-3 text-lg font-bold">{displayName}</h2>
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+            <Badge variant="info">
+              {ROLE_DISPLAY_NAMES[user.role] ?? user.role}
+            </Badge>
+            {user.accountOrigin === 'ADMIN_CREATED' && (
+              <Badge variant="warning">
+                {USERS.PROVISION.ADMIN_CREATED_BADGE}
+              </Badge>
+            )}
+            {user.isActive && !user.isSuspended && (
+              <Badge variant="success">Hoạt động</Badge>
+            )}
+            {user.isSuspended && <Badge variant="danger">Bị khóa</Badge>}
           </div>
-        )}
-        <div className="flex items-center gap-3 text-sm">
-          <IonIcon name="calendar-outline" className="text-faint" />
-          <span className="text-body">
-            Tham gia:{' '}
-            {user.createdAt
-              ? new Date(user.createdAt).toLocaleDateString('vi-VN')
-              : '—'}
-          </span>
         </div>
-        {user.lastLoginAt && (
+
+        <div className="border-surface-border space-y-3 border-t pt-4">
           <div className="flex items-center gap-3 text-sm">
-            <IonIcon name="log-in-outline" className="text-faint" />
+            <IonIcon name="mail-outline" className="text-faint" />
+            <span className="text-body">{user.email}</span>
+          </div>
+          {user.phone && (
+            <div className="flex items-center gap-3 text-sm">
+              <IonIcon name="call-outline" className="text-faint" />
+              <span className="text-body">{user.phone}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-3 text-sm">
+            <IonIcon name="calendar-outline" className="text-faint" />
             <span className="text-body">
-              Đăng nhập cuối:{' '}
-              {new Date(user.lastLoginAt).toLocaleString('vi-VN')}
+              Tham gia:{' '}
+              {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString('vi-VN')
+                : '—'}
             </span>
           </div>
-        )}
-      </div>
+          {user.lastLoginAt && (
+            <div className="flex items-center gap-3 text-sm">
+              <IonIcon name="log-in-outline" className="text-faint" />
+              <span className="text-body">
+                Đăng nhập cuối:{' '}
+                {new Date(user.lastLoginAt).toLocaleString('vi-VN')}
+              </span>
+            </div>
+          )}
+        </div>
 
-      {/* Danger zone */}
-      <div className="border-surface-border space-y-2 border-t pt-4">
-        <p className="text-faint text-xs font-bold tracking-wider uppercase">
-          Admin Actions
-        </p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-amber-400 hover:bg-amber-500/10"
-          iconLeft={
-            user.isSuspended ? 'lock-open-outline' : 'lock-closed-outline'
-          }
-          onClick={handleToggleSuspend}
-          disabled={actionLoading}
-        >
-          {user.isSuspended ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-red-400 hover:bg-red-500/10"
-          iconLeft="trash-outline"
-        >
-          Xóa tài khoản
-        </Button>
-      </div>
-    </GlassPanel>
+        <div className="border-surface-border space-y-2 border-t pt-4">
+          <p className="text-faint text-xs font-bold tracking-wider uppercase">
+            Admin Actions
+          </p>
+
+          <PermissionGate feature="player_password_reset">
+            {canResetPassword && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sky-400 hover:bg-sky-500/10"
+                iconLeft="key-outline"
+                onClick={() => setResetOpen(true)}
+              >
+                {USERS.RESET_PASSWORD.TITLE}
+              </Button>
+            )}
+          </PermissionGate>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-amber-400 hover:bg-amber-500/10"
+            iconLeft={
+              user.isSuspended ? 'lock-open-outline' : 'lock-closed-outline'
+            }
+            onClick={handleToggleSuspend}
+            disabled={actionLoading}
+          >
+            {user.isSuspended ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-red-400 hover:bg-red-500/10"
+            iconLeft="trash-outline"
+          >
+            Xóa tài khoản
+          </Button>
+        </div>
+      </GlassPanel>
+
+      {canResetPassword && (
+        <ResetPlayerPasswordDialog
+          open={resetOpen}
+          userId={user._id}
+          userName={displayName}
+          onClose={() => setResetOpen(false)}
+        />
+      )}
+    </>
   );
 }

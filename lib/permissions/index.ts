@@ -8,6 +8,8 @@ export type PortalFeature =
   | 'user_management'
   | 'admin_creation'
   | 'facility_owner_creation'
+  | 'player_provision'
+  | 'player_password_reset'
   | 'system_settings'
   | 'all_venues'
   | 'own_venues'
@@ -34,6 +36,8 @@ const PORTAL_FEATURES: Record<UserRole, PortalFeature[]> = {
     'user_management',
     'admin_creation',
     'facility_owner_creation',
+    'player_provision',
+    'player_password_reset',
     'system_settings',
     'all_venues',
     'own_venues',
