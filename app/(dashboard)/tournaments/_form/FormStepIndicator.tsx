@@ -9,12 +9,15 @@ interface FormStepIndicatorProps {
   currentStep: number;
   completedSteps: Set<number>;
   onStepClick: (step: number) => void;
+  /** When set, only these step indices are clickable (e.g. courts-only mode). */
+  clickableSteps?: Set<number>;
 }
 
 export function FormStepIndicator({
   currentStep,
   completedSteps,
   onStepClick,
+  clickableSteps,
 }: FormStepIndicatorProps) {
   const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -32,7 +35,9 @@ export function FormStepIndicator({
         {FORM_STEPS.map((step, i) => {
           const isCompleted = completedSteps.has(i);
           const isCurrent = i === currentStep;
-          const isClickable = isCompleted || i < currentStep;
+          const isClickable = clickableSteps
+            ? clickableSteps.has(i)
+            : isCompleted || i < currentStep;
 
           return (
             <div key={i} className="flex shrink-0 items-center">

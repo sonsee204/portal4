@@ -158,12 +158,50 @@ enum ActorType {
   SYSTEM
 }
 
+input AddGamesToCampaignInput {
+  """ID campaign"""
+  campaignId: ID!
+
+  """Danh sách ID kèo cần thêm vào campaign"""
+  gameIds: [ID!]!
+}
+
 input AddGroupMessageReactionInput {
   """Emoji reaction (e.g., 👍, ❤️, 😂)"""
   emoji: String!
 
   """Message ID to add reaction to"""
   messageId: ID!
+}
+
+type AddLateEntryResult {
+  action: LateEntryAction!
+  match: TournamentMatch
+  message: String!
+  opponentName: String
+  registration: TournamentRegistration
+  scheduleNeedsUpdate: Boolean
+  selectedFromCount: Int!
+}
+
+input AddLateEntryToByeSlotInput {
+  athleteName: String!
+  categoryId: ID!
+  club: String
+  dateOfBirth: String
+  email: String
+  guardianName: String
+  guardianPhone: String
+
+  """Thành viên cho nội dung đôi/đội"""
+  members: [EntryMemberInput!]
+  notes: String
+  paymentAmount: Float
+  phone: String
+
+  """Lý do thêm muộn (audit bắt buộc)"""
+  reason: String!
+  school: String
 }
 
 input AddReactionInput {
@@ -411,6 +449,9 @@ enum AuditAction {
   RATE_LIMIT_HIT
   SYSTEM_ERROR
   TOKEN_REFRESH_FAILED
+  TOURNAMENT_COURTS_UPDATED
+  TOURNAMENT_FORCE_DRAW_RESET
+  TOURNAMENT_LATE_ENTRY_BYE_FILL
   USER_CREATE
   USER_DELETE
   USER_ROLE_CHANGE
@@ -427,6 +468,7 @@ enum AuditCategory {
   AUTH
   SECURITY
   SYSTEM
+  TOURNAMENT
 }
 
 type AuditCategoryCount {
@@ -723,8 +765,19 @@ type Booking {
   """Is booking currently being passed"""
   isBeingPassed: Boolean!
 
+  """Whether price was manually overridden by staff/owner"""
+  isManualPrice: Boolean!
+
   """Is recurring booking"""
   isRecurring: Boolean!
+
+  """
+  Manual final amount set by staff/owner (original system price stored in totalPrice)
+  """
+  manualFinalAmount: Int
+
+  """Reason for manual price override"""
+  manualPriceNote: String
 
   """Main order for this booking"""
   order: Order
@@ -1093,6 +1146,15 @@ type BookmarkList {
 }
 
 type BracketDrawPreview {
+  """True khi mô phỏng không phát hiện cặp cùng CLB ở vòng 1"""
+  canFullySeparateClubs: Boolean!
+
+  """Số xung đột CLB vòng 1 sau mô phỏng bốc thăm (0 = tách hoàn toàn được)"""
+  clubSeparationConflictCount: Int!
+
+  """Cảnh báo khi không thể tách hoàn toàn CLB ở vòng 1"""
+  clubSeparationWarning: String
+
   """Kích thước nhánh đấu hiện tại (cấu hình)"""
   currentBracketSize: Int!
 
@@ -1287,6 +1349,69 @@ input BulkUpdateStatusInput {
   venueId: ID
 }
 
+type CampaignGoals {
+  """Mục tiêu tổng lượt check-in"""
+  targetCheckIns: Int
+
+  """Mục tiêu fill rate (0-1)"""
+  targetFillRate: Float
+
+  """Mục tiêu số người chơi unique"""
+  targetUniqueUsers: Int
+}
+
+input CampaignGoalsInput {
+  """Mục tiêu tổng lượt check-in"""
+  targetCheckIns: Int
+
+  """Mục tiêu fill rate (0-1)"""
+  targetFillRate: Float
+
+  """Mục tiêu số người chơi unique"""
+  targetUniqueUsers: Int
+}
+
+type CampaignStats {
+  """Check-in delta trung bình (phút so với giờ bắt đầu)"""
+  avgCheckInDeltaMinutes: Float
+
+  """Fill rate trung bình (totalCheckIns / totalSlots)"""
+  avgFillRate: Float!
+
+  """Số lượt bulk check-in"""
+  bulkCount: Int!
+
+  """Check-in theo ngày"""
+  checkInsByDate: [CheckInByDate!]!
+
+  """Check-in theo từng kèo"""
+  checkInsByGame: [CheckInByGame!]!
+
+  """Số lượt check-in thủ công"""
+  manualCount: Int!
+
+  """Số lượt quét QR"""
+  qrScanCount: Int!
+
+  """Retention rate: % người chơi join >= 2 kèo"""
+  returnRate: Float!
+
+  """Top người chơi tích cực nhất"""
+  topParticipants: [TopCampaignParticipant!]!
+
+  """Tổng lượt check-in"""
+  totalCheckIns: Int!
+
+  """Tổng số kèo trong campaign"""
+  totalGames: Int!
+
+  """Tổng số slot (maxParticipants)"""
+  totalSlots: Int!
+
+  """Số người chơi unique đã check-in"""
+  uniqueParticipants: Int!
+}
+
 type CanPassBookingResult {
   """Whether booking can be passed"""
   canPass: Boolean!
@@ -1472,7 +1597,63 @@ type ChatMediaUploadResult {
   url: String!
 }
 
+type CheckInByDate {
+  """Số lượt check-in"""
+  count: Int!
+
+  """Ngày (YYYY-MM-DD)"""
+  date: String!
+}
+
+type CheckInByGame {
+  """Số lượt bulk check-in"""
+  bulkCount: Int!
+
+  """Số lượt check-in"""
+  checkIns: Int!
+
+  """Ngày diễn ra"""
+  date: String
+
+  """Fill rate (0-1)"""
+  fillRate: Float!
+
+  """ID kèo"""
+  gameId: ID!
+
+  """Tên kèo"""
+  gameName: String!
+
+  """Số lượt check-in thủ công"""
+  manualCount: Int!
+
+  """Số slot tối đa"""
+  maxSlots: Int!
+
+  """Số lượt quét QR"""
+  qrScanCount: Int!
+
+  """Môn thể thao"""
+  sportType: String
+
+  """Tên sân"""
+  venueName: String
+}
+
+"""Phương thức check-in người chơi"""
+enum CheckInMethod {
+  BULK
+  MANUAL
+  QR_SCAN
+}
+
 input CheckInParticipantInput {
+  """Phương thức check-in"""
+  checkInMethod: CheckInMethod
+
+  """Timestamp từ mã QR (ISO string)"""
+  clientTimestamp: String
+
   """ID kèo"""
   gameId: ID!
 
@@ -1691,6 +1872,9 @@ type Conversation {
   """Array of participant user IDs"""
   participantIds: [ID!]!
 
+  """Venue staff badges for participants who are active venue staff"""
+  participantStaffBadges: [StaffBadge!]
+
   """Participant user details"""
   participants: [User]
   type: ConversationType!
@@ -1759,11 +1943,23 @@ type CostConfig {
   """Ghi chú chi phí"""
   costNote: String
 
+  """Giá cố định nữ (FEMALE_FIXED_MALE_SPLIT)"""
+  femalePriceFixed: Int
+
   """Giá cố định/người"""
   fixedPrice: Int
 
-  """Giá theo giới tính"""
+  """Giá theo giới tính (FIXED: nam/nữ khác nhau)"""
   genderPricing: GenderPricing
+
+  """Tổng tiền sân để tính phần nam chia (FEMALE_FIXED_MALE_SPLIT)"""
+  maleSplitTotalCost: Int
+
+  """Giá tối đa/người"""
+  priceMax: Int
+
+  """Giá tối thiểu/người"""
+  priceMin: Int
 
   """Tổng chi phí sân"""
   totalVenueCost: Int
@@ -1776,11 +1972,23 @@ input CostConfigInput {
   """Ghi chú chi phí"""
   costNote: String
 
+  """Giá cố định nữ phải trả (FEMALE_FIXED_MALE_SPLIT)"""
+  femalePriceFixed: Int
+
   """Giá cố định/người"""
   fixedPrice: Int
 
-  """Giá theo giới tính"""
+  """Giá theo giới tính (FIXED)"""
   genderPricing: GenderPricingInput
+
+  """Tổng tiền sân để tính phần nam chia (FEMALE_FIXED_MALE_SPLIT)"""
+  maleSplitTotalCost: Int
+
+  """Giá tối đa/người (khoảng giá)"""
+  priceMax: Int
+
+  """Giá tối thiểu/người (khoảng giá)"""
+  priceMin: Int
 
   """Tổng chi phí sân"""
   totalVenueCost: Int
@@ -1791,6 +1999,7 @@ input CostConfigInput {
 
 """Hình thức chia tiền"""
 enum CostSharingType {
+  FEMALE_FIXED_MALE_SPLIT
   FIXED
   FREE
   SPLIT_EVENLY
@@ -2089,6 +2298,9 @@ input CreateCourtInput {
 }
 
 input CreateGameFromTemplateInput {
+  """Override: Host cũng tham gia chơi (mặc định theo mẫu)"""
+  hostPlaying: Boolean
+
   """Ghi chú bổ sung"""
   notes: String
 
@@ -2186,8 +2398,14 @@ input CreateOrderInput {
   """Internal/admin note"""
   internalNote: String
 
+  """Enable manual price override (use item unitPrice, skip promotion)"""
+  isManualPrice: Boolean = false
+
   """Order items"""
   items: [OrderItemInput!]!
+
+  """Reason for manual price adjustment"""
+  manualPriceNote: String
 
   """Customer note"""
   note: String
@@ -2213,6 +2431,35 @@ input CreateOrderInput {
   venueId: ID!
 }
 
+input CreatePickupGameCampaignInput {
+  """Mô tả campaign"""
+  description: String
+
+  """Ngày kết thúc (ISO string)"""
+  endDate: String
+
+  """Kèo thuộc campaign"""
+  gameIds: [ID!]
+
+  """Mục tiêu campaign"""
+  goals: CampaignGoalsInput
+
+  """Tên campaign"""
+  name: String!
+
+  """Môn thể thao của campaign"""
+  sportTypes: [String!]
+
+  """Ngày bắt đầu (ISO string)"""
+  startDate: String
+
+  """Trình độ mục tiêu"""
+  targetSkillLevels: [String!]
+
+  """Danh sách sân mục tiêu"""
+  venueIds: [ID!]
+}
+
 input CreatePickupGameInput {
   """Chế độ duyệt"""
   approvalMode: ApprovalMode = AUTO_JOIN
@@ -2235,8 +2482,8 @@ input CreatePickupGameInput {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItemInput!]
 
-  """Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5)"""
-  gameFormat: String
+  """Thể thức thi đấu — multi-select (VD: SINGLES, DOUBLES)"""
+  gameFormats: [String!]
 
   """Loại hình chơi"""
   gameType: GameType!
@@ -2584,6 +2831,15 @@ input CreateStaffBookingInput {
   """Internal note"""
   internalNote: String
 
+  """Enable manual price override (skip all pricing rules)"""
+  isManualPrice: Boolean = false
+
+  """Manual final amount (required when isManualPrice = true)"""
+  manualFinalAmount: Int
+
+  """Reason for manual price adjustment"""
+  manualPriceNote: String
+
   """Selected payment method"""
   paymentMethod: PaymentMethod
 
@@ -2620,8 +2876,20 @@ input CreateStaffRecurringBookingInput {
   """Duration in months (1, 2, or 3)"""
   durationMonths: Int!
 
+  """Dates to exclude from the recurring schedule (YYYY-MM-DD)"""
+  excludeDates: [String!]
+
   """Internal note"""
   internalNote: String
+
+  """Enable manual price override (skip all pricing rules)"""
+  isManualPrice: Boolean = false
+
+  """Manual final amount (required when isManualPrice = true)"""
+  manualFinalAmount: Int
+
+  """Reason for manual price adjustment"""
+  manualPriceNote: String
 
   """Selected payment method"""
   paymentMethod: PaymentMethod
@@ -2660,11 +2928,17 @@ input CreateTemplateInput {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItemInput!]
 
+  """Thể thức thi đấu"""
+  gameFormats: [String!]
+
   """Loại hình chơi"""
   gameType: GameType!
 
   """Cấu hình giới tính"""
   genderConfig: GenderConfigInput
+
+  """Host cũng tham gia chơi"""
+  hostPlaying: Boolean = false
 
   """Tên template"""
   name: String!
@@ -3221,11 +3495,17 @@ type GameTemplate {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItem!]
 
+  """Thể thức thi đấu (đơn/đôi/...)"""
+  gameFormats: [String!]
+
   """Loại hình chơi"""
   gameType: GameType!
 
   """Cấu hình giới tính"""
   genderConfig: GenderConfig
+
+  """Host cũng tham gia chơi"""
+  hostPlaying: Boolean
 
   """Lần sử dụng cuối"""
   lastUsedAt: DateTime
@@ -3583,6 +3863,12 @@ type GroupMessage {
   """Sender user ID"""
   senderId: ID!
 
+  """Shared pickup game data (for GAME_SHARE messages)"""
+  sharedGame: PickupGame
+
+  """ID of shared pickup game (for GAME_SHARE type)"""
+  sharedGameId: ID
+
   """Type of message"""
   type: GroupMessageType!
   updatedAt: DateTime!
@@ -3653,6 +3939,7 @@ type GroupMessageReadPayload {
 """Type of group message"""
 enum GroupMessageType {
   FILE
+  GAME_SHARE
   IMAGE
   SYSTEM
   TEXT
@@ -3943,6 +4230,28 @@ input KickParticipantInput {
 
   """ID người chơi"""
   userId: ID!
+}
+
+"""Outcome of a super-admin late entry into a BYE slot"""
+enum LateEntryAction {
+  BLOCKED
+  FILLED_BYE
+  NO_BYE_SLOT
+}
+
+type LateEntryByeMatchSummary {
+  matchId: ID!
+  matchNumber: Int!
+  opponentName: String!
+  roundLabel: String!
+}
+
+type LateEntryPlacementPreview {
+  blockReason: String
+  canProceed: Boolean!
+  eligibleByeMatchCount: Int!
+  eligibleMatches: [LateEntryByeMatchSummary!]!
+  isFormatSupported: Boolean!
 }
 
 type LegalAcceptanceStatus {
@@ -4445,11 +4754,17 @@ type Mutation {
   """Activate promotion directly (owner action)"""
   activatePromotion(promotionId: ID!): Promotion!
 
+  """Thêm kèo vào campaign"""
+  addGamesToCampaign(input: AddGamesToCampaignInput!): PickupGameCampaign!
+
   """Add reaction to a group message"""
   addGroupMessageReaction(input: AddGroupMessageReactionInput!): GroupMessage!
 
   """Add items to a booking (F&B order during play)"""
   addItemsToBooking(bookingId: ID!, items: [OrderItemInput!]!): Order!
+
+  """Super Admin: add late entry and randomly fill an eligible R1 BYE slot"""
+  addLateEntryToByeSlot(input: AddLateEntryToByeSlotInput!): AddLateEntryResult!
 
   """Add reaction to a message"""
   addReaction(input: AddReactionInput!): Message!
@@ -4730,6 +5045,9 @@ type Mutation {
   """Tạo kèo mới"""
   createPickupGame(input: CreatePickupGameInput!): PickupGame!
 
+  """Tạo campaign mới"""
+  createPickupGameCampaign(input: CreatePickupGameCampaignInput!): PickupGameCampaign!
+
   """Create a new post"""
   createPost(input: CreatePostInput!): Post!
 
@@ -4860,6 +5178,11 @@ type Mutation {
 
   """Follow a user"""
   followUser(userId: String!): User!
+
+  """
+  Super Admin only: reset confirmed draw back to DRAW_PENDING when no matches have started
+  """
+  forceRedraw(categoryId: ID!, reason: String): SuccessResponse!
 
   """Forward a message"""
   forwardMessage(input: ForwardMessageInput!): [Message!]!
@@ -5012,6 +5335,9 @@ type Mutation {
   """Bỏ chặn người dùng"""
   removeFromBlacklist(userId: ID!): Boolean!
 
+  """Xoá kèo khỏi campaign"""
+  removeGamesFromCampaign(input: RemoveGamesFromCampaignInput!): PickupGameCampaign!
+
   """Remove reaction from a group message"""
   removeGroupMessageReaction(input: RemoveGroupMessageReactionInput!): GroupMessage!
 
@@ -5133,6 +5459,9 @@ type Mutation {
 
   """Đặt lại người giao cầu (trọng tài)"""
   setServingPlayer(input: SetServingPlayerInput!): MatchScorecard!
+
+  """Share a pickup game to multiple groups"""
+  shareGameToGroups(input: ShareGameToGroupsInput!): Boolean!
 
   """Login with email/phone and password"""
   signIn(input: SignInInput!): AuthResponse!
@@ -5285,6 +5614,9 @@ type Mutation {
 
   """Cập nhật kèo"""
   updatePickupGame(input: UpdatePickupGameInput!): PickupGame!
+
+  """Cập nhật campaign"""
+  updatePickupGameCampaign(campaignId: ID!, input: UpdatePickupGameCampaignInput!): PickupGameCampaign!
 
   """Update a post"""
   updatePost(input: UpdatePostInput!, postId: ID!): Post!
@@ -5666,8 +5998,14 @@ type Order {
   """Internal/admin note"""
   internalNote: String
 
+  """Whether price was manually overridden by staff"""
+  isManualPrice: Boolean!
+
   """Order items"""
   items: [OrderItem!]!
+
+  """Reason for manual price override"""
+  manualPriceNote: String
 
   """Customer note"""
   note: String
@@ -5922,6 +6260,9 @@ input OrderItemInput {
 
   """Quantity"""
   quantity: Int!
+
+  """Override unit price (used when isManualPrice = true on order)"""
+  unitPrice: Int
 }
 
 """Type of order item"""
@@ -6231,8 +6572,8 @@ type PickupGame {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItem!]
 
-  """Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5)"""
-  gameFormat: String
+  """Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) — multi-select"""
+  gameFormats: [String!]
 
   """Loại hình chơi"""
   gameType: GameType!
@@ -6320,6 +6661,48 @@ type PickupGame {
   waitlistCount: Int
 }
 
+type PickupGameCampaign {
+  _id: ID!
+  createdAt: DateTime!
+
+  """Mô tả campaign"""
+  description: String
+
+  """Ngày kết thúc campaign"""
+  endDate: DateTime
+
+  """Danh sách kèo thuộc campaign"""
+  gameIds: [ID!]
+
+  """Mục tiêu campaign"""
+  goals: CampaignGoals
+
+  """Host tạo campaign"""
+  hostId: ID!
+
+  """Campaign đang hoạt động"""
+  isActive: Boolean!
+
+  """JSON metadata mở rộng"""
+  metadata: String
+
+  """Tên campaign"""
+  name: String!
+
+  """Môn thể thao của campaign"""
+  sportTypes: [String!]
+
+  """Ngày bắt đầu campaign"""
+  startDate: DateTime
+
+  """Trình độ mục tiêu"""
+  targetSkillLevels: [String!]
+  updatedAt: DateTime!
+
+  """Danh sách sân mục tiêu"""
+  venueIds: [ID!]
+}
+
 input PickupGameFilterInput {
   """Loại chi phí"""
   costType: CostSharingType
@@ -6366,8 +6749,18 @@ input PickupGameFilterInput {
   """Tìm kiếm theo tiêu đề, mô tả"""
   searchQuery: String
 
-  """Lọc theo trình độ"""
-  skillLevel: SkillLevel
+  """Lọc theo thứ tự trình độ đơn (numeric order) — dùng cho single-select"""
+  skillLevelOrder: Int
+
+  """
+  Lọc theo nhiều thứ tự trình độ (numeric orders) — dùng cho multi-select
+  """
+  skillLevelOrders: [Int!]
+
+  """
+  Hệ thống xếp hạng để lọc (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING)
+  """
+  skillSystem: String
 
   """Sắp xếp theo"""
   sortBy: PickupGameSortBy = DATE
@@ -6440,6 +6833,15 @@ type PickupGameParticipant {
 
   """Thời gian đánh dấu điểm danh"""
   attendanceMarkedAt: DateTime
+
+  """Campaign mà kèo này thuộc về"""
+  campaignId: ID
+
+  """Khoảng cách check-in so với giờ bắt đầu kèo (phút, âm = đến sớm)"""
+  checkInDeltaMinutes: Float
+
+  """Phương thức check-in: QR_SCAN, MANUAL, BULK"""
+  checkInMethod: CheckInMethod
 
   """Thời gian check-in"""
   checkedInAt: DateTime
@@ -6710,6 +7112,25 @@ input PostFilterInput {
 
   """Filter by visibility"""
   visibility: PostVisibility
+}
+
+type PostLikerUser {
+  _id: ID!
+  displayName: String
+  fullName: String
+
+  """When this user liked the post"""
+  likedAt: String!
+  photoURL: String
+  userName: String
+}
+
+type PostLikersList {
+  hasMore: Boolean!
+  limit: Int!
+  page: Int!
+  total: Int!
+  users: [PostLikerUser!]!
 }
 
 type PostList {
@@ -7556,6 +7977,9 @@ type Promotion {
   """Created by user ID"""
   createdBy: ID!
 
+  """Staff or owner who created this promotion"""
+  createdByUser: User
+
   """Full description"""
   description: String
 
@@ -7603,6 +8027,9 @@ type Promotion {
 
   """Approved/Rejected by user ID"""
   reviewedBy: ID
+
+  """Owner who reviewed (approved/rejected) this promotion"""
+  reviewedByUser: User
 
   """Where promotion applies"""
   scope: PromotionScope!
@@ -7962,7 +8389,7 @@ type QrTopCity {
 
 type Query {
   """
-  Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit.
+  Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit. When the caller is authenticated as venue staff/owner (or admin), all active promotions are returned including those hidden from customers.
   """
   activeVenuePromotions(userId: ID, venueId: ID!): [Promotion!]!
 
@@ -8021,6 +8448,9 @@ type Query {
 
   """Calculate discount for a product order"""
   calculateOrderDiscount(input: ApplyOrderPromotionInput!): DiscountCalculationResult!
+
+  """Thống kê chi tiết campaign"""
+  campaignStats(campaignId: ID!): CampaignStats!
 
   """Check if a booking can be passed"""
   canPassBooking(bookingId: ID!): CanPassBookingResult!
@@ -8174,6 +8604,9 @@ type Query {
   """Get comments for a post"""
   getPostComments(pagination: PaginationInput, postId: ID!): CommentList!
 
+  """Get paginated list of users who liked a post"""
+  getPostLikers(pagination: PaginationInput, postId: ID!): PostLikersList!
+
   """Get a single post report by ID (Admin only)"""
   getPostReportById(reportId: ID!): PostReport!
 
@@ -8306,6 +8739,9 @@ type Query {
   """Get my bookings (as customer)"""
   myBookings(filter: BookingFilterInput, pagination: PaginationInput): BookingList!
 
+  """Lấy danh sách campaign của host hiện tại"""
+  myCampaigns(isActive: Boolean): [PickupGameCampaign!]!
+
   """Get current user claim requests"""
   myClaimRequests(pagination: PaginationInput): ClaimRequestList!
 
@@ -8411,6 +8847,9 @@ type Query {
   """Lấy chi tiết kèo"""
   pickupGame(gameId: ID!): PickupGame
 
+  """Lấy chi tiết một campaign"""
+  pickupGameCampaign(campaignId: ID!): PickupGameCampaign
+
   """Lấy danh sách kèo giao lưu"""
   pickupGames(filter: PickupGameFilterInput, pagination: PaginationInput): PickupGameList!
 
@@ -8421,6 +8860,9 @@ type Query {
   Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only)
   """
   previewBulkImport(input: PreviewBulkImportInput!): PreviewBulkImportResult!
+
+  """Super Admin: preview eligible R1 BYE slots for late entry placement"""
+  previewLateEntryPlacement(categoryId: ID!): LateEntryPlacementPreview!
 
   """Get product by ID"""
   product(productId: ID!): Product!
@@ -8734,6 +9176,11 @@ type RecurringBookingSummary {
 }
 
 type RecurringConfig {
+  """
+  Discount amount from manually entered voucher code (subset of promoDiscount)
+  """
+  codeDiscount: Int
+
   """Day of week (0=Sunday, 6=Saturday) - DEPRECATED"""
   dayOfWeek: Int @deprecated(reason: "Use daysOfWeek instead for multi-day support")
 
@@ -8752,11 +9199,22 @@ type RecurringConfig {
   """End date (YYYY-MM-DD)"""
   endDate: String!
 
+  """Dates excluded by staff when creating recurring booking"""
+  excludedDates: [String!]
+
   """Recurring frequency"""
   frequency: RecurringFrequency!
 
   """Promo code discount amount"""
   promoDiscount: Int
+
+  """
+  Current discount amount from RECURRING category promotions (set to 0 when removed on session cancel)
+  """
+  recurringCategoryDiscount: Int
+
+  """Promotion IDs of RECURRING category promotions applied to this booking"""
+  recurringPromotionIds: [String!]
 
   """Sessions per week (number of days)"""
   sessionsPerWeek: Int
@@ -8954,6 +9412,14 @@ input RejectParticipantInput {
 input RejectRegistrationInput {
   reason: String
   registrationId: ID!
+}
+
+input RemoveGamesFromCampaignInput {
+  """ID campaign"""
+  campaignId: ID!
+
+  """Danh sách ID kèo cần xoá khỏi campaign"""
+  gameIds: [ID!]!
 }
 
 input RemoveGroupMessageReactionInput {
@@ -9524,6 +9990,9 @@ input SendGroupMessageInput {
   """ID of message being replied to"""
   replyToId: ID
 
+  """ID of shared pickup game (for GAME_SHARE type)"""
+  sharedGameId: ID
+
   """Type of message"""
   type: GroupMessageType = TEXT
 }
@@ -9672,38 +10141,54 @@ input SetServingPlayerInput {
   servingPlayer: Int!
 }
 
+input ShareGameToGroupsInput {
+  """ID of the pickup game to share"""
+  gameId: ID!
+
+  """IDs of groups to share to"""
+  groupIds: [ID!]!
+
+  """Optional message to include"""
+  message: String
+}
+
 input SignInInput {
   emailOrPhone: String!
   password: String!
-}
-
-"""Trình độ chơi"""
-enum SkillLevel {
-  ADVANCED
-  BEGINNER
-  INTERMEDIATE
 }
 
 type SkillRequirement {
   """Mô tả trình độ"""
   description: String
 
-  """Trình độ tối đa"""
-  maxLevel: SkillLevel
+  """Thứ tự numeric của các trình độ (dùng cho filter)"""
+  levelOrders: [Int!]!
 
-  """Trình độ tối thiểu"""
-  minLevel: SkillLevel!
+  """Danh sách trình độ được chọn"""
+  levels: [String!]!
+
+  """Trình độ tối đa (legacy)"""
+  maxLevel: String
+
+  """Trình độ tối thiểu (legacy)"""
+  minLevel: String
+
+  """Hệ thống xếp hạng (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING)"""
+  skillSystem: String
 }
 
 input SkillRequirementInput {
   """Mô tả trình độ"""
   description: String
 
-  """Trình độ tối đa"""
-  maxLevel: SkillLevel
+  """Thứ tự numeric của các trình độ (dùng cho filter)"""
+  levelOrders: [Int!]!
 
-  """Trình độ tối thiểu"""
-  minLevel: SkillLevel!
+  """Danh sách trình độ được chọn"""
+  levels: [String!]!
+
+  """Hệ thống xếp hạng (DEFAULT, BADMINTON, FOOTBALL, PB_TIME, PB_RATING)"""
+  skillSystem: String
 }
 
 type SkuAvailabilityResult {
@@ -9870,6 +10355,16 @@ input StackingRulesInput {
 
   """Specific promotion IDs that can stack with this"""
   stackableWithIds: [ID!]
+}
+
+"""Venue staff badge for chat participants"""
+type StaffBadge {
+  customTitle: String
+  isOwner: Boolean!
+  userId: ID!
+  venueId: ID!
+  venueImage: String
+  venueName: String!
 }
 
 input StartMatchInput {
@@ -10203,6 +10698,26 @@ type TimeSlotAvailability {
 
   """Start time (HH:mm)"""
   startTime: String!
+}
+
+type TopCampaignParticipant {
+  """Tỉ lệ check-in"""
+  attendanceRate: Float!
+
+  """Avatar URL"""
+  avatarUrl: String
+
+  """Tên hiển thị"""
+  displayName: String!
+
+  """Số kèo đã check-in"""
+  gamesCheckedIn: Int!
+
+  """Số kèo đã tham gia trong campaign"""
+  gamesJoined: Int!
+
+  """ID người dùng"""
+  userId: ID!
 }
 
 type TopParticipant {
@@ -11010,6 +11525,38 @@ input UpdatePaymentStatusInput {
   registrationId: ID!
 }
 
+input UpdatePickupGameCampaignInput {
+  """Mô tả campaign"""
+  description: String
+
+  """Ngày kết thúc (ISO string)"""
+  endDate: String
+
+  """Kèo thuộc campaign"""
+  gameIds: [ID!]
+
+  """Mục tiêu campaign"""
+  goals: CampaignGoalsInput
+
+  """Kích hoạt/tắt"""
+  isActive: Boolean
+
+  """Tên campaign"""
+  name: String
+
+  """Môn thể thao của campaign"""
+  sportTypes: [String!]
+
+  """Ngày bắt đầu (ISO string)"""
+  startDate: String
+
+  """Trình độ mục tiêu"""
+  targetSkillLevels: [String!]
+
+  """Danh sách sân mục tiêu"""
+  venueIds: [ID!]
+}
+
 input UpdatePickupGameInput {
   """Chế độ duyệt"""
   approvalMode: ApprovalMode
@@ -11029,8 +11576,8 @@ input UpdatePickupGameInput {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItemInput!]
 
-  """Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5)"""
-  gameFormat: String
+  """Thể thức thi đấu — multi-select"""
+  gameFormats: [String!]
 
   """ID kèo"""
   gameId: ID!
@@ -11348,11 +11895,17 @@ input UpdateTemplateInput {
   """Dụng cụ cần mang"""
   equipment: [EquipmentItemInput!]
 
+  """Thể thức thi đấu"""
+  gameFormats: [String!]
+
   """Loại hình chơi"""
   gameType: GameType
 
   """Cấu hình giới tính"""
   genderConfig: GenderConfigInput
+
+  """Host cũng tham gia chơi"""
+  hostPlaying: Boolean
 
   """Tên template"""
   name: String
@@ -12062,6 +12615,7 @@ enum VenueAction {
   EDIT
   MANAGE_PRODUCTS
   MANAGE_PROMOTIONS
+  OVERRIDE_PRICE
   VIEW
   VIEW_ANALYTICS
   VIEW_BOOKINGS

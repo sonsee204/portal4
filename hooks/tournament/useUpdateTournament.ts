@@ -7,11 +7,17 @@ import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
 import type { Tournament, UpdateTournamentInput } from '@/graphql/generated';
 
-export function useUpdateTournament(options?: { onSuccess?: () => void }) {
+export function useUpdateTournament(options?: {
+  onSuccess?: () => void;
+  successMessage?: string;
+}) {
   const [mutation, { loading }] = useMutation<{
     updateTournament: Tournament;
   }>(UPDATE_TOURNAMENT, {
-    ...createMutationOptions('UpdateTournament', TOURNAMENT.SUCCESS_UPDATE),
+    ...createMutationOptions(
+      'UpdateTournament',
+      options?.successMessage ?? TOURNAMENT.SUCCESS_UPDATE,
+    ),
     onCompleted: () => {
       options?.onSuccess?.();
     },

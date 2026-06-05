@@ -7,23 +7,28 @@ interface FormActionsProps {
   currentStep: number;
   isEditMode: boolean;
   isSubmitting?: boolean;
+  isCourtsOnlyMode?: boolean;
   onPrev: () => void;
   onNext: () => void;
   onSaveDraft: () => void;
   onSubmit: () => void;
+  submitLabel?: string;
 }
 
 export function FormActions({
   currentStep,
   isEditMode,
   isSubmitting = false,
+  isCourtsOnlyMode = false,
   onPrev,
   onNext,
   onSaveDraft,
   onSubmit,
+  submitLabel,
 }: FormActionsProps) {
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === FORM_STEPS.length - 1;
+  const showCourtsSave = isCourtsOnlyMode && isEditMode;
 
   return (
     <div className="flex items-center justify-between pt-2">
@@ -38,7 +43,7 @@ export function FormActions({
           Quay lại
         </Button>
 
-        {!isLastStep && (
+        {!isLastStep && !isCourtsOnlyMode && (
           <Button
             variant="outline"
             size="sm"
@@ -53,7 +58,16 @@ export function FormActions({
       </div>
 
       <div>
-        {isLastStep ? (
+        {showCourtsSave ? (
+          <Button
+            size="sm"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            iconLeft="save-outline"
+          >
+            {isSubmitting ? 'Đang xử lý...' : submitLabel ?? 'Lưu sân thi đấu'}
+          </Button>
+        ) : isLastStep ? (
           <Button
             size="sm"
             onClick={onSubmit}

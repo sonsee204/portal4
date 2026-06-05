@@ -1,6 +1,16 @@
 export const TOURNAMENT = {
   SUCCESS_CREATE: 'Tạo giải đấu thành công.',
   SUCCESS_UPDATE: 'Cập nhật giải đấu thành công.',
+  SUCCESS_UPDATE_COURTS: 'Cập nhật sân thi đấu thành công.',
+  COURTS_ONLY_MODE_BANNER_OPEN:
+    'Giải đang nhận đăng ký — chỉ có thể chỉnh sửa sân thi đấu.',
+  COURTS_ONLY_MODE_BANNER_CLOSED:
+    'Giải đã đóng đăng ký — chỉ có thể chỉnh sửa sân thi đấu.',
+  SAVE_COURTS_BUTTON: 'Lưu sân thi đấu',
+  EDIT_BLOCKED_IN_PROGRESS:
+    'Không thể chỉnh sửa giải đấu khi đang diễn ra hoặc đã kết thúc.',
+  LABEL_MANAGE_COURTS: 'Quản lý sân',
+  LABEL_ADD_COURTS_LINK: 'Thêm sân',
   SUCCESS_PUBLISH: 'Đăng giải đấu thành công.',
   SUCCESS_OPEN_REG: 'Mở đăng ký thành công.',
   SUCCESS_CLOSE_REG: 'Đóng đăng ký thành công.',

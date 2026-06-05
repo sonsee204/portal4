@@ -236,6 +236,8 @@ export const tournamentFormSchema = z
 /* Per-step field keys for partial validation                          */
 /* ------------------------------------------------------------------ */
 
+export const COURTS_ONLY_STEP_FIELDS: (keyof TournamentFormData)[] = ['courts'];
+
 export const STEP_FIELDS: Record<number, (keyof TournamentFormData)[]> = {
   0: ['name', 'organizerName', 'sport', 'startDate', 'endDate', 'locationName', 'locationAddress', 'description', 'introduction', 'coverImageUrl', 'highlights'],
   1: ['categories'],
