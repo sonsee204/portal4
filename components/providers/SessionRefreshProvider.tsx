@@ -1,0 +1,86 @@
+'use client';
+
+import { useEffect, useRef, type ReactNode } from 'react';
+import { refreshViaApiRoute } from '@nalee-sports/auth/refresh-mutex';
+import { reconnectWebSocket, setClientAccessToken } from '@/lib/apollo/client';
+import { useAuthStore } from '@/stores/auth';
+
+const FALLBACK_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+const REFRESH_BEFORE_EXPIRY_MS = 2 * 60 * 1000;
+
+function scheduleDelay(accessExpiresAt: number | null): number {
+  if (!accessExpiresAt) {
+    return FALLBACK_REFRESH_INTERVAL_MS;
+  }
+
+  const expiresAtMs = accessExpiresAt * 1000;
+  const delay = expiresAtMs - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
+  return delay > 60_000 ? delay : FALLBACK_REFRESH_INTERVAL_MS;
+}
+
+export function SessionRefreshProvider({ children }: { children: ReactNode }) {
+  const user = useAuthStore((s) => s.user);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    let cancelled = false;
+
+    async function scheduleNextRefresh() {
+      if (cancelled) return;
+
+      let accessExpiresAt: number | null = null;
+      try {
+        const res = await fetch('/api/auth/session', {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = (await res.json()) as {
+            accessExpiresAt?: number | null;
+          };
+          accessExpiresAt = data.accessExpiresAt ?? null;
+        }
+      } catch {
+        // Use fallback interval
+      }
+
+      const delay = scheduleDelay(accessExpiresAt);
+      timerRef.current = setTimeout(() => {
+        void runRefresh();
+      }, delay);
+    }
+
+    async function runRefresh() {
+      if (cancelled) return;
+
+      const result = await refreshViaApiRoute();
+      if (result.status === 'success') {
+        setClientAccessToken(result.accessToken);
+        reconnectWebSocket();
+      }
+
+      if (!cancelled) {
+        void scheduleNextRefresh();
+      }
+    }
+
+    void scheduleNextRefresh();
+
+    return () => {
+      cancelled = true;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [user]);
+
+  return <>{children}</>;
+}
