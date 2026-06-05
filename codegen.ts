@@ -1,8 +1,6 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
-const schemaPath =
-  process.env.GRAPHQL_SCHEMA_PATH ||
-  '../nalee-sports-backend/src/schema.gql';
+const schemaPath = process.env.GRAPHQL_SCHEMA_PATH || './schema.gql';
 
 const config: CodegenConfig = {
   overwrite: true,

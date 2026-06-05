@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { buildSessionCookieOptions } from '@nalee-sports/auth/cookie-policy';
+import { buildSessionCookieOptions } from '@/lib/auth/session-core';
 import { AUTH_COOKIES, COOKIE_OPTIONS } from './constants';
 import type { SessionTokens } from '@/types';
 

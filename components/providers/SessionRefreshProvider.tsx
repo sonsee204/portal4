@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { refreshViaApiRoute } from '@nalee-sports/auth/refresh-mutex';
+import { refreshViaApiRoute } from '@/lib/auth/session-core';
 import { reconnectWebSocket, setClientAccessToken } from '@/lib/apollo/client';
 import { useAuthStore } from '@/stores/auth';
 

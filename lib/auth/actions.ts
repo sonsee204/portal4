@@ -6,7 +6,7 @@ import {
 } from './session';
 import { refreshSessionFromCookie } from './refresh-server';
 import { GRAPHQL_URL } from './constants';
-import { isUnauthenticatedGraphQLError } from '@nalee-sports/auth/types';
+import { isUnauthenticatedGraphQLError } from '@/lib/auth/session-core';
 import { AUTH, ERRORS } from '@/lib/strings';
 import type { AuthUser } from '@/types';
 
