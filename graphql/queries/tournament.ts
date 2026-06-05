@@ -57,6 +57,23 @@ export const PREVIEW_BULK_IMPORT = gql`
   }
 `;
 
+export const PREVIEW_LATE_ENTRY_PLACEMENT = gql`
+  query PreviewLateEntryPlacement($categoryId: ID!) {
+    previewLateEntryPlacement(categoryId: $categoryId) {
+      canProceed
+      eligibleByeMatchCount
+      blockReason
+      isFormatSupported
+      eligibleMatches {
+        matchId
+        matchNumber
+        roundLabel
+        opponentName
+      }
+    }
+  }
+`;
+
 export const GET_TOURNAMENT_REGISTRATIONS = gql`
   query GetTournamentRegistrations(
     $tournamentId: ID!

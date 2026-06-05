@@ -110,6 +110,42 @@ export const TOURNAMENT = {
   IMPORT_DISABLED_REASON:
     'Không thể import VĐV khi đã đóng đăng ký hoặc đã bốc thăm',
 
+  LATE_ENTRY_BUTTON: 'Thêm muộn (Super Admin)',
+  LATE_ENTRY_TITLE: 'Thêm VĐV muộn vào slot BYE',
+  LATE_ENTRY_STEP_CATEGORY: 'Chọn nội dung',
+  LATE_ENTRY_STEP_FORM: 'Nhập thông tin',
+  LATE_ENTRY_STEP_CONFIRM: 'Xác nhận',
+  LATE_ENTRY_STEP_RESULT: 'Kết quả',
+  LATE_ENTRY_SELECT_CATEGORY: 'Chọn hạng mục',
+  LATE_ENTRY_NO_ELIGIBLE_CATEGORY:
+    'Không có hạng mục loại trực tiếp đã bốc thăm phù hợp.',
+  LATE_ENTRY_PREVIEW_COUNT: (n: number) =>
+    `${n} trận BYE vòng 1 có thể lấp`,
+  LATE_ENTRY_PREVIEW_OPPONENTS: 'Đối thủ tiềm năng',
+  LATE_ENTRY_RANDOM_WARNING_LABEL: 'Lưu ý',
+  LATE_ENTRY_RANDOM_TITLE: 'Phân bổ ngẫu nhiên',
+  LATE_ENTRY_RANDOM_HINT: (n: number) =>
+    `Hệ thống sẽ chọn ngẫu nhiên 1 trong ${n} trận BYE vòng 1.`,
+  LATE_ENTRY_CONFIRM_SUMMARY: 'Thông tin thêm muộn',
+  LATE_ENTRY_REASON_LABEL: 'Lý do thêm muộn',
+  LATE_ENTRY_REASON_PLACEHOLDER: 'VD: Cặp đôi đăng ký trễ sau khi bốc thăm...',
+  LATE_ENTRY_REASON_MIN: 'Lý do phải có ít nhất 5 ký tự',
+  LATE_ENTRY_CONFIRM_TITLE: 'Xác nhận thêm muộn',
+  LATE_ENTRY_CONFIRM_DESC: (category: string, n: number) =>
+    `Thêm VĐV vào hạng mục "${category}". Hệ thống chọn ngẫu nhiên 1/${n} trận BYE vòng 1.`,
+  LATE_ENTRY_SUCCESS: (opponent: string) =>
+    `Đã lấp slot BYE — đối thủ: ${opponent}`,
+  LATE_ENTRY_RESULT_FILLED: 'Đã lấp slot BYE thành công',
+  LATE_ENTRY_RESULT_MATCH: (num: number, opponent: string) =>
+    `Trận #${num} — đối thủ: ${opponent}`,
+  LATE_ENTRY_RESULT_NO_SLOT: 'Không có slot BYE khả dụng',
+  LATE_ENTRY_RESULT_BLOCKED: 'Không thể thêm muộn',
+  LATE_ENTRY_SCHEDULE_NOTE:
+    'Trận mới chưa có lịch — vui lòng cập nhật lịch thi đấu.',
+  LATE_ENTRY_DISABLED_TOOLTIP: 'Không thể thêm muộn cho hạng mục này',
+  LATE_ENTRY_MEMBER: (i: number) => `Thành viên ${i}`,
+  LATE_ENTRY_TEAM_LABEL: 'Tên đội',
+
   EXPORT_BUTTON: 'Xuất Excel',
   EXPORT_FILENAME: (name: string, date: string) =>
     `${name}-dang-ky-${date}.xlsx`,

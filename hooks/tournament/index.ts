@@ -31,6 +31,10 @@ export {
   useUpdateBibNumber,
 } from './useRegistrations';
 export {
+  usePreviewLateEntryPlacement,
+  useAddLateEntryToByeSlot,
+} from './useLateEntry';
+export {
   useTournamentBracket,
   useGenerateBracket,
   useResetBracket,
