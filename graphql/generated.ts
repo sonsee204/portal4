@@ -255,6 +255,40 @@ export type AdminCreateUserInput = {
   role: UserRole;
 };
 
+export type AdminProvisionPlayerInput = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  fullName: Scalars['String']['input'];
+  /** Bỏ trống để tự động tạo mật khẩu */
+  password?: InputMaybe<Scalars['String']['input']>;
+  phone: Scalars['String']['input'];
+  referralCode?: InputMaybe<Scalars['String']['input']>;
+  /** Ghi chú nội bộ (audit metadata, không gửi cho user) */
+  sendCredentialsNote?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminProvisionPlayerResponse = {
+  __typename?: 'AdminProvisionPlayerResponse';
+  /** Chỉ trả về khi mật khẩu được tự động tạo */
+  generatedPassword?: Maybe<Scalars['String']['output']>;
+  /** Hướng dẫn đăng nhập cho người dùng */
+  loginInstructions: Scalars['String']['output'];
+  user: User;
+};
+
+export type AdminResetUserPasswordInput = {
+  /** Bỏ trống để tự động tạo mật khẩu */
+  newPassword?: InputMaybe<Scalars['String']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+export type AdminResetUserPasswordResponse = {
+  __typename?: 'AdminResetUserPasswordResponse';
+  /** Chỉ trả về khi mật khẩu được tự động tạo */
+  generatedPassword?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type AnalyticsSummary = {
   __typename?: 'AnalyticsSummary';
   /** Average booking value */
@@ -3881,8 +3915,12 @@ export type Mutation = {
   adminChangeUserRole: User;
   /** Create a new user account (SUPER_ADMIN can create ADMIN/FACILITY_OWNER, ADMIN can create FACILITY_OWNER) */
   adminCreateUser: User;
+  /** Provision a PLAYER account on behalf of a user (Super Admin only) */
+  adminProvisionPlayer: AdminProvisionPlayerResponse;
   /** Reject venue request (Admin only) */
   adminRejectVenue: Venue;
+  /** Reset password for a PLAYER account (Super Admin only) */
+  adminResetUserPassword: AdminResetUserPasswordResponse;
   /** Suspend a user (Admin only) */
   adminSuspendUser: User;
   /** Suspend venue (Admin only) */
@@ -4425,7 +4463,7 @@ export type Mutation = {
   updateRegistrationBibNumber: TournamentRegistration;
   /** Update report status (Admin only) */
   updateReportStatus: PostReport;
-  /** Update tournament details */
+  /** Update tournament details. DRAFT/PUBLISHED: all fields. REGISTRATION_OPEN/CLOSED: courts only. IN_PROGRESS+: blocked. */
   updateTournament: Tournament;
   /** Update tournament referee settings */
   updateTournamentReferee: TournamentReferee;
@@ -4561,9 +4599,19 @@ export type MutationAdminCreateUserArgs = {
 };
 
 
+export type MutationAdminProvisionPlayerArgs = {
+  input: AdminProvisionPlayerInput;
+};
+
+
 export type MutationAdminRejectVenueArgs = {
   reason?: InputMaybe<Scalars['String']['input']>;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type MutationAdminResetUserPasswordArgs = {
+  input: AdminResetUserPasswordInput;
 };
 
 
@@ -13184,6 +13232,20 @@ export type AdminChangeUserRoleMutationVariables = Exact<{
 
 
 export type AdminChangeUserRoleMutation = { __typename?: 'Mutation', adminChangeUserRole: { __typename?: 'User', _id: string, role: UserRole } };
+
+export type AdminProvisionPlayerMutationVariables = Exact<{
+  input: AdminProvisionPlayerInput;
+}>;
+
+
+export type AdminProvisionPlayerMutation = { __typename?: 'Mutation', adminProvisionPlayer: { __typename?: 'AdminProvisionPlayerResponse', generatedPassword?: string | null, loginInstructions: string, user: { __typename?: 'User', _id: string, fullName: string, phone: string, email: string, userName: string, role: UserRole, accountOrigin?: AccountOrigin | null, createdBy?: string | null, phoneVerified: boolean, createdAt: string } } };
+
+export type AdminResetUserPasswordMutationVariables = Exact<{
+  input: AdminResetUserPasswordInput;
+}>;
+
+
+export type AdminResetUserPasswordMutation = { __typename?: 'Mutation', adminResetUserPassword: { __typename?: 'AdminResetUserPasswordResponse', success: boolean, generatedPassword?: string | null, message: string } };
 
 export type RequestPasswordResetMutationVariables = Exact<{
   emailOrPhone: Scalars['String']['input'];

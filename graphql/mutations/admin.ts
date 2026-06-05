@@ -47,3 +47,34 @@ export const ADMIN_CHANGE_USER_ROLE = gql`
     }
   }
 `;
+
+export const ADMIN_PROVISION_PLAYER = gql`
+  mutation AdminProvisionPlayer($input: AdminProvisionPlayerInput!) {
+    adminProvisionPlayer(input: $input) {
+      user {
+        _id
+        fullName
+        phone
+        email
+        userName
+        role
+        accountOrigin
+        createdBy
+        phoneVerified
+        createdAt
+      }
+      generatedPassword
+      loginInstructions
+    }
+  }
+`;
+
+export const ADMIN_RESET_USER_PASSWORD = gql`
+  mutation AdminResetUserPassword($input: AdminResetUserPasswordInput!) {
+    adminResetUserPassword(input: $input) {
+      success
+      generatedPassword
+      message
+    }
+  }
+`;
