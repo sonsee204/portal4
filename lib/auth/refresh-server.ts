@@ -1,4 +1,4 @@
-import { performTokenRefresh } from '@nalee-sports/auth/refresh-graphql';
+import { performTokenRefresh } from '@/lib/auth/session-core';
 import {
   clearSession,
   getRefreshToken,

@@ -1,13 +1,15 @@
 import { jwtVerify, errors as joseErrors } from 'jose';
 import type { NextRequest, NextResponse } from 'next/server';
-import { buildSessionCookieOptions } from '@nalee-sports/auth/cookie-policy';
-import { isJwtExpired } from '@nalee-sports/auth/jwt';
-import { performTokenRefresh } from '@nalee-sports/auth/refresh-graphql';
+import {
+  buildSessionCookieOptions,
+  isJwtExpired,
+  performTokenRefresh,
+} from '@/lib/auth/session-core';
 import type {
   BaseCookieOptions,
+  ClientSource,
   SessionCookieNames,
-} from '@nalee-sports/auth/cookie-policy';
-import type { ClientSource } from '@nalee-sports/auth/types';
+} from '@/lib/auth/session-core';
 
 export interface MiddlewareAuthConfig {
   graphqlUrl: string;

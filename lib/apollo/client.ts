@@ -14,8 +14,10 @@ import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
 import { createClient, type Client } from 'graphql-ws';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
-import { isUnauthenticatedGraphQLError } from '@nalee-sports/auth/types';
-import { refreshViaApiRoute } from '@nalee-sports/auth/refresh-mutex';
+import {
+  isUnauthenticatedGraphQLError,
+  refreshViaApiRoute,
+} from '@/lib/auth/session-core';
 import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
 import { showError } from '@/lib/toast';
 import { ERRORS } from '@/lib/strings';

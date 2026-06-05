@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { decodeJwtExp } from '@nalee-sports/auth/jwt';
+import { decodeJwtExp } from '@/lib/auth/session-core';
 import { getAccessToken, getRefreshToken } from '@/lib/auth/session';
 
 export async function GET() {
