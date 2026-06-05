@@ -92,8 +92,15 @@ export function CredentialsModal({
         )}
 
         {warning && (
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            {warning}
+          <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm">
+            <IonIcon
+              name="warning-outline"
+              size="sm"
+              className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
+            />
+            <p className="leading-relaxed text-amber-800 dark:text-amber-200">
+              {warning}
+            </p>
           </div>
         )}
 
