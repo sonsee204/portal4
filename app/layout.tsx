@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { ApolloProvider } from '@/lib/apollo/provider';
+import { SessionRefreshProvider } from '@/components/providers/SessionRefreshProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { AUTH_COOKIES } from '@/lib/auth/constants';
@@ -28,7 +29,9 @@ export default async function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className="bg-bg text-body min-h-screen font-sans antialiased">
         <ThemeProvider>
-          <ApolloProvider accessToken={accessToken}>{children}</ApolloProvider>
+          <ApolloProvider accessToken={accessToken}>
+            <SessionRefreshProvider>{children}</SessionRefreshProvider>
+          </ApolloProvider>
           <ToastProvider />
         </ThemeProvider>
       </body>

@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@nalee-sports/auth": ["../shared/auth/index.ts"],
+      "@nalee-sports/auth/*": ["../shared/auth/*"]
     }
   },
   "include": [
@@ -28,7 +30,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "../shared/auth/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

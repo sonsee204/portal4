@@ -12,8 +12,10 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { Observable } from '@apollo/client/utilities';
 import { setContext } from '@apollo/client/link/context';
 import { ErrorLink } from '@apollo/client/link/error';
-import { createClient } from 'graphql-ws';
+import { createClient, type Client } from 'graphql-ws';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
+import { isUnauthenticatedGraphQLError } from '@nalee-sports/auth/types';
+import { refreshViaApiRoute } from '@nalee-sports/auth/refresh-mutex';
 import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
 import { showError } from '@/lib/toast';
 import { ERRORS } from '@/lib/strings';
@@ -37,7 +39,6 @@ const getGraphqlWsUrl = (): string => {
   if (httpUrl.startsWith('http://') || httpUrl.startsWith('https://')) {
     return httpUrl.replace(/^http/, 'ws');
   }
-  // Relative /graphql - derive from current origin (client-side only)
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${window.location.host}${httpUrl}`;
@@ -45,11 +46,8 @@ const getGraphqlWsUrl = (): string => {
   return 'ws://localhost:4000/graphql';
 };
 
-/**
- * Token storage for client-side Apollo Client.
- * The token is injected from a server component via the AuthProvider.
- */
 let _accessToken: string | null = null;
+let wsClientInstance: Client | null = null;
 
 export function setClientAccessToken(token: string | null) {
   _accessToken = token;
@@ -59,17 +57,29 @@ export function getClientAccessToken(): string | null {
   return _accessToken;
 }
 
+export function reconnectWebSocket(): void {
+  if (wsClientInstance) {
+    wsClientInstance.dispose();
+    wsClientInstance = null;
+  }
+}
+
+function redirectToLogin(): void {
+  if (typeof window === 'undefined') return;
+  const redirect = encodeURIComponent(
+    `${window.location.pathname}${window.location.search}`,
+  );
+  window.location.href = `/login?redirect=${redirect}`;
+}
+
 const httpLink = new HttpLink({
   uri: getGraphqlUrl(),
-  credentials: 'include', // Send cookies with requests
+  credentials: 'include',
   fetchOptions: {
     next: { revalidate: 0 },
   },
 });
 
-/**
- * Auth link: inject access token and client source header
- */
 const authLink = setContext((_, { headers }) => {
   const token = _accessToken;
 
@@ -83,75 +93,64 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-/**
- * Error link: handle 401 errors by refreshing token.
- * Apollo Client v4 uses { error, operation, forward } instead of
- * { graphQLErrors, networkError }.
- */
 const errorLink = new ErrorLink(({ error, operation, forward }) => {
   if (CombinedGraphQLErrors.is(error)) {
-    const hasAuthError = error.errors.some(
-      (err) =>
-        err.extensions?.code === 'UNAUTHENTICATED' ||
-        err.message.includes('Unauthorized') ||
-        err.message.includes('Token'),
+    const hasAuthError = error.errors.some((err) =>
+      isUnauthenticatedGraphQLError(
+        err.extensions?.code as string | undefined,
+        err.message,
+      ),
     );
 
     if (hasAuthError) {
-      // Attempt token refresh via API route
       return new Observable((observer) => {
-        fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-          .then((res) => res.json() as Promise<{ accessToken?: string }>)
-          .then((data) => {
-            if (data.accessToken) {
-              _accessToken = data.accessToken;
+        void refreshViaApiRoute().then((result) => {
+          if (result.status === 'success') {
+            _accessToken = result.accessToken;
+            reconnectWebSocket();
 
-              // Retry the failed operation with new token
-              const oldHeaders = operation.getContext().headers as Record<
-                string,
-                string
-              >;
-              operation.setContext({
-                headers: {
-                  ...oldHeaders,
-                  Authorization: `Bearer ${data.accessToken}`,
-                },
-              });
+            const oldHeaders = operation.getContext().headers as Record<
+              string,
+              string
+            >;
+            operation.setContext({
+              headers: {
+                ...oldHeaders,
+                Authorization: `Bearer ${result.accessToken}`,
+              },
+            });
 
-              forward(operation).subscribe(observer);
-            } else {
-              // Refresh failed -- clear client state and redirect to login
-              _accessToken = null;
-              if (client) {
-                void client.clearStore();
-              }
-              if (typeof window !== 'undefined') {
-                window.location.href = '/login';
-              }
-              observer.error(error);
-            }
-          })
-          .catch(() => {
+            forward(operation).subscribe(observer);
+            return;
+          }
+
+          if (result.status === 'auth_failed') {
             _accessToken = null;
             if (client) {
               void client.clearStore();
             }
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
+            redirectToLogin();
             observer.error(error);
-          });
+            return;
+          }
+
+          showError(ERRORS.NETWORK);
+          observer.error(error);
+        });
       });
     }
 
     const nonAuthErrors = error.errors.filter(
-      (err) => err.extensions?.code !== 'UNAUTHENTICATED',
+      (err) =>
+        !isUnauthenticatedGraphQLError(
+          err.extensions?.code as string | undefined,
+          err.message,
+        ),
     );
     if (nonAuthErrors.length > 0) {
       showError(formatGraphQLError(error));
     }
   } else {
-    // Network or other error
     console.error('[Network error]:', error);
     if (typeof window !== 'undefined') {
       showError(ERRORS.NETWORK);
@@ -160,15 +159,15 @@ const errorLink = new ErrorLink(({ error, operation, forward }) => {
 });
 
 function createWsLink(): GraphQLWsLink {
-  return new GraphQLWsLink(
-    createClient({
-      url: getGraphqlWsUrl(),
-      connectionParams: () => ({
-        authorization: _accessToken ? `Bearer ${_accessToken}` : '',
-        'x-client-source': 'portal',
-      }),
+  wsClientInstance = createClient({
+    url: getGraphqlWsUrl(),
+    connectionParams: () => ({
+      authorization: _accessToken ? `Bearer ${_accessToken}` : '',
+      'x-client-source': 'portal',
     }),
-  );
+  });
+
+  return new GraphQLWsLink(wsClientInstance);
 }
 
 export function createApolloClient() {
@@ -193,39 +192,17 @@ export function createApolloClient() {
     link,
     cache: new InMemoryCache({
       typePolicies: {
-        Booking: {
-          keyFields: ['_id'],
-        },
-        Message: {
-          keyFields: ['_id'],
-        },
-        Conversation: {
-          keyFields: ['_id'],
-        },
-        Venue: {
-          keyFields: ['_id'],
-        },
-        Promotion: {
-          keyFields: ['_id'],
-        },
-        User: {
-          keyFields: ['_id'],
-        },
-        Tournament: {
-          keyFields: ['_id'],
-        },
-        TournamentCategory: {
-          keyFields: ['_id'],
-        },
-        TournamentRegistration: {
-          keyFields: ['_id'],
-        },
-        TournamentMatch: {
-          keyFields: ['_id'],
-        },
-        MatchScorecard: {
-          keyFields: ['_id'],
-        },
+        Booking: { keyFields: ['_id'] },
+        Message: { keyFields: ['_id'] },
+        Conversation: { keyFields: ['_id'] },
+        Venue: { keyFields: ['_id'] },
+        Promotion: { keyFields: ['_id'] },
+        User: { keyFields: ['_id'] },
+        Tournament: { keyFields: ['_id'] },
+        TournamentCategory: { keyFields: ['_id'] },
+        TournamentRegistration: { keyFields: ['_id'] },
+        TournamentMatch: { keyFields: ['_id'] },
+        MatchScorecard: { keyFields: ['_id'] },
       },
     }),
     defaultOptions: {
