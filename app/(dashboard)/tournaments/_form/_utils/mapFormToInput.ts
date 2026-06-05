@@ -175,6 +175,22 @@ export function mapFormToUpdateInput(
   return { id, ...rest };
 }
 
+/** Partial update for REGISTRATION_OPEN / REGISTRATION_CLOSED — courts only. */
+export function mapFormToCourtsUpdateInput(
+  id: string,
+  data: TournamentFormData,
+): UpdateTournamentInput {
+  return {
+    id,
+    courts: data.courts
+      .filter((c) => c.name.trim())
+      .map((c) => ({
+        name: c.name.trim(),
+        status: c.status || 'available',
+      })),
+  };
+}
+
 export function mapTournamentToFormData(tournament: Tournament): TournamentFormData {
   return {
     name: tournament.title,

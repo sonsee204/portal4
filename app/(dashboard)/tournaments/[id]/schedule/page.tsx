@@ -1,12 +1,16 @@
 'use client';
 
-import { use, useState, useCallback, useEffect } from 'react';
+import { use, useState, useCallback, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
+import { Input } from '@/components/atoms/Input';
+import { Select } from '@/components/atoms/Select';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { TOURNAMENT } from '@/lib/strings';
 import {
+  useTournament,
   useTournamentMatches,
   useScheduleMatch,
   useUnscheduleMatch,
@@ -44,6 +48,30 @@ export default function SchedulePage({
   const [statusFilter, setStatusFilter] = useState<
     MatchStatus | typeof ALL_MATCH_STATUS
   >(ALL_MATCH_STATUS);
+  const [schedulingMatchId, setSchedulingMatchId] = useState<string | null>(
+    null
+  );
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleCourt, setScheduleCourt] = useState('');
+
+  const { tournament } = useTournament(tournamentId);
+
+  const availableCourts = useMemo(
+    () =>
+      (tournament?.courts ?? []).filter(
+        (c) => !c.status || c.status === 'available'
+      ),
+    [tournament?.courts]
+  );
+
+  const courtOptions = useMemo(
+    () =>
+      availableCourts.map((c) => ({
+        label: c.name,
+        value: c.name,
+      })),
+    [availableCourts]
+  );
 
   const { matches, loading, refetch, subscribeToMatchUpdates } =
     useTournamentMatches({
@@ -72,17 +100,27 @@ export default function SchedulePage({
 
   const isActionLoading = scheduling || unscheduling || assigning;
 
-  const handleSchedule = (matchId: string) => {
-    const dateStr = window.prompt('Thời gian (YYYY-MM-DDTHH:mm):');
-    const courtName = window.prompt('Tên sân:');
-    if (dateStr) {
-      void scheduleMatch({
-        matchId,
-        scheduledAt: dateStr,
-        courtName: courtName ?? undefined,
-        estimatedDurationMinutes: 30,
-      });
-    }
+  const openScheduleForm = (matchId: string) => {
+    setSchedulingMatchId(matchId);
+    setScheduleDate('');
+    setScheduleCourt(courtOptions[0]?.value ?? '');
+  };
+
+  const closeScheduleForm = () => {
+    setSchedulingMatchId(null);
+    setScheduleDate('');
+    setScheduleCourt('');
+  };
+
+  const handleScheduleSubmit = () => {
+    if (!schedulingMatchId || !scheduleDate) return;
+    void scheduleMatch({
+      matchId: schedulingMatchId,
+      scheduledAt: scheduleDate,
+      courtName: scheduleCourt || undefined,
+      estimatedDurationMinutes: 30,
+    });
+    closeScheduleForm();
   };
 
   const handleAssignReferee = (matchId: string) => {
@@ -117,15 +155,65 @@ export default function SchedulePage({
         title={TOURNAMENT.LABEL_SCHEDULE}
         description={`${matches.length} trận đấu`}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          iconLeft="arrow-back-outline"
-          onClick={() => router.push('/tournaments')}
-        >
-          Quay lại
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/tournaments/${tournamentId}/edit`}>
+            <Button variant="outline" size="sm" iconLeft="grid-outline">
+              {TOURNAMENT.LABEL_ADD_COURTS_LINK}
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft="arrow-back-outline"
+            onClick={() => router.push('/tournaments')}
+          >
+            Quay lại
+          </Button>
+        </div>
       </PageHeader>
+
+      {schedulingMatchId && (
+        <GlassPanel card className="mt-4">
+          <h3 className="text-heading mb-4 text-sm font-semibold">
+            Lên lịch trận đấu
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Thời gian (YYYY-MM-DDTHH:mm)"
+              value={scheduleDate}
+              onChange={(e) => setScheduleDate(e.target.value)}
+              placeholder="2026-06-15T08:00"
+            />
+            {courtOptions.length > 0 ? (
+              <Select
+                label="Sân thi đấu"
+                value={scheduleCourt}
+                onChange={(e) => setScheduleCourt(e.target.value)}
+                options={courtOptions}
+              />
+            ) : (
+              <Input
+                label="Tên sân"
+                value={scheduleCourt}
+                onChange={(e) => setScheduleCourt(e.target.value)}
+                placeholder="Sân 1"
+              />
+            )}
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={closeScheduleForm}>
+              Huỷ
+            </Button>
+            <Button
+              size="sm"
+              disabled={!scheduleDate || isActionLoading}
+              onClick={handleScheduleSubmit}
+            >
+              Xác nhận
+            </Button>
+          </div>
+        </GlassPanel>
+      )}
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
         {[
@@ -254,7 +342,7 @@ export default function SchedulePage({
                               size="sm"
                               variant="ghost"
                               disabled={isActionLoading}
-                              onClick={() => handleSchedule(m._id)}
+                              onClick={() => openScheduleForm(m._id)}
                             >
                               Lên lịch
                             </Button>
