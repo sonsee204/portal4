@@ -16,7 +16,19 @@ import {
   useUnscheduleMatch,
   useAssignReferee,
 } from '@/hooks/tournament';
-import { MatchStatus, RefereeInviteStatus } from '@/graphql/generated';
+import {
+  MatchStatus,
+  RefereeInviteStatus,
+  type TournamentMatch,
+} from '@/graphql/generated';
+import { MatchCorrectionModal } from './_components/MatchCorrectionModal';
+
+const CORRECTABLE_STATUSES = new Set<MatchStatus>([
+  MatchStatus.Live,
+  MatchStatus.Finished,
+  MatchStatus.Walkover,
+  MatchStatus.Retirement,
+]);
 
 const REFEREE_STATUS_CONFIG: Record<
   RefereeInviteStatus,
@@ -53,6 +65,8 @@ export default function SchedulePage({
   );
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleCourt, setScheduleCourt] = useState('');
+  const [correctionMatch, setCorrectionMatch] =
+    useState<TournamentMatch | null>(null);
 
   const { tournament } = useTournament(tournamentId);
 
@@ -368,6 +382,16 @@ export default function SchedulePage({
                               Huỷ lịch
                             </Button>
                           )}
+                        {CORRECTABLE_STATUSES.has(m.status) && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={isActionLoading}
+                            onClick={() => setCorrectionMatch(m)}
+                          >
+                            Hiệu chỉnh
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -377,6 +401,12 @@ export default function SchedulePage({
           </GlassPanel>
         )}
       </div>
+
+      <MatchCorrectionModal
+        match={correctionMatch}
+        onClose={() => setCorrectionMatch(null)}
+        onSuccess={() => void refetch()}
+      />
     </>
   );
 }

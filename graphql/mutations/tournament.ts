@@ -365,6 +365,46 @@ export const UPDATE_MATCH_RESULT = gql`
   ${SCORECARD_FRAGMENT}
 `;
 
+export const ORGANIZER_CORRECT_LIVE_SCORE = gql`
+  mutation OrganizerCorrectLiveScore(
+    $input: OrganizerCorrectLiveScoreInput!
+  ) {
+    organizerCorrectLiveScore(input: $input) {
+      ...ScorecardCore
+    }
+  }
+  ${SCORECARD_FRAGMENT}
+`;
+
+export const ORGANIZER_ABORT_LIVE_MATCH = gql`
+  mutation OrganizerAbortLiveMatch($input: OrganizerAbortLiveMatchInput!) {
+    organizerAbortLiveMatch(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const SET_MATCH_WALKOVER = gql`
+  mutation SetMatchWalkover($input: SetMatchWalkoverInput!) {
+    setMatchWalkover(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const CORRECT_FINISHED_MATCH_RESULT = gql`
+  mutation CorrectFinishedMatchResult(
+    $input: CorrectFinishedMatchResultInput!
+  ) {
+    correctFinishedMatchResult(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 // ==================== SUBSCRIPTIONS ====================
 
 export const MATCH_SCORE_UPDATED_SUB = gql`
