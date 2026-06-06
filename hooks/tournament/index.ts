@@ -55,3 +55,9 @@ export {
   useStartMatch,
   useUpdateMatchResult,
 } from './useScoring';
+export {
+  useOrganizerCorrectLiveScore,
+  useOrganizerAbortLiveMatch,
+  useSetMatchWalkover,
+  useCorrectFinishedMatchResult,
+} from './useMatchCorrection';
