@@ -4882,6 +4882,34 @@ type MonthGameCount {
   month: String!
 }
 
+input MoveMatchInput {
+  """After move, repack subsequent matches on the same court/day"""
+  autoRepack: Boolean = false
+
+  """Target court name"""
+  courtName: String!
+  matchId: ID!
+
+  """New scheduledAt ISO local string"""
+  scheduledAt: String!
+}
+
+"""Preview moving a match without persisting"""
+type MoveMatchPreviewResult {
+  affectedPreview: [ScheduleShiftPreview!]
+  match: TournamentMatch!
+  suggestRepack: Boolean!
+  warnings: [String!]!
+}
+
+"""Result of atomic move (+ optional repack)"""
+type MoveMatchResult {
+  match: TournamentMatch!
+  repackPreview: [ScheduleShiftPreview!]
+  repackedCount: Int!
+  warnings: [String!]!
+}
+
 type Mutation {
   """Accept a group invitation"""
   acceptInvitation(groupId: ID!): GroupMember!
@@ -5416,6 +5444,9 @@ type Mutation {
 
   """Mark order as ready"""
   markOrderReady(orderId: ID!): Order!
+
+  """Move match to new court/time with optional court repack"""
+  moveMatchWithCascade(input: MoveMatchInput!): MoveMatchResult!
 
   """Move products to another venue"""
   moveProductsToVenue(input: TransferProductsInput!): BulkOperationResult!
@@ -9070,6 +9101,9 @@ type Query {
 
   """Super Admin: preview eligible R1 BYE slots for late entry placement"""
   previewLateEntryPlacement(categoryId: ID!): LateEntryPlacementPreview!
+
+  """Preview drag-move without persisting"""
+  previewMoveMatch(input: MoveMatchInput!): MoveMatchPreviewResult!
 
   """
   Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB)

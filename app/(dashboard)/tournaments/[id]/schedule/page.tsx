@@ -351,6 +351,10 @@ export default function SchedulePage({
         <div className="mt-4">
           <ScheduleTimelineView
             tournamentId={tournamentId}
+            onRepackRequest={(anchorMatchId) => {
+              const m = gridRawMatches.find((x) => x._id === anchorMatchId);
+              if (m) openRepack(m);
+            }}
             onMatchClick={(matchId) => {
               const m = gridRawMatches.find((x) => x._id === matchId);
               if (m?.status === MatchStatus.NotStarted) {
