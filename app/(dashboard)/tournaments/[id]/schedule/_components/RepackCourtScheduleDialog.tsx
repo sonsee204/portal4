@@ -47,7 +47,7 @@ export function RepackCourtScheduleDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <GlassPanel
-        card
+        card={true}
         className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden p-0"
       >
         <div className="border-surface-border border-b px-5 py-4">
@@ -70,8 +70,9 @@ export function RepackCourtScheduleDialog({
           ) : (
             <>
               {!showApplied && overdueCount > 0 ? (
-                <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
-                  {overdueCount} trận quá hạn sẽ được xếp lại trước.
+                <p className="border-surface-border dark:bg-surface rounded-lg border border-l-4 border-l-amber-400 bg-white px-3 py-2 text-sm leading-relaxed text-amber-600 shadow-sm dark:border-l-amber-400 dark:text-amber-400">
+                  <span className="font-semibold">{overdueCount}</span> trận quá
+                  hạn sẽ được xếp lại trước.
                 </p>
               ) : null}
               <ScheduleShiftPreviewTable
