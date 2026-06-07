@@ -15,13 +15,22 @@ import {
   useScheduleMatch,
   useUnscheduleMatch,
   useAssignReferee,
+  useCascadeReschedule,
+  usePreviewRepackCourtSchedule,
+  useRepackCourtSchedule,
+  useScheduleAutoRepackBanner,
 } from '@/hooks/tournament';
 import {
   MatchStatus,
   RefereeInviteStatus,
+  type ScheduleShiftPreview,
   type TournamentMatch,
 } from '@/graphql/generated';
 import { MatchCorrectionModal } from './_components/MatchCorrectionModal';
+import { RepackCourtScheduleDialog } from './_components/RepackCourtScheduleDialog';
+import { CascadeRescheduleDialog } from './_components/CascadeRescheduleDialog';
+import { ScheduleAutoRepackBanner } from './_components/ScheduleAutoRepackBanner';
+import { isPortalMatchOverdue } from '@/lib/tournament/schedule-overdue';
 
 const CORRECTABLE_STATUSES = new Set<MatchStatus>([
   MatchStatus.Live,
@@ -50,6 +59,30 @@ const REFEREE_STATUS_CONFIG: Record<
 
 const ALL_MATCH_STATUS = 'ALL' as const;
 
+const REPACK_ANCHOR_STATUSES = new Set<MatchStatus>([
+  MatchStatus.Live,
+  MatchStatus.Finished,
+  MatchStatus.Walkover,
+  MatchStatus.Retirement,
+]);
+
+function calendarKeyFromIso(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
+function formatScheduleDate(dateStr: string) {
+  return new Date(dateStr).toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function SchedulePage({
   params,
 }: {
@@ -67,7 +100,17 @@ export default function SchedulePage({
   const [scheduleCourt, setScheduleCourt] = useState('');
   const [correctionMatch, setCorrectionMatch] =
     useState<TournamentMatch | null>(null);
-
+  const [repackAnchor, setRepackAnchor] = useState<TournamentMatch | null>(
+    null
+  );
+  const [repackOpen, setRepackOpen] = useState(false);
+  const [repackPreview, setRepackPreview] = useState<
+    ScheduleShiftPreview[] | undefined
+  >(undefined);
+  const [cascadeAnchor, setCascadeAnchor] = useState<TournamentMatch | null>(
+    null
+  );
+  const [cascadeOpen, setCascadeOpen] = useState(false);
   const { tournament } = useTournament(tournamentId);
 
   const availableCourts = useMemo(
@@ -97,6 +140,9 @@ export default function SchedulePage({
       pagination: { page: 1, limit: 100 },
     });
 
+  const { autoRepackBanner, dismissAutoRepackBanner } =
+    useScheduleAutoRepackBanner(matches, formatScheduleDate);
+
   useEffect(() => {
     if (!tournamentId) return;
     const unsubscribe = subscribeToMatchUpdates();
@@ -111,8 +157,47 @@ export default function SchedulePage({
     onSuccess,
   });
   const { assignReferee, loading: assigning } = useAssignReferee({ onSuccess });
+  const { cascadeReschedule, loading: cascading } = useCascadeReschedule({
+    onSuccess,
+  });
+  const {
+    previewRepackCourtSchedule,
+    loading: repackPreviewLoading,
+    data: repackPreviewData,
+    error: repackPreviewQueryError,
+  } = usePreviewRepackCourtSchedule();
+  const { repackCourtSchedule, loading: repacking } = useRepackCourtSchedule({
+    onSuccess,
+  });
 
-  const isActionLoading = scheduling || unscheduling || assigning;
+  const isActionLoading =
+    scheduling || unscheduling || assigning || cascading || repacking;
+
+  const repackOverdueMatchIds = useMemo(() => {
+    if (!repackPreviewData?.preview) return undefined;
+    const ids = new Set<string>();
+    for (const row of repackPreviewData.preview) {
+      const m = matches.find((x) => x._id === row.matchId);
+      if (m && isPortalMatchOverdue(m)) ids.add(row.matchId);
+    }
+    return ids.size > 0 ? ids : undefined;
+  }, [repackPreviewData, matches]);
+
+  useEffect(() => {
+    if (
+      !repackOpen ||
+      !repackAnchor?.court?.name ||
+      !repackAnchor.scheduledAt
+    ) {
+      return;
+    }
+    void previewRepackCourtSchedule({
+      tournamentId,
+      courtName: repackAnchor.court.name,
+      calendarDate: calendarKeyFromIso(repackAnchor.scheduledAt),
+      anchorMatchId: repackAnchor._id,
+    });
+  }, [repackOpen, repackAnchor, tournamentId, previewRepackCourtSchedule]);
 
   const openScheduleForm = (matchId: string) => {
     setSchedulingMatchId(matchId);
@@ -144,14 +229,27 @@ export default function SchedulePage({
     }
   };
 
-  function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+  const openRepack = useCallback((match: TournamentMatch) => {
+    setRepackPreview(undefined);
+    setRepackAnchor(match);
+    setRepackOpen(true);
+  }, []);
+
+  const handleRepackConfirm = useCallback(async () => {
+    if (!repackAnchor?.court?.name || !repackAnchor.scheduledAt) return;
+    const result = await repackCourtSchedule({
+      tournamentId,
+      courtName: repackAnchor.court.name,
+      calendarDate: calendarKeyFromIso(repackAnchor.scheduledAt),
+      anchorMatchId: repackAnchor._id,
     });
-  }
+    const preview = result.data?.repackCourtSchedule.preview;
+    if (preview?.length) {
+      setRepackPreview(preview);
+    } else {
+      setRepackOpen(false);
+    }
+  }, [repackAnchor, repackCourtSchedule, tournamentId]);
 
   const STATUS_COLORS: Record<MatchStatus, string> = {
     [MatchStatus.NotStarted]: 'text-secondary',
@@ -185,6 +283,13 @@ export default function SchedulePage({
           </Button>
         </div>
       </PageHeader>
+
+      <ScheduleAutoRepackBanner
+        open={autoRepackBanner != null}
+        courtLabels={autoRepackBanner?.courtLabels ?? []}
+        shifts={autoRepackBanner?.shifts ?? []}
+        onDismiss={dismissAutoRepackBanner}
+      />
 
       {schedulingMatchId && (
         <GlassPanel card className="mt-4">
@@ -314,7 +419,18 @@ export default function SchedulePage({
                       </span>
                     </td>
                     <td className="text-secondary p-3 text-xs">
-                      {m.scheduledAt ? formatDate(m.scheduledAt) : '—'}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span>
+                          {m.scheduledAt
+                            ? formatScheduleDate(m.scheduledAt)
+                            : '—'}
+                        </span>
+                        {isPortalMatchOverdue(m) ? (
+                          <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
+                            Quá hạn
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="text-secondary p-3 text-xs">
                       {m.court?.name ?? '—'}
@@ -392,6 +508,31 @@ export default function SchedulePage({
                             Hiệu chỉnh
                           </Button>
                         )}
+                        {m.scheduledAt &&
+                          m.court?.name &&
+                          REPACK_ANCHOR_STATUSES.has(m.status) && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={isActionLoading}
+                                onClick={() => openRepack(m)}
+                              >
+                                Dồn sân
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={isActionLoading}
+                                onClick={() => {
+                                  setCascadeAnchor(m);
+                                  setCascadeOpen(true);
+                                }}
+                              >
+                                Dịch đều
+                              </Button>
+                            </>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -406,6 +547,38 @@ export default function SchedulePage({
         match={correctionMatch}
         onClose={() => setCorrectionMatch(null)}
         onSuccess={() => void refetch()}
+      />
+
+      <RepackCourtScheduleDialog
+        open={repackOpen}
+        anchorMatch={repackAnchor}
+        courtName={repackAnchor?.court?.name ?? ''}
+        calendarDate={
+          repackAnchor?.scheduledAt
+            ? calendarKeyFromIso(repackAnchor.scheduledAt)
+            : ''
+        }
+        previewRows={repackPreviewData?.preview}
+        overdueCount={repackPreviewData?.overdueCount ?? 0}
+        overdueMatchIds={repackOverdueMatchIds}
+        previewLoading={repackPreviewLoading}
+        previewError={repackPreviewQueryError?.message ?? null}
+        onClose={() => setRepackOpen(false)}
+        onConfirm={handleRepackConfirm}
+        loading={repacking}
+        lastPreview={repackPreview}
+      />
+
+      <CascadeRescheduleDialog
+        open={cascadeOpen}
+        anchorMatch={cascadeAnchor}
+        allMatches={matches}
+        onConfirm={(matchId, shiftMinutes) => {
+          void cascadeReschedule({ matchId, shiftMinutes });
+          setCascadeOpen(false);
+        }}
+        onDismiss={() => setCascadeOpen(false)}
+        loading={cascading}
       />
     </>
   );

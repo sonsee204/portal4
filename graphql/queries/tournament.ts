@@ -241,3 +241,23 @@ export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
   }
   ${REGISTRATION_CORE_FRAGMENT}
 `;
+
+export const PREVIEW_REPACK_COURT_SCHEDULE = gql`
+  query PreviewRepackCourtSchedule($input: RepackCourtScheduleInput!) {
+    previewRepackCourtSchedule(input: $input) {
+      anchorMatchId
+      courtName
+      calendarDate
+      totalAffected
+      overdueCount
+      backlogCount
+      preview {
+        matchId
+        matchNumber
+        oldScheduledAt
+        newScheduledAt
+      }
+      warnings
+    }
+  }
+`;

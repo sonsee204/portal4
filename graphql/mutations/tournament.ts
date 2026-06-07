@@ -305,6 +305,25 @@ export const CASCADE_RESCHEDULE = gql`
   ${MATCH_CORE_FRAGMENT}
 `;
 
+export const REPACK_COURT_SCHEDULE = gql`
+  mutation RepackCourtSchedule($input: RepackCourtScheduleInput!) {
+    repackCourtSchedule(input: $input) {
+      affectedMatches {
+        ...MatchCore
+      }
+      totalAffected
+      preview {
+        matchId
+        matchNumber
+        oldScheduledAt
+        newScheduledAt
+      }
+      warnings
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 export const AUTO_SCHEDULE_MATCHES = gql`
   mutation AutoScheduleMatches($input: AutoScheduleInput!) {
     autoScheduleMatches(input: $input) {
