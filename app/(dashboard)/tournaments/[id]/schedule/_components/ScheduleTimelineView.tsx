@@ -9,28 +9,42 @@ import {
   useTournamentScheduleMatches,
   useScheduleAutoRepackBanner,
   useScheduleDriftBanner,
+  useScheduleMatch,
+  useUnscheduleMatch,
 } from '@/hooks/tournament';
 import {
   mapMatchesToSchedule,
   mapTournamentCourts,
 } from '@/lib/tournament/mappers/schedule';
 import { filterMatchesByScheduleDate } from '@/lib/tournament/schedule-match-scope';
-import { createMatchSubscription } from '@/lib/utils/subscription';
+import {
+  createMatchSubscription,
+  SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS,
+} from '@/lib/utils/subscription';
+import { useScheduleOptimisticMoves } from '@/lib/tournament/use-schedule-optimistic-moves';
+import { detectRepackAfterDrop } from '@/lib/tournament/detect-repack-after-drop';
+import type { RepackAfterDropHint } from '@/lib/tournament/detect-repack-after-drop';
+import { showError, showSuccessWithAction, showWarning } from '@/lib/toast';
 import { ScheduleGrid } from './ScheduleGrid';
 import { computeTimelineDayRange } from './TournamentCourtTimelineGrid';
 import { ScheduleAutoRepackBanner } from './ScheduleAutoRepackBanner';
 import { ScheduleDriftBanner } from './ScheduleDriftBanner';
+import { ScheduleDndLayout } from './ScheduleDndLayout';
+import { ScheduleRepackAfterDropBanner } from './ScheduleRepackAfterDropBanner';
+import type { ScheduleDropPayload } from './schedule-dnd-types';
 
 interface ScheduleTimelineViewProps {
   tournamentId: string;
   onMatchClick: (matchId: string) => void;
   onEmptyClick: (courtId: string, time: string) => void;
+  onRepackRequest?: (anchorMatchId: string) => void;
 }
 
 export function ScheduleTimelineView({
   tournamentId,
   onMatchClick,
   onEmptyClick,
+  onRepackRequest,
 }: ScheduleTimelineViewProps) {
   const { tournament } = useTournament(tournamentId);
   const { categories } = useTournamentCategories(tournamentId);
@@ -46,6 +60,30 @@ export function ScheduleTimelineView({
     [rawMatches, categories]
   );
 
+  const {
+    applyOptimisticMove,
+    commitMove,
+    rollbackMove,
+    patchMatches,
+    hasPendingMoves,
+  } = useScheduleOptimisticMoves();
+
+  const displayMatches = useMemo(
+    () => patchMatches(scheduleMatches),
+    [scheduleMatches, patchMatches]
+  );
+
+  const { scheduleMatch } = useScheduleMatch({
+    onSuccess: () => void refetch(),
+    onWarnings: (warnings: string[]) => warnings.forEach((w) => showWarning(w)),
+  });
+  const { unscheduleMatch } = useUnscheduleMatch({
+    onSuccess: () => void refetch(),
+  });
+
+  const [repackAfterDropHint, setRepackAfterDropHint] =
+    useState<RepackAfterDropHint | null>(null);
+
   const courts = useMemo(
     () => mapTournamentCourts(tournament?.courts ?? []),
     [tournament?.courts]
@@ -53,11 +91,11 @@ export function ScheduleTimelineView({
 
   const scheduleDates = useMemo(() => {
     const dates = new Set<string>();
-    for (const m of scheduleMatches) {
+    for (const m of displayMatches) {
       if (m.scheduledDate) dates.add(m.scheduledDate);
     }
     return [...dates].sort();
-  }, [scheduleMatches]);
+  }, [displayMatches]);
 
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -68,19 +106,33 @@ export function ScheduleTimelineView({
     return scheduleDates[0] ?? '';
   }, [selectedDate, scheduleDates]);
 
+  const today = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
+  const isPastDate = activeDate !== '' && activeDate < today;
+  const courtBufferMinutes =
+    tournament?.scheduleConfig?.courtBufferMinutes ?? 5;
+  const minRestMinutes = tournament?.scheduleConfig?.minRestMinutes ?? 0;
+
   const dayMatches = useMemo(
     () =>
       activeDate
-        ? filterMatchesByScheduleDate(scheduleMatches, activeDate, {
+        ? filterMatchesByScheduleDate(displayMatches, activeDate, {
             includeUnscheduledWithoutDate: false,
           })
-        : scheduleMatches,
-    [scheduleMatches, activeDate]
+        : displayMatches,
+    [displayMatches, activeDate]
+  );
+
+  const scheduledDayMatches = useMemo(
+    () => dayMatches.filter((m) => m.courtId && m.startTime),
+    [dayMatches]
   );
 
   const dayRange = useMemo(
-    () => computeTimelineDayRange(dayMatches),
-    [dayMatches]
+    () =>
+      computeTimelineDayRange(scheduledDayMatches, {
+        selectedDate: activeDate,
+      }),
+    [scheduledDayMatches, activeDate]
   );
 
   const { autoRepackBanner, dismissAutoRepackBanner } =
@@ -93,10 +145,83 @@ export function ScheduleTimelineView({
     const unsubscribe = createMatchSubscription(
       subscribeToMore,
       refetch,
-      tournamentId
+      tournamentId,
+      SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS,
+      () => !hasPendingMoves()
     );
     return () => unsubscribe();
-  }, [subscribeToMore, refetch, tournamentId]);
+  }, [subscribeToMore, refetch, tournamentId, hasPendingMoves]);
+
+  const handleScheduleDrop = useCallback(
+    async ({ matchId, courtId, time }: ScheduleDropPayload) => {
+      if (isPastDate || !activeDate) return;
+      const match = scheduleMatches.find((m) => m.id === matchId);
+      if (!match) return;
+
+      const undoSnapshot = {
+        courtId: match.courtId,
+        startTime: match.startTime,
+        scheduledDate: match.scheduledDate ?? activeDate,
+      };
+
+      applyOptimisticMove(match, courtId, time, activeDate);
+
+      try {
+        await scheduleMatch({
+          matchId,
+          courtName: courtId,
+          scheduledAt: `${activeDate}T${time}:00`,
+        });
+        commitMove(matchId);
+
+        const hint = detectRepackAfterDrop(
+          { ...match, courtId, startTime: time, scheduledDate: activeDate },
+          patchMatches(scheduleMatches),
+          courtBufferMinutes
+        );
+        if (hint) setRepackAfterDropHint(hint);
+
+        showSuccessWithAction(`Đã đổi lịch trận #${match.matchNumber}`, {
+          label: 'Hoàn tác',
+          onClick: () => {
+            if (!undoSnapshot.courtId || !undoSnapshot.startTime) return;
+            void scheduleMatch({
+              matchId,
+              courtName: undoSnapshot.courtId,
+              scheduledAt: `${undoSnapshot.scheduledDate}T${undoSnapshot.startTime}:00`,
+            });
+          },
+        });
+      } catch (err) {
+        rollbackMove(matchId);
+        showError(
+          err instanceof Error ? err.message : 'Không thể đổi lịch trận'
+        );
+      }
+    },
+    [
+      isPastDate,
+      activeDate,
+      scheduleMatches,
+      applyOptimisticMove,
+      scheduleMatch,
+      commitMove,
+      rollbackMove,
+      patchMatches,
+      courtBufferMinutes,
+    ]
+  );
+
+  const handleUnscheduleDrop = useCallback(
+    async (matchId: string) => {
+      try {
+        await unscheduleMatch(matchId);
+      } catch (err) {
+        showError(err instanceof Error ? err.message : 'Không thể gỡ lịch');
+      }
+    },
+    [unscheduleMatch]
+  );
 
   const handleMatchClick = useCallback(
     (matchId: string) => onMatchClick(matchId),
@@ -129,6 +254,20 @@ export function ScheduleTimelineView({
         onDismiss={dismissDriftBanner}
       />
 
+      {repackAfterDropHint ? (
+        <ScheduleRepackAfterDropBanner
+          hint={repackAfterDropHint}
+          courtName={
+            courts.find((c) => c.id === repackAfterDropHint.courtId)?.name
+          }
+          onPreviewRepack={() => {
+            onRepackRequest?.(repackAfterDropHint.anchorMatchId);
+            setRepackAfterDropHint(null);
+          }}
+          onDismiss={() => setRepackAfterDropHint(null)}
+        />
+      ) : null}
+
       {scheduleDates.length > 0 ? (
         <div className="max-w-xs">
           <Select
@@ -152,21 +291,38 @@ export function ScheduleTimelineView({
           <p className="text-muted p-8 text-center text-sm">
             Chưa có sân. Thêm sân trong phần cài đặt giải.
           </p>
-        ) : dayMatches.length === 0 ? (
-          <p className="text-muted p-8 text-center text-sm">
-            Chưa có trận nào được xếp lịch trong ngày này.
-          </p>
         ) : (
-          <ScheduleGrid
+          <ScheduleDndLayout
+            enabled
             courts={courts}
-            matches={dayMatches}
+            allMatches={displayMatches}
+            scheduledMatches={scheduledDayMatches}
             dayRange={dayRange}
-            onClickEmpty={onEmptyClick}
-            onClickMatch={handleMatchClick}
-            courtBufferMinutes={
-              tournament?.scheduleConfig?.courtBufferMinutes ?? 5
-            }
-          />
+            selectedDate={activeDate}
+            isPastDate={isPastDate}
+            minRestMinutes={minRestMinutes}
+            courtBufferMinutes={courtBufferMinutes}
+            onScheduleDrop={handleScheduleDrop}
+            onUnscheduleDrop={handleUnscheduleDrop}
+          >
+            {scheduledDayMatches.length === 0 ? (
+              <p className="text-muted border-surface-border border-b px-4 py-2 text-center text-xs">
+                Chưa có trận xếp lịch — nhấn ô trống trên lưới để xếp lịch
+              </p>
+            ) : null}
+            <ScheduleGrid
+              courts={courts}
+              matches={scheduledDayMatches}
+              dayRange={dayRange}
+              selectedDate={activeDate}
+              isPastDate={isPastDate}
+              onClickEmpty={onEmptyClick}
+              onClickMatch={handleMatchClick}
+              courtBufferMinutes={courtBufferMinutes}
+              dragDropEnabled
+              emptyColumnHint="Nhấn hoặc kéo thả để xếp lịch"
+            />
+          </ScheduleDndLayout>
         )}
       </GlassPanel>
     </div>

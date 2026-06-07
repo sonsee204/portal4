@@ -1,14 +1,22 @@
 'use client';
 
 import { useMemo, useCallback, type ReactNode } from 'react';
+import { useDroppable } from '@dnd-kit/react';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import type { ScheduleMatch, ScheduleCourt } from '@/types/tournament-schedule';
-import { timeToMinutes, minutesToTime } from '../_utils/schedule-helpers';
+import { minutesToTime } from '../_utils/schedule-helpers';
 import {
-  getEffectiveDurationMinutes,
-  getTimelineStartTime,
-} from '@/lib/tournament/schedule-timeline-slot';
+  resolveTimelineDropFromClick,
+  TIMELINE_TOP_INSET_PX,
+} from '@/lib/tournament/resolve-timeline-drop';
+import { courtDropId } from '@/lib/tournament/schedule-dnd-ids';
+import { canDragScheduledMatch } from '@/lib/tournament/validate-schedule-drop';
+import { useScheduleDnd, previewTopPx } from './ScheduleDndContext';
+import type { ScheduleDropPreview } from './schedule-dnd-types';
+import { ScheduleDropSnapLine } from './ScheduleDropSnapLine';
+import { ScheduleCourtDropHighlight } from './ScheduleCourtDropHighlight';
+import { ScheduleDraggableMatchWrapper } from './ScheduleDraggableMatchWrapper';
 import { hasTimeOverlap } from '@/lib/tournament/schedule-court-conflicts';
 import {
   ScheduleMatchSearchHighlightOverlay,
@@ -33,12 +41,11 @@ export {
 } from './timeline-card-layout';
 export type { TimelinePlacedMatch } from './timeline-card-layout';
 
-const CLICK_SNAP_MINUTES = 15;
 const LABEL_INTERVAL = 60;
 const GRIDLINE_INTERVAL = 30;
-/** Chừa đầu cột giờ để nhãn ở topPx=0 không bị cắt (nhãn căn giữa line: topPx - 8). */
-const TIMELINE_TOP_INSET_PX = 18;
 const TIMELINE_HEADER_ROW_PX = 44;
+
+export { TIMELINE_TOP_INSET_PX };
 
 export interface TournamentCourtTimelineGridProps {
   courts: ScheduleCourt[];
@@ -75,42 +82,17 @@ export interface TournamentCourtTimelineGridProps {
   estimatedCardHeightPx?: number;
   /** Court buffer between matches — aligns conflict detection with backend repack. */
   courtBufferMinutes?: number;
+  /** Enable drag-and-drop rescheduling (requires ScheduleDndProvider ancestor). */
+  dragDropEnabled?: boolean;
+  selectedDate?: string;
+  isPastDate?: boolean;
 }
 
-/** Khớp bước snap khi click ô trống trên lưới */
-const RANGE_SNAP_MINUTES = CLICK_SNAP_MINUTES;
-const DEFAULT_TRAILING_PADDING_MINUTES = 30;
-
-export function computeTimelineDayRange(
-  matches: ScheduleMatch[],
-  trailingPaddingMinutes = DEFAULT_TRAILING_PADDING_MINUTES
-): [number, number] {
-  const withStart = matches
-    .map((m) => ({ m, start: getTimelineStartTime(m) }))
-    .filter((x): x is { m: ScheduleMatch; start: string } => !!x.start);
-  if (withStart.length === 0) return [0, 24 * 60];
-
-  const mins = withStart.map((x) => timeToMinutes(x.start));
-  const minStart = Math.min(...mins);
-  const maxMatch = withStart.reduce((prev, cur) =>
-    timeToMinutes(cur.start) > timeToMinutes(prev.start) ? cur : prev
-  ).m;
-  const latestEnd =
-    timeToMinutes(getTimelineStartTime(maxMatch)!) +
-    getEffectiveDurationMinutes(maxMatch);
-
-  // Bắt đầu đúng khung giờ trận sớm nhất — không render khoảng trắng phía trên
-  const start = Math.max(
-    0,
-    Math.floor(minStart / RANGE_SNAP_MINUTES) * RANGE_SNAP_MINUTES
-  );
-  const end = Math.min(
-    24 * 60,
-    Math.ceil(latestEnd / GRIDLINE_INTERVAL) * GRIDLINE_INTERVAL +
-      trailingPaddingMinutes
-  );
-  return [start, end];
-}
+export {
+  computeTimelineDayRange,
+  DEFAULT_TRAILING_PADDING_MINUTES,
+} from '@/lib/tournament/compute-timeline-day-range';
+export type { ComputeTimelineDayRangeOptions } from '@/lib/tournament/compute-timeline-day-range';
 
 export function TournamentCourtTimelineGrid({
   courts,
@@ -128,7 +110,13 @@ export function TournamentCourtTimelineGrid({
   cardSizing = 'content',
   estimatedCardHeightPx = DEFAULT_TIMELINE_CARD_ESTIMATE_PX,
   courtBufferMinutes,
+  dragDropEnabled = false,
+  selectedDate = '',
+  isPastDate = false,
 }: TournamentCourtTimelineGridProps) {
+  const { enabled: dndActive, registerCourtColumn, preview } = useScheduleDnd();
+  const dndOn = dragDropEnabled && dndActive;
+
   const activeCourts = courts.filter((c) => c.status !== 'maintenance');
 
   const [dayStart, dayEnd] = dayRange;
@@ -210,16 +198,13 @@ export function TournamentCourtTimelineGrid({
   const handleColumnClick = useCallback(
     (courtId: string, e: React.MouseEvent<HTMLDivElement>) => {
       if (!onClickEmpty) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const relY = e.clientY - rect.top - TIMELINE_TOP_INSET_PX;
-      const rawMinute = dayStart + Math.max(0, relY) / pxPerMinute;
-      const snapped =
-        Math.round(rawMinute / CLICK_SNAP_MINUTES) * CLICK_SNAP_MINUTES;
-      const clamped = Math.max(
+      const { time } = resolveTimelineDropFromClick(
+        e,
         dayStart,
-        Math.min(dayEnd - CLICK_SNAP_MINUTES, snapped)
+        dayEnd,
+        pxPerMinute
       );
-      onClickEmpty(courtId, minutesToTime(clamped));
+      onClickEmpty(courtId, time);
     },
     [dayStart, dayEnd, onClickEmpty, pxPerMinute]
   );
@@ -324,55 +309,32 @@ export function TournamentCourtTimelineGrid({
                   )}
                 </div>
 
-                <div
-                  className={cn(
-                    'relative w-full min-w-0 overflow-hidden select-none',
-                    onClickEmpty && !isMaintenance && 'cursor-pointer'
-                  )}
-                  style={{ height: columnHeight + TIMELINE_TOP_INSET_PX }}
-                  onClick={
+                <CourtTimelineColumn
+                  courtId={court.id}
+                  isMaintenance={isMaintenance}
+                  columnHeight={columnHeight}
+                  onClickEmpty={onClickEmpty}
+                  onColumnClick={
                     isMaintenance || !onClickEmpty
                       ? undefined
                       : (e) => handleColumnClick(court.id, e)
                   }
-                >
-                  {timeLabels.map(({ minutes, topPx, isHour }) => (
-                    <div
-                      key={minutes}
-                      className={cn(
-                        'border-surface-border pointer-events-none absolute right-0 left-0 border-t',
-                        isHour ? '' : 'border-dashed opacity-80'
-                      )}
-                      style={{ top: TIMELINE_TOP_INSET_PX + topPx }}
-                    />
-                  ))}
-
-                  {isMaintenance && (
-                    <div className="bg-surface-hover/80 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
-                      <span className="text-faint pointer-events-none rotate-[-25deg] text-xs font-semibold tracking-widest uppercase select-none">
-                        Bảo trì
-                      </span>
-                    </div>
-                  )}
-
-                  {!isMaintenance && placed.length === 0 && onClickEmpty && (
-                    <div className="text-faint pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-40">
-                      <IonIcon name="calendar-outline" className="h-7 w-7" />
-                      <span className="text-[11px]">{emptyColumnHint}</span>
-                    </div>
-                  )}
-
-                  {placed.map((pm) => (
-                    <TimelineMatchSlot
-                      key={pm.match.id}
-                      pm={pm}
-                      cardSizing={cardSizing}
-                      highlightedMatchIds={highlightedMatchIds}
-                      dimUnhighlighted={dimUnhighlighted}
-                      renderMatchCard={renderMatchCard}
-                    />
-                  ))}
-                </div>
+                  dndOn={dndOn}
+                  registerCourtColumn={registerCourtColumn}
+                  dropPreview={preview?.courtId === court.id ? preview : null}
+                  dayStart={dayStart}
+                  pxPerMinute={pxPerMinute}
+                  emptyColumnHint={emptyColumnHint}
+                  timeLabels={timeLabels}
+                  placed={placed}
+                  cardSizing={cardSizing}
+                  highlightedMatchIds={highlightedMatchIds}
+                  dimUnhighlighted={dimUnhighlighted}
+                  renderMatchCard={renderMatchCard}
+                  dragDropEnabled={dndOn}
+                  selectedDate={selectedDate}
+                  isPastDate={isPastDate}
+                />
               </div>
             );
           })}
@@ -397,18 +359,146 @@ export function TournamentCourtTimelineGrid({
   );
 }
 
+function CourtTimelineColumn({
+  courtId,
+  isMaintenance,
+  columnHeight,
+  onClickEmpty,
+  onColumnClick,
+  dndOn,
+  registerCourtColumn,
+  dropPreview,
+  dayStart,
+  pxPerMinute,
+  emptyColumnHint,
+  timeLabels,
+  placed,
+  cardSizing,
+  highlightedMatchIds,
+  dimUnhighlighted,
+  renderMatchCard,
+  dragDropEnabled,
+  selectedDate,
+  isPastDate,
+}: {
+  courtId: string;
+  isMaintenance: boolean;
+  columnHeight: number;
+  onClickEmpty?: (courtId: string, time: string) => void;
+  onColumnClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  dndOn: boolean;
+  registerCourtColumn: (courtId: string, el: HTMLElement | null) => void;
+  dropPreview: ScheduleDropPreview | null;
+  dayStart: number;
+  pxPerMinute: number;
+  emptyColumnHint: string;
+  timeLabels: { minutes: number; topPx: number; isHour: boolean }[];
+  placed: TimelinePlacedMatch[];
+  cardSizing: TimelineCardSizing;
+  highlightedMatchIds?: ReadonlySet<string>;
+  dimUnhighlighted?: boolean;
+  renderMatchCard: TournamentCourtTimelineGridProps['renderMatchCard'];
+  dragDropEnabled: boolean;
+  selectedDate: string;
+  isPastDate: boolean;
+}) {
+  const { ref: dropRef } = useDroppable({
+    id: courtDropId(courtId),
+    disabled: isMaintenance || !dndOn,
+  });
+
+  const setRef = useCallback(
+    (el: HTMLElement | null) => {
+      dropRef(el);
+      if (dndOn) registerCourtColumn(courtId, el);
+    },
+    [dropRef, dndOn, registerCourtColumn, courtId]
+  );
+
+  return (
+    <div
+      ref={setRef}
+      className={cn(
+        'relative w-full min-w-0 overflow-hidden select-none',
+        onColumnClick && !isMaintenance && 'cursor-pointer'
+      )}
+      style={{ height: columnHeight + TIMELINE_TOP_INSET_PX }}
+      onClick={onColumnClick}
+    >
+      {dropPreview ? (
+        <>
+          <ScheduleCourtDropHighlight
+            severity={dropPreview.severity}
+            isActive
+          />
+          <ScheduleDropSnapLine
+            topPx={previewTopPx(dropPreview, dayStart, pxPerMinute)}
+            time={dropPreview.time}
+          />
+        </>
+      ) : null}
+
+      {timeLabels.map(({ minutes, topPx, isHour }) => (
+        <div
+          key={minutes}
+          className={cn(
+            'border-surface-border pointer-events-none absolute right-0 left-0 border-t',
+            isHour ? '' : 'border-dashed opacity-80'
+          )}
+          style={{ top: TIMELINE_TOP_INSET_PX + topPx }}
+        />
+      ))}
+
+      {isMaintenance && (
+        <div className="bg-surface-hover/80 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]">
+          <span className="text-faint pointer-events-none rotate-[-25deg] text-xs font-semibold tracking-widest uppercase select-none">
+            Bảo trì
+          </span>
+        </div>
+      )}
+
+      {!isMaintenance && placed.length === 0 && onClickEmpty && (
+        <div className="text-faint pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-40">
+          <IonIcon name="calendar-outline" className="h-7 w-7" />
+          <span className="text-[11px]">{emptyColumnHint}</span>
+        </div>
+      )}
+
+      {placed.map((pm) => (
+        <TimelineMatchSlot
+          key={pm.match.id}
+          pm={pm}
+          cardSizing={cardSizing}
+          highlightedMatchIds={highlightedMatchIds}
+          dimUnhighlighted={dimUnhighlighted}
+          renderMatchCard={renderMatchCard}
+          dragDropEnabled={dragDropEnabled}
+          selectedDate={selectedDate}
+          isPastDate={isPastDate}
+        />
+      ))}
+    </div>
+  );
+}
+
 function TimelineMatchSlot({
   pm,
   cardSizing,
   highlightedMatchIds,
   dimUnhighlighted,
   renderMatchCard,
+  dragDropEnabled = false,
+  selectedDate = '',
+  isPastDate = false,
 }: {
   pm: TimelinePlacedMatch;
   cardSizing: TimelineCardSizing;
   highlightedMatchIds?: ReadonlySet<string>;
   dimUnhighlighted?: boolean;
   renderMatchCard: TournamentCourtTimelineGridProps['renderMatchCard'];
+  dragDropEnabled?: boolean;
+  selectedDate?: string;
+  isPastDate?: boolean;
 }) {
   const isContent = cardSizing === 'content';
   const slotTop = pm.visualTopPx;
@@ -468,7 +558,20 @@ function TimelineMatchSlot({
             'rounded-lg ring-2 ring-red-400/60 dark:ring-red-500/50'
         )}
       >
-        {renderMatchCard(pm.match, layout)}
+        {dragDropEnabled ? (
+          <ScheduleDraggableMatchWrapper
+            matchId={pm.match.id}
+            source="grid"
+            showDragHandle={cardSizing === 'slot'}
+            disabled={
+              !canDragScheduledMatch(pm.match, selectedDate, isPastDate)
+            }
+          >
+            {renderMatchCard(pm.match, layout)}
+          </ScheduleDraggableMatchWrapper>
+        ) : (
+          renderMatchCard(pm.match, layout)
+        )}
         {showOverlay ? <ScheduleMatchSearchHighlightOverlay /> : null}
       </div>
     </div>

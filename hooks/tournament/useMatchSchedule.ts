@@ -85,12 +85,21 @@ export function useRefereeMatches(tournamentId: string, skip = false) {
   };
 }
 
-export function useScheduleMatch(options?: { onSuccess?: () => void }) {
+export function useScheduleMatch(
+  options?: {
+    onSuccess?: () => void;
+    onWarnings?: (warnings: string[]) => void;
+  },
+) {
   const [mutation, { loading }] = useMutation<{
-    scheduleMatch: TournamentMatch;
+    scheduleMatch: { match: TournamentMatch; warnings?: string[] };
   }>(SCHEDULE_MATCH, {
     ...createMutationOptions('ScheduleMatch', TOURNAMENT.SUCCESS_SCHEDULE),
-    onCompleted: () => options?.onSuccess?.(),
+    onCompleted: (data) => {
+      const warnings = data.scheduleMatch.warnings ?? [];
+      if (warnings.length > 0) options?.onWarnings?.(warnings);
+      options?.onSuccess?.();
+    },
   });
 
   const scheduleMatch = useCallback(

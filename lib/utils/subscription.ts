@@ -31,8 +31,10 @@ export function createMatchSubscription(
   refetch: () => void,
   tournamentId: string,
   debounceMs = SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS,
+  shouldRefetch?: () => boolean,
 ) {
   const debouncedRefetch = debounceCallback(() => {
+    if (shouldRefetch && !shouldRefetch()) return;
     void refetch();
   }, debounceMs);
 
