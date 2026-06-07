@@ -114,6 +114,9 @@ function ScheduleDndMonitor({
     const onPointerMove = (e: PointerEvent) => {
       pointerRef.current = { x: e.clientX, y: e.clientY };
 
+      // Auto-scroll only while dragging — not on normal mouse movement
+      if (!draggingMatchIdRef.current) return;
+
       const scrollers = document.querySelectorAll<HTMLElement>(
         '[data-schedule-timeline-scroll]'
       );
