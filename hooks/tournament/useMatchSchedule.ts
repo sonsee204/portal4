@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
 import {
   GET_TOURNAMENT_MATCHES,
   GET_REFEREE_MATCHES,
@@ -11,7 +11,10 @@ import {
   BULK_SCHEDULE_MATCHES,
   UNSCHEDULE_MATCH,
   ASSIGN_REFEREE,
+  CASCADE_RESCHEDULE,
+  REPACK_COURT_SCHEDULE,
 } from '@/graphql/mutations/tournament';
+import { PREVIEW_REPACK_COURT_SCHEDULE } from '@/graphql/queries/tournament';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';
@@ -21,6 +24,11 @@ import type {
   MatchFilterInput,
   PaginationInput,
   ScheduleMatchInput,
+  CascadeRescheduleInput,
+  CascadeRescheduleResult,
+  RepackCourtScheduleInput,
+  RepackCourtScheduleResult,
+  RepackCourtSchedulePreviewResult,
 } from '@/graphql/generated';
 
 interface UseTournamentMatchesOptions {
@@ -140,4 +148,55 @@ export function useAssignReferee(options?: { onSuccess?: () => void }) {
   );
 
   return { assignReferee, loading };
+}
+
+export function useCascadeReschedule(options?: { onSuccess?: () => void }) {
+  const [mutation, { loading }] = useMutation<{
+    cascadeReschedule: CascadeRescheduleResult;
+  }>(CASCADE_RESCHEDULE, {
+    onCompleted: () => options?.onSuccess?.(),
+  });
+
+  const cascadeReschedule = useCallback(
+    (input: CascadeRescheduleInput) => mutation({ variables: { input } }),
+    [mutation],
+  );
+
+  return { cascadeReschedule, loading };
+}
+
+export function usePreviewRepackCourtSchedule() {
+  const [fetchPreview, { loading, data, error }] = useLazyQuery<{
+    previewRepackCourtSchedule: RepackCourtSchedulePreviewResult;
+  }>(PREVIEW_REPACK_COURT_SCHEDULE, {
+    fetchPolicy: 'network-only',
+  });
+
+  const previewRepackCourtSchedule = useCallback(
+    (input: RepackCourtScheduleInput) =>
+      fetchPreview({ variables: { input } }),
+    [fetchPreview],
+  );
+
+  return {
+    previewRepackCourtSchedule,
+    loading,
+    data: data?.previewRepackCourtSchedule,
+    error,
+  };
+}
+
+export function useRepackCourtSchedule(options?: { onSuccess?: () => void }) {
+  const [mutation, { loading }] = useMutation<{
+    repackCourtSchedule: RepackCourtScheduleResult;
+  }>(REPACK_COURT_SCHEDULE, {
+    onCompleted: () => options?.onSuccess?.(),
+  });
+
+  const repackCourtSchedule = useCallback(
+    (input: RepackCourtScheduleInput) => mutation({ variables: { input } }),
+    [mutation],
+  );
+
+  return { repackCourtSchedule, loading };
 }
