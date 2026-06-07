@@ -5,11 +5,13 @@ import {
   detectScheduleAutoRepack,
   type AutoRepackBannerPayload,
 } from '@/lib/tournament/detect-schedule-auto-repack';
-import type { TournamentMatch } from '@/graphql/generated';
+import type { ScheduleMatch } from '@/types/tournament-schedule';
+
+type CourtLike = { id: string; name: string };
 
 export function useScheduleAutoRepackBanner(
-  matches: TournamentMatch[],
-  formatScheduleDate: (iso: string) => string
+  matches: ScheduleMatch[],
+  courts: CourtLike[],
 ) {
   const [autoRepackBanner, setAutoRepackBanner] =
     useState<AutoRepackBannerPayload | null>(null);
@@ -19,17 +21,17 @@ export function useScheduleAutoRepackBanner(
     const { nextSnapshot, banner } = detectScheduleAutoRepack(
       scheduleSnapshotRef.current,
       matches,
-      formatScheduleDate
+      courts,
     );
     scheduleSnapshotRef.current = nextSnapshot;
     if (banner) {
       queueMicrotask(() => setAutoRepackBanner(banner));
     }
-  }, [matches, formatScheduleDate]);
+  }, [matches, courts]);
 
   const dismissAutoRepackBanner = useCallback(
     () => setAutoRepackBanner(null),
-    []
+    [],
   );
 
   return { autoRepackBanner, dismissAutoRepackBanner };
