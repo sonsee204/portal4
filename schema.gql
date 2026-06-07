@@ -9664,21 +9664,25 @@ input RepackCourtScheduleInput {
   tournamentId: ID!
 }
 
-"""Result of tight court schedule repack"""
-type RepackCourtScheduleResult {
-  affectedMatches: [TournamentMatch!]!
+"""Dry-run preview of tight court schedule repack (no DB writes)"""
+type RepackCourtSchedulePreviewResult {
+  anchorMatchId: ID!
+
+  """Total NOT_STARTED matches that would be repacked"""
+  backlogCount: Int!
+  calendarDate: String!
+  courtName: String!
+
+  """Shifts where old time was before anchor actual start (overdue backlog)"""
+  overdueCount: Int!
   preview: [ScheduleShiftPreview!]!
   totalAffected: Int!
   warnings: [String!]!
 }
 
-"""Dry-run preview of tight court schedule repack (no DB writes)"""
-type RepackCourtSchedulePreviewResult {
-  anchorMatchId: ID!
-  backlogCount: Int!
-  calendarDate: String!
-  courtName: String!
-  overdueCount: Int!
+"""Result of tight court schedule repack"""
+type RepackCourtScheduleResult {
+  affectedMatches: [TournamentMatch!]!
   preview: [ScheduleShiftPreview!]!
   totalAffected: Int!
   warnings: [String!]!
