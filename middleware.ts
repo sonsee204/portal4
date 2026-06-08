@@ -17,7 +17,7 @@ const middlewareAuthConfig = createPortalMiddlewareAuthConfig();
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (SKIP_MIDDLEWARE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    if (SKIP_MIDDLEWARE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 

@@ -47,7 +47,13 @@ export {
   useBulkScheduleMatches,
   useUnscheduleMatch,
   useAssignReferee,
+  useCascadeReschedule,
+  usePreviewRepackCourtSchedule,
+  useRepackCourtSchedule,
 } from './useMatchSchedule';
+export { useTournamentScheduleMatches } from './useTournamentScheduleMatches';
+export { useScheduleAutoRepackBanner } from './useScheduleAutoRepackBanner';
+export { useScheduleDriftBanner } from './useScheduleDriftBanner';
 export {
   useMatchScorecard,
   useScorePoint,
@@ -55,3 +61,9 @@ export {
   useStartMatch,
   useUpdateMatchResult,
 } from './useScoring';
+export {
+  useOrganizerCorrectLiveScore,
+  useOrganizerAbortLiveMatch,
+  useSetMatchWalkover,
+  useCorrectFinishedMatchResult,
+} from './useMatchCorrection';
