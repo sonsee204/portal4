@@ -23,22 +23,25 @@ import {
   useMatchScorecard,
   useScorePoint,
   useUndoPoint,
-  useStartMatch,
 } from '@/hooks/tournament';
+
+const WEB_SCORING_BASE =
+  process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:3003';
 
 export default function ScoringPage({
   params,
 }: {
   params: Promise<{ id: string; matchId: string }>;
 }) {
-  const { matchId } = use(params);
+  const { id: tournamentId, matchId } = use(params);
   const router = useRouter();
 
   const { scorecard, loading, subscribeToScoreUpdates } =
     useMatchScorecard(matchId);
   const { scorePoint, loading: scoring } = useScorePoint();
   const { undoPoint, loading: undoing } = useUndoPoint();
-  const { startMatch, loading: starting } = useStartMatch();
+
+  const refereeSetupUrl = `${WEB_SCORING_BASE}/tournaments/${tournamentId}/scoring/${matchId}`;
 
   useEffect(() => {
     const unsubscribe = subscribeToScoreUpdates();
@@ -56,11 +59,7 @@ export default function ScoringPage({
     void undoPoint(matchId);
   }, [matchId, undoPoint]);
 
-  const handleStart = useCallback(() => {
-    void startMatch({ matchId, servingPlayer: 1 });
-  }, [matchId, startMatch]);
-
-  const isActionLoading = scoring || undoing || starting;
+  const isActionLoading = scoring || undoing;
 
   if (loading) {
     return (
@@ -77,7 +76,7 @@ export default function ScoringPage({
       <>
         <PageHeader
           title={TOURNAMENT.LABEL_SCORING}
-          description="Chấm điểm trận đấu"
+          description="Chuẩn bị trận & tung đồng xu"
         >
           <Button
             variant="ghost"
@@ -89,10 +88,19 @@ export default function ScoringPage({
           </Button>
         </PageHeader>
         <GlassPanel card className="mt-6">
-          <div className="py-12 text-center">
-            <p className="text-secondary mb-4">Trận đấu chưa bắt đầu.</p>
-            <Button size="sm" disabled={starting} onClick={handleStart}>
-              {starting ? 'Đang bắt đầu...' : 'Bắt đầu trận đấu'}
+          <div className="space-y-4 py-12 text-center">
+            <p className="text-secondary">
+              Trận chưa bắt đầu. Mở màn chấm điểm trọng tài trên Ao Trình để
+              tung đồng xu và chọn giao cầu.
+            </p>
+            <Button
+              size="sm"
+              iconLeft="open-outline"
+              onClick={() => {
+                window.open(refereeSetupUrl, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              Mở màn chấm điểm trọng tài
             </Button>
           </div>
         </GlassPanel>
@@ -119,7 +127,6 @@ export default function ScoringPage({
       </PageHeader>
 
       <div className="mt-6 space-y-6">
-        {/* Score display */}
         <GlassPanel card>
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
@@ -146,7 +153,6 @@ export default function ScoringPage({
           </div>
         </GlassPanel>
 
-        {/* Current set score */}
         {currentSet && (
           <GlassPanel card>
             <div className="text-center">
@@ -163,7 +169,6 @@ export default function ScoringPage({
           </GlassPanel>
         )}
 
-        {/* Scoring buttons */}
         {scorecard.status !== 'FINISHED' && (
           <div className="grid grid-cols-2 gap-4">
             <Button
@@ -186,7 +191,6 @@ export default function ScoringPage({
           </div>
         )}
 
-        {/* Action buttons */}
         <div className="flex items-center justify-center gap-3">
           <Button
             size="sm"
@@ -198,7 +202,6 @@ export default function ScoringPage({
           </Button>
         </div>
 
-        {/* Point history */}
         <GlassPanel card>
           <h3 className="text-heading mb-3 text-sm font-bold">Lịch sử điểm</h3>
           {scorecard.pointHistory.length === 0 ? (

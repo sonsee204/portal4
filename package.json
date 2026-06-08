@@ -13,10 +13,12 @@
     "format": "prettier --write .",
     "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal",
     "schema:sync": "node ../scripts/sync-schema.mjs",
+    "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
     "version:sync": "node ../scripts/sync-version.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.1.4",
+    "@dnd-kit/react": "^0.3.2",
     "@hookform/resolvers": "^5.2.2",
     "@uiw/react-md-editor": "^4.0.11",
     "clsx": "^2.1.1",

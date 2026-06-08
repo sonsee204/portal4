@@ -174,6 +174,36 @@ input AddGroupMessageReactionInput {
   messageId: ID!
 }
 
+type AddLateEntryResult {
+  action: LateEntryAction!
+  match: TournamentMatch
+  message: String!
+  opponentName: String
+  registration: TournamentRegistration
+  scheduleNeedsUpdate: Boolean
+  selectedFromCount: Int!
+}
+
+input AddLateEntryToByeSlotInput {
+  athleteName: String!
+  categoryId: ID!
+  club: String
+  dateOfBirth: String
+  email: String
+  guardianName: String
+  guardianPhone: String
+
+  """Thành viên cho nội dung đôi/đội"""
+  members: [EntryMemberInput!]
+  notes: String
+  paymentAmount: Float
+  phone: String
+
+  """Lý do thêm muộn (audit bắt buộc)"""
+  reason: String!
+  school: String
+}
+
 input AddReactionInput {
   """Emoji reaction (e.g., ❤️, 👍, 😂)"""
   emoji: String!
@@ -237,6 +267,41 @@ input AdminCreateUserInput {
 
   """Role for the new user (ADMIN or FACILITY_OWNER only)"""
   role: UserRole!
+}
+
+input AdminProvisionPlayerInput {
+  email: String
+  fullName: String!
+
+  """Bỏ trống để tự động tạo mật khẩu"""
+  password: String
+  phone: String!
+  referralCode: String
+
+  """Ghi chú nội bộ (audit metadata, không gửi cho user)"""
+  sendCredentialsNote: String
+}
+
+type AdminProvisionPlayerResponse {
+  """Chỉ trả về khi mật khẩu được tự động tạo"""
+  generatedPassword: String
+
+  """Hướng dẫn đăng nhập cho người dùng"""
+  loginInstructions: String!
+  user: User!
+}
+
+input AdminResetUserPasswordInput {
+  """Bỏ trống để tự động tạo mật khẩu"""
+  newPassword: String
+  userId: ID!
+}
+
+type AdminResetUserPasswordResponse {
+  """Chỉ trả về khi mật khẩu được tự động tạo"""
+  generatedPassword: String
+  message: String!
+  success: Boolean!
 }
 
 type AnalyticsSummary {
@@ -432,6 +497,14 @@ enum AuditAction {
   RATE_LIMIT_HIT
   SYSTEM_ERROR
   TOKEN_REFRESH_FAILED
+  TOURNAMENT_COURTS_UPDATED
+  TOURNAMENT_FORCE_DRAW_RESET
+  TOURNAMENT_LATE_ENTRY_BYE_FILL
+  TOURNAMENT_MATCH_ABORTED
+  TOURNAMENT_MATCH_LIVE_CORRECTED
+  TOURNAMENT_MATCH_RESULT_CORRECTED
+  TOURNAMENT_MATCH_RESULT_OVERRIDE
+  TOURNAMENT_MATCH_WALKOVER_SET
   USER_CREATE
   USER_DELETE
   USER_ROLE_CHANGE
@@ -449,6 +522,7 @@ enum AuditCategory {
   OTP
   SECURITY
   SYSTEM
+  TOURNAMENT
 }
 
 type AuditCategoryCount {
@@ -562,13 +636,32 @@ input AutoScheduleInput {
   minRestMinutes: Int
 
   """
+  Order unscheduled matches are processed: bracket order (default) or interleave categories per round
+  """
+  orderStrategy: AutoScheduleOrderStrategy = BRACKET_ORDER
+
+  """
+  Xóa lịch cũ trong ngày của các nội dung đã chọn (hoặc tất cả nếu không chọn) trước khi xếp lại
+  """
+  rescheduleExisting: Boolean = false
+
+  """
   Ghi đè khoảng nghỉ trong ngày (HH:mm). Bỏ qua nếu không gửi — dùng theo cấu hình giải.
   """
   restBreakWindows: [ScheduleRestBreakWindowInput!]
 
+  """Category×round scope (when set, only matching rounds are scheduled)"""
+  scopes: [AutoScheduleScope!]
+
   """Start time HH:mm (default 06:00)"""
   startTime: String
   tournamentId: ID!
+}
+
+"""Order in which unscheduled matches are processed during auto-schedule"""
+enum AutoScheduleOrderStrategy {
+  BRACKET_ORDER
+  INTERLEAVE_CATEGORIES
 }
 
 """Result of auto-schedule operation"""
@@ -576,6 +669,13 @@ type AutoScheduleResult {
   scheduledMatches: [TournamentMatch!]!
   totalScheduled: Int!
   warnings: [String!]!
+}
+
+input AutoScheduleScope {
+  categoryId: ID!
+
+  """Round numbers (null or empty = all rounds for this category)"""
+  rounds: [Int!]
 }
 
 input AvailablePassesFilterInput {
@@ -1281,6 +1381,15 @@ type BookmarkList {
 }
 
 type BracketDrawPreview {
+  """True khi mô phỏng không phát hiện cặp cùng CLB ở vòng 1"""
+  canFullySeparateClubs: Boolean!
+
+  """Số xung đột CLB vòng 1 sau mô phỏng bốc thăm (0 = tách hoàn toàn được)"""
+  clubSeparationConflictCount: Int!
+
+  """Cảnh báo khi không thể tách hoàn toàn CLB ở vòng 1"""
+  clubSeparationWarning: String
+
   """Kích thước nhánh đấu hiện tại (cấu hình)"""
   currentBracketSize: Int!
 
@@ -1445,6 +1554,9 @@ input BulkScheduleMatchInput {
 }
 
 input BulkUnscheduleByDateInput {
+  """Category IDs (null = all categories)"""
+  categoryIds: [String!]
+
   """YYYY-MM-DD local date to clear"""
   date: String
   tournamentId: ID!
@@ -1863,6 +1975,12 @@ type CommentDeletedPayload {
   postId: ID!
 }
 
+"""What the coin-toss winner chose: serve or court side"""
+enum CoinTossChoice {
+  SERVE
+  SIDE
+}
+
 type CommentList {
   """List of comments"""
   comments: [PostComment!]!
@@ -2073,6 +2191,41 @@ type Coordinates {
 input CoordinatesInput {
   latitude: Float!
   longitude: Float!
+}
+
+input CorrectFinishedMatchResultInput {
+  """Optimistic concurrency guard"""
+  expectedMatchUpdatedAt: String
+  matchId: ID!
+
+  """Lý do sửa kết quả (audit bắt buộc)"""
+  reason: String!
+
+  """Set scores [[p1,p2],[p1,p2],...]"""
+  setScores: [[Int!]!]
+
+  """Winner: 1 or 2"""
+  winner: Int!
+}
+
+type CorrectionEvent {
+  action: MatchCorrectionAction!
+  actorId: ID!
+  actorRole: String
+  afterSnapshot: CorrectionSnapshot
+  beforeSnapshot: CorrectionSnapshot
+  id: ID!
+  reason: String!
+
+  """ISO timestamp"""
+  timestamp: String!
+}
+
+type CorrectionSnapshot {
+  pointHistoryLength: Int
+  sets: [[Int!]!]
+  status: String
+  winner: Int
 }
 
 type CostConfig {
@@ -4570,6 +4723,28 @@ input KickParticipantInput {
   userId: ID!
 }
 
+"""Outcome of a super-admin late entry into a BYE slot"""
+enum LateEntryAction {
+  BLOCKED
+  FILLED_BYE
+  NO_BYE_SLOT
+}
+
+type LateEntryByeMatchSummary {
+  matchId: ID!
+  matchNumber: Int!
+  opponentName: String!
+  roundLabel: String!
+}
+
+type LateEntryPlacementPreview {
+  blockReason: String
+  canProceed: Boolean!
+  eligibleByeMatchCount: Int!
+  eligibleMatches: [LateEntryByeMatchSummary!]!
+  isFormatSupported: Boolean!
+}
+
 type LegalAcceptanceStatus {
   """Version of Privacy user accepted"""
   acceptedPrivacyVersion: String
@@ -4665,6 +4840,9 @@ input LocationInput {
 input ManualMatchResultInput {
   matchId: ID!
 
+  """Lý do ghi đè kết quả (audit bắt buộc)"""
+  reason: String!
+
   """Set scores [[p1,p2],[p1,p2],...]"""
   setScores: [[Int!]!]
 
@@ -4689,6 +4867,16 @@ input MarkMvpInput {
 
   """ID MVP"""
   userId: ID!
+}
+
+"""Organizer correction action type"""
+enum MatchCorrectionAction {
+  ABORT_LIVE
+  CORRECT_RESULT
+  MANUAL_RESULT
+  SET_SNAPSHOT
+  UNDO_POINTS
+  WALKOVER
 }
 
 type MatchCourt {
@@ -4752,6 +4940,9 @@ type MatchScorecard {
   _id: ID!
   bestOf: Int!
   categoryId: ID!
+
+  """Organizer correction audit trail"""
+  correctionHistory: [CorrectionEvent!]
   createdAt: DateTime!
 
   """Index of the current set (0-based)"""
@@ -4763,6 +4954,9 @@ type MatchScorecard {
   """Who is on the left side: 1 or 2"""
   leftSidePlayer: Int
   matchId: ID!
+
+  """Pre-match setup audit (coin toss / manual)"""
+  matchSetup: MatchSetupSnapshot
   pointHistory: [PointEvent!]!
 
   """Snapshot of scoring rules at match start"""
@@ -4779,6 +4973,24 @@ type MatchScorecard {
 input MatchSetupInput {
   leftSidePlayer: Int!
   servingPlayer: Int!
+}
+
+"""How pre-match serve/side setup was decided"""
+enum MatchSetupMethod {
+  COIN_TOSS
+  MANUAL
+}
+
+type MatchSetupSnapshot {
+  """What the toss winner chose"""
+  coinTossChoice: CoinTossChoice
+
+  """Coin toss winner: 1 or 2"""
+  coinTossWinner: Int
+
+  """ISO timestamp when setup was finalized"""
+  decidedAt: String!
+  setupMethod: MatchSetupMethod!
 }
 
 """Status of a tournament match"""
@@ -5074,6 +5286,34 @@ type MonthGameCount {
   month: String!
 }
 
+input MoveMatchInput {
+  """After move, repack subsequent matches on the same court/day"""
+  autoRepack: Boolean = false
+
+  """Target court name"""
+  courtName: String!
+  matchId: ID!
+
+  """New scheduledAt ISO local string"""
+  scheduledAt: String!
+}
+
+"""Preview moving a match without persisting"""
+type MoveMatchPreviewResult {
+  affectedPreview: [ScheduleShiftPreview!]
+  match: TournamentMatch!
+  suggestRepack: Boolean!
+  warnings: [String!]!
+}
+
+"""Result of atomic move (+ optional repack)"""
+type MoveMatchResult {
+  match: TournamentMatch!
+  repackPreview: [ScheduleShiftPreview!]
+  repackedCount: Int!
+  warnings: [String!]!
+}
+
 type Mutation {
   """Accept a group invitation"""
   acceptInvitation(groupId: ID!): GroupMember!
@@ -5102,6 +5342,9 @@ type Mutation {
   """Add items to a booking (F&B order during play)"""
   addItemsToBooking(bookingId: ID!, items: [OrderItemInput!]!): Order!
 
+  """Super Admin: add late entry and randomly fill an eligible R1 BYE slot"""
+  addLateEntryToByeSlot(input: AddLateEntryToByeSlotInput!): AddLateEntryResult!
+
   """Add reaction to a message"""
   addReaction(input: AddReactionInput!): Message!
 
@@ -5125,8 +5368,14 @@ type Mutation {
   """
   adminCreateUser(input: AdminCreateUserInput!): User!
 
+  """Provision a PLAYER account on behalf of a user (Super Admin only)"""
+  adminProvisionPlayer(input: AdminProvisionPlayerInput!): AdminProvisionPlayerResponse!
+
   """Reject venue request (Admin only)"""
   adminRejectVenue(reason: String, venueId: ID!): Venue!
+
+  """Reset password for a PLAYER account (Super Admin only)"""
+  adminResetUserPassword(input: AdminResetUserPasswordInput!): AdminResetUserPasswordResponse!
 
   """Suspend a user (Admin only)"""
   adminSuspendUser(reason: String, userId: ID!): User!
@@ -5339,6 +5588,9 @@ type Mutation {
   """Confirm recurring booking (all sessions)"""
   confirmRecurringBooking(masterBookingId: ID!): BookingWithOrderPayload!
 
+  """BTC sửa kết quả trận đã kết thúc (khi vòng sau chưa đấu)"""
+  correctFinishedMatchResult(input: CorrectFinishedMatchResultInput!): TournamentMatch!
+
   """Create booking (customer)"""
   createBooking(input: CreateBookingInput!): Booking!
 
@@ -5533,6 +5785,11 @@ type Mutation {
   """Follow a user"""
   followUser(userId: String!): User!
 
+  """
+  Super Admin only: reset confirmed draw back to DRAW_PENDING when no matches have started
+  """
+  forceRedraw(categoryId: ID!, reason: String): SuccessResponse!
+
   """Forward a message"""
   forwardMessage(input: ForwardMessageInput!): [Message!]!
 
@@ -5615,6 +5872,9 @@ type Mutation {
   """Mark order as ready"""
   markOrderReady(orderId: ID!): Order!
 
+  """Move match to new court/time with optional court repack"""
+  moveMatchWithCascade(input: MoveMatchInput!): MoveMatchResult!
+
   """Move products to another venue"""
   moveProductsToVenue(input: TransferProductsInput!): BulkOperationResult!
 
@@ -5623,6 +5883,12 @@ type Mutation {
 
   """Open registration"""
   openRegistration(id: ID!): Tournament!
+
+  """BTC huỷ trận đang LIVE và reset về NOT_STARTED"""
+  organizerAbortLiveMatch(input: OrganizerAbortLiveMatchInput!): TournamentMatch!
+
+  """BTC hiệu chỉnh tỉ số trận đang LIVE"""
+  organizerCorrectLiveScore(input: OrganizerCorrectLiveScoreInput!): MatchScorecard!
 
   """Pause a promotion"""
   pausePromotion(promotionId: ID!): Promotion!
@@ -5713,6 +5979,9 @@ type Mutation {
 
   """Remove staff member"""
   removeVenueStaff(userId: ID!, venueId: ID!): Boolean!
+
+  """Tight repack: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày"""
+  repackCourtSchedule(input: RepackCourtScheduleInput!): RepackCourtScheduleResult!
 
   """Reply to review"""
   replyToReview(reply: String!, reviewId: ID!): VenueReview!
@@ -5837,6 +6106,9 @@ type Mutation {
 
   """Enable or disable OTP test phone (SUPER_ADMIN only)"""
   setOtpTestPhoneEnabled(enabled: Boolean!, id: ID!): OtpTestPhone!
+
+  """BTC ghi nhận walkover"""
+  setMatchWalkover(input: SetMatchWalkoverInput!): TournamentMatch!
 
   """VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE)"""
   setRetirement(input: SetRetirementInput!): TournamentMatch!
@@ -5979,7 +6251,7 @@ type Mutation {
   """Update a legal document (admin only)"""
   updateLegalDocument(input: UpdateLegalDocumentInput!): LegalDocument!
 
-  """Manual match result override"""
+  """BTC ghi đè kết quả trận chưa kết thúc"""
   updateMatchResult(input: ManualMatchResultInput!): MatchScorecard!
 
   """Update a message"""
@@ -6036,7 +6308,9 @@ type Mutation {
   """Update report status (Admin only)"""
   updateReportStatus(input: UpdateReportStatusInput!): PostReport!
 
-  """Update tournament details"""
+  """
+  Update tournament details. DRAFT/PUBLISHED: all fields. REGISTRATION_OPEN/CLOSED: courts and scheduleConfig only. IN_PROGRESS+: blocked.
+  """
   updateTournament(input: UpdateTournamentInput!): Tournament!
 
   """Update tournament referee settings"""
@@ -6848,6 +7122,43 @@ enum OtpPurpose {
   PHONE_CHANGE
   SIGN_IN_PHONE
   SIGN_UP_PHONE
+}
+
+input OrganizerAbortLiveMatchInput {
+  """Optimistic concurrency guard"""
+  expectedScorecardUpdatedAt: String
+  matchId: ID!
+
+  """Lý do huỷ trận (audit bắt buộc)"""
+  reason: String!
+}
+
+input OrganizerCorrectLiveScoreInput {
+  """Optimistic concurrency guard"""
+  expectedScorecardUpdatedAt: String
+
+  """Left side player after correction: 1 or 2"""
+  leftSidePlayer: Int
+  matchId: ID!
+  mode: OrganizerCorrectLiveScoreMode!
+
+  """Lý do hiệu chỉnh (audit bắt buộc)"""
+  reason: String!
+
+  """Serving player after correction: 1 or 2"""
+  servingPlayer: Int
+
+  """Set scores [[p1,p2],[p1,p2],...] (SET_SNAPSHOT mode)"""
+  sets: [[Int!]!]
+
+  """Number of points to undo (UNDO_POINTS mode)"""
+  undoCount: Int
+}
+
+"""Mode for organizer live score correction"""
+enum OrganizerCorrectLiveScoreMode {
+  SET_SNAPSHOT
+  UNDO_POINTS
 }
 
 type OtpResponse {
@@ -9262,6 +9573,9 @@ type Query {
   """
   getPostLikers(pagination: PaginationInput, postId: ID!): PostLikersList! @deprecated(reason: "Use postLikersConnection (cursor pagination).")
 
+  """Get paginated list of users who liked a post"""
+  getPostLikers(pagination: PaginationInput, postId: ID!): PostLikersList!
+
   """Get a single post report by ID (Admin only)"""
   getPostReportById(reportId: ID!): PostReport!
 
@@ -9405,6 +9719,9 @@ type Query {
 
   """Cursor-paginated current user's bookmarks."""
   myBookmarksConnection(pagination: CursorPaginationInput): PostBookmarkConnection!
+
+  """Lấy danh sách campaign của host hiện tại"""
+  myCampaigns(isActive: Boolean): [PickupGameCampaign!]!
 
   """Lấy danh sách campaign của host hiện tại"""
   myCampaigns(isActive: Boolean): [PickupGameCampaign!]!
@@ -9557,6 +9874,17 @@ type Query {
   Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only)
   """
   previewBulkImport(input: PreviewBulkImportInput!): PreviewBulkImportResult!
+
+  """Super Admin: preview eligible R1 BYE slots for late entry placement"""
+  previewLateEntryPlacement(categoryId: ID!): LateEntryPlacementPreview!
+
+  """Preview drag-move without persisting"""
+  previewMoveMatch(input: MoveMatchInput!): MoveMatchPreviewResult!
+
+  """
+  Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB)
+  """
+  previewRepackCourtSchedule(input: RepackCourtScheduleInput!): RepackCourtSchedulePreviewResult!
 
   """Get product by ID"""
   product(productId: ID!): Product!
@@ -10186,6 +10514,44 @@ input ReportBookingPassInput {
   reason: BookingPassReportReason!
 }
 
+input RepackCourtScheduleInput {
+  """
+  Optional anchor match; defaults to earliest LIVE or last FINISHED on court
+  """
+  anchorMatchId: ID
+
+  """Calendar date YYYY-MM-DD"""
+  calendarDate: String!
+
+  """Court name (e.g. Sân 1)"""
+  courtName: String!
+  tournamentId: ID!
+}
+
+"""Dry-run preview of tight court schedule repack (no DB writes)"""
+type RepackCourtSchedulePreviewResult {
+  anchorMatchId: ID!
+
+  """Total NOT_STARTED matches that would be repacked"""
+  backlogCount: Int!
+  calendarDate: String!
+  courtName: String!
+
+  """Shifts where old time was before anchor actual start (overdue backlog)"""
+  overdueCount: Int!
+  preview: [ScheduleShiftPreview!]!
+  totalAffected: Int!
+  warnings: [String!]!
+}
+
+"""Result of tight court schedule repack"""
+type RepackCourtScheduleResult {
+  affectedMatches: [TournamentMatch!]!
+  preview: [ScheduleShiftPreview!]!
+  totalAffected: Int!
+  warnings: [String!]!
+}
+
 input ReportMessageInput {
   """Message ID to report"""
   messageId: ID!
@@ -10622,6 +10988,13 @@ input ScheduleRestBreakWindowInput {
   startTime: String!
 }
 
+type ScheduleShiftPreview {
+  matchId: ID!
+  matchNumber: Int!
+  newScheduledAt: String!
+  oldScheduledAt: String!
+}
+
 input ScorePointInput {
   matchId: ID!
 
@@ -11053,6 +11426,16 @@ type ServicePerformance {
   trend: Float!
 }
 
+input SetMatchWalkoverInput {
+  matchId: ID!
+
+  """Lý do walkover (audit bắt buộc)"""
+  reason: String!
+
+  """Winner: 1 or 2"""
+  winner: Int!
+}
+
 input SetRetirementInput {
   matchId: ID!
 
@@ -11299,10 +11682,21 @@ type StaffBadge {
 }
 
 input StartMatchInput {
+  """What the toss winner chose: SERVE or SIDE"""
+  coinTossChoice: CoinTossChoice
+
+  """Coin toss winner: 1 or 2"""
+  coinTossWinner: Int
+
+  """Who is on the left side: 1 or 2"""
+  leftSidePlayer: Int
   matchId: ID!
 
   """Initial serving player: 1 or 2"""
   servingPlayer: Int
+
+  """How setup was decided: MANUAL or COIN_TOSS"""
+  setupMethod: MatchSetupMethod
 }
 
 input StartScoreboardSessionInput {

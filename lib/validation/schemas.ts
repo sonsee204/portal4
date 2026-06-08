@@ -93,6 +93,46 @@ export const createUserSchema = z.object({
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
 
+/** Super Admin provisions a PLAYER account */
+export const provisionPlayerSchema = z
+  .object({
+    fullName: fullNameValidation,
+    phone: phoneValidation,
+    email: z.union([z.literal(''), z.email(VALIDATION.EMAIL_INVALID)]).optional(),
+    password: z.union([z.literal(''), passwordValidation]).optional(),
+    referralCode: z.string().optional(),
+    autoGeneratePassword: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.autoGeneratePassword && !data.password) {
+      ctx.addIssue({
+        code: 'custom',
+        message: VALIDATION.PASSWORD_MIN(PASSWORD_MIN_LENGTH),
+        path: ['password'],
+      });
+    }
+  });
+
+export type ProvisionPlayerFormData = z.infer<typeof provisionPlayerSchema>;
+
+/** Super Admin resets a PLAYER password */
+export const adminResetPasswordSchema = z
+  .object({
+    newPassword: z.union([z.literal(''), passwordValidation]).optional(),
+    autoGeneratePassword: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.autoGeneratePassword && !data.newPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: VALIDATION.PASSWORD_MIN(PASSWORD_MIN_LENGTH),
+        path: ['newPassword'],
+      });
+    }
+  });
+
+export type AdminResetPasswordFormData = z.infer<typeof adminResetPasswordSchema>;
+
 /** User login */
 export const loginSchema = z.object({
   emailOrPhone: emailOrPhoneValidation,

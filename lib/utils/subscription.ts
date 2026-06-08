@@ -17,9 +17,22 @@ import {
   TOURNAMENT_STATUS_CHANGED_SUB,
 } from '@/graphql/mutations/tournament';
 
+export const SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS = 3_000;
+
+function debounceCallback(callback: () => void, waitMs: number): () => void {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return () => {
+    if (timer !== undefined) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = undefined;
+      callback();
+    }, waitMs);
+  };
+}
+
 /**
  * Shared subscription factory for tournament match updates.
- * Triggers a refetch on each subscription event and returns the unsubscribe function.
+ * Triggers a debounced refetch on each subscription event.
  */
 export function createMatchSubscription(
   subscribeToMore: (options: {
@@ -30,12 +43,19 @@ export function createMatchSubscription(
   }) => () => void,
   refetch: () => void,
   tournamentId: string,
+  debounceMs = SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS,
+  shouldRefetch?: () => boolean,
 ) {
+  const debouncedRefetch = debounceCallback(() => {
+    if (shouldRefetch && !shouldRefetch()) return;
+    void refetch();
+  }, debounceMs);
+
   return subscribeToMore({
     document: TOURNAMENT_MATCHES_UPDATED_SUB,
     variables: { tournamentId },
     updateQuery: () => {
-      void refetch();
+      debouncedRefetch();
     },
     onError: (err: Error) => {
       console.error('[tournamentMatchesUpdated subscription]', err.message);
@@ -43,11 +63,6 @@ export function createMatchSubscription(
   });
 }
 
-/**
- * Subscribe to status changes for multiple tournaments.
- * When any tournament's status changes, refetches the list.
- * Returns unsubscribe function.
- */
 export function createTournamentStatusSubscriptions(
   subscribeToMore: (options: {
     document: DocumentNode;

@@ -24,3 +24,17 @@ export const showInfo = (message: string) => toast.info(message);
 
 /** Show a warning toast */
 export const showWarning = (message: string) => toast.warning(message);
+
+export function showSuccessWithAction(
+  message: string,
+  action: { label: string; onClick: () => void },
+  durationMs = 5000,
+) {
+  return toast.success(message, {
+    duration: durationMs,
+    action: {
+      label: action.label,
+      onClick: action.onClick,
+    },
+  });
+}

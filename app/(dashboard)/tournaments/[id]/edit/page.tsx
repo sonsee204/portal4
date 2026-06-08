@@ -21,6 +21,14 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useTournament } from '@/hooks/tournament';
 import { TournamentFormWizard } from '../../_form/TournamentFormWizard';
 import { mapTournamentToFormData } from '../../_form/_utils/mapFormToInput';
+import { TOURNAMENT } from '@/lib/strings';
+import { TournamentStatus } from '@/graphql/generated';
+
+const BLOCKED_EDIT_STATUSES: TournamentStatus[] = [
+  TournamentStatus.InProgress,
+  TournamentStatus.Completed,
+  TournamentStatus.Cancelled,
+];
 
 export default function EditTournamentPage({
   params,
@@ -59,28 +67,58 @@ export default function EditTournamentPage({
     );
   }
 
+  const isEditBlocked = BLOCKED_EDIT_STATUSES.includes(tournament.status);
+
+  const isCourtsOnlyEdit =
+    tournament.status === TournamentStatus.RegistrationOpen ||
+    tournament.status === TournamentStatus.RegistrationClosed;
+
+  const pageTitle = isCourtsOnlyEdit
+    ? TOURNAMENT.LABEL_MANAGE_COURTS
+    : 'Chỉnh sửa giải đấu';
+
+  const pageDescription = isCourtsOnlyEdit
+    ? 'Cập nhật số lượng và trạng thái sân thi đấu.'
+    : 'Cập nhật thông tin giải đấu hiện có.';
+
   return (
     <>
-      <PageHeader
-        title="Chỉnh sửa giải đấu"
-        description="Cập nhật thông tin giải đấu hiện có."
-      >
+      <PageHeader title={pageTitle} description={pageDescription}>
         <Button
           variant="ghost"
           size="sm"
           iconLeft="arrow-back-outline"
-          onClick={() => router.push('/tournaments')}
+          onClick={() => router.push(`/tournaments/${id}`)}
         >
           Quay lại
         </Button>
       </PageHeader>
 
       <div className="mt-6">
-        <TournamentFormWizard
-          defaultValues={mapTournamentToFormData(tournament)}
-          isEditMode
-          tournamentId={id}
-        />
+        {isEditBlocked ? (
+          <GlassPanel card>
+            <div className="py-20 text-center">
+              <p className="text-secondary">
+                {TOURNAMENT.EDIT_BLOCKED_IN_PROGRESS}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(`/tournaments/${id}`)}
+                className="mt-4"
+              >
+                Quay lại chi tiết giải
+              </Button>
+            </div>
+          </GlassPanel>
+        ) : (
+          <TournamentFormWizard
+            defaultValues={mapTournamentToFormData(tournament)}
+            isEditMode
+            tournamentId={id}
+            tournamentStatus={tournament.status}
+          />
+        )}
       </div>
     </>
   );

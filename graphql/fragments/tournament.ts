@@ -277,6 +277,12 @@ export const SCORECARD_FRAGMENT = gql`
     servingPlayer
     leftSidePlayer
     elapsedSeconds
+    matchSetup {
+      setupMethod
+      coinTossWinner
+      coinTossChoice
+      decidedAt
+    }
     sets {
       setNumber
       player1Score
@@ -290,6 +296,13 @@ export const SCORECARD_FRAGMENT = gql`
       servingPlayer
       setNumber
       scoreAfter
+      timestamp
+    }
+    correctionHistory {
+      id
+      actorId
+      reason
+      action
       timestamp
     }
     scoringConfig {

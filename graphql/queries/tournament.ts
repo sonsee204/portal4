@@ -70,6 +70,23 @@ export const PREVIEW_BULK_IMPORT = gql`
   }
 `;
 
+export const PREVIEW_LATE_ENTRY_PLACEMENT = gql`
+  query PreviewLateEntryPlacement($categoryId: ID!) {
+    previewLateEntryPlacement(categoryId: $categoryId) {
+      canProceed
+      eligibleByeMatchCount
+      blockReason
+      isFormatSupported
+      eligibleMatches {
+        matchId
+        matchNumber
+        roundLabel
+        opponentName
+      }
+    }
+  }
+`;
+
 export const GET_TOURNAMENT_REGISTRATIONS = gql`
   query GetTournamentRegistrations(
     $tournamentId: ID!
@@ -236,4 +253,24 @@ export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
     }
   }
   ${REGISTRATION_CORE_FRAGMENT}
+`;
+
+export const PREVIEW_REPACK_COURT_SCHEDULE = gql`
+  query PreviewRepackCourtSchedule($input: RepackCourtScheduleInput!) {
+    previewRepackCourtSchedule(input: $input) {
+      anchorMatchId
+      courtName
+      calendarDate
+      totalAffected
+      overdueCount
+      backlogCount
+      preview {
+        matchId
+        matchNumber
+        oldScheduledAt
+        newScheduledAt
+      }
+      warnings
+    }
+  }
 `;

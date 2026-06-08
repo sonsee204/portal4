@@ -206,6 +206,26 @@ export const BULK_IMPORT_REGISTRATIONS = gql`
   }
 `;
 
+export const ADD_LATE_ENTRY_TO_BYE_SLOT = gql`
+  mutation AddLateEntryToByeSlot($input: AddLateEntryToByeSlotInput!) {
+    addLateEntryToByeSlot(input: $input) {
+      action
+      message
+      opponentName
+      selectedFromCount
+      scheduleNeedsUpdate
+      registration {
+        ...RegistrationCore
+      }
+      match {
+        ...MatchCore
+      }
+    }
+  }
+  ${REGISTRATION_CORE_FRAGMENT}
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 export const UPDATE_REGISTRATION_BIB_NUMBER = gql`
   mutation UpdateRegistrationBibNumber($input: UpdateBibNumberInput!) {
     updateRegistrationBibNumber(input: $input) {
@@ -298,6 +318,25 @@ export const CASCADE_RESCHEDULE = gql`
   ${MATCH_CORE_FRAGMENT}
 `;
 
+export const REPACK_COURT_SCHEDULE = gql`
+  mutation RepackCourtSchedule($input: RepackCourtScheduleInput!) {
+    repackCourtSchedule(input: $input) {
+      affectedMatches {
+        ...MatchCore
+      }
+      totalAffected
+      preview {
+        matchId
+        matchNumber
+        oldScheduledAt
+        newScheduledAt
+      }
+      warnings
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
 export const AUTO_SCHEDULE_MATCHES = gql`
   mutation AutoScheduleMatches($input: AutoScheduleInput!) {
     autoScheduleMatches(input: $input) {
@@ -356,6 +395,46 @@ export const UPDATE_MATCH_RESULT = gql`
     }
   }
   ${SCORECARD_FRAGMENT}
+`;
+
+export const ORGANIZER_CORRECT_LIVE_SCORE = gql`
+  mutation OrganizerCorrectLiveScore(
+    $input: OrganizerCorrectLiveScoreInput!
+  ) {
+    organizerCorrectLiveScore(input: $input) {
+      ...ScorecardCore
+    }
+  }
+  ${SCORECARD_FRAGMENT}
+`;
+
+export const ORGANIZER_ABORT_LIVE_MATCH = gql`
+  mutation OrganizerAbortLiveMatch($input: OrganizerAbortLiveMatchInput!) {
+    organizerAbortLiveMatch(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const SET_MATCH_WALKOVER = gql`
+  mutation SetMatchWalkover($input: SetMatchWalkoverInput!) {
+    setMatchWalkover(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
+
+export const CORRECT_FINISHED_MATCH_RESULT = gql`
+  mutation CorrectFinishedMatchResult(
+    $input: CorrectFinishedMatchResultInput!
+  ) {
+    correctFinishedMatchResult(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
 `;
 
 // ==================== SUBSCRIPTIONS ====================

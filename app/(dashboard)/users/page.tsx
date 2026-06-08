@@ -30,6 +30,7 @@ import { useAdminUsers } from '@/hooks/admin';
 import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
 import type { UserRole, User } from '@/types';
 import { CreateUserDialog } from './_components/CreateUserDialog';
+import { ProvisionPlayerDialog } from './_components/ProvisionPlayerDialog';
 
 const PAGE_SIZE = 20;
 
@@ -62,6 +63,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showProvisionDialog, setShowProvisionDialog] = useState(false);
   const router = useRouter();
 
   const { users, total, loading, error, refetch } = useAdminUsers({
@@ -91,6 +93,16 @@ export default function UsersPage() {
             wrapperClassName="w-56"
             onChange={(e) => handleSearch(e.target.value)}
           />
+          <PermissionGate feature="player_provision">
+            <Button
+              size="sm"
+              variant="secondary"
+              iconLeft="phone-portrait-outline"
+              onClick={() => setShowProvisionDialog(true)}
+            >
+              Đăng ký hộ Player
+            </Button>
+          </PermissionGate>
           <PermissionGate
             features={['admin_creation', 'facility_owner_creation']}
           >
@@ -195,6 +207,12 @@ export default function UsersPage() {
       <CreateUserDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCreateSuccess}
+      />
+
+      <ProvisionPlayerDialog
+        open={showProvisionDialog}
+        onClose={() => setShowProvisionDialog(false)}
         onSuccess={handleCreateSuccess}
       />
     </>

@@ -73,3 +73,6 @@ export function createSilentMutationOptions(operationName: string) {
     },
   };
 }
+
+/** Mutations that must throw/reject on GraphQL errors (overrides client default `errorPolicy: 'all'`). */
+export const strictMutationErrorPolicy = { errorPolicy: 'none' as const };

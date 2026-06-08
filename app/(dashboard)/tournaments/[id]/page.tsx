@@ -21,6 +21,7 @@ import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useTournament } from '@/hooks/tournament';
 import { TOURNAMENT } from '@/lib/strings';
+import { TournamentStatus } from '@/graphql/generated';
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: 'bg-gray-500/20 text-gray-400',
@@ -42,12 +43,15 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: TOURNAMENT.STATUS_CANCELLED,
 };
 
-const QUICK_LINKS = [
-  { href: 'edit', label: 'Chỉnh sửa', icon: 'create-outline' },
-  { href: 'registrations', label: TOURNAMENT.LABEL_REGISTRATIONS, icon: 'person-add-outline' },
-  { href: 'draw', label: TOURNAMENT.LABEL_DRAW, icon: 'git-branch-outline' },
-  { href: 'schedule', label: TOURNAMENT.LABEL_SCHEDULE, icon: 'calendar-outline' },
-] as const;
+function getEditQuickLinkLabel(status: TournamentStatus): string {
+  if (
+    status === TournamentStatus.RegistrationOpen ||
+    status === TournamentStatus.RegistrationClosed
+  ) {
+    return TOURNAMENT.LABEL_MANAGE_COURTS;
+  }
+  return 'Chỉnh sửa';
+}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -101,7 +105,9 @@ export default function TournamentDetailPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-heading">{tournament.title}</h1>
+          <h1 className="text-heading text-2xl font-bold">
+            {tournament.title}
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
@@ -165,16 +171,38 @@ export default function TournamentDetailPage({
             Thao tác nhanh
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {QUICK_LINKS.map(({ href, label, icon }) => (
-              <Link
-                key={href}
-                href={`/tournaments/${id}/${href}`}
-                className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
-              >
-                <IonIcon name={icon} size="md" />
-                <span className="font-medium">{label}</span>
-              </Link>
-            ))}
+            <Link
+              href={`/tournaments/${id}/edit`}
+              className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+            >
+              <IonIcon name="create-outline" size="md" />
+              <span className="font-medium">
+                {getEditQuickLinkLabel(tournament.status)}
+              </span>
+            </Link>
+            <Link
+              href={`/tournaments/${id}/registrations`}
+              className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+            >
+              <IonIcon name="person-add-outline" size="md" />
+              <span className="font-medium">
+                {TOURNAMENT.LABEL_REGISTRATIONS}
+              </span>
+            </Link>
+            <Link
+              href={`/tournaments/${id}/draw`}
+              className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+            >
+              <IonIcon name="git-branch-outline" size="md" />
+              <span className="font-medium">{TOURNAMENT.LABEL_DRAW}</span>
+            </Link>
+            <Link
+              href={`/tournaments/${id}/schedule`}
+              className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+            >
+              <IonIcon name="calendar-outline" size="md" />
+              <span className="font-medium">{TOURNAMENT.LABEL_SCHEDULE}</span>
+            </Link>
           </div>
         </div>
       </GlassPanel>

@@ -15,11 +15,11 @@
 
 import {
   setSession,
-  clearSession,
-  getRefreshToken,
   getAccessToken,
 } from './session';
+import { refreshSessionFromCookie } from './refresh-server';
 import { GRAPHQL_URL } from './constants';
+import { isUnauthenticatedGraphQLError } from '@/lib/auth/session-core';
 import { AUTH, ERRORS } from '@/lib/strings';
 import type { AuthUser } from '@/types';
 
@@ -47,23 +47,6 @@ interface SignInResponse {
         role: string;
       };
       message: string;
-    };
-  };
-  errors?: Array<{ message: string }>;
-}
-
-/**
- * GraphQL response shape for refreshToken mutation
- */
-interface RefreshTokenResponse {
-  data?: {
-    refreshToken: {
-      accessToken: string;
-      refreshToken: string;
-      user: {
-        _id: string;
-        role: string;
-      };
     };
   };
   errors?: Array<{ message: string }>;
@@ -172,57 +155,8 @@ export async function loginAction(
  * Returns new access token or null if refresh failed
  */
 export async function refreshAction(): Promise<boolean> {
-  const refreshToken = await getRefreshToken();
-
-  if (!refreshToken) {
-    return false;
-  }
-
-  try {
-    const response = await fetch(GRAPHQL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${refreshToken}`,
-        'x-client-source': 'portal',
-        'Apollo-Require-Preflight': 'true',
-      },
-      body: JSON.stringify({
-        query: `
-          mutation RefreshToken {
-            refreshToken {
-              accessToken
-              refreshToken
-              user {
-                _id
-                role
-              }
-            }
-          }
-        `,
-      }),
-    });
-
-    const result = (await response.json()) as RefreshTokenResponse;
-
-    if (result.errors || !result.data?.refreshToken) {
-      await clearSession();
-      return false;
-    }
-
-    const { accessToken, refreshToken: newRefreshToken, user } =
-      result.data.refreshToken;
-
-    await setSession(
-      { accessToken, refreshToken: newRefreshToken },
-      user.role,
-    );
-
-    return true;
-  } catch {
-    await clearSession();
-    return false;
-  }
+  const result = await refreshSessionFromCookie();
+  return result.ok;
 }
 
 // ==================== PASSWORD RESET ====================
@@ -355,63 +289,96 @@ export async function resetPasswordAction(
 /**
  * Get current user server action (for client components to fetch user data)
  */
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  const accessToken = await getAccessToken();
+const ME_QUERY = `
+  query Me {
+    me {
+      _id
+      email
+      phone
+      fullName
+      displayName
+      userName
+      role
+      photoURL
+      bio
+      club
+      gender
+      dateOfBirth
+      location {
+        city
+        country
+        displayText
+        coordinates {
+          latitude
+          longitude
+        }
+      }
+    }
+  }
+`;
 
-  if (!accessToken) {
+const PORTAL_GQL_HEADERS = {
+  'Content-Type': 'application/json',
+  'x-client-source': 'portal',
+  'Apollo-Require-Preflight': 'true',
+} as const;
+
+async function fetchMe(accessToken: string): Promise<AuthUser | null> {
+  const response = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: {
+      ...PORTAL_GQL_HEADERS,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ query: ME_QUERY }),
+  });
+
+  const result = (await response.json()) as {
+    data?: { me: AuthUser };
+    errors?: Array<{ message: string; extensions?: { code?: string } }>;
+  };
+
+  if (result.data?.me) {
+    return result.data.me;
+  }
+
+  const firstError = result.errors?.[0];
+  if (
+    firstError &&
+    isUnauthenticatedGraphQLError(
+      firstError.extensions?.code,
+      firstError.message,
+    )
+  ) {
     return null;
   }
 
+  return null;
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  let accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    const refreshed = await refreshSessionFromCookie();
+    if (!refreshed.ok) {
+      return null;
+    }
+    accessToken = refreshed.accessToken;
+  }
+
   try {
-    const response = await fetch(GRAPHQL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'x-client-source': 'portal',
-        'Apollo-Require-Preflight': 'true',
-      },
-      body: JSON.stringify({
-        query: `
-          query Me {
-            me {
-              _id
-              email
-              phone
-              fullName
-              displayName
-              userName
-              role
-              photoURL
-              bio
-              club
-              gender
-              dateOfBirth
-              location {
-                city
-                country
-                displayText
-                coordinates {
-                  latitude
-                  longitude
-                }
-              }
-            }
-          }
-        `,
-      }),
-    });
+    const user = await fetchMe(accessToken);
+    if (user) {
+      return user;
+    }
 
-    const result = (await response.json()) as {
-      data?: { me: AuthUser };
-      errors?: Array<{ message: string }>;
-    };
-
-    if (result.errors || !result.data?.me) {
+    const refreshed = await refreshSessionFromCookie();
+    if (!refreshed.ok) {
       return null;
     }
 
-    return result.data.me;
+    return await fetchMe(refreshed.accessToken);
   } catch {
     return null;
   }
