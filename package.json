@@ -13,7 +13,8 @@
     "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal",
     "schema:sync": "node ../scripts/sync-schema.mjs",
     "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
-    "version:sync": "node ../scripts/sync-version.mjs"
+    "version:sync": "node ../scripts/sync-version.mjs",
+    "dev:https": "next dev --experimental-https --experimental-https-key localhost+1-key.pem --experimental-https-cert localhost+1.pem --port 3003"
   },
   "dependencies": {
     "@apollo/client": "^4.1.4",

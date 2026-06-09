@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ------------------------------------------------------------------ */
 /* Semantic Design Tokens (light = default, .dark = override)          */
@@ -266,11 +266,8 @@ input[type='time']::-moz-calendar-picker-indicator {
 
   /* Chart background grid effect */
   .chart-grid {
-    background-image: linear-gradient(
-        to right,
-        var(--chart-grid-line) 1px,
-        transparent 1px
-      ),
+    background-image:
+      linear-gradient(to right, var(--chart-grid-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--chart-grid-line) 1px, transparent 1px);
     background-size: 4% 20%;
   }

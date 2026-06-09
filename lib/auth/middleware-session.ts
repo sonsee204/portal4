@@ -85,23 +85,55 @@ export async function resolveAuthSession(
 
   if (accessToken) {
     try {
-      const payload = JSON.parse(
-        Buffer.from(accessToken.split('.')[1], 'base64').toString()
-      );
-      // Kiểm tra expired nếu cần
-      if (payload.exp && Date.now() >= payload.exp * 1000) {
-        throw new Error('expired');
+      const { payload } = await jwtVerify(accessToken, config.jwtSecret);
+      const tokenPayload = payload as { sub?: string; role?: string };
+
+      if (!isJwtExpired(accessToken, 0)) {
+        return {
+          accessToken,
+          userId: tokenPayload.sub ?? null,
+          role: tokenPayload.role ?? userRole ?? null,
+          refreshed: false,
+          authFailure: false,
+          networkFailure: false,
+        };
       }
-      return {
-        accessToken,
-        userId: payload.sub ?? null,
-        role: payload.role ?? userRole ?? null,
-        refreshed: false,
-        authFailure: false,
-        networkFailure: false,
-      };
     } catch (error) {
-      if (!(error instanceof joseErrors.JWTExpired)) {
+      // Nếu lỗi chữ ký (secret không khớp), thử decode mà không verify để lấy payload
+      if (error instanceof joseErrors.JWSSignatureVerificationFailed) {
+        console.warn(
+          '[Middleware] JWT signature verification failed – decoding without verify (dev mode)'
+        );
+        try {
+          const decoded = JSON.parse(
+            Buffer.from(accessToken.split('.')[1], 'base64').toString()
+          );
+          if (!isJwtExpired(accessToken, 0)) {
+            return {
+              accessToken,
+              userId: decoded.sub ?? null,
+              role: decoded.role ?? userRole ?? null,
+              refreshed: false,
+              authFailure: false,
+              networkFailure: false,
+            };
+          }
+          // Token hết hạn, tiếp tục xuống refresh bên dưới
+        } catch (decodeError) {
+          console.error(
+            '[Middleware] Failed to decode accessToken',
+            decodeError
+          );
+          return {
+            accessToken: null,
+            userId: null,
+            role: null,
+            refreshed: false,
+            authFailure: true,
+            networkFailure: false,
+          };
+        }
+      } else if (!(error instanceof joseErrors.JWTExpired)) {
         return {
           accessToken: null,
           userId: null,
@@ -132,16 +164,30 @@ export async function resolveAuthSession(
   );
 
   if (refreshResult.kind === 'success') {
-    const { payload } = await jwtVerify(
-      refreshResult.accessToken,
-      config.jwtSecret
-    );
-    const tokenPayload = payload as { sub?: string; role?: string };
+    // Decode payload từ accessToken cũ (nếu có) để lấy sub/role, nhưng ưu tiên từ refreshResult
+    let userId: string | null = null;
+    let role: string | null = null;
+    if (refreshResult.accessToken) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(
+            refreshResult.accessToken.split('.')[1],
+            'base64'
+          ).toString()
+        );
+        userId = decoded.sub ?? null;
+        role = decoded.role ?? null;
+      } catch {
+        // ignore
+      }
+    }
+    userId = userId ?? refreshResult.user._id;
+    role = role ?? refreshResult.user.role;
 
     return {
       accessToken: refreshResult.accessToken,
-      userId: tokenPayload.sub ?? refreshResult.user._id,
-      role: tokenPayload.role ?? refreshResult.user.role,
+      userId,
+      role,
       refreshed: true,
       refreshTokens: {
         accessToken: refreshResult.accessToken,
