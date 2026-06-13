@@ -14,14 +14,26 @@ alwaysApply: true
 - Mock types (`types/mock.ts`) cho UI production — dùng `graphql/generated.ts`
 - Hardcode hex/rgb trong JSX — dùng Tailwind token / `config/theme.ts`
 - Copy schedule/DnD logic thủ công từ web — dùng `pnpm schedule-dnd:sync`
+- File source mới không có copyright header Ao Trình — `pnpm run check:copyright-header`
+
+## File header (bắt buộc — file mới)
+
+Block Ao Trình ở **đầu file**, trước `'use client'` / imports. Gate: `check:copyright-header`.
+
+```ts
+/**
+ * Ao Trình (NALee Sports)
+ * ...
+ */
+```
 
 ## Verify
 
 ```bash
 pnpm exec tsc --noEmit
 pnpm lint
-pnpm run verify:a-plus   # sau F2: typecheck + lint + size-gate:strict + build
-pnpm run verify:quick  # pre-push: typecheck + size-gate:strict
+pnpm run verify:a-plus   # typecheck + copyright + lint + size-gate:strict + build
+pnpm run verify:quick  # pre-push: typecheck + copyright + size-gate:strict
 ```
 
 Sau đổi GraphQL: `pnpm schema:sync` + `pnpm codegen`

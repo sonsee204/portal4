@@ -18,6 +18,7 @@ definitions:
           - export GRAPHQL_SCHEMA_PATH=schema.gql
           - HUSKY=0 pnpm install --frozen-lockfile
           - pnpm run typecheck
+          - pnpm run check:copyright-header
           - pnpm run lint
           - pnpm run size-gate:strict
           - pnpm run build
