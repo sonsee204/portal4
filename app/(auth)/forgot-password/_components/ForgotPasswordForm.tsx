@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -25,14 +38,9 @@ import {
   requestPasswordResetAction,
   resetPasswordAction,
 } from '@/lib/auth/actions';
-import {
-  setupRecaptcha,
-  sendOtp,
-  verifyOtp,
-  cleanup,
-} from '@/lib/firebase/phone-auth';
-import type { ConfirmationResult } from 'firebase/auth';
+import { useOtpFlow } from '@/hooks/auth/useOtpFlow';
 import { AUTH, COMMON } from '@/lib/strings';
+import { getOtpDeliveryHint } from '@/lib/utils/otp-channel-message';
 
 type Step = 'phone' | 'otp' | 'password';
 
@@ -45,17 +53,6 @@ const STEPPER_STEPS = [
   { label: AUTH.FORGOT_PASSWORD.STEP_OTP },
   { label: AUTH.FORGOT_PASSWORD.STEP_PASSWORD },
 ];
-
-function toE164(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('0')) {
-    return `+84${cleaned.slice(1)}`;
-  }
-  if (cleaned.startsWith('84')) {
-    return `+${cleaned}`;
-  }
-  return `+${cleaned}`;
-}
 
 function formatPhone(phone: string): string {
   const local = phone.replace(/^\+84/, '0');
@@ -93,8 +90,13 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const idTokenRef = useRef<string | null>(null);
+  /**
+   * `useOtpFlow` hides the ZNS-vs-Firebase branching. This form only
+   * cares about the resulting `proof` object.
+   */
+  const otpFlow = useOtpFlow({
+    recaptchaContainerId: RECAPTCHA_CONTAINER_ID,
+  });
 
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -117,11 +119,11 @@ export function ForgotPasswordForm() {
   const watchPassword = passwordForm.watch('newPassword');
 
   useEffect(() => {
-    setupRecaptcha(RECAPTCHA_CONTAINER_ID);
     return () => {
-      cleanup();
       if (timerRef.current) clearInterval(timerRef.current);
+      void otpFlow.reset();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -164,6 +166,8 @@ export function ForgotPasswordForm() {
       try {
         setPhone(data.phone);
 
+        // Backend pre-check is non-enumerable; OTP request enforces
+        // the real-world behaviour.
         const resetResult = await requestPasswordResetAction(data.phone);
         if (!resetResult.success) {
           setError(
@@ -172,9 +176,14 @@ export function ForgotPasswordForm() {
           return;
         }
 
-        const e164 = toE164(data.phone);
-        const confirmation = await sendOtp(e164);
-        confirmationRef.current = confirmation;
+        const r = await otpFlow.start({
+          phone: data.phone,
+          purpose: 'PASSWORD_RESET_PHONE',
+        });
+        if (!r.success) {
+          setError(r.error || AUTH.FORGOT_PASSWORD.ERROR_SEND_OTP);
+          return;
+        }
 
         setResendTimer(RESEND_DELAY_S);
         goToStep('otp');
@@ -184,7 +193,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [goToStep]
+    [goToStep, otpFlow]
   );
 
   const handleOtpSubmit = useCallback(
@@ -192,14 +201,11 @@ export function ForgotPasswordForm() {
       setError(null);
       setLoading(true);
       try {
-        if (!confirmationRef.current) {
-          setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
-          goToStep('phone');
+        const r = await otpFlow.submitCode(data.otp);
+        if (!r.success || !r.proof) {
+          setError(r.error || AUTH.FORGOT_PASSWORD.ERROR_INVALID_OTP);
           return;
         }
-
-        const idToken = await verifyOtp(confirmationRef.current, data.otp);
-        idTokenRef.current = idToken;
         goToStep('password');
       } catch {
         setError(AUTH.FORGOT_PASSWORD.ERROR_INVALID_OTP);
@@ -207,16 +213,18 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [goToStep]
+    [goToStep, otpFlow]
   );
 
   const handleResend = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      const e164 = toE164(phone);
-      const confirmation = await sendOtp(e164);
-      confirmationRef.current = confirmation;
+      const r = await otpFlow.resend();
+      if (!r.success) {
+        setError(r.error || AUTH.FORGOT_PASSWORD.ERROR_RESEND_OTP);
+        return;
+      }
       setResendTimer(RESEND_DELAY_S);
       otpForm.reset({ otp: '' });
     } catch {
@@ -224,13 +232,14 @@ export function ForgotPasswordForm() {
     } finally {
       setLoading(false);
     }
-  }, [phone, otpForm]);
+  }, [otpForm, otpFlow]);
 
   const handlePasswordSubmit = useCallback(
     async (data: ResetPasswordFormData) => {
       setError(null);
 
-      if (!idTokenRef.current) {
+      const phoneProof = otpFlow.proof;
+      if (!phoneProof) {
         setError(AUTH.FORGOT_PASSWORD.ERROR_SESSION_EXPIRED);
         goToStep('phone');
         return;
@@ -239,7 +248,10 @@ export function ForgotPasswordForm() {
       setLoading(true);
       try {
         const result = await resetPasswordAction(
-          idTokenRef.current,
+          {
+            phoneVerificationToken: phoneProof.phoneVerificationToken,
+            firebaseIdToken: phoneProof.firebaseIdToken,
+          },
           data.newPassword
         );
 
@@ -248,6 +260,7 @@ export function ForgotPasswordForm() {
           return;
         }
 
+        void otpFlow.reset();
         router.push('/login?reset=success');
       } catch {
         setError(AUTH.FORGOT_PASSWORD.ERROR_RESET_FAILED);
@@ -255,7 +268,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
       }
     },
-    [router, goToStep]
+    [router, goToStep, otpFlow]
   );
 
   // ==================== Render Helpers ====================
@@ -350,6 +363,15 @@ export function ForgotPasswordForm() {
         <p className="text-muted text-sm">{AUTH.FORGOT_PASSWORD.OTP_SENT_TO}</p>
         <p className="text-primary text-sm font-semibold">
           {formatPhone(phone)}
+        </p>
+        <p
+          className={
+            otpFlow.channel === 'ZNS'
+              ? 'text-primary text-xs'
+              : 'text-muted text-xs'
+          }
+        >
+          {getOtpDeliveryHint(otpFlow.channel)}
         </p>
       </div>
 

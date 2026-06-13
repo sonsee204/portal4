@@ -479,6 +479,19 @@ enum AuditAction {
   LOGIN_FAILED
   LOGOUT
   LOGOUT_ALL
+  OTP_CHANNEL_FALLBACK
+  OTP_DELIVERY_UPDATE
+  OTP_REQUESTED
+  OTP_TEST_PHONE_CREATED
+  OTP_TEST_PHONE_DISABLED
+  OTP_TEST_PHONE_ENABLED
+  OTP_TEST_PHONE_UPDATED
+  OTP_TEST_USER_GRANT_CREATED
+  OTP_TEST_USER_GRANT_REPLACED
+  OTP_TEST_USER_GRANT_REVOKED
+  OTP_THROTTLED
+  OTP_VERIFIED
+  OTP_VERIFY_FAILED
   PASSWORD_CHANGE
   PASSWORD_RESET
   RATE_LIMIT_HIT
@@ -506,6 +519,7 @@ enum AuditAction {
 enum AuditCategory {
   ADMIN
   AUTH
+  OTP
   SECURITY
   SYSTEM
   TOURNAMENT
@@ -674,8 +688,34 @@ input AvailablePassesFilterInput {
   """Filter from date (YYYY-MM-DD)"""
   fromDate: String
 
+  """Toạ độ user — vĩ độ (cần kèm longitude để bật geo filter)"""
+  latitude: Float
+
+  """Toạ độ user — kinh độ (cần kèm latitude để bật geo filter)"""
+  longitude: Float
+
+  """Giá tối đa (VND)"""
+  maxPrice: Int
+
+  """Giá tối thiểu (VND)"""
+  minPrice: Int
+
+  """Bán kính tìm kiếm (km) — mặc định 10km, tối đa 50km"""
+  radiusKm: Float = 10
+
+  """Cách sắp xếp kết quả"""
+  sort: BookingPassSortOrder = EXPIRES_ASC
+
+  """
+  Lọc theo nguồn pass (mặc định trả cả 2 nếu không truyền). Truyền [INTERNAL] để chỉ xem pass đã xác thực.
+  """
+  sources: [BookingPassSource!]
+
   """Filter by sport type"""
   sportType: SportType
+
+  """Khung giờ trong ngày: MORNING / AFTERNOON / EVENING / NIGHT"""
+  timeOfDay: TimeOfDay
 
   """Filter to date (YYYY-MM-DD)"""
   toDate: String
@@ -898,6 +938,20 @@ type Booking {
   venueId: ID!
 }
 
+"""A Relay-style connection for Booking items."""
+type BookingConnection {
+  """List of edges (each contains a node + cursor)."""
+  edges: [BookingEdge!]!
+
+  """Pagination metadata (next/prev page, start/end cursor)."""
+  pageInfo: PageInfo!
+
+  """
+  Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
+  """
+  totalCount: Int!
+}
+
 type BookingDistribution {
   """Color for chart (hex)"""
   color: String!
@@ -910,6 +964,15 @@ type BookingDistribution {
 
   """Number of bookings"""
   value: Int!
+}
+
+"""An edge in the BookingConnection."""
+type BookingEdge {
+  """Opaque cursor pointing to this node."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Booking!
 }
 
 input BookingFilterInput {
@@ -1027,14 +1090,16 @@ type BookingPass {
   """Asking price set by owner"""
   askingPrice: Int!
 
-  """The booking being passed"""
-  booking: Booking!
+  """
+  The booking being passed (chỉ có với pass INTERNAL — null cho EXTERNAL)
+  """
+  booking: Booking
 
   """Booking date (YYYY-MM-DD)"""
   bookingDate: String!
 
-  """Booking being passed"""
-  bookingId: ID!
+  """Booking ID — chỉ có với pass INTERNAL"""
+  bookingId: ID
 
   """Cancellation reason"""
   cancellationReason: String
@@ -1048,6 +1113,9 @@ type BookingPass {
 
   """When pass expires (booking start time)"""
   expiresAt: DateTime!
+
+  """Thông tin lịch đặt do user khai báo (chỉ khi source=EXTERNAL)"""
+  externalBooking: ExternalBookingSnapshot
 
   """Users who expressed interest"""
   interestedUserDetails: [User!]!
@@ -1070,6 +1138,11 @@ type BookingPass {
   """Selected user ID"""
   selectedUserId: ID
 
+  """
+  Nguồn gốc pass: INTERNAL (booking hệ thống) hoặc EXTERNAL (user tự khai báo)
+  """
+  source: BookingPassSource!
+
   """Pass status"""
   status: BookingPassStatus!
 
@@ -1089,11 +1162,13 @@ type BookingPass {
   transferrerId: ID!
   updatedAt: DateTime!
 
-  """Venue of the booking"""
-  venue: Venue!
+  """Venue của pass (EXTERNAL có thể null nếu user chưa khai báo sân nào)"""
+  venue: Venue
 
-  """Venue ID"""
-  venueId: ID!
+  """
+  Venue ID — INTERNAL luôn có; EXTERNAL có thể null nếu sân chưa được khai báo
+  """
+  venueId: ID
 
   """Pass visibility"""
   visibility: BookingPassVisibility!
@@ -1114,6 +1189,92 @@ type BookingPassList {
 
   """Total number of passes"""
   total: Int!
+}
+
+type BookingPassReport {
+  _id: ID!
+  createdAt: DateTime!
+
+  """Mô tả chi tiết"""
+  description: String
+
+  """Ghi chú admin / kết quả xử lý"""
+  notes: String
+  pass: BookingPass
+
+  """ID của pass bị báo cáo"""
+  passId: ID!
+
+  """Lý do báo cáo"""
+  reason: BookingPassReportReason!
+  reporter: User
+
+  """User báo cáo"""
+  reporterId: ID!
+
+  """Thời điểm xử lý"""
+  reviewedAt: DateTime
+
+  """Admin xử lý"""
+  reviewedBy: ID
+  reviewer: User
+
+  """Trạng thái"""
+  status: BookingPassReportStatus!
+  transferrer: User
+
+  """ID của user pass (transferrer)"""
+  transferrerId: ID!
+  updatedAt: DateTime!
+}
+
+input BookingPassReportFilterInput {
+  reason: BookingPassReportReason
+  status: BookingPassReportStatus
+  transferrerId: ID
+}
+
+type BookingPassReportList {
+  hasMore: Boolean!
+  items: [BookingPassReport!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+"""Lý do báo cáo pass sân"""
+enum BookingPassReportReason {
+  ALREADY_TRANSFERRED
+  FAKE_BOOKING
+  INAPPROPRIATE
+  OTHER
+  PRICE_GOUGING
+  SCAM
+}
+
+"""Trạng thái báo cáo pass sân"""
+enum BookingPassReportStatus {
+  DISMISSED
+  PENDING
+  RESOLVED
+  REVIEWED
+}
+
+"""Cách sắp xếp danh sách pass"""
+enum BookingPassSortOrder {
+  CREATED_DESC
+  DISCOUNT_DESC
+  EXPIRES_ASC
+  PRICE_ASC
+  PRICE_DESC
+}
+
+"""
+Nguồn gốc của booking pass: INTERNAL = lịch hệ thống, EXTERNAL = lịch tự khai báo
+"""
+enum BookingPassSource {
+  EXTERNAL
+  INTERNAL
 }
 
 """Status of the booking pass"""
@@ -1192,6 +1353,14 @@ enum BookingTypeFilter {
   RECURRING_CHILD
   RECURRING_MASTER
   SINGLE
+}
+
+type BookingWithOrderPayload {
+  """The confirmed booking"""
+  booking: Booking!
+
+  """Order created for the booking"""
+  order: Order!
 }
 
 type BookmarkList {
@@ -1798,6 +1967,14 @@ enum ClaimRequestStatus {
   REJECTED
 }
 
+"""Payload for the commentDeleted subscription."""
+type CommentDeletedPayload {
+  _id: ID!
+  commentId: ID!
+  parentId: ID
+  postId: ID!
+}
+
 """What the coin-toss winner chose: serve or court side"""
 enum CoinTossChoice {
   SERVE
@@ -1829,8 +2006,10 @@ input ConfirmEmailUpdateInput {
 }
 
 input ConfirmPhoneUpdateInput {
-  idToken: String!
+  firebaseIdToken: String
+  idToken: String
   newPhone: String!
+  phoneVerificationToken: String
 }
 
 type ContactInquiry {
@@ -2275,17 +2454,28 @@ input CreateBookingInput {
 }
 
 input CreateBookingPassInput {
-  """Asking price"""
+  """Giá pass (VND)"""
   askingPrice: Int!
 
-  """Booking ID to pass"""
-  bookingId: ID!
+  """Booking ID — bắt buộc khi source=INTERNAL"""
+  bookingId: ID
 
-  """Description/reason for passing"""
+  """Mô tả/lý do pass"""
   description: String
 
-  """Target user ID for private pass"""
+  """Snapshot lịch đặt — bắt buộc khi source=EXTERNAL"""
+  externalBooking: ExternalBookingInput
+
+  """Loại pass — mặc định INTERNAL nếu bỏ trống (backwards-compat)"""
+  source: BookingPassSource
+
+  """Target user ID cho private pass"""
   transfereeId: ID
+
+  """
+  Venue ID khi user pick venue có sẵn (claimed hoặc UNCLAIMED) — chỉ EXTERNAL
+  """
+  venueId: ID
 
   """Pass visibility"""
   visibility: BookingPassVisibility!
@@ -2541,6 +2731,35 @@ input CreateOrderInput {
   venueId: ID!
 }
 
+input CreateOtpTestPhoneInput {
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  expiresAt: DateTime
+
+  """Human-readable label for QA / ops"""
+  label: String!
+
+  """Vietnamese phone number (E.164 after normalisation)"""
+  phone: String!
+
+  """Fixed 6-digit OTP code"""
+  testCode: String!
+}
+
+input CreateOtpTestUserGrantInput {
+  """Default SIGN_IN_PHONE only"""
+  allowedPurposes: [OtpPurpose!]
+
+  """Grant expiry (default +24h, max +7d)"""
+  expiresAt: DateTime
+
+  """Reason / ticket reference (min 10 chars)"""
+  reason: String!
+
+  """User ID to grant test OTP login"""
+  userId: String!
+}
+
 input CreatePickupGameCampaignInput {
   """Mô tả campaign"""
   description: String
@@ -2558,7 +2777,7 @@ input CreatePickupGameCampaignInput {
   name: String!
 
   """Môn thể thao của campaign"""
-  sportTypes: [String!]
+  sportTypes: [SportType!]
 
   """Ngày bắt đầu (ISO string)"""
   startDate: String
@@ -2925,6 +3144,20 @@ input CreateReferralCodeInput {
   ownerRole: String
 }
 
+input CreateScoreboardSessionInput {
+  leftSidePlayer: Int
+  matchFormat: ScoreboardMatchFormat!
+  scheduledAt: DateTime
+  scoringConfig: ScoringConfigInput!
+  servingPlayer: Int
+  side1: ScoreboardSideInput!
+  side2: ScoreboardSideInput!
+  sportType: SportType!
+
+  """If true, start immediately as LIVE"""
+  startImmediately: Boolean
+}
+
 input CreateStaffBookingInput {
   """Customer user ID (if booking for existing user)"""
   customerId: ID
@@ -3092,6 +3325,32 @@ input CreateTournamentInput {
   title: String!
 }
 
+input CreateUserSubmittedVenueInput {
+  """Địa chỉ đầy đủ"""
+  address: String!
+
+  """Tỉnh/Thành phố"""
+  city: String
+
+  """Quận/Huyện"""
+  district: String
+
+  """Vĩ độ"""
+  latitude: Float
+
+  """Kinh độ"""
+  longitude: Float
+
+  """Tên sân"""
+  name: String!
+
+  """Danh sách môn thể thao tại sân"""
+  sportTypes: [SportType!]!
+
+  """Phường/Xã"""
+  ward: String
+}
+
 input CreateVenueInput {
   """Advance booking days"""
   advanceBookingDays: Int = 14
@@ -3210,6 +3469,20 @@ type CurrentLegalDocuments {
 
   """Current Terms of Service"""
   termsOfService: LegalDocumentSummary
+}
+
+input CursorPaginationInput {
+  """Opaque cursor pointing at the last item of the previous page."""
+  after: String
+
+  """Reserved for backwards pagination."""
+  before: String
+
+  """Number of items to return after the cursor (1..50)."""
+  first: Int = 20
+
+  """Reserved for backwards pagination (1..50)."""
+  last: Int
 }
 
 type CustomLocation {
@@ -3514,6 +3787,70 @@ input ExecuteDrawInput {
   seeds: [SeedPlayerInput!]! = []
 }
 
+input ExternalBookingInput {
+  """Ngày đặt (ISO 8601 date)"""
+  bookingDate: String!
+
+  """Tên sân con (nếu có)"""
+  courtName: String
+
+  """Thời gian kết thúc (ISO 8601)"""
+  endTime: String!
+
+  """Ghi chú thêm về booking gốc"""
+  notes: String
+
+  """Giá gốc (VND)"""
+  originalPrice: Int!
+
+  """URL ảnh chứng từ (1-5 ảnh)"""
+  proofImages: [String!]!
+
+  """Loại thể thao"""
+  sportType: SportType!
+
+  """Thời gian bắt đầu (ISO 8601)"""
+  startTime: String!
+
+  """Địa chỉ sân (tuỳ chọn)"""
+  venueAddress: String
+
+  """Tên sân do user khai báo"""
+  venueName: String!
+}
+
+type ExternalBookingSnapshot {
+  """Ngày đặt (YYYY-MM-DD)"""
+  bookingDate: String!
+
+  """Mã đặt sân (nếu có)"""
+  bookingReference: String
+
+  """Tên sân con (nếu có)"""
+  courtName: String
+
+  """Thời lượng (phút)"""
+  durationMinutes: Int!
+
+  """Giờ kết thúc (HH:mm)"""
+  endTime: String!
+
+  """Ảnh chứng từ booking gốc (1-5 ảnh)"""
+  proofImages: [String!]!
+
+  """Môn thể thao"""
+  sportType: SportType
+
+  """Giờ bắt đầu (HH:mm)"""
+  startTime: String!
+
+  """Địa chỉ sân"""
+  venueAddress: String
+
+  """Tên sân do user khai báo"""
+  venueName: String!
+}
+
 type FavoriteResult {
   """Whether venue is now favorited"""
   isFavorite: Boolean!
@@ -3524,14 +3861,18 @@ input FinishMatchEarlyInput {
 }
 
 input FirebaseSignInInput {
-  idToken: String!
+  firebaseIdToken: String
+  idToken: String
+  phoneVerificationToken: String
 }
 
 input FirebaseSignUpInput {
   email: String
+  firebaseIdToken: String
   fullName: String!
-  idToken: String!
+  idToken: String
   password: String!
+  phoneVerificationToken: String
 
   """Mã giới thiệu (không bắt buộc)"""
   referralCode: String
@@ -3679,8 +4020,11 @@ type GameTemplateList {
 }
 
 type GameTimeSlot {
-  """Ngày chơi (YYYY-MM-DD)"""
+  """Ngày bắt đầu chơi (YYYY-MM-DD)"""
   date: String!
+
+  """Ngày kết thúc (YYYY-MM-DD). Mặc định cùng ngày bắt đầu."""
+  endDate: String!
 
   """Giờ kết thúc (HH:mm)"""
   endTime: String!
@@ -3692,6 +4036,11 @@ type GameTimeSlot {
 input GameTimeSlotInput {
   """Ngày chơi (YYYY-MM-DD)"""
   date: String!
+
+  """
+  Ngày kết thúc (YYYY-MM-DD). Bỏ trống = cùng ngày bắt đầu hoặc tự suy ra khi kết thúc qua đêm.
+  """
+  endDate: String
 
   """Giờ kết thúc (HH:mm)"""
   endTime: String!
@@ -3782,8 +4131,11 @@ type Group {
   """Group address/location"""
   address: String
 
+  """Cover image with placeholder + responsive variants."""
+  coverImage: ImageMedia
+
   """Cover image URL"""
-  coverImageUrl: String
+  coverImageUrl: String @deprecated(reason: "Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.")
   createdAt: DateTime!
 
   """Group creator"""
@@ -3836,6 +4188,9 @@ type Group {
 input GroupFilterInput {
   """Filter only groups user is member of"""
   myGroups: Boolean
+
+  """Filter groups where current user has a pending join request"""
+  pendingOnly: Boolean
 
   """Filter by privacy"""
   privacy: GroupPrivacy
@@ -4206,6 +4561,32 @@ type HostStatistics {
 
   """Tổng doanh thu"""
   totalRevenue: Int!
+}
+
+"""A user-uploaded image asset with placeholder & responsive variants."""
+type ImageMedia {
+  """
+  Compact base83 BlurHash placeholder; clients decode locally to render an instant preview.
+  """
+  blurhash: String
+
+  """Pixel height of the original image."""
+  height: Int
+
+  """~800px medium variant (feed cards, detail header)."""
+  mediumUrl: String
+
+  """Storage key — useful for backend cleanup jobs."""
+  storageKey: String
+
+  """~200px thumbnail variant (chat list, search row)."""
+  thumbnailUrl: String
+
+  """Full-resolution image URL."""
+  url: String!
+
+  """Pixel width of the original image."""
+  width: Int
 }
 
 input ImportStockInput {
@@ -4589,6 +4970,11 @@ type MatchScorecard {
   updatedAt: DateTime!
 }
 
+input MatchSetupInput {
+  leftSidePlayer: Int!
+  servingPlayer: Int!
+}
+
 """How pre-match serve/side setup was decided"""
 enum MatchSetupMethod {
   COIN_TOSS
@@ -4718,11 +5104,19 @@ input MessageLocationInput {
 }
 
 type MessageMedia {
+  """
+  BlurHash placeholder used to render an instant preview on the chat bubble.
+  """
+  blurhash: String
+
   """Duration in seconds (for videos/audio)"""
   duration: Float
 
   """Height in pixels (for images/videos)"""
   height: Float
+
+  """~800px medium variant for bubble preview."""
+  mediumUrl: String
 
   """MIME type of the file"""
   mimeType: String
@@ -4772,6 +5166,16 @@ type MessageReaction {
 
   """User ID who reacted"""
   userId: ID!
+}
+
+type MessageReactionsBatchEntry {
+  messageId: ID!
+  reactions: [ReactionDelta!]!
+}
+
+type MessageReactionsBatchPayload {
+  conversationId: ID!
+  items: [MessageReactionsBatchEntry!]!
 }
 
 type MessageReadPayload {
@@ -5097,6 +5501,7 @@ type Mutation {
 
   """Cancel a single session of recurring booking"""
   cancelRecurringSession(reason: String, sessionBookingId: ID!): Booking!
+  cancelScoreboardSession(sessionId: ID!): ScoreboardSession!
 
   """Cancel tournament"""
   cancelTournament(id: ID!): Tournament!
@@ -5158,7 +5563,7 @@ type Mutation {
   completeTournament(id: ID!): Tournament!
 
   """Confirm booking"""
-  confirmBooking(bookingId: ID!): Booking!
+  confirmBooking(bookingId: ID!): BookingWithOrderPayload!
 
   """Confirm draw and transition category to IN_PROGRESS"""
   confirmDraw(categoryId: ID!): SuccessResponse!
@@ -5167,7 +5572,7 @@ type Mutation {
   confirmEmailUpdate(input: ConfirmEmailUpdateInput!): SuccessResponse!
 
   """Confirm a hold booking (staff)"""
-  confirmHoldBooking(bookingId: ID!, paymentMethod: PaymentMethod): Booking!
+  confirmHoldBooking(bookingId: ID!, paymentMethod: PaymentMethod): BookingWithOrderPayload!
 
   """Confirm order"""
   confirmOrder(orderId: ID!): Order!
@@ -5175,11 +5580,13 @@ type Mutation {
   """Confirm pass transfer (owner confirms after receiving payment)"""
   confirmPassTransfer(passId: ID!): BookingPass!
 
-  """Confirm phone number update after OTP verification via Firebase"""
+  """
+  Confirm phone number update (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
+  """
   confirmPhoneUpdate(input: ConfirmPhoneUpdateInput!): SuccessResponse!
 
   """Confirm recurring booking (all sessions)"""
-  confirmRecurringBooking(masterBookingId: ID!): Booking!
+  confirmRecurringBooking(masterBookingId: ID!): BookingWithOrderPayload!
 
   """BTC sửa kết quả trận đã kết thúc (khi vòng sau chưa đấu)"""
   correctFinishedMatchResult(input: CorrectFinishedMatchResultInput!): TournamentMatch!
@@ -5226,6 +5633,12 @@ type Mutation {
   """Create order (customer)"""
   createOrder(input: CreateOrderInput!): Order!
 
+  """Create OTP test phone (SUPER_ADMIN only)"""
+  createOtpTestPhone(input: CreateOtpTestPhoneInput!): OtpTestPhone!
+
+  """Create OTP test user login grant (SUPER_ADMIN only)"""
+  createOtpTestUserGrant(input: CreateOtpTestUserGrantInput!): OtpTestUserGrant!
+
   """Tạo kèo mới"""
   createPickupGame(input: CreatePickupGameInput!): PickupGame!
 
@@ -5252,8 +5665,11 @@ type Mutation {
   """Create a new referral code (Admin only)"""
   createReferralCode(input: CreateReferralCodeInput!): ReferralCode!
 
+  """Create scoreboard session"""
+  createScoreboardSession(input: CreateScoreboardSessionInput!): ScoreboardSession!
+
   """Create staff booking"""
-  createStaffBooking(input: CreateStaffBookingInput!): Booking!
+  createStaffBooking(input: CreateStaffBookingInput!): BookingWithOrderPayload!
 
   """Create staff order"""
   createStaffOrder(input: CreateOrderInput!): Order!
@@ -5261,10 +5677,15 @@ type Mutation {
   """
   Create recurring booking by staff. Supports single-day and multi-day bookings.
   """
-  createStaffRecurringBooking(input: CreateStaffRecurringBookingInput!): Booking!
+  createStaffRecurringBooking(input: CreateStaffRecurringBookingInput!): BookingWithOrderPayload!
 
   """Create a new tournament"""
   createTournament(input: CreateTournamentInput!): Tournament!
+
+  """
+  Tạo venue do user submit từ flow Pass sân (UNCLAIMED, PENDING). Throttled 3/day/user. Auto-dedupe theo (name + city).
+  """
+  createUserSubmittedVenue(input: CreateUserSubmittedVenueInput!): Venue!
 
   """Create a new venue (request)"""
   createVenue(input: CreateVenueInput!): Venue!
@@ -5328,6 +5749,7 @@ type Mutation {
 
   """Delete registration (organizer only)"""
   deleteRegistration(input: DeleteRegistrationInput!): SuccessResponse!
+  deleteScoreboardSession(sessionId: ID!): Boolean!
 
   """Permanently delete a DRAFT tournament"""
   deleteTournament(id: ID!): SuccessResponse!
@@ -5376,6 +5798,11 @@ type Mutation {
 
   """Import stock for a product"""
   importStock(input: ImportStockInput!, venueId: ID!): StockMovement!
+
+  """
+  Atomically bump a post view count. Fire-and-forget from the client; returns the new view count or null if the post does not exist.
+  """
+  incrementPostView(postId: ID!): Int
 
   """Invite a user to join a group (admin/mod only)"""
   inviteMember(groupId: ID!, message: String, userId: ID!): GroupMember!
@@ -5489,6 +5916,11 @@ type Mutation {
   """Đánh giá người tham gia"""
   rateParticipants(input: RateParticipantsInput!): Boolean!
 
+  """
+  Đánh giá người chuyển pass sau khi giao dịch COMPLETED. Chỉ receiver mới được rate.
+  """
+  ratePassTransfer(input: RatePassTransferInput!): TransferrerRating!
+
   """Record a QR code scan event (Public - called by landing page)"""
   recordQrScan(input: RecordQrScanInput!, redirectedTo: QrRedirectTarget!): SuccessResponse!
 
@@ -5554,6 +5986,9 @@ type Mutation {
   """Reply to review"""
   replyToReview(reply: String!, reviewId: ID!): VenueReview!
 
+  """Báo cáo một pass sân (anti-spam: không dup 24h, không self)."""
+  reportBookingPass(input: ReportBookingPassInput!): BookingPassReport!
+
   """Report a message"""
   reportMessage(input: ReportMessageInput!): MessageReport!
 
@@ -5580,6 +6015,9 @@ type Mutation {
   """
   requestPasswordReset(emailOrPhone: String!): SuccessResponse!
 
+  """Request a phone OTP. Backend decides ZNS vs Firebase fallback."""
+  requestPhoneOtp(input: RequestPhoneOtpInput!): RequestPhoneOtpResponse!
+
   """
   Request phone number update (validates availability, frontend sends OTP)
   """
@@ -5588,7 +6026,9 @@ type Mutation {
   """Reset bracket (delete all matches)"""
   resetBracket(categoryId: ID!): SuccessResponse!
 
-  """Reset password after OTP verification via Firebase Phone Auth"""
+  """
+  Reset password after OTP verification (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
+  """
   resetPassword(input: ResetPasswordInput!): SuccessResponse!
 
   """Referee responds to invite (accept or decline)"""
@@ -5600,11 +6040,17 @@ type Mutation {
   """Process customer return"""
   returnStock(input: ReturnStockInput!, venueId: ID!): StockMovement!
 
+  """[Admin] Xét báo cáo pass sân"""
+  reviewBookingPassReport(input: ReviewBookingPassReportInput!): BookingPassReport!
+
   """Review (approve/reject) a claim request - Admin only"""
   reviewClaimRequest(input: ReviewClaimRequestInput!): VenueClaimRequest!
 
   """Review promotion (owner approves/rejects)"""
   reviewPromotion(input: ReviewPromotionInput!): Promotion!
+
+  """Revoke OTP test user login grant (SUPER_ADMIN only)"""
+  revokeOtpTestUserGrant(id: ID!): OtpTestUserGrant!
 
   """Save FCM token"""
   saveFcmToken(token: String!): Boolean!
@@ -5617,6 +6063,14 @@ type Mutation {
 
   """Score a point"""
   scorePoint(input: ScorePointInput!): MatchScorecard!
+  scoreboardCompleteSet(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardFinishMatchEarly(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardRetireSession(input: ScoreboardRetireInput!): ScoreboardSession!
+  scoreboardScorePoint(input: ScoreboardScorePointInput!): ScoreboardSession!
+  scoreboardSetServingPlayer(input: ScoreboardSetServingPlayerInput!): ScoreboardSession!
+  scoreboardSwapCourtSides(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardUndoLastPoint(input: ScoreboardSessionIdInput!): ScoreboardSession!
+  scoreboardUpdateElapsed(input: ScoreboardUpdateElapsedInput!): ScoreboardSession!
 
   """
   Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only)
@@ -5650,6 +6104,9 @@ type Mutation {
   """Set typing status in a group"""
   setGroupTypingStatus(groupId: ID!, isTyping: Boolean!): Boolean!
 
+  """Enable or disable OTP test phone (SUPER_ADMIN only)"""
+  setOtpTestPhoneEnabled(enabled: Boolean!, id: ID!): OtpTestPhone!
+
   """BTC ghi nhận walkover"""
   setMatchWalkover(input: SetMatchWalkoverInput!): TournamentMatch!
 
@@ -5665,7 +6122,9 @@ type Mutation {
   """Login with email/phone and password"""
   signIn(input: SignInInput!): AuthResponse!
 
-  """Sign in with Firebase Phone Authentication"""
+  """
+  Sign in with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
+  """
   signInWithFirebase(input: FirebaseSignInInput!): AuthResponse!
 
   """Logout current user"""
@@ -5674,7 +6133,9 @@ type Mutation {
   """Logout from all devices"""
   signOutAllDevices: Boolean!
 
-  """Sign up with Firebase Phone Authentication"""
+  """
+  Sign up with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
+  """
   signUpWithFirebase(input: FirebaseSignUpInput!): AuthResponse!
 
   """Start a match and create scorecard"""
@@ -5682,6 +6143,9 @@ type Mutation {
 
   """Bắt đầu kèo thủ công"""
   startPickupGame(gameId: ID!): PickupGame!
+
+  """Start a scheduled scoreboard session"""
+  startScoreboardSession(input: StartScoreboardSessionInput!): ScoreboardSession!
 
   """Start tournament"""
   startTournament(id: ID!): Tournament!
@@ -5802,6 +6266,9 @@ type Mutation {
   """Update order status"""
   updateOrderStatus(orderId: ID!, reason: String, status: OrderStatus!): Order!
 
+  """Update OTP test phone (SUPER_ADMIN only)"""
+  updateOtpTestPhone(id: ID!, input: UpdateOtpTestPhoneInput!): OtpTestPhone!
+
   """Cập nhật trạng thái đặt cọc"""
   updateParticipantDeposit(input: UpdateParticipantDepositInput!): PickupGameParticipant!
 
@@ -5867,7 +6334,9 @@ type Mutation {
   """Update staff custom title"""
   updateVenueStaffTitle(customTitle: String!, userId: ID!, venueId: ID!): VenueStaff!
 
-  """Upload avatar image and update user photoURL"""
+  """
+  Upload avatar image; persists both legacy photoURL and the new structured `avatar` (with blurhash + variants).
+  """
   uploadAvatar(input: UploadAvatarInput!): UploadResponse!
 
   """Upload media for chat messages"""
@@ -5888,6 +6357,9 @@ type Mutation {
   """Upload post media image and return URL"""
   uploadPostMedia(input: UploadPostMediaInput!): UploadPostMediaResponse!
 
+  """Upload + process an image (blurhash + thumbnail + medium variants)."""
+  uploadProcessedImage(input: UploadProcessedImageInput!): ImageMedia!
+
   """Upload product image and return URL"""
   uploadProductImage(input: UploadProductImageInput!): UploadPostMediaResponse!
 
@@ -5902,6 +6374,11 @@ type Mutation {
 
   """Verify OTP code for email verification, password reset, etc."""
   verifyOtp(input: VerifyOtpInput!): OtpResponse!
+
+  """
+  Verify a phone OTP (ZNS path). Returns a short-lived phoneVerificationToken.
+  """
+  verifyPhoneOtp(input: VerifyPhoneOtpInput!): VerifyPhoneOtpResponse!
 }
 
 input MyGamesFilterInput {
@@ -5930,6 +6407,7 @@ input MyGamesFilterInput {
 """Filter for my passes"""
 enum MyPassesFilter {
   ALL
+  COMPLETED
   CREATED
   INTERESTED
   RECEIVED
@@ -6012,6 +6490,20 @@ type Notification {
   userId: ID!
 }
 
+"""A Relay-style connection for Notification items."""
+type NotificationConnection {
+  """List of edges (each contains a node + cursor)."""
+  edges: [NotificationEdge!]!
+
+  """Pagination metadata (next/prev page, start/end cursor)."""
+  pageInfo: PageInfo!
+
+  """
+  Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
+  """
+  totalCount: Int!
+}
+
 type NotificationData {
   """Custom action identifier"""
   action: String
@@ -6049,6 +6541,15 @@ input NotificationDataInput {
   targetId: String
   type: String
   venueName: String
+}
+
+"""An edge in the NotificationConnection."""
+type NotificationEdge {
+  """Opaque cursor pointing to this node."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: Notification!
 }
 
 input NotificationFilterInput {
@@ -6604,6 +7105,25 @@ type OrderTypeDistribution {
   revenue: Int!
 }
 
+"""Transport channel used to deliver an OTP"""
+enum OtpChannelType {
+  EMAIL
+  FIREBASE_FALLBACK
+  PENDING
+  ZNS
+}
+
+"""Specific purpose an OTP was issued for; bound at creation"""
+enum OtpPurpose {
+  EMAIL_CHANGE
+  EMAIL_VERIFICATION
+  PASSWORD_RESET_EMAIL
+  PASSWORD_RESET_PHONE
+  PHONE_CHANGE
+  SIGN_IN_PHONE
+  SIGN_UP_PHONE
+}
+
 input OrganizerAbortLiveMatchInput {
   """Optimistic concurrency guard"""
   expectedScorecardUpdatedAt: String
@@ -6645,6 +7165,107 @@ type OtpResponse {
   message: String!
   success: Boolean!
   verificationId: String
+}
+
+type OtpTestPhone {
+  _id: ID!
+
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  createdAt: DateTime!
+  createdBy: ID
+  enabled: Boolean!
+  expiresAt: DateTime
+
+  """Human-readable label for QA / ops"""
+  label: String!
+
+  """E.164 phone number"""
+  phone: String!
+
+  """Fixed 6-digit OTP code (SUPER_ADMIN only)"""
+  testCode: String!
+  updatedAt: DateTime!
+  updatedBy: ID
+}
+
+input OtpTestPhoneFilterInput {
+  enabled: Boolean
+
+  """Search phone or label (partial match)"""
+  search: String
+}
+
+type OtpTestPhoneList {
+  hasMore: Boolean!
+  items: [OtpTestPhone!]!
+  limit: Float!
+  page: Float!
+  total: Float!
+}
+
+type OtpTestUserGrant {
+  _id: ID!
+
+  """Allowed OTP purposes (default SIGN_IN_PHONE only)"""
+  allowedPurposes: [OtpPurpose!]!
+  createdAt: DateTime!
+  createdBy: ID
+  enabled: Boolean!
+  expiresAt: DateTime!
+
+  """E.164 phone from user account"""
+  phone: String!
+
+  """Reason / ticket reference for audit trail"""
+  reason: String!
+  revokedAt: DateTime
+  revokedBy: ID
+
+  """Fixed 6-digit OTP code (SUPER_ADMIN only)"""
+  testCode: String!
+  updatedAt: DateTime!
+
+  """Denormalized user display name at grant time"""
+  userDisplayName: String!
+
+  """Linked user account"""
+  userId: ID!
+
+  """Denormalized user role at grant time"""
+  userRole: UserRole!
+}
+
+input OtpTestUserGrantFilterInput {
+  enabled: Boolean
+
+  """Search phone, reason, or userId"""
+  search: String
+
+  """Filter by user ID"""
+  userId: String
+}
+
+type OtpTestUserGrantList {
+  hasMore: Boolean!
+  items: [OtpTestUserGrant!]!
+  limit: Float!
+  page: Float!
+  total: Float!
+}
+
+type PageInfo {
+  """Cursor of the last item in the current page."""
+  endCursor: String
+
+  """Whether more items exist after the current page."""
+  hasNextPage: Boolean!
+
+  """Whether items exist before the current page (reserved)."""
+  hasPreviousPage: Boolean!
+
+  """Cursor of the first item in the current page."""
+  startCursor: String
 }
 
 input PaginationInput {
@@ -6794,8 +7415,11 @@ type PickupGame {
   """Cấu hình chi phí"""
   costConfig: CostConfig!
 
+  """Cover image with placeholder + responsive variants."""
+  coverImage: ImageMedia
+
   """Ảnh bìa"""
-  coverImageUrl: String
+  coverImageUrl: String @deprecated(reason: "Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.")
   createdAt: DateTime!
 
   """Địa điểm tùy chỉnh"""
@@ -6806,6 +7430,9 @@ type PickupGame {
 
   """Khoảng cách (km)"""
   distanceKm: Float
+
+  """Thời điểm kết thúc kèo (Asia/Ho_Chi_Minh)"""
+  endsAt: DateTime!
 
   """Dụng cụ cần mang"""
   equipment: [EquipmentItem!]
@@ -6825,8 +7452,11 @@ type PickupGame {
   """ID người tạo kèo"""
   hostId: ID!
 
+  """Gallery with placeholder + responsive variants."""
+  imageMedia: [ImageMedia!]
+
   """Ảnh khác"""
-  images: [String!]
+  images: [String!] @deprecated(reason: "Use `imageMedia[].url`. Kept for mobile builds < 1.7.")
 
   """Là host"""
   isHost: Boolean
@@ -6869,6 +7499,9 @@ type PickupGame {
 
   """Môn thể thao"""
   sportType: SportType!
+
+  """Thời điểm bắt đầu kèo (Asia/Ho_Chi_Minh)"""
+  startsAt: DateTime!
 
   """Trạng thái kèo"""
   status: PickupGameStatus!
@@ -7018,10 +7651,10 @@ input PickupGameFilterInput {
   """Lọc theo tags"""
   tags: [String!]
 
-  """Từ giờ (HH:mm)"""
+  """Lọc theo giờ bắt đầu (HH:mm) trên startsAt; kết hợp dateFrom/dateTo"""
   timeFrom: String
 
-  """Đến giờ (HH:mm)"""
+  """Giới hạn trên startsAt (HH:mm) trong ngày dateTo hoặc dateFrom"""
   timeTo: String
 
   """Giới tính của user (để lọc kèo phù hợp)"""
@@ -7302,6 +7935,16 @@ type PostBookmark {
   userId: ID!
 }
 
+type PostBookmarkConnection {
+  edges: [PostBookmarkEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PostBookmarkEdge {
+  cursor: String!
+  node: PostBookmark!
+}
+
 type PostComment {
   _id: ID!
 
@@ -7335,6 +7978,32 @@ type PostComment {
   updatedAt: DateTime!
 }
 
+type PostCommentConnection {
+  edges: [PostCommentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type PostCommentEdge {
+  cursor: String!
+  node: PostComment!
+}
+
+type PostConnection {
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""Payload for the postDeleted subscription."""
+type PostDeletedPayload {
+  _id: ID!
+  postId: ID!
+}
+
+type PostEdge {
+  cursor: String!
+  node: Post!
+}
+
 input PostFilterInput {
   """Filter by author ID"""
   authorId: ID
@@ -7352,6 +8021,11 @@ input PostFilterInput {
   visibility: PostVisibility
 }
 
+type PostLikerEdge {
+  cursor: String!
+  node: PostLikerUser!
+}
+
 type PostLikerUser {
   _id: ID!
   displayName: String
@@ -7361,6 +8035,11 @@ type PostLikerUser {
   likedAt: String!
   photoURL: String
   userName: String
+}
+
+type PostLikersConnection {
+  edges: [PostLikerEdge!]!
+  pageInfo: PageInfo!
 }
 
 type PostLikersList {
@@ -7414,6 +8093,8 @@ input PostLocationInput {
 }
 
 type PostMedia {
+  """BlurHash placeholder for instant image preview."""
+  blurhash: String
   duration: Float
   height: Float
   mimeType: String
@@ -7425,6 +8106,11 @@ type PostMedia {
 }
 
 input PostMediaInput {
+  """
+  BlurHash placeholder used by the mobile client to render an instant preview while the full image loads.
+  """
+  blurhash: String
+
   """Duration in seconds (for videos)"""
   duration: Float
 
@@ -7887,14 +8573,29 @@ type ProductImage {
   """Alt text for accessibility"""
   alt: String
 
+  """BlurHash placeholder for instant preview."""
+  blurhash: String
+
   """Display order"""
   displayOrder: Int!
+
+  """Image height in pixels."""
+  height: Int
 
   """Is primary image"""
   isPrimary: Boolean!
 
+  """~800px medium variant."""
+  mediumUrl: String
+
+  """~200px thumbnail variant."""
+  thumbnailUrl: String
+
   """Image URL"""
   url: String!
+
+  """Image width in pixels."""
+  width: Int
 }
 
 input ProductImageInput {
@@ -8664,6 +9365,9 @@ type Query {
   """Get available promotions for a booking"""
   availablePromotionsForBooking(input: ApplyPromotionInput!): AvailablePromotionsForBooking!
 
+  """Top N pass có giảm giá >= 20% so với giá gốc (cho section "Giảm sâu")."""
+  bestDealPasses(filter: AvailablePassesFilterInput, take: Int = 10): [BookingPass!]!
+
   """Get booking by ID"""
   booking(bookingId: ID!): Booking!
 
@@ -8672,6 +9376,12 @@ type Query {
 
   """Get booking pass by ID"""
   bookingPass(passId: ID!): BookingPass!
+
+  """[Admin] Chi tiết báo cáo pass sân"""
+  bookingPassReport(id: ID!): BookingPassReport!
+
+  """[Admin] Danh sách báo cáo pass sân"""
+  bookingPassReports(filter: BookingPassReportFilterInput, pagination: PaginationInput): BookingPassReportList!
 
   """Get booking statistics"""
   bookingStats(fromDate: String, toDate: String, venueId: ID!): BookingStats!
@@ -8728,6 +9438,9 @@ type Query {
   """Get claim requests with filters - Admin only"""
   claimRequests(filter: ClaimRequestFilterInput, pagination: PaginationInput): ClaimRequestList!
 
+  """Cursor-paginated replies to a parent comment."""
+  commentRepliesConnection(commentId: ID!, pagination: CursorPaginationInput, postId: ID!): PostCommentConnection!
+
   """Public list of referees who confirmed participation (name + role only)"""
   confirmedTournamentReferees(tournamentId: ID!): [TournamentRefereePublic!]!
 
@@ -8758,8 +9471,10 @@ type Query {
   """Get list of blocked users"""
   getBlockedUsers: [UserBlock!]!
 
-  """Get replies to a comment"""
-  getCommentReplies(commentId: ID!, pagination: PaginationInput, postId: ID!): CommentList!
+  """
+  Get replies to a comment (offset). DEPRECATED: prefer commentRepliesConnection.
+  """
+  getCommentReplies(commentId: ID!, pagination: PaginationInput, postId: ID!): CommentList! @deprecated(reason: "Use commentRepliesConnection (cursor pagination).")
 
   """Get contact inquiries with filters (Admin only)"""
   getContactInquiries(filter: ContactInquiryFilterInput): ContactInquiryList!
@@ -8769,6 +9484,9 @@ type Query {
 
   """Get contact inquiry stats by status (Admin only)"""
   getContactInquiryStats: ContactInquiryStats!
+
+  """Get a conversation by ID"""
+  getConversation(conversationId: ID!): Conversation!
 
   """Get conversations for current user"""
   getConversations(filter: ConversationFilterInput, pagination: PaginationInput): ConversationList!
@@ -8812,8 +9530,10 @@ type Query {
   """Get messages in a conversation"""
   getMessages(conversationId: ID!, pagination: PaginationInput): MessageList!
 
-  """Get current user bookmarked posts"""
-  getMyBookmarks(pagination: PaginationInput): BookmarkList!
+  """
+  Get current user bookmarked posts (offset). DEPRECATED: prefer myBookmarksConnection.
+  """
+  getMyBookmarks(pagination: PaginationInput): BookmarkList! @deprecated(reason: "Use myBookmarksConnection (cursor pagination).")
 
   """Get groups the current user is a member of"""
   getMyGroups(pagination: PaginationInput): GroupList!
@@ -8821,14 +9541,18 @@ type Query {
   """Get pending invitations for the current user"""
   getMyInvitations(pagination: PaginationInput): GroupMemberList!
 
-  """Get current user's posts"""
-  getMyPosts(pagination: PaginationInput): PostList!
+  """
+  Get current user's posts (offset). DEPRECATED: prefer myPostsConnection.
+  """
+  getMyPosts(pagination: PaginationInput): PostList! @deprecated(reason: "Use myPostsConnection (cursor pagination).")
 
   """Get a single notification by ID"""
   getNotification(notificationId: ID!): Notification!
 
-  """Get notifications for current user with filters and pagination"""
-  getNotifications(filter: NotificationFilterInput, pagination: PaginationInput): NotificationList!
+  """
+  Get notifications for current user with filters and pagination. DEPRECATED: prefer notificationsConnection.
+  """
+  getNotifications(filter: NotificationFilterInput, pagination: PaginationInput): NotificationList! @deprecated(reason: "Use notificationsConnection (cursor pagination).")
 
   """Get partner leaderboard for the dashboard (Admin only)"""
   getPartnerLeaderboard(filter: ReferralFilterInput): PartnerLeaderboard!
@@ -8837,10 +9561,17 @@ type Query {
   getPinnedMessages(conversationId: ID!): [Message!]!
 
   """Get a single post by ID"""
-  getPost(incrementView: Boolean = false, postId: ID!): Post!
+  getPost(incrementView: Boolean = false @deprecated(reason: "Pass `false` (default) and call `incrementPostView` mutation instead. Mutating data on a query violates GraphQL semantics."), postId: ID!): Post!
 
-  """Get comments for a post"""
-  getPostComments(pagination: PaginationInput, postId: ID!): CommentList!
+  """
+  Get comments for a post (offset). DEPRECATED: prefer postCommentsConnection.
+  """
+  getPostComments(pagination: PaginationInput, postId: ID!): CommentList! @deprecated(reason: "Use postCommentsConnection (cursor pagination).")
+
+  """
+  Get paginated list of users who liked a post (offset). DEPRECATED: prefer postLikersConnection.
+  """
+  getPostLikers(pagination: PaginationInput, postId: ID!): PostLikersList! @deprecated(reason: "Use postLikersConnection (cursor pagination).")
 
   """Get paginated list of users who liked a post"""
   getPostLikers(pagination: PaginationInput, postId: ID!): PostLikersList!
@@ -8854,8 +9585,10 @@ type Query {
   """Get all post reports with filters (Admin only)"""
   getPostReportsForAdmin(filter: PostReportFilterInput, pagination: PaginationInput): PostReportList!
 
-  """Get posts with filters and pagination"""
-  getPosts(filter: PostFilterInput, pagination: PaginationInput): PostList!
+  """
+  Get posts with filters and pagination (offset). DEPRECATED: prefer postsConnection.
+  """
+  getPosts(filter: PostFilterInput, pagination: PaginationInput): PostList! @deprecated(reason: "Use postsConnection (cursor pagination).")
 
   """Get import history for a product"""
   getProductImportHistory(limit: Int = 10, productId: ID!): [StockMovement!]!
@@ -8893,8 +9626,10 @@ type Query {
   """Get user by username"""
   getUserByUserName(userName: String!): User!
 
-  """Get posts by a specific user"""
-  getUserPosts(pagination: PaginationInput, userId: ID!): PostList!
+  """
+  Get posts by a specific user (offset). DEPRECATED: prefer userPostsConnection.
+  """
+  getUserPosts(pagination: PaginationInput, userId: ID!): PostList! @deprecated(reason: "Use userPostsConnection (cursor pagination).")
 
   """Get user profile by ID"""
   getUserProfile(userId: String!): User!
@@ -8974,8 +9709,19 @@ type Query {
   """Blacklist của tôi"""
   myBlacklist(pagination: PaginationInput): HostBlacklistList!
 
-  """Get my bookings (as customer)"""
-  myBookings(filter: BookingFilterInput, pagination: PaginationInput): BookingList!
+  """
+  Get my bookings (as customer). DEPRECATED: prefer myBookingsConnection.
+  """
+  myBookings(filter: BookingFilterInput, pagination: PaginationInput): BookingList! @deprecated(reason: "Use myBookingsConnection (cursor pagination).")
+
+  """Cursor-paginated bookings of the current customer (Relay-style)."""
+  myBookingsConnection(filter: BookingFilterInput, pagination: CursorPaginationInput): BookingConnection!
+
+  """Cursor-paginated current user's bookmarks."""
+  myBookmarksConnection(pagination: CursorPaginationInput): PostBookmarkConnection!
+
+  """Lấy danh sách campaign của host hiện tại"""
+  myCampaigns(isActive: Boolean): [PickupGameCampaign!]!
 
   """Lấy danh sách campaign của host hiện tại"""
   myCampaigns(isActive: Boolean): [PickupGameCampaign!]!
@@ -9009,6 +9755,12 @@ type Query {
 
   """Get current user pending staff invitations"""
   myPendingInvitations: [VenueStaff!]!
+
+  """Cursor-paginated posts authored by the current user."""
+  myPostsConnection(pagination: CursorPaginationInput): PostConnection!
+
+  """Đánh giá hiện tại của user cho 1 pass (nếu có)."""
+  myRatingForPass(passId: ID!): TransferrerRating
 
   """Get my recurring bookings (customer)"""
   myRecurringBookings(pagination: PaginationInput): RecurringBookingList!
@@ -9058,6 +9810,9 @@ type Query {
   """Quick check if user needs to accept legal documents"""
   needsToAcceptLegal: Boolean!
 
+  """Cursor-paginated notifications feed (Relay-style)."""
+  notificationsConnection(filter: NotificationFilterInput, pagination: CursorPaginationInput): NotificationConnection!
+
   """Get order by ID"""
   order(orderId: ID!): Order!
 
@@ -9076,6 +9831,18 @@ type Query {
   """Get orders pending refund for a venue (Owner only)"""
   ordersPendingRefund(pagination: PaginationInput, venueId: ID!): OrderList!
 
+  """Get OTP test phone by id (SUPER_ADMIN only)"""
+  otpTestPhone(id: ID!): OtpTestPhone!
+
+  """List OTP test phones (SUPER_ADMIN only)"""
+  otpTestPhones(filter: OtpTestPhoneFilterInput, pagination: PaginationInput): OtpTestPhoneList!
+
+  """Get OTP test user grant by id (SUPER_ADMIN only)"""
+  otpTestUserGrant(id: ID!): OtpTestUserGrant!
+
+  """List OTP test user grants (SUPER_ADMIN only)"""
+  otpTestUserGrants(filter: OtpTestUserGrantFilterInput, pagination: PaginationInput): OtpTestUserGrantList!
+
   """Get pending claim requests - Admin only"""
   pendingClaimRequests(pagination: PaginationInput): ClaimRequestList!
 
@@ -9093,6 +9860,15 @@ type Query {
 
   """Get popular/featured sports"""
   popularSports: [Sport!]!
+
+  """Cursor-paginated top-level comments of a post."""
+  postCommentsConnection(pagination: CursorPaginationInput, postId: ID!): PostCommentConnection!
+
+  """Cursor-paginated likers of a post."""
+  postLikersConnection(pagination: CursorPaginationInput, postId: ID!): PostLikersConnection!
+
+  """Cursor-paginated posts feed (Relay-style)."""
+  postsConnection(filter: PostFilterInput, pagination: CursorPaginationInput): PostConnection!
 
   """
   Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only)
@@ -9143,11 +9919,26 @@ type Query {
   """Get referee workload statistics for a tournament"""
   refereeWorkload(tournamentId: ID!): RefereeWorkloadResult!
 
+  """Hub header stats"""
+  scoreboardHubStats: ScoreboardHubStats!
+
+  """Default scoring preset for sport"""
+  scoreboardPreset(sportType: SportType!): ScoringConfig!
+
+  """Get scoreboard session by ID"""
+  scoreboardSession(sessionId: ID!): ScoreboardSession!
+
+  """Public viewer access by share token"""
+  scoreboardSessionByViewerToken(viewerToken: String!): ScoreboardSession!
+
+  """List scoreboard sessions for hub tabs"""
+  scoreboardSessions(filter: ScoreboardSessionsFilterInput!, pagination: PaginationInput): ScoreboardSessionList!
+
   """Search messages in a conversation"""
   searchMessages(input: SearchMessagesInput!, pagination: PaginationInput): MessageList!
 
-  """Search user by phone number (for staff booking)"""
-  searchUserByPhone(phone: String!): User
+  """Search user by phone number (venue staff or admin only, for booking)"""
+  searchUserByPhone(phone: String!): UserContactLookup
 
   """Search users by username"""
   searchUsersByUserName(limit: Float = 20, searchTerm: String!): [User!]!
@@ -9163,6 +9954,9 @@ type Query {
 
   """Get venues I work at"""
   staffedVenues(pagination: PaginationInput): VenueList!
+
+  """Giá pass đề xuất (median) dựa trên các pass COMPLETED 90 ngày qua."""
+  suggestedPrice(filter: SuggestedPriceFilterInput): SuggestedPrice!
 
   """Get system categories"""
   systemCategories: [ProductCategory!]!
@@ -9205,6 +9999,22 @@ type Query {
 
   """List tournaments with filters"""
   tournaments(filter: TournamentFilterInput, pagination: PaginationInput): TournamentList!
+
+  """Đánh giá đã nhận của 1 transferrer."""
+  transferrerRatings(limit: Int = 20, userId: ID!): [TransferrerRating!]!
+
+  """
+  Trust stats cho 1 user (totalCreated, completionRate, pendingReports...) — dùng trên PassDetail.
+  """
+  transferrerStats(userId: ID!): TransferrerStats!
+
+  """
+  Top N pass sắp hết hạn trong 24h (cho marketplace section "Sắp hết hạn").
+  """
+  urgentPasses(filter: AvailablePassesFilterInput, take: Int = 10): [BookingPass!]!
+
+  """Cursor-paginated posts authored by a specific user."""
+  userPostsConnection(pagination: CursorPaginationInput, userId: ID!): PostConnection!
 
   """Get user profile by ID"""
   userProfile(userId: String!): User
@@ -9310,6 +10120,20 @@ input RateParticipantsInput {
 
   """Danh sách đánh giá"""
   ratings: [ParticipantRatingInput!]!
+}
+
+input RatePassTransferInput {
+  comment: String
+  passId: ID!
+
+  """Điểm 1-5"""
+  score: Int!
+}
+
+type ReactionDelta {
+  createdAt: DateTime!
+  emoji: String!
+  userId: ID!
 }
 
 input RecordQrScanInput {
@@ -9684,6 +10508,12 @@ input RemoveReactionInput {
   messageId: ID!
 }
 
+input ReportBookingPassInput {
+  description: String
+  passId: ID!
+  reason: BookingPassReportReason!
+}
+
 input RepackCourtScheduleInput {
   """
   Optional anchor match; defaults to earliest LIVE or last FINISHED on court
@@ -9862,11 +10692,11 @@ input RequestLocationInput {
   """District"""
   district: String
 
-  """Latitude"""
-  latitude: Float
+  """Latitude (required for map / search)"""
+  latitude: Float!
 
-  """Longitude"""
-  longitude: Float
+  """Longitude (required for map / search)"""
+  longitude: Float!
 
   """Ward"""
   ward: String
@@ -9906,6 +10736,22 @@ input RequestOperatingHoursInput {
   openTime: String!
 }
 
+input RequestPhoneOtpInput {
+  deviceId: String
+  forceChannel: OtpChannelType
+  phone: String!
+  purpose: OtpPurpose!
+}
+
+type RequestPhoneOtpResponse {
+  channel: OtpChannelType!
+  channelLabel: String
+  expiresAt: DateTime
+  maskedPhone: String!
+  resendAvailableAt: DateTime!
+  verificationId: String
+}
+
 input RequestPhoneUpdateInput {
   newPhone: String!
 }
@@ -9939,8 +10785,10 @@ input RequestTimeSlotPricingInput {
 }
 
 input ResetPasswordInput {
-  idToken: String!
+  firebaseIdToken: String
+  idToken: String
   newPassword: String!
+  phoneVerificationToken: String
 }
 
 """Type of resource affected"""
@@ -10014,6 +10862,13 @@ type RevenueDataPoint {
 
   """Revenue value"""
   value: Int!
+}
+
+input ReviewBookingPassReportInput {
+  cancelPass: Boolean = false
+  notes: String
+  reportId: ID!
+  status: BookingPassReportStatus!
 }
 
 input ReviewClaimRequestInput {
@@ -10155,6 +11010,156 @@ type ScoreSummary {
   sets: [SetScoreSummary!]!
 }
 
+enum ScoreboardAbandonReason {
+  EXPIRED
+  INACTIVITY
+}
+
+enum ScoreboardDatePreset {
+  ALL
+  TODAY
+  WEEK
+}
+
+type ScoreboardHubStats {
+  liveCount: Int!
+  todayCount: Int!
+  weekWins: Int!
+}
+
+enum ScoreboardHubTab {
+  HISTORY
+  LIVE
+  MINE
+}
+
+enum ScoreboardMatchFormat {
+  DOUBLES
+  SINGLES
+  TEAM
+}
+
+type ScoreboardPointEvent {
+  id: ID!
+  pointValue: Int
+  scoreAfter: [Int!]!
+  scoringPlayer: Int!
+  servingPlayer: Int!
+  setNumber: Int!
+  timestamp: String!
+}
+
+input ScoreboardRetireInput {
+  retiredPlayer: Int!
+  sessionId: String!
+}
+
+input ScoreboardScorePointInput {
+  pointValue: Int = 1
+  scoringPlayer: Int!
+  sessionId: String!
+}
+
+type ScoreboardScorecard {
+  bestOf: Int!
+  currentPeriod: Int
+  currentSetIndex: Int!
+  elapsedSeconds: Int!
+  isTiebreak: Boolean
+  leftSidePlayer: Int
+  pointHistory: [ScoreboardPointEvent!]!
+  scoringConfig: ScoringConfig!
+  servingPlayer: Int
+  sessionId: ID!
+  sets: [ScoreboardScorecardSet!]!
+  side1Serving: Boolean
+  status: ScorecardStatus!
+}
+
+type ScoreboardScorecardSet {
+  isComplete: Boolean!
+  player1Score: Int!
+  player2Score: Int!
+  setNumber: Int!
+  winner: Int
+}
+
+type ScoreboardSession {
+  _id: ID!
+  abandonReason: ScoreboardAbandonReason
+  createdAt: DateTime!
+  finishedAt: DateTime
+  lastScoringActivityAt: DateTime
+  matchFormat: ScoreboardMatchFormat!
+  ownerId: ID!
+  scheduledAt: DateTime
+  scorecard: ScoreboardScorecard
+  scoringConfig: ScoringConfig!
+  side1: ScoreboardSide!
+  side2: ScoreboardSide!
+  sportType: SportType!
+  startedAt: DateTime
+  status: ScoreboardSessionStatus!
+  updatedAt: DateTime!
+  viewerToken: String!
+  visibility: ScoreboardVisibility!
+  winner: Int
+}
+
+input ScoreboardSessionIdInput {
+  sessionId: String!
+}
+
+type ScoreboardSessionList {
+  hasMore: Boolean!
+  items: [ScoreboardSession!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+enum ScoreboardSessionStatus {
+  ABANDONED
+  CANCELLED
+  DRAFT
+  FINISHED
+  LIVE
+  SCHEDULED
+}
+
+input ScoreboardSessionsFilterInput {
+  datePreset: ScoreboardDatePreset
+  searchQuery: String
+  sportType: SportType
+  status: ScoreboardSessionStatus
+  tab: ScoreboardHubTab!
+}
+
+input ScoreboardSetServingPlayerInput {
+  servingPlayer: Int!
+  sessionId: String!
+}
+
+type ScoreboardSide {
+  label: String!
+  memberLabels: [String!]
+}
+
+input ScoreboardSideInput {
+  label: String!
+  memberLabels: [String!]
+}
+
+input ScoreboardUpdateElapsedInput {
+  seconds: Int!
+  sessionId: String!
+}
+
+enum ScoreboardVisibility {
+  PRIVATE
+  PUBLIC
+}
+
 type ScorecardSet {
   isComplete: Boolean!
   player1Score: Int!
@@ -10185,6 +11190,9 @@ type ScoringConfig {
 
   """Whether deuce rules apply"""
   deuceEnabled: Boolean!
+
+  """Frames to win (billiards / FRAMES scoring system)"""
+  framesToWin: Int
 
   """Max points per set (0 = unlimited, win by margin)"""
   maxPoints: Int!
@@ -10222,11 +11230,14 @@ input ScoringConfigInput {
   bestOf: Int!
   deuceAt: Int! = 0
   deuceEnabled: Boolean! = false
+  framesToWin: Int
   maxPoints: Int! = 0
   periodDurationMinutes: Int! = 0
   periodsCount: Int! = 0
   pointsPerSet: Int!
   scoringSystem: ScoringSystem!
+  serveRotationInterval: Int
+  serveRule: ServeRule
   setsToWin: Int!
   tiebreakEnabled: Boolean! = false
   tiebreakPoints: Int! = 0
@@ -10236,6 +11247,7 @@ input ScoringConfigInput {
 """Type of scoring system used for a sport"""
 enum ScoringSystem {
   CUSTOM
+  FRAMES
   SETS_AND_POINTS
   TIMED_GOALS
   TIMED_POINTS
@@ -10384,6 +11396,7 @@ enum ServeRule {
   NO_SERVE
   RALLY_POINT
   ROTATION
+  SIDE_OUT
 }
 
 type ServerInfo {
@@ -10686,6 +11699,11 @@ input StartMatchInput {
   setupMethod: MatchSetupMethod
 }
 
+input StartScoreboardSessionInput {
+  sessionId: String!
+  setup: MatchSetupInput!
+}
+
 """Reason for stock adjustment"""
 enum StockAdjustmentReason {
   CORRECTION
@@ -10860,6 +11878,21 @@ input SubmitContactInquiryInput {
 }
 
 type Subscription {
+  """
+  Fires when a comment is created on a specific post. Subscribe with `postId` from PostDetail.
+  """
+  commentCreated(postId: ID!): PostComment!
+
+  """
+  Fires when a comment is deleted on a specific post. Subscribe with `postId` from PostDetail.
+  """
+  commentDeleted(postId: ID!): CommentDeletedPayload!
+
+  """
+  Fires when a comment is updated on a specific post. Subscribe with `postId` from PostDetail.
+  """
+  commentUpdated(postId: ID!): PostComment!
+
   """Subscribe to message read receipts in a group"""
   groupMessageRead(groupId: ID!): GroupMessageReadPayload!
 
@@ -10878,6 +11911,9 @@ type Subscription {
   """Subscribe to message deletions"""
   messageDeleted(conversationId: ID!): MessageDeletedPayload!
 
+  """Batched reaction updates for a conversation (200ms window)."""
+  messageReactionsBatch(conversationId: ID!): MessageReactionsBatchPayload!
+
   """Subscribe to message read receipts"""
   messageRead(conversationId: ID!): MessageReadPayload!
 
@@ -10889,6 +11925,24 @@ type Subscription {
 
   """Real-time notification for a specific user"""
   notificationCreated(userId: ID!): Notification!
+
+  """
+  Fires when a new post is created. Subscribe from the feed to show a "new posts" pill.
+  """
+  postCreated: Post!
+
+  """
+  Fires when a specific post is deleted. Subscribe with `postId` from PostDetail.
+  """
+  postDeleted(postId: ID!): PostDeletedPayload!
+
+  """
+  Fires when a specific post is updated. Subscribe with `postId` from PostDetail.
+  """
+  postUpdated(postId: ID!): Post!
+
+  """Realtime scoreboard session updates"""
+  scoreboardSessionUpdated(sessionId: ID!): ScoreboardSession!
 
   """
   Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list.
@@ -10913,6 +11967,29 @@ type SuccessResponse {
   success: Boolean!
 }
 
+type SuggestedPrice {
+  p25: Float
+  p50: Float
+  p75: Float
+
+  """Số pass mẫu dùng để tính"""
+  sampleSize: Int!
+
+  """
+  Giá đề xuất chính (median của các pass tương tự đã COMPLETED 90 ngày qua)
+  """
+  suggested: Float
+}
+
+input SuggestedPriceFilterInput {
+  """Tỉnh / thành phố"""
+  city: String
+  sportType: SportType
+
+  """Lọc theo venue (ưu tiên cùng sân)."""
+  venueId: ID
+}
+
 input SwapCourtSidesInput {
   matchId: ID!
 }
@@ -10926,6 +12003,14 @@ type SystemStats {
   totalRevenue: Int!
   totalUsers: Int!
   totalVenues: Int!
+}
+
+"""Khung giờ trong ngày để lọc pass"""
+enum TimeOfDay {
+  AFTERNOON
+  EVENING
+  MORNING
+  NIGHT
 }
 
 type TimeRange {
@@ -10956,6 +12041,9 @@ type TimeSlotAvailability {
 
   """Customer name who booked this slot"""
   customerName: String
+
+  """Customer phone who booked this slot"""
+  customerPhone: String
 
   """End time (HH:mm)"""
   endTime: String!
@@ -11626,6 +12714,54 @@ input TransferProductsInput {
   sourceVenueId: ID!
 }
 
+type TransferrerRating {
+  _id: ID!
+
+  """Nhận xét tuỳ chọn"""
+  comment: String
+  createdAt: DateTime!
+
+  """Pass đã được rate"""
+  passId: ID!
+  rater: User
+
+  """User rate (receiver / transferee)"""
+  raterId: ID!
+
+  """Điểm 1-5"""
+  score: Int!
+  transferrer: User
+
+  """User được rate (transferrer)"""
+  transferrerId: ID!
+  updatedAt: DateTime!
+}
+
+type TransferrerStats {
+  """
+  Tỷ lệ hoàn tất = totalCompleted / (totalCompleted + totalCancelled). 0..1
+  """
+  completionRate: Float!
+
+  """Ngày tham gia hệ thống (ISO)"""
+  memberSince: DateTime
+
+  """Số báo cáo PENDING tích luỹ"""
+  pendingReports: Int!
+
+  """Số pass bị huỷ"""
+  totalCancelled: Int!
+
+  """Số pass đã hoàn tất giao dịch"""
+  totalCompleted: Int!
+
+  """Tổng số pass đã tạo"""
+  totalCreated: Int!
+
+  """Số pass hết hạn không ai nhận"""
+  totalExpired: Int!
+}
+
 type TypingStatusPayload {
   conversationId: ID!
   isTyping: Boolean!
@@ -11800,6 +12936,14 @@ input UpdateMessageReportStatusInput {
   status: ReportStatus!
 }
 
+input UpdateOtpTestPhoneInput {
+  """Empty = all phone OTP purposes allowed"""
+  allowedPurposes: [OtpPurpose!]
+  expiresAt: DateTime
+  label: String
+  testCode: String
+}
+
 input UpdateParticipantDepositInput {
   """Trạng thái đặt cọc mới"""
   depositStatus: DepositStatus!
@@ -11857,7 +13001,7 @@ input UpdatePickupGameCampaignInput {
   name: String
 
   """Môn thể thao của campaign"""
-  sportTypes: [String!]
+  sportTypes: [SportType!]
 
   """Ngày bắt đầu (ISO string)"""
   startDate: String
@@ -12414,6 +13558,25 @@ input UploadGroupCoverInput {
   groupId: String
 }
 
+"""
+Logical category of an uploaded asset; controls storage path & validation rules.
+"""
+enum UploadKind {
+  AVATAR
+  CHAT_FILE
+  CHAT_IMAGE
+  CHAT_VIDEO
+  COVER_PHOTO
+  GROUP_CHAT_IMAGE
+  GROUP_COVER
+  PAYMENT_PROOF
+  POST_MEDIA
+  PRODUCT_IMAGE
+  TOURNAMENT_IMAGE
+  VENUE_IMAGE
+  VENUE_REQUEST_IMAGE
+}
+
 input UploadPaymentProofInput {
   """Base64 encoded image data"""
   base64Image: String!
@@ -12428,6 +13591,9 @@ input UploadPostMediaInput {
 }
 
 type UploadPostMediaResponse {
+  """BlurHash placeholder for instant image preview on the client."""
+  blurhash: String
+
   """Height in pixels"""
   height: Float
 
@@ -12445,6 +13611,25 @@ type UploadPostMediaResponse {
 
   """Width in pixels"""
   width: Float
+}
+
+input UploadProcessedImageInput {
+  """Base64-encoded image (with or without data: URI prefix)."""
+  base64Image: String!
+
+  """Logical asset kind (avatar, group-cover, venue-image, …)."""
+  kind: UploadKind!
+
+  """
+  Owner id used to namespace the storage path (userId / venueId / groupId).
+  """
+  ownerId: String
+
+  """Skip 800px medium variant generation."""
+  skipMedium: Boolean
+
+  """Skip 200px thumbnail generation if the consumer does not need it."""
+  skipThumbnail: Boolean
 }
 
 input UploadProductImageInput {
@@ -12498,6 +13683,9 @@ type User {
 
   """How the user discovered the platform (collected via onboarding survey)"""
   acquisitionSource: AcquisitionSource
+
+  """Avatar with placeholder + responsive variants."""
+  avatar: ImageMedia
   bio: String
   club: String
   coverPhotoURL: String
@@ -12507,7 +13695,7 @@ type User {
   createdBy: ID
   dateOfBirth: DateTime
   displayName: String!
-  email: String!
+  email: String
   emailVerificationDate: DateTime
   emailVerified: Boolean!
   fcmTokens: [String!]!
@@ -12521,10 +13709,20 @@ type User {
   isSuspended: Boolean!
   lastLoginAt: DateTime
   location: Location
+
+  """Average rating (1-5) from receivers across completed pass transfers"""
+  passRatingAvg: Float
+
+  """Total number of ratings received for completed transfers"""
+  passRatingCount: Float
   passwordSetAt: DateTime
-  phone: String!
+  phone: String
   phoneVerificationDate: DateTime
   phoneVerified: Boolean!
+
+  """
+  Plain avatar URL. Kept for backward compat with mobile builds < 1.7. Prefer `avatar.url` (with blurhash placeholder).
+  """
   photoURL: String
 
   """Personal referral code (unique per user)"""
@@ -12543,7 +13741,7 @@ type User {
   """Suspension reason"""
   suspensionReason: String
   totalActivities: Float!
-  uid: ID!
+  uid: ID
   updatedAt: DateTime!
   userName: String!
 }
@@ -12564,6 +13762,15 @@ type UserBlock {
   """Reason for blocking"""
   reason: String
   updatedAt: DateTime!
+}
+
+type UserContactLookup {
+  _id: ID!
+  displayName: String!
+  email: String
+  fullName: String!
+  phone: String!
+  photoURL: String
 }
 
 type UserList {
@@ -12795,8 +14002,11 @@ type Venue {
   """Venue courts"""
   courts(pagination: PaginationInput): CourtList!
 
+  """Cover image with placeholder + responsive variants."""
+  coverImage: ImageMedia
+
   """Cover image URL"""
-  coverImageUrl: String
+  coverImageUrl: String @deprecated(reason: "Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.")
   createdAt: DateTime!
 
   """Venue description"""
@@ -12820,8 +14030,11 @@ type Venue {
   """Has food/beverage service"""
   hasOrderService: Boolean!
 
+  """Venue gallery with placeholder + responsive variants."""
+  imageMedia: [ImageMedia!]
+
   """Venue images URLs"""
-  images: [String!]
+  images: [String!] @deprecated(reason: "Use `imageMedia[].url`. Kept for mobile builds < 1.7.")
 
   """Is venue favorited by current user"""
   isFavorite: Boolean!
@@ -12897,6 +14110,11 @@ type Venue {
 
   """Venue status"""
   status: VenueStatus!
+
+  """
+  User ID who submitted this venue via Pass sân flow (USER_SUBMITTED). Used to throttle abuse and trace authorship.
+  """
+  submittedById: ID
 
   """Terms and conditions of the venue"""
   termsAndConditions: String
@@ -13620,4 +14838,16 @@ input VerifyOtpInput {
 
   """Verification ID received when OTP was sent"""
   verificationId: String!
+}
+
+input VerifyPhoneOtpInput {
+  code: String!
+  purpose: OtpPurpose!
+  verificationId: String!
+}
+
+type VerifyPhoneOtpResponse {
+  expiresAt: DateTime!
+  phone: String!
+  phoneVerificationToken: String!
 }

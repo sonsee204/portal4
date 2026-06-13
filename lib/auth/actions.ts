@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use server';
 
 import {
@@ -207,14 +220,25 @@ export async function requestPasswordResetAction(
   }
 }
 
+export interface ResetPasswordPhoneProof {
+  /** Issued by `verifyPhoneOtp` (ZNS path). */
+  phoneVerificationToken?: string;
+  /** Firebase ID token (fallback path). */
+  firebaseIdToken?: string;
+}
+
 /**
- * Step 3 — reset password using the Firebase ID token obtained after OTP verification.
+ * Step 3 — reset password using EITHER a ZNS proof token or a Firebase
+ * ID token. Mirrors the dual-input shape of the backend resolver.
  */
 export async function resetPasswordAction(
-  idToken: string,
+  proof: ResetPasswordPhoneProof,
   newPassword: string,
 ): Promise<ActionResult> {
-  if (!idToken || !newPassword) {
+  if (
+    (!proof.phoneVerificationToken && !proof.firebaseIdToken) ||
+    !newPassword
+  ) {
     return { success: false, error: AUTH.LOGIN.MISSING_CREDENTIALS };
   }
 
@@ -235,7 +259,13 @@ export async function resetPasswordAction(
             }
           }
         `,
-        variables: { input: { idToken, newPassword } },
+        variables: {
+          input: {
+            phoneVerificationToken: proof.phoneVerificationToken,
+            firebaseIdToken: proof.firebaseIdToken,
+            newPassword,
+          },
+        },
       }),
     });
 

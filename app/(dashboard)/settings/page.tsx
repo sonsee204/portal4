@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -12,6 +25,8 @@ import { AppearanceSettings } from './_components/AppearanceSettings';
 import { PermissionMatrix } from './_components/PermissionMatrix';
 import { ApiKeyCard } from './_components/ApiKeyCard';
 import { ProfileSettings } from './_components/ProfileSettings';
+import { OtpTestPhoneSettings } from './_components/OtpTestPhoneSettings';
+import { OTP_TEST_PHONES } from '@/lib/strings';
 
 const settingsTabs = [
   { label: 'Hồ sơ cá nhân', value: 'profile' },
@@ -19,6 +34,7 @@ const settingsTabs = [
   { label: 'Giao diện', value: 'appearance' },
   { label: 'Vai trò & Quyền', value: 'rbac' },
   { label: 'API Keys', value: 'api' },
+  { label: OTP_TEST_PHONES.TAB_LABEL, value: 'otp-test' },
 ];
 
 const API_KEYS = [
@@ -133,6 +149,8 @@ export default function SettingsPage() {
             </Button>
           </div>
         )}
+
+        {tab === 'otp-test' && <OtpTestPhoneSettings />}
       </div>
     </>
   );

@@ -1,0 +1,27 @@
+---
+description: Core Cấm list — always apply on portal
+alwaysApply: true
+---
+
+# Cấm (Portal)
+
+- `any` type — TypeScript strict + ESLint `no-explicit-any`
+- `@ts-nocheck` / `@ts-ignore` mới
+- God file > 400 effective lines — `pnpm size-gate:strict` (sau F2; baseline ratchet)
+- `gql` inline trong `app/`, `components/`, `hooks/` — gom `graphql/<domain>/`
+- Offset pagination mới `{ page, limit }` — chỉ cursor `*Connection`
+- Sửa tay `graphql/generated.ts`
+- Mock types (`types/mock.ts`) cho UI production — dùng `graphql/generated.ts`
+- Hardcode hex/rgb trong JSX — dùng Tailwind token / `config/theme.ts`
+- Copy schedule/DnD logic thủ công từ web — dùng `pnpm schedule-dnd:sync`
+
+## Verify
+
+```bash
+pnpm exec tsc --noEmit
+pnpm lint
+pnpm run verify:a-plus   # sau F2: typecheck + lint + size-gate:strict + build
+pnpm run verify:quick  # pre-push: typecheck + size-gate:strict
+```
+
+Sau đổi GraphQL: `pnpm schema:sync` + `pnpm codegen`

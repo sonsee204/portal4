@@ -1,4 +1,17 @@
 /**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
+/**
  * Centralized sidebar navigation — portal structure.
  * Each item can optionally require a PortalFeature for role-based visibility.
  */
@@ -6,7 +19,7 @@
 import type { PortalFeature } from '@/lib/permissions';
 
 /** Routes that are currently enabled (not dimmed/disabled). All others show as disabled. */
-export const ENABLED_SIDEBAR_ROUTES = ['/profile', '/users', '/audit', '/growth', '/qr-campaigns', '/pickup-campaigns', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests'] as const;
+export const ENABLED_SIDEBAR_ROUTES = ['/profile', '/users', '/audit', '/growth', '/qr-campaigns', '/pickup-campaigns', '/support', '/tournaments', '/moderation', '/venue-requests', '/claim-requests', '/settings'] as const;
 
 export interface NavItem {
   href: string;

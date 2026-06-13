@@ -1,0 +1,15 @@
+---
+description: DB migrations — N/A in portal; use migrations repo
+globs: src/migrations/**
+alwaysApply: false
+---
+
+# Migrations (N/A — portal)
+
+Repo này **không** chứa DB migration scripts. Schema changes chạy qua `nalee-sports-migrations/`:
+
+- Idempotent `up()`, respect `dryRun`, có `down()` khi `reversible: true`
+- Không sửa migration đã applied — tạo file `YYYY-MM-*.ts` mới
+- Deploy order: migration **trước** backend deploy khi đổi shape DB
+
+Nếu thêm `src/migrations/` trong tương lai, tuân `nalee-sports-migrations/AGENTS.md`.

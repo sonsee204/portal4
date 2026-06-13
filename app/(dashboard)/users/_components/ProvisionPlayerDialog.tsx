@@ -110,8 +110,8 @@ export function ProvisionPlayerDialog({
 
       const fields: CredentialField[] = [
         { label: 'Họ tên', value: payload.user.fullName },
-        { label: 'Số điện thoại', value: payload.user.phone },
-        { label: 'Email', value: payload.user.email },
+        { label: 'Số điện thoại', value: payload.user.phone ?? pendingData.phone },
+        { label: 'Email', value: payload.user.email ?? '' },
       ];
 
       if (payload.generatedPassword) {

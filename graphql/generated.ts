@@ -426,6 +426,19 @@ export enum AuditAction {
   LoginFailed = 'LOGIN_FAILED',
   Logout = 'LOGOUT',
   LogoutAll = 'LOGOUT_ALL',
+  OtpChannelFallback = 'OTP_CHANNEL_FALLBACK',
+  OtpDeliveryUpdate = 'OTP_DELIVERY_UPDATE',
+  OtpRequested = 'OTP_REQUESTED',
+  OtpTestPhoneCreated = 'OTP_TEST_PHONE_CREATED',
+  OtpTestPhoneDisabled = 'OTP_TEST_PHONE_DISABLED',
+  OtpTestPhoneEnabled = 'OTP_TEST_PHONE_ENABLED',
+  OtpTestPhoneUpdated = 'OTP_TEST_PHONE_UPDATED',
+  OtpTestUserGrantCreated = 'OTP_TEST_USER_GRANT_CREATED',
+  OtpTestUserGrantReplaced = 'OTP_TEST_USER_GRANT_REPLACED',
+  OtpTestUserGrantRevoked = 'OTP_TEST_USER_GRANT_REVOKED',
+  OtpThrottled = 'OTP_THROTTLED',
+  OtpVerified = 'OTP_VERIFIED',
+  OtpVerifyFailed = 'OTP_VERIFY_FAILED',
   PasswordChange = 'PASSWORD_CHANGE',
   PasswordReset = 'PASSWORD_RESET',
   RateLimitHit = 'RATE_LIMIT_HIT',
@@ -453,6 +466,7 @@ export enum AuditAction {
 export enum AuditCategory {
   Admin = 'ADMIN',
   Auth = 'AUTH',
+  Otp = 'OTP',
   Security = 'SECURITY',
   System = 'SYSTEM',
   Tournament = 'TOURNAMENT'
@@ -602,8 +616,24 @@ export type AvailablePassesFilterInput = {
   district?: InputMaybe<Scalars['String']['input']>;
   /** Filter from date (YYYY-MM-DD) */
   fromDate?: InputMaybe<Scalars['String']['input']>;
+  /** Toạ độ user — vĩ độ (cần kèm longitude để bật geo filter) */
+  latitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Toạ độ user — kinh độ (cần kèm latitude để bật geo filter) */
+  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Giá tối đa (VND) */
+  maxPrice?: InputMaybe<Scalars['Int']['input']>;
+  /** Giá tối thiểu (VND) */
+  minPrice?: InputMaybe<Scalars['Int']['input']>;
+  /** Bán kính tìm kiếm (km) — mặc định 10km, tối đa 50km */
+  radiusKm?: InputMaybe<Scalars['Float']['input']>;
+  /** Cách sắp xếp kết quả */
+  sort?: InputMaybe<BookingPassSortOrder>;
+  /** Lọc theo nguồn pass (mặc định trả cả 2 nếu không truyền). Truyền [INTERNAL] để chỉ xem pass đã xác thực. */
+  sources?: InputMaybe<Array<BookingPassSource>>;
   /** Filter by sport type */
   sportType?: InputMaybe<SportType>;
+  /** Khung giờ trong ngày: MORNING / AFTERNOON / EVENING / NIGHT */
+  timeOfDay?: InputMaybe<TimeOfDay>;
   /** Filter to date (YYYY-MM-DD) */
   toDate?: InputMaybe<Scalars['String']['input']>;
   /** Filter by venue ID */
@@ -763,6 +793,17 @@ export type Booking = {
   venueId: Scalars['ID']['output'];
 };
 
+/** A Relay-style connection for Booking items. */
+export type BookingConnection = {
+  __typename?: 'BookingConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<BookingEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type BookingDistribution = {
   __typename?: 'BookingDistribution';
   /** Color for chart (hex) */
@@ -773,6 +814,15 @@ export type BookingDistribution = {
   percentage: Scalars['Int']['output'];
   /** Number of bookings */
   value: Scalars['Int']['output'];
+};
+
+/** An edge in the BookingConnection. */
+export type BookingEdge = {
+  __typename?: 'BookingEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Booking;
 };
 
 export type BookingFilterInput = {
@@ -865,12 +915,12 @@ export type BookingPass = {
   acceptedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Asking price set by owner */
   askingPrice: Scalars['Int']['output'];
-  /** The booking being passed */
-  booking: Booking;
+  /** The booking being passed (chỉ có với pass INTERNAL — null cho EXTERNAL) */
+  booking?: Maybe<Booking>;
   /** Booking date (YYYY-MM-DD) */
   bookingDate: Scalars['String']['output'];
-  /** Booking being passed */
-  bookingId: Scalars['ID']['output'];
+  /** Booking ID — chỉ có với pass INTERNAL */
+  bookingId?: Maybe<Scalars['ID']['output']>;
   /** Cancellation reason */
   cancellationReason?: Maybe<Scalars['String']['output']>;
   /** When pass was cancelled */
@@ -880,6 +930,8 @@ export type BookingPass = {
   description?: Maybe<Scalars['String']['output']>;
   /** When pass expires (booking start time) */
   expiresAt: Scalars['DateTime']['output'];
+  /** Thông tin lịch đặt do user khai báo (chỉ khi source=EXTERNAL) */
+  externalBooking?: Maybe<ExternalBookingSnapshot>;
   /** Users who expressed interest */
   interestedUserDetails: Array<User>;
   /** List of interested users (for public pass) */
@@ -894,6 +946,8 @@ export type BookingPass = {
   selectedUser?: Maybe<User>;
   /** Selected user ID */
   selectedUserId?: Maybe<Scalars['ID']['output']>;
+  /** Nguồn gốc pass: INTERNAL (booking hệ thống) hoặc EXTERNAL (user tự khai báo) */
+  source: BookingPassSource;
   /** Pass status */
   status: BookingPassStatus;
   /** When transfer was completed */
@@ -907,10 +961,10 @@ export type BookingPass = {
   /** Original owner (transferrer) */
   transferrerId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
-  /** Venue of the booking */
-  venue: Venue;
-  /** Venue ID */
-  venueId: Scalars['ID']['output'];
+  /** Venue của pass (EXTERNAL có thể null nếu user chưa khai báo sân nào) */
+  venue?: Maybe<Venue>;
+  /** Venue ID — INTERNAL luôn có; EXTERNAL có thể null nếu sân chưa được khai báo */
+  venueId?: Maybe<Scalars['ID']['output']>;
   /** Pass visibility */
   visibility: BookingPassVisibility;
 };
@@ -928,6 +982,83 @@ export type BookingPassList = {
   /** Total number of passes */
   total: Scalars['Int']['output'];
 };
+
+export type BookingPassReport = {
+  __typename?: 'BookingPassReport';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Mô tả chi tiết */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Ghi chú admin / kết quả xử lý */
+  notes?: Maybe<Scalars['String']['output']>;
+  pass?: Maybe<BookingPass>;
+  /** ID của pass bị báo cáo */
+  passId: Scalars['ID']['output'];
+  /** Lý do báo cáo */
+  reason: BookingPassReportReason;
+  reporter?: Maybe<User>;
+  /** User báo cáo */
+  reporterId: Scalars['ID']['output'];
+  /** Thời điểm xử lý */
+  reviewedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Admin xử lý */
+  reviewedBy?: Maybe<Scalars['ID']['output']>;
+  reviewer?: Maybe<User>;
+  /** Trạng thái */
+  status: BookingPassReportStatus;
+  transferrer?: Maybe<User>;
+  /** ID của user pass (transferrer) */
+  transferrerId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type BookingPassReportFilterInput = {
+  reason?: InputMaybe<BookingPassReportReason>;
+  status?: InputMaybe<BookingPassReportStatus>;
+  transferrerId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type BookingPassReportList = {
+  __typename?: 'BookingPassReportList';
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<BookingPassReport>;
+  limit: Scalars['Int']['output'];
+  page: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
+/** Lý do báo cáo pass sân */
+export enum BookingPassReportReason {
+  AlreadyTransferred = 'ALREADY_TRANSFERRED',
+  FakeBooking = 'FAKE_BOOKING',
+  Inappropriate = 'INAPPROPRIATE',
+  Other = 'OTHER',
+  PriceGouging = 'PRICE_GOUGING',
+  Scam = 'SCAM'
+}
+
+/** Trạng thái báo cáo pass sân */
+export enum BookingPassReportStatus {
+  Dismissed = 'DISMISSED',
+  Pending = 'PENDING',
+  Resolved = 'RESOLVED',
+  Reviewed = 'REVIEWED'
+}
+
+/** Cách sắp xếp danh sách pass */
+export enum BookingPassSortOrder {
+  CreatedDesc = 'CREATED_DESC',
+  DiscountDesc = 'DISCOUNT_DESC',
+  ExpiresAsc = 'EXPIRES_ASC',
+  PriceAsc = 'PRICE_ASC',
+  PriceDesc = 'PRICE_DESC'
+}
+
+/** Nguồn gốc của booking pass: INTERNAL = lịch hệ thống, EXTERNAL = lịch tự khai báo */
+export enum BookingPassSource {
+  External = 'EXTERNAL',
+  Internal = 'INTERNAL'
+}
 
 /** Status of the booking pass */
 export enum BookingPassStatus {
@@ -999,6 +1130,14 @@ export enum BookingTypeFilter {
   RecurringMaster = 'RECURRING_MASTER',
   Single = 'SINGLE'
 }
+
+export type BookingWithOrderPayload = {
+  __typename?: 'BookingWithOrderPayload';
+  /** The confirmed booking */
+  booking: Booking;
+  /** Order created for the booking */
+  order: Order;
+};
 
 export type BookmarkList = {
   __typename?: 'BookmarkList';
@@ -1508,6 +1647,15 @@ export enum CoinTossChoice {
   Side = 'SIDE'
 }
 
+/** Payload for the commentDeleted subscription. */
+export type CommentDeletedPayload = {
+  __typename?: 'CommentDeletedPayload';
+  _id: Scalars['ID']['output'];
+  commentId: Scalars['ID']['output'];
+  parentId?: Maybe<Scalars['ID']['output']>;
+  postId: Scalars['ID']['output'];
+};
+
 export type CommentList = {
   __typename?: 'CommentList';
   /** List of comments */
@@ -1531,8 +1679,10 @@ export type ConfirmEmailUpdateInput = {
 };
 
 export type ConfirmPhoneUpdateInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
   newPhone: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ContactInquiry = {
@@ -1896,14 +2046,20 @@ export type CreateBookingInput = {
 };
 
 export type CreateBookingPassInput = {
-  /** Asking price */
+  /** Giá pass (VND) */
   askingPrice: Scalars['Int']['input'];
-  /** Booking ID to pass */
-  bookingId: Scalars['ID']['input'];
-  /** Description/reason for passing */
+  /** Booking ID — bắt buộc khi source=INTERNAL */
+  bookingId?: InputMaybe<Scalars['ID']['input']>;
+  /** Mô tả/lý do pass */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** Target user ID for private pass */
+  /** Snapshot lịch đặt — bắt buộc khi source=EXTERNAL */
+  externalBooking?: InputMaybe<ExternalBookingInput>;
+  /** Loại pass — mặc định INTERNAL nếu bỏ trống (backwards-compat) */
+  source?: InputMaybe<BookingPassSource>;
+  /** Target user ID cho private pass */
   transfereeId?: InputMaybe<Scalars['ID']['input']>;
+  /** Venue ID khi user pick venue có sẵn (claimed hoặc UNCLAIMED) — chỉ EXTERNAL */
+  venueId?: InputMaybe<Scalars['ID']['input']>;
   /** Pass visibility */
   visibility: BookingPassVisibility;
 };
@@ -2098,6 +2254,29 @@ export type CreateOrderInput = {
   venueId: Scalars['ID']['input'];
 };
 
+export type CreateOtpTestPhoneInput = {
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Human-readable label for QA / ops */
+  label: Scalars['String']['input'];
+  /** Vietnamese phone number (E.164 after normalisation) */
+  phone: Scalars['String']['input'];
+  /** Fixed 6-digit OTP code */
+  testCode: Scalars['String']['input'];
+};
+
+export type CreateOtpTestUserGrantInput = {
+  /** Default SIGN_IN_PHONE only */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  /** Grant expiry (default +24h, max +7d) */
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Reason / ticket reference (min 10 chars) */
+  reason: Scalars['String']['input'];
+  /** User ID to grant test OTP login */
+  userId: Scalars['String']['input'];
+};
+
 export type CreatePickupGameCampaignInput = {
   /** Mô tả campaign */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -2110,7 +2289,7 @@ export type CreatePickupGameCampaignInput = {
   /** Tên campaign */
   name: Scalars['String']['input'];
   /** Môn thể thao của campaign */
-  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  sportTypes?: InputMaybe<Array<SportType>>;
   /** Ngày bắt đầu (ISO string) */
   startDate?: InputMaybe<Scalars['String']['input']>;
   /** Trình độ mục tiêu */
@@ -2362,6 +2541,19 @@ export type CreateReferralCodeInput = {
   ownerRole?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateScoreboardSessionInput = {
+  leftSidePlayer?: InputMaybe<Scalars['Int']['input']>;
+  matchFormat: ScoreboardMatchFormat;
+  scheduledAt?: InputMaybe<Scalars['DateTime']['input']>;
+  scoringConfig: ScoringConfigInput;
+  servingPlayer?: InputMaybe<Scalars['Int']['input']>;
+  side1: ScoreboardSideInput;
+  side2: ScoreboardSideInput;
+  sportType: SportType;
+  /** If true, start immediately as LIVE */
+  startImmediately?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type CreateStaffBookingInput = {
   /** Customer user ID (if booking for existing user) */
   customerId?: InputMaybe<Scalars['ID']['input']>;
@@ -2481,6 +2673,25 @@ export type CreateTournamentInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateUserSubmittedVenueInput = {
+  /** Địa chỉ đầy đủ */
+  address: Scalars['String']['input'];
+  /** Tỉnh/Thành phố */
+  city?: InputMaybe<Scalars['String']['input']>;
+  /** Quận/Huyện */
+  district?: InputMaybe<Scalars['String']['input']>;
+  /** Vĩ độ */
+  latitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Kinh độ */
+  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Tên sân */
+  name: Scalars['String']['input'];
+  /** Danh sách môn thể thao tại sân */
+  sportTypes: Array<SportType>;
+  /** Phường/Xã */
+  ward?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -2565,6 +2776,17 @@ export type CurrentLegalDocuments = {
   privacyPolicy?: Maybe<LegalDocumentSummary>;
   /** Current Terms of Service */
   termsOfService?: Maybe<LegalDocumentSummary>;
+};
+
+export type CursorPaginationInput = {
+  /** Opaque cursor pointing at the last item of the previous page. */
+  after?: InputMaybe<Scalars['String']['input']>;
+  /** Reserved for backwards pagination. */
+  before?: InputMaybe<Scalars['String']['input']>;
+  /** Number of items to return after the cursor (1..50). */
+  first?: InputMaybe<Scalars['Int']['input']>;
+  /** Reserved for backwards pagination (1..50). */
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CustomLocation = {
@@ -2821,6 +3043,53 @@ export type ExecuteDrawInput = {
   seeds?: Array<SeedPlayerInput>;
 };
 
+export type ExternalBookingInput = {
+  /** Ngày đặt (ISO 8601 date) */
+  bookingDate: Scalars['String']['input'];
+  /** Tên sân con (nếu có) */
+  courtName?: InputMaybe<Scalars['String']['input']>;
+  /** Thời gian kết thúc (ISO 8601) */
+  endTime: Scalars['String']['input'];
+  /** Ghi chú thêm về booking gốc */
+  notes?: InputMaybe<Scalars['String']['input']>;
+  /** Giá gốc (VND) */
+  originalPrice: Scalars['Int']['input'];
+  /** URL ảnh chứng từ (1-5 ảnh) */
+  proofImages: Array<Scalars['String']['input']>;
+  /** Loại thể thao */
+  sportType: SportType;
+  /** Thời gian bắt đầu (ISO 8601) */
+  startTime: Scalars['String']['input'];
+  /** Địa chỉ sân (tuỳ chọn) */
+  venueAddress?: InputMaybe<Scalars['String']['input']>;
+  /** Tên sân do user khai báo */
+  venueName: Scalars['String']['input'];
+};
+
+export type ExternalBookingSnapshot = {
+  __typename?: 'ExternalBookingSnapshot';
+  /** Ngày đặt (YYYY-MM-DD) */
+  bookingDate: Scalars['String']['output'];
+  /** Mã đặt sân (nếu có) */
+  bookingReference?: Maybe<Scalars['String']['output']>;
+  /** Tên sân con (nếu có) */
+  courtName?: Maybe<Scalars['String']['output']>;
+  /** Thời lượng (phút) */
+  durationMinutes: Scalars['Int']['output'];
+  /** Giờ kết thúc (HH:mm) */
+  endTime: Scalars['String']['output'];
+  /** Ảnh chứng từ booking gốc (1-5 ảnh) */
+  proofImages: Array<Scalars['String']['output']>;
+  /** Môn thể thao */
+  sportType?: Maybe<SportType>;
+  /** Giờ bắt đầu (HH:mm) */
+  startTime: Scalars['String']['output'];
+  /** Địa chỉ sân */
+  venueAddress?: Maybe<Scalars['String']['output']>;
+  /** Tên sân do user khai báo */
+  venueName: Scalars['String']['output'];
+};
+
 export type FavoriteResult = {
   __typename?: 'FavoriteResult';
   /** Whether venue is now favorited */
@@ -2832,14 +3101,18 @@ export type FinishMatchEarlyInput = {
 };
 
 export type FirebaseSignInInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type FirebaseSignUpInput = {
   email?: InputMaybe<Scalars['String']['input']>;
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
   fullName: Scalars['String']['input'];
-  idToken: Scalars['String']['input'];
+  idToken?: InputMaybe<Scalars['String']['input']>;
   password: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
   /** Mã giới thiệu (không bắt buộc) */
   referralCode?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2953,8 +3226,10 @@ export type GameTemplateList = {
 
 export type GameTimeSlot = {
   __typename?: 'GameTimeSlot';
-  /** Ngày chơi (YYYY-MM-DD) */
+  /** Ngày bắt đầu chơi (YYYY-MM-DD) */
   date: Scalars['String']['output'];
+  /** Ngày kết thúc (YYYY-MM-DD). Mặc định cùng ngày bắt đầu. */
+  endDate: Scalars['String']['output'];
   /** Giờ kết thúc (HH:mm) */
   endTime: Scalars['String']['output'];
   /** Giờ bắt đầu (HH:mm) */
@@ -2964,6 +3239,8 @@ export type GameTimeSlot = {
 export type GameTimeSlotInput = {
   /** Ngày chơi (YYYY-MM-DD) */
   date: Scalars['String']['input'];
+  /** Ngày kết thúc (YYYY-MM-DD). Bỏ trống = cùng ngày bắt đầu hoặc tự suy ra khi kết thúc qua đêm. */
+  endDate?: InputMaybe<Scalars['String']['input']>;
   /** Giờ kết thúc (HH:mm) */
   endTime: Scalars['String']['input'];
   /** Giờ bắt đầu (HH:mm) */
@@ -3045,7 +3322,12 @@ export type Group = {
   _id: Scalars['ID']['output'];
   /** Group address/location */
   address?: Maybe<Scalars['String']['output']>;
-  /** Cover image URL */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Cover image URL
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Group creator */
@@ -3084,6 +3366,8 @@ export type Group = {
 export type GroupFilterInput = {
   /** Filter only groups user is member of */
   myGroups?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter groups where current user has a pending join request */
+  pendingOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by privacy */
   privacy?: InputMaybe<GroupPrivacy>;
   /** Search query for name/description */
@@ -3392,6 +3676,25 @@ export type HostStatistics = {
   totalParticipants: Scalars['Int']['output'];
   /** Tổng doanh thu */
   totalRevenue: Scalars['Int']['output'];
+};
+
+/** A user-uploaded image asset with placeholder & responsive variants. */
+export type ImageMedia = {
+  __typename?: 'ImageMedia';
+  /** Compact base83 BlurHash placeholder; clients decode locally to render an instant preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
+  /** Pixel height of the original image. */
+  height?: Maybe<Scalars['Int']['output']>;
+  /** ~800px medium variant (feed cards, detail header). */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
+  /** Storage key — useful for backend cleanup jobs. */
+  storageKey?: Maybe<Scalars['String']['output']>;
+  /** ~200px thumbnail variant (chat list, search row). */
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
+  /** Full-resolution image URL. */
+  url: Scalars['String']['output'];
+  /** Pixel width of the original image. */
+  width?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ImportStockInput = {
@@ -3724,6 +4027,11 @@ export type MatchScorecard = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type MatchSetupInput = {
+  leftSidePlayer: Scalars['Int']['input'];
+  servingPlayer: Scalars['Int']['input'];
+};
+
 /** How pre-match serve/side setup was decided */
 export enum MatchSetupMethod {
   CoinToss = 'COIN_TOSS',
@@ -3836,10 +4144,14 @@ export type MessageLocationInput = {
 
 export type MessageMedia = {
   __typename?: 'MessageMedia';
+  /** BlurHash placeholder used to render an instant preview on the chat bubble. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Duration in seconds (for videos/audio) */
   duration?: Maybe<Scalars['Float']['output']>;
   /** Height in pixels (for images/videos) */
   height?: Maybe<Scalars['Float']['output']>;
+  /** ~800px medium variant for bubble preview. */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
   /** MIME type of the file */
   mimeType?: Maybe<Scalars['String']['output']>;
   /** File size in bytes */
@@ -3877,6 +4189,18 @@ export type MessageReaction = {
   emoji: Scalars['String']['output'];
   /** User ID who reacted */
   userId: Scalars['ID']['output'];
+};
+
+export type MessageReactionsBatchEntry = {
+  __typename?: 'MessageReactionsBatchEntry';
+  messageId: Scalars['ID']['output'];
+  reactions: Array<ReactionDelta>;
+};
+
+export type MessageReactionsBatchPayload = {
+  __typename?: 'MessageReactionsBatchPayload';
+  conversationId: Scalars['ID']['output'];
+  items: Array<MessageReactionsBatchEntry>;
 };
 
 export type MessageReadPayload = {
@@ -3974,6 +4298,34 @@ export type MonthGameCount = {
   count: Scalars['Int']['output'];
   /** Tháng (YYYY-MM) */
   month: Scalars['String']['output'];
+};
+
+export type MoveMatchInput = {
+  /** After move, repack subsequent matches on the same court/day */
+  autoRepack?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Target court name */
+  courtName: Scalars['String']['input'];
+  matchId: Scalars['ID']['input'];
+  /** New scheduledAt ISO local string */
+  scheduledAt: Scalars['String']['input'];
+};
+
+/** Preview moving a match without persisting */
+export type MoveMatchPreviewResult = {
+  __typename?: 'MoveMatchPreviewResult';
+  affectedPreview?: Maybe<Array<ScheduleShiftPreview>>;
+  match: TournamentMatch;
+  suggestRepack: Scalars['Boolean']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
+
+/** Result of atomic move (+ optional repack) */
+export type MoveMatchResult = {
+  __typename?: 'MoveMatchResult';
+  match: TournamentMatch;
+  repackPreview?: Maybe<Array<ScheduleShiftPreview>>;
+  repackedCount: Scalars['Int']['output'];
+  warnings: Array<Scalars['String']['output']>;
 };
 
 export type Mutation = {
@@ -4094,6 +4446,7 @@ export type Mutation = {
   cancelRecurringBooking: Booking;
   /** Cancel a single session of recurring booking */
   cancelRecurringSession: Booking;
+  cancelScoreboardSession: ScoreboardSession;
   /** Cancel tournament */
   cancelTournament: Tournament;
   /** Cancel a pending request */
@@ -4133,21 +4486,21 @@ export type Mutation = {
   /** Complete tournament */
   completeTournament: Tournament;
   /** Confirm booking */
-  confirmBooking: Booking;
+  confirmBooking: BookingWithOrderPayload;
   /** Confirm draw and transition category to IN_PROGRESS */
   confirmDraw: SuccessResponse;
   /** Confirm email update after OTP verification */
   confirmEmailUpdate: SuccessResponse;
   /** Confirm a hold booking (staff) */
-  confirmHoldBooking: Booking;
+  confirmHoldBooking: BookingWithOrderPayload;
   /** Confirm order */
   confirmOrder: Order;
   /** Confirm pass transfer (owner confirms after receiving payment) */
   confirmPassTransfer: BookingPass;
-  /** Confirm phone number update after OTP verification via Firebase */
+  /** Confirm phone number update (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   confirmPhoneUpdate: SuccessResponse;
   /** Confirm recurring booking (all sessions) */
-  confirmRecurringBooking: Booking;
+  confirmRecurringBooking: BookingWithOrderPayload;
   /** BTC sửa kết quả trận đã kết thúc (khi vòng sau chưa đấu) */
   correctFinishedMatchResult: TournamentMatch;
   /** Create booking (customer) */
@@ -4178,6 +4531,10 @@ export type Mutation = {
   createNotification: Notification;
   /** Create order (customer) */
   createOrder: Order;
+  /** Create OTP test phone (SUPER_ADMIN only) */
+  createOtpTestPhone: OtpTestPhone;
+  /** Create OTP test user login grant (SUPER_ADMIN only) */
+  createOtpTestUserGrant: OtpTestUserGrant;
   /** Tạo kèo mới */
   createPickupGame: PickupGame;
   /** Tạo campaign mới */
@@ -4194,14 +4551,18 @@ export type Mutation = {
   createRecurringBooking: Booking;
   /** Create a new referral code (Admin only) */
   createReferralCode: ReferralCode;
+  /** Create scoreboard session */
+  createScoreboardSession: ScoreboardSession;
   /** Create staff booking */
-  createStaffBooking: Booking;
+  createStaffBooking: BookingWithOrderPayload;
   /** Create staff order */
   createStaffOrder: Order;
   /** Create recurring booking by staff. Supports single-day and multi-day bookings. */
-  createStaffRecurringBooking: Booking;
+  createStaffRecurringBooking: BookingWithOrderPayload;
   /** Create a new tournament */
   createTournament: Tournament;
+  /** Tạo venue do user submit từ flow Pass sân (UNCLAIMED, PENDING). Throttled 3/day/user. Auto-dedupe theo (name + city). */
+  createUserSubmittedVenue: Venue;
   /** Create a new venue (request) */
   createVenue: Venue;
   /** Create a new venue request */
@@ -4244,6 +4605,7 @@ export type Mutation = {
   deletePromotion: Scalars['Boolean']['output'];
   /** Delete registration (organizer only) */
   deleteRegistration: SuccessResponse;
+  deleteScoreboardSession: Scalars['Boolean']['output'];
   /** Permanently delete a DRAFT tournament */
   deleteTournament: SuccessResponse;
   /** Delete venue */
@@ -4272,6 +4634,8 @@ export type Mutation = {
   generateBracket: Array<TournamentMatch>;
   /** Import stock for a product */
   importStock: StockMovement;
+  /** Atomically bump a post view count. Fire-and-forget from the client; returns the new view count or null if the post does not exist. */
+  incrementPostView?: Maybe<Scalars['Int']['output']>;
   /** Invite a user to join a group (admin/mod only) */
   inviteMember: GroupMember;
   /** Invite a referee to the tournament (pool-level invite) */
@@ -4316,6 +4680,8 @@ export type Mutation = {
   markOrderPreparing: Order;
   /** Mark order as ready */
   markOrderReady: Order;
+  /** Move match to new court/time with optional court repack */
+  moveMatchWithCascade: MoveMatchResult;
   /** Move products to another venue */
   moveProductsToVenue: BulkOperationResult;
   /** Mute a conversation */
@@ -4342,6 +4708,8 @@ export type Mutation = {
   publishTournament: Tournament;
   /** Đánh giá người tham gia */
   rateParticipants: Scalars['Boolean']['output'];
+  /** Đánh giá người chuyển pass sau khi giao dịch COMPLETED. Chỉ receiver mới được rate. */
+  ratePassTransfer: TransferrerRating;
   /** Record a QR code scan event (Public - called by landing page) */
   recordQrScan: SuccessResponse;
   /** Record one venue detail view */
@@ -4384,6 +4752,8 @@ export type Mutation = {
   repackCourtSchedule: RepackCourtScheduleResult;
   /** Reply to review */
   replyToReview: VenueReview;
+  /** Báo cáo một pass sân (anti-spam: không dup 24h, không self). */
+  reportBookingPass: BookingPassReport;
   /** Report a message */
   reportMessage: MessageReport;
   /** Report a post */
@@ -4400,11 +4770,13 @@ export type Mutation = {
   requestJoinGroup: GroupMember;
   /** Request password reset (validates user exists, frontend sends OTP via Firebase) */
   requestPasswordReset: SuccessResponse;
+  /** Request a phone OTP. Backend decides ZNS vs Firebase fallback. */
+  requestPhoneOtp: RequestPhoneOtpResponse;
   /** Request phone number update (validates availability, frontend sends OTP) */
   requestPhoneUpdate: SuccessResponse;
   /** Reset bracket (delete all matches) */
   resetBracket: SuccessResponse;
-  /** Reset password after OTP verification via Firebase Phone Auth */
+  /** Reset password after OTP verification (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   resetPassword: SuccessResponse;
   /** Referee responds to invite (accept or decline) */
   respondRefereeInvite: TournamentMatch;
@@ -4412,10 +4784,14 @@ export type Mutation = {
   respondTournamentRefereeInvite: TournamentReferee;
   /** Process customer return */
   returnStock: StockMovement;
+  /** [Admin] Xét báo cáo pass sân */
+  reviewBookingPassReport: BookingPassReport;
   /** Review (approve/reject) a claim request - Admin only */
   reviewClaimRequest: VenueClaimRequest;
   /** Review promotion (owner approves/rejects) */
   reviewPromotion: Promotion;
+  /** Revoke OTP test user login grant (SUPER_ADMIN only) */
+  revokeOtpTestUserGrant: OtpTestUserGrant;
   /** Save FCM token */
   saveFcmToken: Scalars['Boolean']['output'];
   /** Lưu kèo */
@@ -4424,6 +4800,14 @@ export type Mutation = {
   scheduleMatch: ScheduleMatchResult;
   /** Score a point */
   scorePoint: MatchScorecard;
+  scoreboardCompleteSet: ScoreboardSession;
+  scoreboardFinishMatchEarly: ScoreboardSession;
+  scoreboardRetireSession: ScoreboardSession;
+  scoreboardScorePoint: ScoreboardSession;
+  scoreboardSetServingPlayer: ScoreboardSession;
+  scoreboardSwapCourtSides: ScoreboardSession;
+  scoreboardUndoLastPoint: ScoreboardSession;
+  scoreboardUpdateElapsed: ScoreboardSession;
   /** Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only) */
   seedKnockoutBracket: Array<TournamentMatch>;
   /** Seed players in category */
@@ -4446,6 +4830,8 @@ export type Mutation = {
   setGroupTypingStatus: Scalars['Boolean']['output'];
   /** BTC ghi nhận walkover */
   setMatchWalkover: TournamentMatch;
+  /** Enable or disable OTP test phone (SUPER_ADMIN only) */
+  setOtpTestPhoneEnabled: OtpTestPhone;
   /** VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE) */
   setRetirement: TournamentMatch;
   /** Đặt lại người giao cầu (trọng tài) */
@@ -4454,18 +4840,20 @@ export type Mutation = {
   shareGameToGroups: Scalars['Boolean']['output'];
   /** Login with email/phone and password */
   signIn: AuthResponse;
-  /** Sign in with Firebase Phone Authentication */
+  /** Sign in with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   signInWithFirebase: AuthResponse;
   /** Logout current user */
   signOut: Scalars['Boolean']['output'];
   /** Logout from all devices */
   signOutAllDevices: Scalars['Boolean']['output'];
-  /** Sign up with Firebase Phone Authentication */
+  /** Sign up with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   signUpWithFirebase: AuthResponse;
   /** Start a match and create scorecard */
   startMatch: MatchScorecard;
   /** Bắt đầu kèo thủ công */
   startPickupGame: PickupGame;
+  /** Start a scheduled scoreboard session */
+  startScoreboardSession: ScoreboardSession;
   /** Start tournament */
   startTournament: Tournament;
   /** Signal that user is typing */
@@ -4544,6 +4932,8 @@ export type Mutation = {
   updateOrderInternalNote: Order;
   /** Update order status */
   updateOrderStatus: Order;
+  /** Update OTP test phone (SUPER_ADMIN only) */
+  updateOtpTestPhone: OtpTestPhone;
   /** Cập nhật trạng thái đặt cọc */
   updateParticipantDeposit: PickupGameParticipant;
   /** Cập nhật trạng thái thanh toán */
@@ -4586,7 +4976,7 @@ export type Mutation = {
   updateVenueStaffPermissions: VenueStaff;
   /** Update staff custom title */
   updateVenueStaffTitle: VenueStaff;
-  /** Upload avatar image and update user photoURL */
+  /** Upload avatar image; persists both legacy photoURL and the new structured `avatar` (with blurhash + variants). */
   uploadAvatar: UploadResponse;
   /** Upload media for chat messages */
   uploadChatMedia: ChatMediaUploadResult;
@@ -4600,6 +4990,8 @@ export type Mutation = {
   uploadPaymentProof: Order;
   /** Upload post media image and return URL */
   uploadPostMedia: UploadPostMediaResponse;
+  /** Upload + process an image (blurhash + thumbnail + medium variants). */
+  uploadProcessedImage: ImageMedia;
   /** Upload product image and return URL */
   uploadProductImage: UploadPostMediaResponse;
   /** Upload tournament image (QR code, banner, etc.) and return URL */
@@ -4610,6 +5002,8 @@ export type Mutation = {
   uploadVenueRequestImage: UploadPostMediaResponse;
   /** Verify OTP code for email verification, password reset, etc. */
   verifyOtp: OtpResponse;
+  /** Verify a phone OTP (ZNS path). Returns a short-lived phoneVerificationToken. */
+  verifyPhoneOtp: VerifyPhoneOtpResponse;
 };
 
 
@@ -4927,6 +5321,11 @@ export type MutationCancelRecurringSessionArgs = {
 };
 
 
+export type MutationCancelScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
 export type MutationCancelTournamentArgs = {
   id: Scalars['ID']['input'];
 };
@@ -5134,6 +5533,16 @@ export type MutationCreateOrderArgs = {
 };
 
 
+export type MutationCreateOtpTestPhoneArgs = {
+  input: CreateOtpTestPhoneInput;
+};
+
+
+export type MutationCreateOtpTestUserGrantArgs = {
+  input: CreateOtpTestUserGrantInput;
+};
+
+
 export type MutationCreatePickupGameArgs = {
   input: CreatePickupGameInput;
 };
@@ -5174,6 +5583,11 @@ export type MutationCreateReferralCodeArgs = {
 };
 
 
+export type MutationCreateScoreboardSessionArgs = {
+  input: CreateScoreboardSessionInput;
+};
+
+
 export type MutationCreateStaffBookingArgs = {
   input: CreateStaffBookingInput;
 };
@@ -5191,6 +5605,11 @@ export type MutationCreateStaffRecurringBookingArgs = {
 
 export type MutationCreateTournamentArgs = {
   input: CreateTournamentInput;
+};
+
+
+export type MutationCreateUserSubmittedVenueArgs = {
+  input: CreateUserSubmittedVenueInput;
 };
 
 
@@ -5304,6 +5723,11 @@ export type MutationDeleteRegistrationArgs = {
 };
 
 
+export type MutationDeleteScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTournamentArgs = {
   id: Scalars['ID']['input'];
 };
@@ -5374,6 +5798,11 @@ export type MutationGenerateBracketArgs = {
 export type MutationImportStockArgs = {
   input: ImportStockInput;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type MutationIncrementPostViewArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -5492,6 +5921,11 @@ export type MutationMarkOrderReadyArgs = {
 };
 
 
+export type MutationMoveMatchWithCascadeArgs = {
+  input: MoveMatchInput;
+};
+
+
 export type MutationMoveProductsToVenueArgs = {
   input: TransferProductsInput;
 };
@@ -5557,6 +5991,11 @@ export type MutationPublishTournamentArgs = {
 
 export type MutationRateParticipantsArgs = {
   input: RateParticipantsInput;
+};
+
+
+export type MutationRatePassTransferArgs = {
+  input: RatePassTransferInput;
 };
 
 
@@ -5668,6 +6107,11 @@ export type MutationReplyToReviewArgs = {
 };
 
 
+export type MutationReportBookingPassArgs = {
+  input: ReportBookingPassInput;
+};
+
+
 export type MutationReportMessageArgs = {
   input: ReportMessageInput;
 };
@@ -5709,6 +6153,11 @@ export type MutationRequestPasswordResetArgs = {
 };
 
 
+export type MutationRequestPhoneOtpArgs = {
+  input: RequestPhoneOtpInput;
+};
+
+
 export type MutationRequestPhoneUpdateArgs = {
   input: RequestPhoneUpdateInput;
 };
@@ -5740,6 +6189,11 @@ export type MutationReturnStockArgs = {
 };
 
 
+export type MutationReviewBookingPassReportArgs = {
+  input: ReviewBookingPassReportInput;
+};
+
+
 export type MutationReviewClaimRequestArgs = {
   input: ReviewClaimRequestInput;
 };
@@ -5747,6 +6201,11 @@ export type MutationReviewClaimRequestArgs = {
 
 export type MutationReviewPromotionArgs = {
   input: ReviewPromotionInput;
+};
+
+
+export type MutationRevokeOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -5767,6 +6226,46 @@ export type MutationScheduleMatchArgs = {
 
 export type MutationScorePointArgs = {
   input: ScorePointInput;
+};
+
+
+export type MutationScoreboardCompleteSetArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardFinishMatchEarlyArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardRetireSessionArgs = {
+  input: ScoreboardRetireInput;
+};
+
+
+export type MutationScoreboardScorePointArgs = {
+  input: ScoreboardScorePointInput;
+};
+
+
+export type MutationScoreboardSetServingPlayerArgs = {
+  input: ScoreboardSetServingPlayerInput;
+};
+
+
+export type MutationScoreboardSwapCourtSidesArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardUndoLastPointArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardUpdateElapsedArgs = {
+  input: ScoreboardUpdateElapsedInput;
 };
 
 
@@ -5822,6 +6321,12 @@ export type MutationSetMatchWalkoverArgs = {
 };
 
 
+export type MutationSetOtpTestPhoneEnabledArgs = {
+  enabled: Scalars['Boolean']['input'];
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationSetRetirementArgs = {
   input: SetRetirementInput;
 };
@@ -5859,6 +6364,11 @@ export type MutationStartMatchArgs = {
 
 export type MutationStartPickupGameArgs = {
   gameId: Scalars['ID']['input'];
+};
+
+
+export type MutationStartScoreboardSessionArgs = {
+  input: StartScoreboardSessionInput;
 };
 
 
@@ -6066,6 +6576,12 @@ export type MutationUpdateOrderStatusArgs = {
 };
 
 
+export type MutationUpdateOtpTestPhoneArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateOtpTestPhoneInput;
+};
+
+
 export type MutationUpdateParticipantDepositArgs = {
   input: UpdateParticipantDepositInput;
 };
@@ -6217,6 +6733,11 @@ export type MutationUploadPostMediaArgs = {
 };
 
 
+export type MutationUploadProcessedImageArgs = {
+  input: UploadProcessedImageInput;
+};
+
+
 export type MutationUploadProductImageArgs = {
   input: UploadProductImageInput;
 };
@@ -6241,6 +6762,11 @@ export type MutationVerifyOtpArgs = {
   input: VerifyOtpInput;
 };
 
+
+export type MutationVerifyPhoneOtpArgs = {
+  input: VerifyPhoneOtpInput;
+};
+
 export type MyGamesFilterInput = {
   /** Từ ngày (YYYY-MM-DD) */
   dateFrom?: InputMaybe<Scalars['String']['input']>;
@@ -6261,6 +6787,7 @@ export type MyGamesFilterInput = {
 /** Filter for my passes */
 export enum MyPassesFilter {
   All = 'ALL',
+  Completed = 'COMPLETED',
   Created = 'CREATED',
   Interested = 'INTERESTED',
   Received = 'RECEIVED'
@@ -6328,6 +6855,17 @@ export type Notification = {
   userId: Scalars['ID']['output'];
 };
 
+/** A Relay-style connection for Notification items. */
+export type NotificationConnection = {
+  __typename?: 'NotificationConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<NotificationEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type NotificationData = {
   __typename?: 'NotificationData';
   /** Custom action identifier */
@@ -6358,6 +6896,15 @@ export type NotificationDataInput = {
   targetId?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
   venueName?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** An edge in the NotificationConnection. */
+export type NotificationEdge = {
+  __typename?: 'NotificationEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Notification;
 };
 
 export type NotificationFilterInput = {
@@ -6819,11 +7366,119 @@ export enum OrganizerCorrectLiveScoreMode {
   UndoPoints = 'UNDO_POINTS'
 }
 
+/** Transport channel used to deliver an OTP */
+export enum OtpChannelType {
+  Email = 'EMAIL',
+  FirebaseFallback = 'FIREBASE_FALLBACK',
+  Pending = 'PENDING',
+  Zns = 'ZNS'
+}
+
+/** Specific purpose an OTP was issued for; bound at creation */
+export enum OtpPurpose {
+  EmailChange = 'EMAIL_CHANGE',
+  EmailVerification = 'EMAIL_VERIFICATION',
+  PasswordResetEmail = 'PASSWORD_RESET_EMAIL',
+  PasswordResetPhone = 'PASSWORD_RESET_PHONE',
+  PhoneChange = 'PHONE_CHANGE',
+  SignInPhone = 'SIGN_IN_PHONE',
+  SignUpPhone = 'SIGN_UP_PHONE'
+}
+
 export type OtpResponse = {
   __typename?: 'OtpResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verificationId?: Maybe<Scalars['String']['output']>;
+};
+
+export type OtpTestPhone = {
+  __typename?: 'OtpTestPhone';
+  _id: Scalars['ID']['output'];
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: Maybe<Array<OtpPurpose>>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['ID']['output']>;
+  enabled: Scalars['Boolean']['output'];
+  expiresAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Human-readable label for QA / ops */
+  label: Scalars['String']['output'];
+  /** E.164 phone number */
+  phone: Scalars['String']['output'];
+  /** Fixed 6-digit OTP code (SUPER_ADMIN only) */
+  testCode: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  updatedBy?: Maybe<Scalars['ID']['output']>;
+};
+
+export type OtpTestPhoneFilterInput = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search phone or label (partial match) */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OtpTestPhoneList = {
+  __typename?: 'OtpTestPhoneList';
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<OtpTestPhone>;
+  limit: Scalars['Float']['output'];
+  page: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type OtpTestUserGrant = {
+  __typename?: 'OtpTestUserGrant';
+  _id: Scalars['ID']['output'];
+  /** Allowed OTP purposes (default SIGN_IN_PHONE only) */
+  allowedPurposes: Array<OtpPurpose>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['ID']['output']>;
+  enabled: Scalars['Boolean']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+  /** E.164 phone from user account */
+  phone: Scalars['String']['output'];
+  /** Reason / ticket reference for audit trail */
+  reason: Scalars['String']['output'];
+  revokedAt?: Maybe<Scalars['DateTime']['output']>;
+  revokedBy?: Maybe<Scalars['ID']['output']>;
+  /** Fixed 6-digit OTP code (SUPER_ADMIN only) */
+  testCode: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  /** Denormalized user display name at grant time */
+  userDisplayName: Scalars['String']['output'];
+  /** Linked user account */
+  userId: Scalars['ID']['output'];
+  /** Denormalized user role at grant time */
+  userRole: UserRole;
+};
+
+export type OtpTestUserGrantFilterInput = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search phone, reason, or userId */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by user ID */
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OtpTestUserGrantList = {
+  __typename?: 'OtpTestUserGrantList';
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<OtpTestUserGrant>;
+  limit: Scalars['Float']['output'];
+  page: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  /** Cursor of the last item in the current page. */
+  endCursor?: Maybe<Scalars['String']['output']>;
+  /** Whether more items exist after the current page. */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Whether items exist before the current page (reserved). */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** Cursor of the first item in the current page. */
+  startCursor?: Maybe<Scalars['String']['output']>;
 };
 
 export type PaginationInput = {
@@ -6949,7 +7604,12 @@ export type PickupGame = {
   conversationId?: Maybe<Scalars['ID']['output']>;
   /** Cấu hình chi phí */
   costConfig: CostConfig;
-  /** Ảnh bìa */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Ảnh bìa
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Địa điểm tùy chỉnh */
@@ -6958,6 +7618,8 @@ export type PickupGame = {
   depositConfig?: Maybe<DepositConfig>;
   /** Khoảng cách (km) */
   distanceKm?: Maybe<Scalars['Float']['output']>;
+  /** Thời điểm kết thúc kèo (Asia/Ho_Chi_Minh) */
+  endsAt: Scalars['DateTime']['output'];
   /** Dụng cụ cần mang */
   equipment?: Maybe<Array<EquipmentItem>>;
   /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) — multi-select */
@@ -6970,7 +7632,12 @@ export type PickupGame = {
   host?: Maybe<User>;
   /** ID người tạo kèo */
   hostId: Scalars['ID']['output'];
-  /** Ảnh khác */
+  /** Gallery with placeholder + responsive variants. */
+  imageMedia?: Maybe<Array<ImageMedia>>;
+  /**
+   * Ảnh khác
+   * @deprecated Use `imageMedia[].url`. Kept for mobile builds < 1.7.
+   */
   images?: Maybe<Array<Scalars['String']['output']>>;
   /** Là host */
   isHost?: Maybe<Scalars['Boolean']['output']>;
@@ -7000,6 +7667,8 @@ export type PickupGame = {
   slotConfig: SlotConfig;
   /** Môn thể thao */
   sportType: SportType;
+  /** Thời điểm bắt đầu kèo (Asia/Ho_Chi_Minh) */
+  startsAt: Scalars['DateTime']['output'];
   /** Trạng thái kèo */
   status: PickupGameStatus;
   /** Tags */
@@ -7101,9 +7770,9 @@ export type PickupGameFilterInput = {
   statuses?: InputMaybe<Array<PickupGameStatus>>;
   /** Lọc theo tags */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** Từ giờ (HH:mm) */
+  /** Lọc theo giờ bắt đầu (HH:mm) trên startsAt; kết hợp dateFrom/dateTo */
   timeFrom?: InputMaybe<Scalars['String']['input']>;
-  /** Đến giờ (HH:mm) */
+  /** Giới hạn trên startsAt (HH:mm) trong ngày dateTo hoặc dateFrom */
   timeTo?: InputMaybe<Scalars['String']['input']>;
   /** Giới tính của user (để lọc kèo phù hợp) */
   userGender?: InputMaybe<Gender>;
@@ -7321,6 +7990,18 @@ export type PostBookmark = {
   userId: Scalars['ID']['output'];
 };
 
+export type PostBookmarkConnection = {
+  __typename?: 'PostBookmarkConnection';
+  edges: Array<PostBookmarkEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostBookmarkEdge = {
+  __typename?: 'PostBookmarkEdge';
+  cursor: Scalars['String']['output'];
+  node: PostBookmark;
+};
+
 export type PostComment = {
   __typename?: 'PostComment';
   _id: Scalars['ID']['output'];
@@ -7346,6 +8027,37 @@ export type PostComment = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type PostCommentConnection = {
+  __typename?: 'PostCommentConnection';
+  edges: Array<PostCommentEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostCommentEdge = {
+  __typename?: 'PostCommentEdge';
+  cursor: Scalars['String']['output'];
+  node: PostComment;
+};
+
+export type PostConnection = {
+  __typename?: 'PostConnection';
+  edges: Array<PostEdge>;
+  pageInfo: PageInfo;
+};
+
+/** Payload for the postDeleted subscription. */
+export type PostDeletedPayload = {
+  __typename?: 'PostDeletedPayload';
+  _id: Scalars['ID']['output'];
+  postId: Scalars['ID']['output'];
+};
+
+export type PostEdge = {
+  __typename?: 'PostEdge';
+  cursor: Scalars['String']['output'];
+  node: Post;
+};
+
 export type PostFilterInput = {
   /** Filter by author ID */
   authorId?: InputMaybe<Scalars['ID']['input']>;
@@ -7359,6 +8071,12 @@ export type PostFilterInput = {
   visibility?: InputMaybe<PostVisibility>;
 };
 
+export type PostLikerEdge = {
+  __typename?: 'PostLikerEdge';
+  cursor: Scalars['String']['output'];
+  node: PostLikerUser;
+};
+
 export type PostLikerUser = {
   __typename?: 'PostLikerUser';
   _id: Scalars['ID']['output'];
@@ -7368,6 +8086,12 @@ export type PostLikerUser = {
   likedAt: Scalars['String']['output'];
   photoURL?: Maybe<Scalars['String']['output']>;
   userName?: Maybe<Scalars['String']['output']>;
+};
+
+export type PostLikersConnection = {
+  __typename?: 'PostLikersConnection';
+  edges: Array<PostLikerEdge>;
+  pageInfo: PageInfo;
 };
 
 export type PostLikersList = {
@@ -7417,6 +8141,8 @@ export type PostLocationInput = {
 
 export type PostMedia = {
   __typename?: 'PostMedia';
+  /** BlurHash placeholder for instant image preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   duration?: Maybe<Scalars['Float']['output']>;
   height?: Maybe<Scalars['Float']['output']>;
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -7428,6 +8154,8 @@ export type PostMedia = {
 };
 
 export type PostMediaInput = {
+  /** BlurHash placeholder used by the mobile client to render an instant preview while the full image loads. */
+  blurhash?: InputMaybe<Scalars['String']['input']>;
   /** Duration in seconds (for videos) */
   duration?: InputMaybe<Scalars['Float']['input']>;
   /** Height in pixels */
@@ -7780,12 +8508,22 @@ export type ProductImage = {
   __typename?: 'ProductImage';
   /** Alt text for accessibility */
   alt?: Maybe<Scalars['String']['output']>;
+  /** BlurHash placeholder for instant preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Display order */
   displayOrder: Scalars['Int']['output'];
+  /** Image height in pixels. */
+  height?: Maybe<Scalars['Int']['output']>;
   /** Is primary image */
   isPrimary: Scalars['Boolean']['output'];
+  /** ~800px medium variant. */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
+  /** ~200px thumbnail variant. */
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
   /** Image URL */
   url: Scalars['String']['output'];
+  /** Image width in pixels. */
+  width?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ProductImageInput = {
@@ -8378,12 +9116,18 @@ export type Query = {
   availablePasses: BookingPassList;
   /** Get available promotions for a booking */
   availablePromotionsForBooking: AvailablePromotionsForBooking;
+  /** Top N pass có giảm giá >= 20% so với giá gốc (cho section "Giảm sâu"). */
+  bestDealPasses: Array<BookingPass>;
   /** Get booking by ID */
   booking: Booking;
   /** Get combined invoice for a booking */
   bookingInvoice: BookingInvoice;
   /** Get booking pass by ID */
   bookingPass: BookingPass;
+  /** [Admin] Chi tiết báo cáo pass sân */
+  bookingPassReport: BookingPassReport;
+  /** [Admin] Danh sách báo cáo pass sân */
+  bookingPassReports: BookingPassReportList;
   /** Get booking statistics */
   bookingStats: BookingStats;
   /** Preview trước khi bốc thăm: kiểm tra nếu cần tự động giảm kích thước nhánh đấu (organizer only) */
@@ -8418,6 +9162,8 @@ export type Query = {
   claimRequestStats: ClaimRequestStats;
   /** Get claim requests with filters - Admin only */
   claimRequests: ClaimRequestList;
+  /** Cursor-paginated replies to a parent comment. */
+  commentRepliesConnection: PostCommentConnection;
   /** Public list of referees who confirmed participation (name + role only) */
   confirmedTournamentReferees: Array<TournamentRefereePublic>;
   /** Get court by ID */
@@ -8438,7 +9184,10 @@ export type Query = {
   getAvailableOrderPromotions: Array<Promotion>;
   /** Get list of blocked users */
   getBlockedUsers: Array<UserBlock>;
-  /** Get replies to a comment */
+  /**
+   * Get replies to a comment (offset). DEPRECATED: prefer commentRepliesConnection.
+   * @deprecated Use commentRepliesConnection (cursor pagination).
+   */
   getCommentReplies: CommentList;
   /** Get contact inquiries with filters (Admin only) */
   getContactInquiries: ContactInquiryList;
@@ -8446,6 +9195,8 @@ export type Query = {
   getContactInquiry: ContactInquiry;
   /** Get contact inquiry stats by status (Admin only) */
   getContactInquiryStats: ContactInquiryStats;
+  /** Get a conversation by ID */
+  getConversation: Conversation;
   /** Get conversations for current user */
   getConversations: ConversationList;
   /** Get followers of a user */
@@ -8474,17 +9225,26 @@ export type Query = {
   getMessageReportsForAdmin: MessageReportList;
   /** Get messages in a conversation */
   getMessages: MessageList;
-  /** Get current user bookmarked posts */
+  /**
+   * Get current user bookmarked posts (offset). DEPRECATED: prefer myBookmarksConnection.
+   * @deprecated Use myBookmarksConnection (cursor pagination).
+   */
   getMyBookmarks: BookmarkList;
   /** Get groups the current user is a member of */
   getMyGroups: GroupList;
   /** Get pending invitations for the current user */
   getMyInvitations: GroupMemberList;
-  /** Get current user's posts */
+  /**
+   * Get current user's posts (offset). DEPRECATED: prefer myPostsConnection.
+   * @deprecated Use myPostsConnection (cursor pagination).
+   */
   getMyPosts: PostList;
   /** Get a single notification by ID */
   getNotification: Notification;
-  /** Get notifications for current user with filters and pagination */
+  /**
+   * Get notifications for current user with filters and pagination. DEPRECATED: prefer notificationsConnection.
+   * @deprecated Use notificationsConnection (cursor pagination).
+   */
   getNotifications: NotificationList;
   /** Get partner leaderboard for the dashboard (Admin only) */
   getPartnerLeaderboard: PartnerLeaderboard;
@@ -8492,7 +9252,10 @@ export type Query = {
   getPinnedMessages: Array<Message>;
   /** Get a single post by ID */
   getPost: Post;
-  /** Get comments for a post */
+  /**
+   * Get comments for a post (offset). DEPRECATED: prefer postCommentsConnection.
+   * @deprecated Use postCommentsConnection (cursor pagination).
+   */
   getPostComments: CommentList;
   /** Get paginated list of users who liked a post */
   getPostLikers: PostLikersList;
@@ -8502,7 +9265,10 @@ export type Query = {
   getPostReportStats: PostReportStats;
   /** Get all post reports with filters (Admin only) */
   getPostReportsForAdmin: PostReportList;
-  /** Get posts with filters and pagination */
+  /**
+   * Get posts with filters and pagination (offset). DEPRECATED: prefer postsConnection.
+   * @deprecated Use postsConnection (cursor pagination).
+   */
   getPosts: PostList;
   /** Get import history for a product */
   getProductImportHistory: Array<StockMovement>;
@@ -8528,7 +9294,10 @@ export type Query = {
   getUnreadNotificationCount: Scalars['Int']['output'];
   /** Get user by username */
   getUserByUserName: User;
-  /** Get posts by a specific user */
+  /**
+   * Get posts by a specific user (offset). DEPRECATED: prefer userPostsConnection.
+   * @deprecated Use userPostsConnection (cursor pagination).
+   */
   getUserPosts: PostList;
   /** Get user profile by ID */
   getUserProfile: User;
@@ -8582,8 +9351,15 @@ export type Query = {
   me: User;
   /** Blacklist của tôi */
   myBlacklist: HostBlacklistList;
-  /** Get my bookings (as customer) */
+  /**
+   * Get my bookings (as customer). DEPRECATED: prefer myBookingsConnection.
+   * @deprecated Use myBookingsConnection (cursor pagination).
+   */
   myBookings: BookingList;
+  /** Cursor-paginated bookings of the current customer (Relay-style). */
+  myBookingsConnection: BookingConnection;
+  /** Cursor-paginated current user's bookmarks. */
+  myBookmarksConnection: PostBookmarkConnection;
   /** Lấy danh sách campaign của host hiện tại */
   myCampaigns: Array<PickupGameCampaign>;
   /** Get current user claim requests */
@@ -8606,6 +9382,10 @@ export type Query = {
   myPasses: BookingPassList;
   /** Get current user pending staff invitations */
   myPendingInvitations: Array<VenueStaff>;
+  /** Cursor-paginated posts authored by the current user. */
+  myPostsConnection: PostConnection;
+  /** Đánh giá hiện tại của user cho 1 pass (nếu có). */
+  myRatingForPass?: Maybe<TransferrerRating>;
   /** Get my recurring bookings (customer) */
   myRecurringBookings: RecurringBookingList;
   /** Current user's registrations */
@@ -8630,6 +9410,8 @@ export type Query = {
   nearbyVenues: NearbyVenueList;
   /** Quick check if user needs to accept legal documents */
   needsToAcceptLegal: Scalars['Boolean']['output'];
+  /** Cursor-paginated notifications feed (Relay-style). */
+  notificationsConnection: NotificationConnection;
   /** Get order by ID */
   order: Order;
   /** Get comprehensive order analytics */
@@ -8642,6 +9424,14 @@ export type Query = {
   ordersByBookingId: Array<Order>;
   /** Get orders pending refund for a venue (Owner only) */
   ordersPendingRefund: OrderList;
+  /** Get OTP test phone by id (SUPER_ADMIN only) */
+  otpTestPhone: OtpTestPhone;
+  /** List OTP test phones (SUPER_ADMIN only) */
+  otpTestPhones: OtpTestPhoneList;
+  /** Get OTP test user grant by id (SUPER_ADMIN only) */
+  otpTestUserGrant: OtpTestUserGrant;
+  /** List OTP test user grants (SUPER_ADMIN only) */
+  otpTestUserGrants: OtpTestUserGrantList;
   /** Get pending claim requests - Admin only */
   pendingClaimRequests: ClaimRequestList;
   /** Get pending venue requests (Admin only) */
@@ -8654,10 +9444,18 @@ export type Query = {
   pickupGames: PickupGameList;
   /** Get popular/featured sports */
   popularSports: Array<Sport>;
+  /** Cursor-paginated top-level comments of a post. */
+  postCommentsConnection: PostCommentConnection;
+  /** Cursor-paginated likers of a post. */
+  postLikersConnection: PostLikersConnection;
+  /** Cursor-paginated posts feed (Relay-style). */
+  postsConnection: PostConnection;
   /** Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only) */
   previewBulkImport: PreviewBulkImportResult;
   /** Super Admin: preview eligible R1 BYE slots for late entry placement */
   previewLateEntryPlacement: LateEntryPlacementPreview;
+  /** Preview drag-move without persisting */
+  previewMoveMatch: MoveMatchPreviewResult;
   /** Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB) */
   previewRepackCourtSchedule: RepackCourtSchedulePreviewResult;
   /** Get product by ID */
@@ -8682,10 +9480,20 @@ export type Query = {
   refereeMatches: Array<TournamentMatch>;
   /** Get referee workload statistics for a tournament */
   refereeWorkload: RefereeWorkloadResult;
+  /** Hub header stats */
+  scoreboardHubStats: ScoreboardHubStats;
+  /** Default scoring preset for sport */
+  scoreboardPreset: ScoringConfig;
+  /** Get scoreboard session by ID */
+  scoreboardSession: ScoreboardSession;
+  /** Public viewer access by share token */
+  scoreboardSessionByViewerToken: ScoreboardSession;
+  /** List scoreboard sessions for hub tabs */
+  scoreboardSessions: ScoreboardSessionList;
   /** Search messages in a conversation */
   searchMessages: MessageList;
-  /** Search user by phone number (for staff booking) */
-  searchUserByPhone?: Maybe<User>;
+  /** Search user by phone number (venue staff or admin only, for booking) */
+  searchUserByPhone?: Maybe<UserContactLookup>;
   /** Search users by username */
   searchUsersByUserName: Array<User>;
   /** Server information */
@@ -8696,6 +9504,8 @@ export type Query = {
   sports: Array<Sport>;
   /** Get venues I work at */
   staffedVenues: VenueList;
+  /** Giá pass đề xuất (median) dựa trên các pass COMPLETED 90 ngày qua. */
+  suggestedPrice: SuggestedPrice;
   /** Get system categories */
   systemCategories: Array<ProductCategory>;
   /** Test query for notification service */
@@ -8724,6 +9534,14 @@ export type Query = {
   tournamentStats: TournamentStats;
   /** List tournaments with filters */
   tournaments: TournamentList;
+  /** Đánh giá đã nhận của 1 transferrer. */
+  transferrerRatings: Array<TransferrerRating>;
+  /** Trust stats cho 1 user (totalCreated, completionRate, pendingReports...) — dùng trên PassDetail. */
+  transferrerStats: TransferrerStats;
+  /** Top N pass sắp hết hạn trong 24h (cho marketplace section "Sắp hết hạn"). */
+  urgentPasses: Array<BookingPass>;
+  /** Cursor-paginated posts authored by a specific user. */
+  userPostsConnection: PostConnection;
   /** Get user profile by ID */
   userProfile?: Maybe<User>;
   /** Validate QR code check-in */
@@ -8844,6 +9662,12 @@ export type QueryAvailablePromotionsForBookingArgs = {
 };
 
 
+export type QueryBestDealPassesArgs = {
+  filter?: InputMaybe<AvailablePassesFilterInput>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryBookingArgs = {
   bookingId: Scalars['ID']['input'];
 };
@@ -8856,6 +9680,17 @@ export type QueryBookingInvoiceArgs = {
 
 export type QueryBookingPassArgs = {
   passId: Scalars['ID']['input'];
+};
+
+
+export type QueryBookingPassReportArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBookingPassReportsArgs = {
+  filter?: InputMaybe<BookingPassReportFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
 };
 
 
@@ -8953,6 +9788,13 @@ export type QueryClaimRequestsArgs = {
 };
 
 
+export type QueryCommentRepliesConnectionArgs = {
+  commentId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
 export type QueryConfirmedTournamentRefereesArgs = {
   tournamentId: Scalars['ID']['input'];
 };
@@ -9011,6 +9853,11 @@ export type QueryGetContactInquiriesArgs = {
 
 export type QueryGetContactInquiryArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetConversationArgs = {
+  conversationId: Scalars['ID']['input'];
 };
 
 
@@ -9347,6 +10194,17 @@ export type QueryMyBookingsArgs = {
 };
 
 
+export type QueryMyBookingsConnectionArgs = {
+  filter?: InputMaybe<BookingFilterInput>;
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
+export type QueryMyBookmarksConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
 export type QueryMyCampaignsArgs = {
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -9388,6 +10246,16 @@ export type QueryMyOrdersArgs = {
 export type QueryMyPassesArgs = {
   filter?: InputMaybe<MyPassesFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryMyPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
+export type QueryMyRatingForPassArgs = {
+  passId: Scalars['ID']['input'];
 };
 
 
@@ -9446,6 +10314,12 @@ export type QueryNearbyVenuesArgs = {
 };
 
 
+export type QueryNotificationsConnectionArgs = {
+  filter?: InputMaybe<NotificationFilterInput>;
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
 export type QueryOrderArgs = {
   orderId: Scalars['ID']['input'];
 };
@@ -9480,6 +10354,28 @@ export type QueryOrdersPendingRefundArgs = {
 };
 
 
+export type QueryOtpTestPhoneArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryOtpTestPhonesArgs = {
+  filter?: InputMaybe<OtpTestPhoneFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryOtpTestUserGrantsArgs = {
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
 export type QueryPendingClaimRequestsArgs = {
   pagination?: InputMaybe<PaginationInput>;
 };
@@ -9506,6 +10402,24 @@ export type QueryPickupGamesArgs = {
 };
 
 
+export type QueryPostCommentsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostLikersConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostsConnectionArgs = {
+  filter?: InputMaybe<PostFilterInput>;
+  pagination?: InputMaybe<CursorPaginationInput>;
+};
+
+
 export type QueryPreviewBulkImportArgs = {
   input: PreviewBulkImportInput;
 };
@@ -9513,6 +10427,11 @@ export type QueryPreviewBulkImportArgs = {
 
 export type QueryPreviewLateEntryPlacementArgs = {
   categoryId: Scalars['ID']['input'];
+};
+
+
+export type QueryPreviewMoveMatchArgs = {
+  input: MoveMatchInput;
 };
 
 
@@ -9584,6 +10503,27 @@ export type QueryRefereeWorkloadArgs = {
 };
 
 
+export type QueryScoreboardPresetArgs = {
+  sportType: SportType;
+};
+
+
+export type QueryScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
+export type QueryScoreboardSessionByViewerTokenArgs = {
+  viewerToken: Scalars['String']['input'];
+};
+
+
+export type QueryScoreboardSessionsArgs = {
+  filter: ScoreboardSessionsFilterInput;
+  pagination?: InputMaybe<PaginationInput>;
+};
+
+
 export type QuerySearchMessagesArgs = {
   input: SearchMessagesInput;
   pagination?: InputMaybe<PaginationInput>;
@@ -9608,6 +10548,11 @@ export type QuerySportArgs = {
 
 export type QueryStaffedVenuesArgs = {
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QuerySuggestedPriceArgs = {
+  filter?: InputMaybe<SuggestedPriceFilterInput>;
 };
 
 
@@ -9675,6 +10620,29 @@ export type QueryTournamentStatsArgs = {
 export type QueryTournamentsArgs = {
   filter?: InputMaybe<TournamentFilterInput>;
   pagination?: InputMaybe<PaginationInput>;
+};
+
+
+export type QueryTransferrerRatingsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryTransferrerStatsArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryUrgentPassesArgs = {
+  filter?: InputMaybe<AvailablePassesFilterInput>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryUserPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPaginationInput>;
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -9836,6 +10804,20 @@ export type RateParticipantsInput = {
   mvpUserId?: InputMaybe<Scalars['ID']['input']>;
   /** Danh sách đánh giá */
   ratings: Array<ParticipantRatingInput>;
+};
+
+export type RatePassTransferInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  passId: Scalars['ID']['input'];
+  /** Điểm 1-5 */
+  score: Scalars['Int']['input'];
+};
+
+export type ReactionDelta = {
+  __typename?: 'ReactionDelta';
+  createdAt: Scalars['DateTime']['output'];
+  emoji: Scalars['String']['output'];
+  userId: Scalars['ID']['output'];
 };
 
 export type RecordQrScanInput = {
@@ -10157,9 +11139,11 @@ export type RepackCourtScheduleInput = {
 export type RepackCourtSchedulePreviewResult = {
   __typename?: 'RepackCourtSchedulePreviewResult';
   anchorMatchId: Scalars['ID']['output'];
+  /** Total NOT_STARTED matches that would be repacked */
   backlogCount: Scalars['Int']['output'];
   calendarDate: Scalars['String']['output'];
   courtName: Scalars['String']['output'];
+  /** Shifts where old time was before anchor actual start (overdue backlog) */
   overdueCount: Scalars['Int']['output'];
   preview: Array<ScheduleShiftPreview>;
   totalAffected: Scalars['Int']['output'];
@@ -10173,6 +11157,12 @@ export type RepackCourtScheduleResult = {
   preview: Array<ScheduleShiftPreview>;
   totalAffected: Scalars['Int']['output'];
   warnings: Array<Scalars['String']['output']>;
+};
+
+export type ReportBookingPassInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  passId: Scalars['ID']['input'];
+  reason: BookingPassReportReason;
 };
 
 export type ReportMessageInput = {
@@ -10289,10 +11279,10 @@ export type RequestLocationInput = {
   city?: InputMaybe<Scalars['String']['input']>;
   /** District */
   district?: InputMaybe<Scalars['String']['input']>;
-  /** Latitude */
-  latitude?: InputMaybe<Scalars['Float']['input']>;
-  /** Longitude */
-  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Latitude (required for map / search) */
+  latitude: Scalars['Float']['input'];
+  /** Longitude (required for map / search) */
+  longitude: Scalars['Float']['input'];
   /** Ward */
   ward?: InputMaybe<Scalars['String']['input']>;
 };
@@ -10324,6 +11314,23 @@ export type RequestOperatingHoursInput = {
   openTime: Scalars['String']['input'];
 };
 
+export type RequestPhoneOtpInput = {
+  deviceId?: InputMaybe<Scalars['String']['input']>;
+  forceChannel?: InputMaybe<OtpChannelType>;
+  phone: Scalars['String']['input'];
+  purpose: OtpPurpose;
+};
+
+export type RequestPhoneOtpResponse = {
+  __typename?: 'RequestPhoneOtpResponse';
+  channel: OtpChannelType;
+  channelLabel?: Maybe<Scalars['String']['output']>;
+  expiresAt?: Maybe<Scalars['DateTime']['output']>;
+  maskedPhone: Scalars['String']['output'];
+  resendAvailableAt: Scalars['DateTime']['output'];
+  verificationId?: Maybe<Scalars['String']['output']>;
+};
+
 export type RequestPhoneUpdateInput = {
   newPhone: Scalars['String']['input'];
 };
@@ -10352,8 +11359,10 @@ export type RequestTimeSlotPricingInput = {
 };
 
 export type ResetPasswordInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
   newPassword: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Type of resource affected */
@@ -10417,6 +11426,13 @@ export type RevenueDataPoint = {
   previousValue?: Maybe<Scalars['Int']['output']>;
   /** Revenue value */
   value: Scalars['Int']['output'];
+};
+
+export type ReviewBookingPassReportInput = {
+  cancelPass?: InputMaybe<Scalars['Boolean']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  reportId: Scalars['ID']['input'];
+  status: BookingPassReportStatus;
 };
 
 export type ReviewClaimRequestInput = {
@@ -10538,6 +11554,163 @@ export type ScoreSummary = {
   sets: Array<SetScoreSummary>;
 };
 
+export enum ScoreboardAbandonReason {
+  Expired = 'EXPIRED',
+  Inactivity = 'INACTIVITY'
+}
+
+export enum ScoreboardDatePreset {
+  All = 'ALL',
+  Today = 'TODAY',
+  Week = 'WEEK'
+}
+
+export type ScoreboardHubStats = {
+  __typename?: 'ScoreboardHubStats';
+  liveCount: Scalars['Int']['output'];
+  todayCount: Scalars['Int']['output'];
+  weekWins: Scalars['Int']['output'];
+};
+
+export enum ScoreboardHubTab {
+  History = 'HISTORY',
+  Live = 'LIVE',
+  Mine = 'MINE'
+}
+
+export enum ScoreboardMatchFormat {
+  Doubles = 'DOUBLES',
+  Singles = 'SINGLES',
+  Team = 'TEAM'
+}
+
+export type ScoreboardPointEvent = {
+  __typename?: 'ScoreboardPointEvent';
+  id: Scalars['ID']['output'];
+  pointValue?: Maybe<Scalars['Int']['output']>;
+  scoreAfter: Array<Scalars['Int']['output']>;
+  scoringPlayer: Scalars['Int']['output'];
+  servingPlayer: Scalars['Int']['output'];
+  setNumber: Scalars['Int']['output'];
+  timestamp: Scalars['String']['output'];
+};
+
+export type ScoreboardRetireInput = {
+  retiredPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardScorePointInput = {
+  pointValue?: InputMaybe<Scalars['Int']['input']>;
+  scoringPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardScorecard = {
+  __typename?: 'ScoreboardScorecard';
+  bestOf: Scalars['Int']['output'];
+  currentPeriod?: Maybe<Scalars['Int']['output']>;
+  currentSetIndex: Scalars['Int']['output'];
+  elapsedSeconds: Scalars['Int']['output'];
+  isTiebreak?: Maybe<Scalars['Boolean']['output']>;
+  leftSidePlayer?: Maybe<Scalars['Int']['output']>;
+  pointHistory: Array<ScoreboardPointEvent>;
+  scoringConfig: ScoringConfig;
+  servingPlayer?: Maybe<Scalars['Int']['output']>;
+  sessionId: Scalars['ID']['output'];
+  sets: Array<ScoreboardScorecardSet>;
+  side1Serving?: Maybe<Scalars['Boolean']['output']>;
+  status: ScorecardStatus;
+};
+
+export type ScoreboardScorecardSet = {
+  __typename?: 'ScoreboardScorecardSet';
+  isComplete: Scalars['Boolean']['output'];
+  player1Score: Scalars['Int']['output'];
+  player2Score: Scalars['Int']['output'];
+  setNumber: Scalars['Int']['output'];
+  winner?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ScoreboardSession = {
+  __typename?: 'ScoreboardSession';
+  _id: Scalars['ID']['output'];
+  abandonReason?: Maybe<ScoreboardAbandonReason>;
+  createdAt: Scalars['DateTime']['output'];
+  finishedAt?: Maybe<Scalars['DateTime']['output']>;
+  lastScoringActivityAt?: Maybe<Scalars['DateTime']['output']>;
+  matchFormat: ScoreboardMatchFormat;
+  ownerId: Scalars['ID']['output'];
+  scheduledAt?: Maybe<Scalars['DateTime']['output']>;
+  scorecard?: Maybe<ScoreboardScorecard>;
+  scoringConfig: ScoringConfig;
+  side1: ScoreboardSide;
+  side2: ScoreboardSide;
+  sportType: SportType;
+  startedAt?: Maybe<Scalars['DateTime']['output']>;
+  status: ScoreboardSessionStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  viewerToken: Scalars['String']['output'];
+  visibility: ScoreboardVisibility;
+  winner?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ScoreboardSessionIdInput = {
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardSessionList = {
+  __typename?: 'ScoreboardSessionList';
+  hasMore: Scalars['Boolean']['output'];
+  items: Array<ScoreboardSession>;
+  page: Scalars['Int']['output'];
+  pageSize: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
+export enum ScoreboardSessionStatus {
+  Abandoned = 'ABANDONED',
+  Cancelled = 'CANCELLED',
+  Draft = 'DRAFT',
+  Finished = 'FINISHED',
+  Live = 'LIVE',
+  Scheduled = 'SCHEDULED'
+}
+
+export type ScoreboardSessionsFilterInput = {
+  datePreset?: InputMaybe<ScoreboardDatePreset>;
+  searchQuery?: InputMaybe<Scalars['String']['input']>;
+  sportType?: InputMaybe<SportType>;
+  status?: InputMaybe<ScoreboardSessionStatus>;
+  tab: ScoreboardHubTab;
+};
+
+export type ScoreboardSetServingPlayerInput = {
+  servingPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardSide = {
+  __typename?: 'ScoreboardSide';
+  label: Scalars['String']['output'];
+  memberLabels?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+export type ScoreboardSideInput = {
+  label: Scalars['String']['input'];
+  memberLabels?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type ScoreboardUpdateElapsedInput = {
+  seconds: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export enum ScoreboardVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC'
+}
+
 export type ScorecardSet = {
   __typename?: 'ScorecardSet';
   isComplete: Scalars['Boolean']['output'];
@@ -10567,6 +11740,8 @@ export type ScoringConfig = {
   deuceAt: Scalars['Int']['output'];
   /** Whether deuce rules apply */
   deuceEnabled: Scalars['Boolean']['output'];
+  /** Frames to win (billiards / FRAMES scoring system) */
+  framesToWin?: Maybe<Scalars['Int']['output']>;
   /** Max points per set (0 = unlimited, win by margin) */
   maxPoints: Scalars['Int']['output'];
   /** Period duration in minutes (timed sports) */
@@ -10594,11 +11769,14 @@ export type ScoringConfigInput = {
   bestOf: Scalars['Int']['input'];
   deuceAt?: Scalars['Int']['input'];
   deuceEnabled?: Scalars['Boolean']['input'];
+  framesToWin?: InputMaybe<Scalars['Int']['input']>;
   maxPoints?: Scalars['Int']['input'];
   periodDurationMinutes?: Scalars['Int']['input'];
   periodsCount?: Scalars['Int']['input'];
   pointsPerSet: Scalars['Int']['input'];
   scoringSystem: ScoringSystem;
+  serveRotationInterval?: InputMaybe<Scalars['Int']['input']>;
+  serveRule?: InputMaybe<ServeRule>;
   setsToWin: Scalars['Int']['input'];
   tiebreakEnabled?: Scalars['Boolean']['input'];
   tiebreakPoints?: Scalars['Int']['input'];
@@ -10608,6 +11786,7 @@ export type ScoringConfigInput = {
 /** Type of scoring system used for a sport */
 export enum ScoringSystem {
   Custom = 'CUSTOM',
+  Frames = 'FRAMES',
   SetsAndPoints = 'SETS_AND_POINTS',
   TimedGoals = 'TIMED_GOALS',
   TimedPoints = 'TIMED_POINTS'
@@ -10725,7 +11904,8 @@ export type SendNotificationToUsersInput = {
 export enum ServeRule {
   NoServe = 'NO_SERVE',
   RallyPoint = 'RALLY_POINT',
-  Rotation = 'ROTATION'
+  Rotation = 'ROTATION',
+  SideOut = 'SIDE_OUT'
 }
 
 export type ServerInfo = {
@@ -10982,6 +12162,11 @@ export type StartMatchInput = {
   setupMethod?: InputMaybe<MatchSetupMethod>;
 };
 
+export type StartScoreboardSessionInput = {
+  sessionId: Scalars['String']['input'];
+  setup: MatchSetupInput;
+};
+
 /** Reason for stock adjustment */
 export enum StockAdjustmentReason {
   Correction = 'CORRECTION',
@@ -11120,6 +12305,12 @@ export type SubmitContactInquiryInput = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Fires when a comment is created on a specific post. Subscribe with `postId` from PostDetail. */
+  commentCreated: PostComment;
+  /** Fires when a comment is deleted on a specific post. Subscribe with `postId` from PostDetail. */
+  commentDeleted: CommentDeletedPayload;
+  /** Fires when a comment is updated on a specific post. Subscribe with `postId` from PostDetail. */
+  commentUpdated: PostComment;
   /** Subscribe to message read receipts in a group */
   groupMessageRead: GroupMessageReadPayload;
   /** Subscribe to new messages in a group */
@@ -11132,6 +12323,8 @@ export type Subscription = {
   matchScoreUpdated: MatchScorecard;
   /** Subscribe to message deletions */
   messageDeleted: MessageDeletedPayload;
+  /** Batched reaction updates for a conversation (200ms window). */
+  messageReactionsBatch: MessageReactionsBatchPayload;
   /** Subscribe to message read receipts */
   messageRead: MessageReadPayload;
   /** Subscribe to new messages in a conversation */
@@ -11140,6 +12333,14 @@ export type Subscription = {
   messageUpdated: Message;
   /** Real-time notification for a specific user */
   notificationCreated: Notification;
+  /** Fires when a new post is created. Subscribe from the feed to show a "new posts" pill. */
+  postCreated: Post;
+  /** Fires when a specific post is deleted. Subscribe with `postId` from PostDetail. */
+  postDeleted: PostDeletedPayload;
+  /** Fires when a specific post is updated. Subscribe with `postId` from PostDetail. */
+  postUpdated: Post;
+  /** Realtime scoreboard session updates */
+  scoreboardSessionUpdated: ScoreboardSession;
   /** Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list. */
   tournamentListUpdated: Scalars['String']['output'];
   /** Any match updated in tournament */
@@ -11150,6 +12351,21 @@ export type Subscription = {
   tournamentStatusChanged: Scalars['String']['output'];
   /** Subscribe to typing indicators */
   typingStatus: TypingStatusPayload;
+};
+
+
+export type SubscriptionCommentCreatedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentUpdatedArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -11183,6 +12399,11 @@ export type SubscriptionMessageDeletedArgs = {
 };
 
 
+export type SubscriptionMessageReactionsBatchArgs = {
+  conversationId: Scalars['ID']['input'];
+};
+
+
 export type SubscriptionMessageReadArgs = {
   conversationId: Scalars['ID']['input'];
 };
@@ -11200,6 +12421,21 @@ export type SubscriptionMessageUpdatedArgs = {
 
 export type SubscriptionNotificationCreatedArgs = {
   userId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionPostDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionPostUpdatedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionScoreboardSessionUpdatedArgs = {
+  sessionId: Scalars['ID']['input'];
 };
 
 
@@ -11228,6 +12464,25 @@ export type SuccessResponse = {
   success: Scalars['Boolean']['output'];
 };
 
+export type SuggestedPrice = {
+  __typename?: 'SuggestedPrice';
+  p25?: Maybe<Scalars['Float']['output']>;
+  p50?: Maybe<Scalars['Float']['output']>;
+  p75?: Maybe<Scalars['Float']['output']>;
+  /** Số pass mẫu dùng để tính */
+  sampleSize: Scalars['Int']['output'];
+  /** Giá đề xuất chính (median của các pass tương tự đã COMPLETED 90 ngày qua) */
+  suggested?: Maybe<Scalars['Float']['output']>;
+};
+
+export type SuggestedPriceFilterInput = {
+  /** Tỉnh / thành phố */
+  city?: InputMaybe<Scalars['String']['input']>;
+  sportType?: InputMaybe<SportType>;
+  /** Lọc theo venue (ưu tiên cùng sân). */
+  venueId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type SwapCourtSidesInput = {
   matchId: Scalars['ID']['input'];
 };
@@ -11243,6 +12498,14 @@ export type SystemStats = {
   totalUsers: Scalars['Int']['output'];
   totalVenues: Scalars['Int']['output'];
 };
+
+/** Khung giờ trong ngày để lọc pass */
+export enum TimeOfDay {
+  Afternoon = 'AFTERNOON',
+  Evening = 'EVENING',
+  Morning = 'MORNING',
+  Night = 'NIGHT'
+}
 
 export type TimeRange = {
   __typename?: 'TimeRange';
@@ -11269,6 +12532,8 @@ export type TimeSlotAvailability = {
   customerId?: Maybe<Scalars['ID']['output']>;
   /** Customer name who booked this slot */
   customerName?: Maybe<Scalars['String']['output']>;
+  /** Customer phone who booked this slot */
+  customerPhone?: Maybe<Scalars['String']['output']>;
   /** End time (HH:mm) */
   endTime: Scalars['String']['output'];
   /** Has active booking pass for this slot */
@@ -11849,6 +13114,43 @@ export type TransferProductsInput = {
   sourceVenueId: Scalars['ID']['input'];
 };
 
+export type TransferrerRating = {
+  __typename?: 'TransferrerRating';
+  _id: Scalars['ID']['output'];
+  /** Nhận xét tuỳ chọn */
+  comment?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  /** Pass đã được rate */
+  passId: Scalars['ID']['output'];
+  rater?: Maybe<User>;
+  /** User rate (receiver / transferee) */
+  raterId: Scalars['ID']['output'];
+  /** Điểm 1-5 */
+  score: Scalars['Int']['output'];
+  transferrer?: Maybe<User>;
+  /** User được rate (transferrer) */
+  transferrerId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type TransferrerStats = {
+  __typename?: 'TransferrerStats';
+  /** Tỷ lệ hoàn tất = totalCompleted / (totalCompleted + totalCancelled). 0..1 */
+  completionRate: Scalars['Float']['output'];
+  /** Ngày tham gia hệ thống (ISO) */
+  memberSince?: Maybe<Scalars['DateTime']['output']>;
+  /** Số báo cáo PENDING tích luỹ */
+  pendingReports: Scalars['Int']['output'];
+  /** Số pass bị huỷ */
+  totalCancelled: Scalars['Int']['output'];
+  /** Số pass đã hoàn tất giao dịch */
+  totalCompleted: Scalars['Int']['output'];
+  /** Tổng số pass đã tạo */
+  totalCreated: Scalars['Int']['output'];
+  /** Số pass hết hạn không ai nhận */
+  totalExpired: Scalars['Int']['output'];
+};
+
 export type TypingStatusPayload = {
   __typename?: 'TypingStatusPayload';
   conversationId: Scalars['ID']['output'];
@@ -11993,6 +13295,14 @@ export type UpdateMessageReportStatusInput = {
   status: ReportStatus;
 };
 
+export type UpdateOtpTestPhoneInput = {
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  testCode?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateParticipantDepositInput = {
   /** Trạng thái đặt cọc mới */
   depositStatus: DepositStatus;
@@ -12037,7 +13347,7 @@ export type UpdatePickupGameCampaignInput = {
   /** Tên campaign */
   name?: InputMaybe<Scalars['String']['input']>;
   /** Môn thể thao của campaign */
-  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  sportTypes?: InputMaybe<Array<SportType>>;
   /** Ngày bắt đầu (ISO string) */
   startDate?: InputMaybe<Scalars['String']['input']>;
   /** Trình độ mục tiêu */
@@ -12449,6 +13759,23 @@ export type UploadGroupCoverInput = {
   groupId?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Logical category of an uploaded asset; controls storage path & validation rules. */
+export enum UploadKind {
+  Avatar = 'AVATAR',
+  ChatFile = 'CHAT_FILE',
+  ChatImage = 'CHAT_IMAGE',
+  ChatVideo = 'CHAT_VIDEO',
+  CoverPhoto = 'COVER_PHOTO',
+  GroupChatImage = 'GROUP_CHAT_IMAGE',
+  GroupCover = 'GROUP_COVER',
+  PaymentProof = 'PAYMENT_PROOF',
+  PostMedia = 'POST_MEDIA',
+  ProductImage = 'PRODUCT_IMAGE',
+  TournamentImage = 'TOURNAMENT_IMAGE',
+  VenueImage = 'VENUE_IMAGE',
+  VenueRequestImage = 'VENUE_REQUEST_IMAGE'
+}
+
 export type UploadPaymentProofInput = {
   /** Base64 encoded image data */
   base64Image: Scalars['String']['input'];
@@ -12463,6 +13790,8 @@ export type UploadPostMediaInput = {
 
 export type UploadPostMediaResponse = {
   __typename?: 'UploadPostMediaResponse';
+  /** BlurHash placeholder for instant image preview on the client. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Height in pixels */
   height?: Maybe<Scalars['Float']['output']>;
   /** File key in storage */
@@ -12475,6 +13804,19 @@ export type UploadPostMediaResponse = {
   url: Scalars['String']['output'];
   /** Width in pixels */
   width?: Maybe<Scalars['Float']['output']>;
+};
+
+export type UploadProcessedImageInput = {
+  /** Base64-encoded image (with or without data: URI prefix). */
+  base64Image: Scalars['String']['input'];
+  /** Logical asset kind (avatar, group-cover, venue-image, …). */
+  kind: UploadKind;
+  /** Owner id used to namespace the storage path (userId / venueId / groupId). */
+  ownerId?: InputMaybe<Scalars['String']['input']>;
+  /** Skip 800px medium variant generation. */
+  skipMedium?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Skip 200px thumbnail generation if the consumer does not need it. */
+  skipThumbnail?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UploadProductImageInput = {
@@ -12522,6 +13864,8 @@ export type User = {
   accountOrigin?: Maybe<AccountOrigin>;
   /** How the user discovered the platform (collected via onboarding survey) */
   acquisitionSource?: Maybe<AcquisitionSource>;
+  /** Avatar with placeholder + responsive variants. */
+  avatar?: Maybe<ImageMedia>;
   bio?: Maybe<Scalars['String']['output']>;
   club?: Maybe<Scalars['String']['output']>;
   coverPhotoURL?: Maybe<Scalars['String']['output']>;
@@ -12530,7 +13874,7 @@ export type User = {
   createdBy?: Maybe<Scalars['ID']['output']>;
   dateOfBirth?: Maybe<Scalars['DateTime']['output']>;
   displayName: Scalars['String']['output'];
-  email: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   emailVerificationDate?: Maybe<Scalars['DateTime']['output']>;
   emailVerified: Scalars['Boolean']['output'];
   fcmTokens: Array<Scalars['String']['output']>;
@@ -12543,10 +13887,15 @@ export type User = {
   isSuspended: Scalars['Boolean']['output'];
   lastLoginAt?: Maybe<Scalars['DateTime']['output']>;
   location?: Maybe<Location>;
+  /** Average rating (1-5) from receivers across completed pass transfers */
+  passRatingAvg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of ratings received for completed transfers */
+  passRatingCount?: Maybe<Scalars['Float']['output']>;
   passwordSetAt?: Maybe<Scalars['DateTime']['output']>;
-  phone: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
   phoneVerificationDate?: Maybe<Scalars['DateTime']['output']>;
   phoneVerified: Scalars['Boolean']['output'];
+  /** Plain avatar URL. Kept for backward compat with mobile builds < 1.7. Prefer `avatar.url` (with blurhash placeholder). */
   photoURL?: Maybe<Scalars['String']['output']>;
   /** Personal referral code (unique per user) */
   referralCode?: Maybe<Scalars['String']['output']>;
@@ -12560,7 +13909,7 @@ export type User = {
   /** Suspension reason */
   suspensionReason?: Maybe<Scalars['String']['output']>;
   totalActivities: Scalars['Float']['output'];
-  uid: Scalars['ID']['output'];
+  uid?: Maybe<Scalars['ID']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   userName: Scalars['String']['output'];
 };
@@ -12578,6 +13927,16 @@ export type UserBlock = {
   /** Reason for blocking */
   reason?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type UserContactLookup = {
+  __typename?: 'UserContactLookup';
+  _id: Scalars['ID']['output'];
+  displayName: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  fullName: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  photoURL?: Maybe<Scalars['String']['output']>;
 };
 
 export type UserList = {
@@ -12762,7 +14121,12 @@ export type Venue = {
   courtCount: Scalars['Int']['output'];
   /** Venue courts */
   courts: CourtList;
-  /** Cover image URL */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Cover image URL
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Venue description */
@@ -12779,7 +14143,12 @@ export type Venue = {
   externalSource?: Maybe<VenueExternalSource>;
   /** Has food/beverage service */
   hasOrderService: Scalars['Boolean']['output'];
-  /** Venue images URLs */
+  /** Venue gallery with placeholder + responsive variants. */
+  imageMedia?: Maybe<Array<ImageMedia>>;
+  /**
+   * Venue images URLs
+   * @deprecated Use `imageMedia[].url`. Kept for mobile builds < 1.7.
+   */
   images?: Maybe<Array<Scalars['String']['output']>>;
   /** Is venue favorited by current user */
   isFavorite: Scalars['Boolean']['output'];
@@ -12832,6 +14201,8 @@ export type Venue = {
   sportTypes: Array<SportType>;
   /** Venue status */
   status: VenueStatus;
+  /** User ID who submitted this venue via Pass sân flow (USER_SUBMITTED). Used to throttle abuse and trace authorship. */
+  submittedById?: Maybe<Scalars['ID']['output']>;
   /** Terms and conditions of the venue */
   termsAndConditions?: Maybe<Scalars['String']['output']>;
   /** Total bookings */
@@ -13413,6 +14784,19 @@ export type VerifyOtpInput = {
   verificationId: Scalars['String']['input'];
 };
 
+export type VerifyPhoneOtpInput = {
+  code: Scalars['String']['input'];
+  purpose: OtpPurpose;
+  verificationId: Scalars['String']['input'];
+};
+
+export type VerifyPhoneOtpResponse = {
+  __typename?: 'VerifyPhoneOtpResponse';
+  expiresAt: Scalars['DateTime']['output'];
+  phone: Scalars['String']['output'];
+  phoneVerificationToken: Scalars['String']['output'];
+};
+
 export type NotificationFieldsFragment = { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null };
 
 export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
@@ -13434,7 +14818,7 @@ export type AdminCreateUserMutationVariables = Exact<{
 }>;
 
 
-export type AdminCreateUserMutation = { __typename?: 'Mutation', adminCreateUser: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, accountOrigin?: AccountOrigin | null, createdAt: string } };
+export type AdminCreateUserMutation = { __typename?: 'Mutation', adminCreateUser: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, accountOrigin?: AccountOrigin | null, createdAt: string } };
 
 export type AdminSuspendUserMutationVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -13464,7 +14848,7 @@ export type AdminProvisionPlayerMutationVariables = Exact<{
 }>;
 
 
-export type AdminProvisionPlayerMutation = { __typename?: 'Mutation', adminProvisionPlayer: { __typename?: 'AdminProvisionPlayerResponse', generatedPassword?: string | null, loginInstructions: string, user: { __typename?: 'User', _id: string, fullName: string, phone: string, email: string, userName: string, role: UserRole, accountOrigin?: AccountOrigin | null, createdBy?: string | null, phoneVerified: boolean, createdAt: string } } };
+export type AdminProvisionPlayerMutation = { __typename?: 'Mutation', adminProvisionPlayer: { __typename?: 'AdminProvisionPlayerResponse', generatedPassword?: string | null, loginInstructions: string, user: { __typename?: 'User', _id: string, fullName: string, phone?: string | null, email?: string | null, userName: string, role: UserRole, accountOrigin?: AccountOrigin | null, createdBy?: string | null, phoneVerified: boolean, createdAt: string } } };
 
 export type AdminResetUserPasswordMutationVariables = Exact<{
   input: AdminResetUserPasswordInput;
@@ -13963,7 +15347,7 @@ export type UpdateProfileMutationVariables = Exact<{
 }>;
 
 
-export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
 
 export type ApproveVenueRequestMutationVariables = Exact<{
   requestId: Scalars['ID']['input'];
@@ -13990,7 +15374,7 @@ export type AdminGetUsersQueryVariables = Exact<{
 }>;
 
 
-export type AdminGetUsersQuery = { __typename?: 'Query', adminGetUsers: { __typename?: 'UserList', total: number, page: number, limit: number, hasMore: boolean, users: Array<{ __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string }> } };
+export type AdminGetUsersQuery = { __typename?: 'Query', adminGetUsers: { __typename?: 'UserList', total: number, page: number, limit: number, hasMore: boolean, users: Array<{ __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string }> } };
 
 export type AdminGetSystemStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -14136,6 +15520,59 @@ export type GetNotificationQueryVariables = Exact<{
 
 
 export type GetNotificationQuery = { __typename?: 'Query', getNotification: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
+
+export type GetOtpTestPhonesQueryVariables = Exact<{
+  pagination?: InputMaybe<PaginationInput>;
+  filter?: InputMaybe<OtpTestPhoneFilterInput>;
+}>;
+
+
+export type GetOtpTestPhonesQuery = { __typename?: 'Query', otpTestPhones: { __typename?: 'OtpTestPhoneList', total: number, page: number, limit: number, hasMore: boolean, items: Array<{ __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string, updatedAt: string }> } };
+
+export type CreateOtpTestPhoneMutationVariables = Exact<{
+  input: CreateOtpTestPhoneInput;
+}>;
+
+
+export type CreateOtpTestPhoneMutation = { __typename?: 'Mutation', createOtpTestPhone: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string } };
+
+export type UpdateOtpTestPhoneMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateOtpTestPhoneInput;
+}>;
+
+
+export type UpdateOtpTestPhoneMutation = { __typename?: 'Mutation', updateOtpTestPhone: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, updatedAt: string } };
+
+export type SetOtpTestPhoneEnabledMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  enabled: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTestPhoneEnabled: { __typename?: 'OtpTestPhone', _id: string, enabled: boolean, updatedAt: string } };
+
+export type GetOtpTestUserGrantsQueryVariables = Exact<{
+  pagination?: InputMaybe<PaginationInput>;
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+}>;
+
+
+export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrants: { __typename?: 'OtpTestUserGrantList', total: number, page: number, limit: number, hasMore: boolean, items: Array<{ __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string }> } };
+
+export type CreateOtpTestUserGrantMutationVariables = Exact<{
+  input: CreateOtpTestUserGrantInput;
+}>;
+
+
+export type CreateOtpTestUserGrantMutation = { __typename?: 'Mutation', createOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string } };
+
+export type RevokeOtpTestUserGrantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, enabled: boolean, revokedAt?: string | null, updatedAt: string } };
 
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
@@ -14389,14 +15826,14 @@ export type PreviewRepackCourtScheduleQuery = { __typename?: 'Query', previewRep
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
+export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
 
 export type GetAllVenueRequestsQueryVariables = Exact<{
   status?: InputMaybe<VenueRequestStatus>;

@@ -1,0 +1,32 @@
+---
+description: GraphQL documents — domain folders, generated types
+globs: graphql/**
+alwaysApply: false
+---
+
+# GraphQL Documents
+
+**Target:** `graphql/<domain>/queries.ts`, `mutations.ts`, `fragments.ts`
+
+**Legacy (đang migrate):** `graphql/queries/`, `graphql/mutations/`, `graphql/fragments/`, `graphql/subscriptions/` — gom theo domain khi sửa (`tournament`, `admin`, `moderation`, `contact`, …).
+
+- Types từ `graphql/generated.ts` — **không sửa tay**
+- Hooks import documents: `hooks/tournament/useTournament.ts` → `@/graphql/queries/tournament`
+- **Không** `gql` inline trong `app/` hoặc `components/`
+- **Không** god file GraphQL (>400L)
+- Sau đổi schema BE: `pnpm schema:sync` + `pnpm codegen`
+
+### Pagination
+
+- Cursor `*Connection` + `edges` / `pageInfo` — **cấm offset mới**
+- Legacy offset hooks (~13) migrate P3 — operation name khớp backend
+
+```typescript
+import type { GetTournamentQuery, GetTournamentQueryVariables } from '@/graphql/generated';
+import { GET_TOURNAMENT } from '@/graphql/queries/tournament';
+
+const { data, loading } = useQuery<GetTournamentQuery, GetTournamentQueryVariables>(
+  GET_TOURNAMENT,
+  { variables: { id } },
+);
+```
