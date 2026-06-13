@@ -113,6 +113,7 @@ Atomic design — `components/atoms/` → `molecules/` → `organisms/` → `tem
 - Mock types (`types/mock.ts`) cho data production — dùng generated types
 - Hardcode hex/rgb trong JSX — dùng Tailwind token / theme
 - Copy/sửa logic schedule từ web thủ công — dùng `schedule-dnd:sync`
+- File source mới không có copyright header Ao Trình — `pnpm run check:copyright-header`
 
 Repo này **không** chứa DB migrations — chạy qua `nalee-sports-migrations/` trước backend deploy khi đổi schema.
 
