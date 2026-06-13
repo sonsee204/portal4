@@ -11,10 +11,19 @@
     "lint": "eslint",
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "size-gate": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all",
+    "size-gate:strict": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --strict --warn-baseline",
+    "size-gate:warn-baseline:update": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --update-warn-baseline",
+    "verify:quick": "pnpm run typecheck && pnpm run size-gate:strict",
+    "verify:a-plus": "pnpm run typecheck && pnpm run lint && pnpm run size-gate:strict",
+    "verify:go": "node scripts/check-working-tree-clean.mjs && pnpm run check:codegen-drift && pnpm run verify:a-plus",
+    "check:codegen-drift": "node scripts/check-codegen-drift.mjs",
     "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal",
     "schema:sync": "node ../scripts/sync-schema.mjs",
     "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
-    "version:sync": "node ../scripts/sync-version.mjs"
+    "version:sync": "node ../scripts/sync-version.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@apollo/client": "^4.1.4",
@@ -53,6 +62,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
     "ionicons": "^8.0.13",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
