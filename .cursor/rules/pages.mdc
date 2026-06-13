@@ -1,0 +1,38 @@
+---
+description: Next.js page pattern — shell, hooks, sections
+globs: app/**/page.tsx
+alwaysApply: false
+---
+
+# Page Pattern (Portal Admin)
+
+Port từ mobile `VenueDetail`. Reference mỏng: `app/(dashboard)/tournaments/[id]/page.tsx`
+
+```
+page.tsx                    # Thin shell: params + permissions + compose sections
+  _hooks/useScheduleData.ts
+  _hooks/useScheduleActions.ts
+  _sections/ScheduleToolbarSection.tsx
+```
+
+- Shell chỉ routing params + `PermissionGate` + compose — logic thuần → `lib/tournament/` hoặc `*.derived.ts`
+- **Anti-pattern:** god pages `schedule`, `draw`, `registrations`, `moderation` — split `_hooks/` + `_sections/`
+- States: `QueryState` + toast — không spinner/error markup duplicate
+- Strings từ `lib/strings/` — không hardcode label admin dài
+- Max **400 effective lines** — `pnpm size-gate:strict`
+
+```tsx
+export default function TournamentSchedulePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const data = useScheduleData(id);
+  const actions = useScheduleActions(id);
+  if (data.loading) return <QueryState loading />;
+  if (data.error) return <QueryState error={data.error} onRetry={data.refetch} />;
+  return (
+    <>
+      <ScheduleToolbarSection {...data.toolbar} {...actions} />
+      <ScheduleGridSection matches={data.matches} onDrop={actions.handleDrop} />
+    </>
+  );
+}
+```
