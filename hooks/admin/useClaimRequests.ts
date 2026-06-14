@@ -18,67 +18,51 @@ import {
   GET_CLAIM_REQUESTS,
   GET_CLAIM_REQUEST_STATS,
 } from '@/graphql/queries/claim-requests';
+import type { GetClaimRequestsQuery } from '@/graphql/generated';
 import type {
   ClaimRequestItem,
   ClaimRequestStatus,
 } from '@/app/(dashboard)/claim-requests/types';
-
-interface ClaimRequestsFilter {
-  status?: ClaimRequestStatus;
-}
-
-interface ClaimRequestsQueryData {
-  claimRequests: {
-    requests: ClaimRequestItem[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface ClaimStatsQueryData {
-  claimRequestStats: {
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-    cancelled: number;
-    thisWeek: number;
-    thisMonth: number;
-  };
-}
+import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
 
 export function useClaimRequests(
-  filter?: ClaimRequestsFilter,
+  filter?: { status?: ClaimRequestStatus },
   pagination?: { page: number; limit: number },
 ) {
-  const { data, loading, error, refetch } = useQuery<ClaimRequestsQueryData>(
-    GET_CLAIM_REQUESTS,
-    {
-      variables: { filter, pagination },
-      fetchPolicy: 'cache-and-network',
-    },
-  );
+  const result = usePagedConnectionQuery<
+    GetClaimRequestsQuery,
+    ClaimRequestItem,
+    { filter?: { status?: ClaimRequestStatus } }
+  >({
+    query: GET_CLAIM_REQUESTS,
+    pagination,
+    resetKey: JSON.stringify(filter ?? null),
+    variables: { filter },
+    getConnection: (data) => data?.claimRequestsConnection,
+  });
 
   return {
-    requests: data?.claimRequests?.requests ?? [],
-    total: data?.claimRequests?.total ?? 0,
-    hasMore: data?.claimRequests?.hasMore ?? false,
-    loading,
-    error,
-    refetch,
+    requests: result.items,
+    total: result.total,
+    hasMore: result.hasMore,
+    loading: result.loading,
+    error: result.error,
+    refetch: result.refetch,
   };
 }
 
 export function useClaimRequestStats() {
-  const { data, loading, error, refetch } =
-    useQuery<ClaimStatsQueryData>(GET_CLAIM_REQUEST_STATS);
+  const { data, loading, error, refetch } = useQuery<{
+    claimRequestStats: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+      cancelled: number;
+      thisWeek: number;
+      thisMonth: number;
+    };
+  }>(GET_CLAIM_REQUEST_STATS);
 
-  return {
-    stats: data?.claimRequestStats,
-    loading,
-    error,
-    refetch,
-  };
+  return { stats: data?.claimRequestStats, loading, error, refetch };
 }
