@@ -60,17 +60,3 @@ export function filterMatchesForRefereeGrid(
     return REFEREE_GRID_STATUSES.has(m.status);
   });
 }
-
-export function scrollToScheduleMatchCard(
-  matchId: string,
-  retries = 5,
-): void {
-  const el = document.querySelector(`[data-match-id="${CSS.escape(matchId)}"]`);
-  if (el) {
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    return;
-  }
-  if (retries > 0) {
-    requestAnimationFrame(() => scrollToScheduleMatchCard(matchId, retries - 1));
-  }
-}

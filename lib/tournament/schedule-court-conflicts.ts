@@ -80,6 +80,7 @@ function blocksOverlap(
   courtBufferMinutes: number,
 ): boolean {
   if (aOccupied && !bOccupied) {
+    // Scheduled tail repacked after anchor: starts at or after occupied end → no conflict.
     if (b.startMin >= a.endMin) return false;
     return b.startMin < a.endMin && b.endMin > a.startMin;
   }
@@ -90,6 +91,7 @@ function blocksOverlap(
   if (aOccupied && bOccupied) {
     return a.startMin < b.endMin && a.endMin > b.startMin;
   }
+  // Two planned (NOT_STARTED / LIVE treated as planned for mutual buffer) — mirrors backend validateScheduleConflicts court check.
   return (
     a.startMin < b.endMin + courtBufferMinutes &&
     a.endMin + courtBufferMinutes > b.startMin
