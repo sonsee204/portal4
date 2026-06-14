@@ -34,46 +34,55 @@ import {
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
 import type {
-  RegistrationList,
   RegistrationFilterInput,
-  PaginationInput,
   TournamentRegistration,
   TournamentPaymentStatus,
   BulkImportResult,
   BulkImportRegistrationsInput,
   ExportTournamentRegistrationsQuery,
+  GetTournamentRegistrationsQuery,
+  BracketSizeAdjustmentInput,
 } from '@/graphql/generated';
 import type { BulkImportItem } from '@/lib/utils/registration-import';
-import type { BracketSizeAdjustmentInput } from '@/graphql/generated';
+import {
+  resolveConnectionFirst,
+  totalPagesFromCount,
+} from '@/hooks/shared/useCursorConnection';
+import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import type { LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 interface UseRegistrationsOptions {
   tournamentId: string;
   filter?: RegistrationFilterInput;
-  pagination?: PaginationInput;
+  pagination?: LegacyPagePagination;
   skip?: boolean;
 }
 
 export function useRegistrations(options: UseRegistrationsOptions) {
   const { tournamentId, filter, pagination, skip } = options;
+  const first = resolveConnectionFirst(pagination);
 
-  const { data, loading, error, refetch } = useQuery<{
-    tournamentRegistrations: RegistrationList;
-  }>(GET_TOURNAMENT_REGISTRATIONS, {
-    variables: { tournamentId, filter, pagination },
-    fetchPolicy: 'cache-and-network',
+  const result = usePagedConnectionQuery<
+    { tournamentRegistrationsConnection: GetTournamentRegistrationsQuery['tournamentRegistrationsConnection'] },
+    TournamentRegistration,
+    { tournamentId: string; filter?: RegistrationFilterInput }
+  >({
+    query: GET_TOURNAMENT_REGISTRATIONS,
+    pagination,
+    resetKey: JSON.stringify({ tournamentId, filter }),
+    variables: { tournamentId, filter },
+    getConnection: (data) => data?.tournamentRegistrationsConnection,
     skip: skip || !tournamentId,
   });
 
-  const result = data?.tournamentRegistrations;
-
   return {
-    registrations: result?.registrations ?? [],
-    total: result?.total ?? 0,
-    page: result?.page ?? 1,
-    totalPages: result?.totalPages ?? 1,
-    loading,
-    error,
-    refetch,
+    registrations: result.items,
+    total: result.total,
+    page: pagination?.page ?? 1,
+    totalPages: totalPagesFromCount(result.total, first),
+    loading: result.loading,
+    error: result.error,
+    refetch: result.refetch,
   };
 }
 
