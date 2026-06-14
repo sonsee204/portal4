@@ -16,14 +16,15 @@
 import { DataTable } from '@/components/organisms/DataTable';
 import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
-import type { AuditLog, AuditAction, AuditCategory } from '@/types';
+import type { AuditLogEntry } from '@/hooks/audit';
+import type { AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
 import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditTableProps {
-  logs: AuditLog[];
+  logs: AuditLogEntry[];
   loading: boolean;
-  onViewDetail: (log: AuditLog) => void;
+  onViewDetail: (log: AuditLogEntry) => void;
 }
 
 const ACTION_LABELS: Record<AuditAction, string> = AUDIT.ACTIONS;
@@ -64,7 +65,7 @@ function formatTimestamp(iso: string): string {
   });
 }
 
-function getInitials(name?: string): string {
+function getInitials(name?: string | null): string {
   if (!name) return '?';
   return name
     .split(' ')
@@ -127,12 +128,12 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
           </td>
           <td className="px-4 py-3">
             <span className="text-muted text-xs font-medium">
-              {CATEGORY_LABELS[log.category] ?? log.category}
+              {CATEGORY_LABELS[log.category as AuditCategory] ?? log.category}
             </span>
           </td>
           <td className="px-4 py-3">
-            <Badge variant={ACTION_VARIANT[log.action] ?? 'neutral'}>
-              {ACTION_LABELS[log.action] ?? log.action}
+            <Badge variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}>
+              {ACTION_LABELS[log.action as AuditAction] ?? log.action}
             </Badge>
           </td>
           <td className="text-muted max-w-[200px] truncate px-4 py-3 font-mono text-xs">

@@ -17,8 +17,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Pagination } from '@/components/organisms/Pagination';
 import { QueryState } from '@/components/molecules/QueryState';
-import { useAuditLogs, useAuditStats } from '@/hooks/audit';
-import type { AuditLog, AuditCategory, AuditStatus } from '@/types';
+import { useAuditLogs, useAuditStats, type AuditLogEntry } from '@/hooks/audit';
+import type { AuditCategory, AuditStatus } from '@/types';
 import { AuditStatsCards } from './_components/AuditStatsCards';
 import { AuditFilters } from './_components/AuditFilters';
 import { AuditTable } from './_components/AuditTable';
@@ -36,7 +36,7 @@ export default function AuditPage() {
   const [page, setPage] = useState(1);
 
   // Detail drawer
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
 
   // Build filter variables
   const filterVariables = useMemo(() => {
@@ -97,7 +97,7 @@ export default function AuditPage() {
     refetchStats();
   }, [refetchLogs, refetchStats]);
 
-  const handleViewDetail = useCallback((log: AuditLog) => {
+  const handleViewDetail = useCallback((log: AuditLogEntry) => {
     setSelectedLog(log);
   }, []);
 

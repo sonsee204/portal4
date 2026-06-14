@@ -17,12 +17,13 @@ import { useEffect, useCallback } from 'react';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { IconButton } from '@/components/atoms/IconButton';
-import type { AuditLog, AuditAction, AuditCategory } from '@/types';
+import type { AuditLogEntry } from '@/hooks/audit';
+import type { AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
 import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditDetailDrawerProps {
-  log: AuditLog | null;
+  log: AuditLogEntry | null;
   onClose: () => void;
 }
 
@@ -136,8 +137,8 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
           <div className="flex-1 space-y-1 p-4">
             {/* Status and Action badges */}
             <div className="mb-4 flex items-center gap-2">
-              <Badge variant={ACTION_VARIANT[log.action] ?? 'neutral'}>
-                {ACTION_LABELS[log.action] ?? log.action}
+              <Badge variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}>
+                {ACTION_LABELS[log.action as AuditAction] ?? log.action}
               </Badge>
               <Badge variant={log.status === 'SUCCESS' ? 'success' : 'danger'}>
                 {log.status === 'SUCCESS'
@@ -159,7 +160,7 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
             <DetailRow
               icon="layers-outline"
               label={AUDIT.DETAIL.CATEGORY}
-              value={CATEGORY_LABELS[log.category] ?? log.category}
+              value={CATEGORY_LABELS[log.category as AuditCategory] ?? log.category}
             />
             <DetailRow
               icon="locate-outline"

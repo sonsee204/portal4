@@ -16,10 +16,10 @@
 import { useCallback } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { AUDIT } from '@/lib/strings';
-import type { AuditLog } from '@/types';
+import type { AuditLogEntry } from '@/hooks/audit';
 
 interface AuditExportButtonProps {
-  logs: AuditLog[];
+  logs: AuditLogEntry[];
   disabled?: boolean;
 }
 
