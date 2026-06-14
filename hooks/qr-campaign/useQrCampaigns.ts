@@ -34,25 +34,36 @@ import type {
   CreateQrCampaignInput,
   UpdateQrCampaignInput,
 } from '@/types';
-import type { PaginationInput } from '@/graphql/generated';
+import type { GetQrCampaignsQuery } from '@/graphql/generated';
+import {
+  connectionNodes,
+  resolveConnectionFirst,
+} from '@/hooks/shared/useCursorConnection';
 
 export function useQrCampaigns(
   filter?: QrCampaignFilterInput,
-  pagination?: PaginationInput,
+  pagination?: { page?: number; limit?: number; first?: number; after?: string | null },
 ) {
-  const variables: Record<string, unknown> = {};
-  if (filter) variables.filter = filter;
-  if (pagination) variables.pagination = pagination;
+  const first = resolveConnectionFirst(pagination);
 
-  const { data, loading, error, refetch } = useQuery<{
-    getQrCampaigns: QrCampaign[];
-  }>(GET_QR_CAMPAIGNS, {
-    variables,
-    fetchPolicy: 'cache-and-network',
-  });
+  const { data, loading, error, refetch } = useQuery<GetQrCampaignsQuery>(
+    GET_QR_CAMPAIGNS,
+    {
+      variables: {
+        filter,
+        pagination: { first, after: pagination?.after ?? null },
+      },
+      fetchPolicy: 'cache-and-network',
+    },
+  );
+
+  const connection = data?.qrCampaignsConnection;
+  const campaigns = connectionNodes(connection?.edges) as QrCampaign[];
 
   return {
-    campaigns: data?.getQrCampaigns ?? [],
+    campaigns,
+    total: connection?.totalCount ?? 0,
+    hasMore: connection?.pageInfo?.hasNextPage ?? false,
     loading,
     error,
     refetch,
