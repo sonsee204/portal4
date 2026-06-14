@@ -425,9 +425,7 @@ export function createApolloClient() {
               merge: makeOffsetMerge('promotions'),
             },
 
-            // ── Cursor connections (Relay-style) — admin pages adopt these
-            // first because they show very long lists. Older offset queries
-            // remain registered above so callers can migrate gradually.
+            // ── Cursor connections (Relay-style)
             postsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
             myBookingsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
             venueBookingsConnection: {
@@ -435,7 +433,7 @@ export function createApolloClient() {
               merge: relayMergeFn,
             },
             pickupGamesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
-            getNotificationsConnection: {
+            notificationsConnection: {
               keyArgs: ['filter'],
               merge: relayMergeFn,
             },
@@ -443,6 +441,46 @@ export function createApolloClient() {
               keyArgs: ['latitude', 'longitude', 'radiusKm', 'filter'],
               merge: relayMergeFn,
             },
+            auditLogsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            contactInquiriesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            adminUsersConnection: {
+              keyArgs: ['role', 'isActive', 'isSuspended', 'searchQuery'],
+              merge: relayMergeFn,
+            },
+            adminAllBookingsConnection: {
+              keyArgs: ['statuses', 'fromDate', 'toDate'],
+              merge: relayMergeFn,
+            },
+            adminUserBookingsConnection: {
+              keyArgs: ['userId', 'statuses'],
+              merge: relayMergeFn,
+            },
+            getPostReportsForAdminConnection: {
+              keyArgs: ['filter'],
+              merge: relayMergeFn,
+            },
+            getUserReportsForAdminConnection: {
+              keyArgs: ['filter'],
+              merge: relayMergeFn,
+            },
+            messageReportsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            claimRequestsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            allVenueRequestsConnection: {
+              keyArgs: ['status'],
+              merge: relayMergeFn,
+            },
+            qrCampaignsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            myTournamentsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            tournamentRegistrationsConnection: {
+              keyArgs: ['tournamentId', 'filter'],
+              merge: relayMergeFn,
+            },
+            tournamentMatchesConnection: {
+              keyArgs: ['tournamentId', 'filter'],
+              merge: relayMergeFn,
+            },
+            otpTestPhonesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+            otpTestUserGrantsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
           },
         },
       },

@@ -11,9 +11,10 @@
  * is strictly prohibited without prior written consent.
  */
 
-export * from './mutation-helpers';
-export * from './types';
-export * from './useCursorConnection';
-export * from './useConnectionPageAfter';
-export * from './usePagedConnectionQuery';
-export * from './useUploadTournamentImage';
+/** Backend CursorPageInput.first is capped at 50. */
+export const CURSOR_PAGE_MAX = 50;
+
+export const DEFAULT_CONNECTION_FIRST = 20;
+export const ADMIN_TABLE_FIRST = 50;
+export const SCHEDULE_MATCHES_FIRST = 50;
+export const NOTIFICATION_LIST_FIRST = 15;
