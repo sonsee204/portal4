@@ -15,8 +15,8 @@
 
 import { useEffect, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
-import { NOTIFICATION_CREATED_SUBSCRIPTION } from '@/graphql/subscriptions/notification';
-import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/queries/notification';
+import { NOTIFICATION_CREATED_SUBSCRIPTION } from '@/graphql/notification/subscriptions';
+import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/notification/queries';
 import type { Notification } from '@/types/notification';
 
 export function useNotificationSubscription(userId: string | undefined) {

@@ -18,7 +18,7 @@ import { useApolloClient, useQuery } from '@apollo/client/react';
 import {
   GET_CONTACT_INQUIRIES,
   GET_CONTACT_INQUIRY_STATS,
-} from '@/graphql/queries/contact';
+} from '@/graphql/contact/queries';
 import type {
   ContactInquiry,
   ContactInquiryStats,

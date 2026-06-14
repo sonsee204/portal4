@@ -18,7 +18,7 @@ import { useMutation } from '@apollo/client/react';
 import {
   SAVE_FCM_TOKEN,
   REMOVE_FCM_TOKEN,
-} from '@/graphql/mutations/notification';
+} from '@/graphql/notification/mutations';
 import { requestNotificationPermission } from '@/lib/firebase/messaging';
 
 let storedToken: string | null = null;

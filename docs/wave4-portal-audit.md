@@ -1,60 +1,70 @@
 # Wave 4 Portal Audit — NALee Sports (Jun 2026)
 
-> **Purpose:** Track portal A+ gates (excluding test expansion). Update after each ratchet commit.
+> **Purpose:** Track portal A+ gates (excluding test expansion).
 
 ---
 
-## Verdict (live)
+## Verdict
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| `tsc` | GO | strict |
-| `lint` | GO | ~20 warnings, 0 errors |
-| `size-gate:strict` | IN PROGRESS | baseline: **6 error**, **18 warn** @250L → target 0/≤5 |
-| `dead-code-gate` | GO | **0** orphan GraphQL exports |
-| `check:codegen-drift` | GO | in `verify:go` |
-| `check:schema-drift` | GO | in `verify:go` |
-| `verify:go` | GO | local |
-| `build` | GO | |
+| Repo | Maintainability | TypeScript | CI/CD | **Grade** |
+|------|-----------------|------------|-------|-----------|
+| **Portal** | `size-gate:strict` **0 error**, **15 warn** @250L | `tsc` pass | dead-code @ **0**, schema-drift, codegen-drift in verify:go | **A-** |
 
-**Grade target:** A (sát A+) — excluding vitest/CI test gate per Wave 4 scope.
+Stretch: warn → ≤5 (form wizard, settings) — Wave 5 backlog.
 
 ---
 
-## Completed waves
+## Automated gates
+
+| Gate | Status |
+|------|--------|
+| `tsc` | GO |
+| `lint` | GO (0 errors, ~21 warnings) |
+| `size-gate:strict` | GO — **error: 0**, **warn: 15** baseline |
+| `dead-code-gate` | GO — **0** orphan GraphQL exports |
+| `check:codegen-drift` | GO |
+| `check:schema-drift` | GO |
+| `verify:go` | GO (local, clean tree) |
+| `build` | GO |
+| `test` | Out of Wave 4 scope |
+
+---
+
+## Waves completed
 
 | Wave | Item | Status |
 |------|------|--------|
-| P1–P2 | AGENTS, rules, size-gate, mock cleanup | GO |
-| P3 | Cursor `*Connection` hooks + shared helpers | GO |
-| P4 | God page split (schedule, draw, registrations, moderation) | GO |
-| P5 | Schedule DnD lib sync + dead-code 0 | GO |
-| A | Governance: schema-drift, CI dead-code-gate, ESLint pagination guard | GO |
+| P3 | Cursor `*Connection` hooks | GO |
+| P4 | God page split | GO |
+| P5 | DnD kernel sync + dead-code 0 | GO |
+| A | Governance: schema-drift, CI, ESLint pagination guard | GO |
+| B | Schedule hooks facade (no ScheduleTimelineView god) | GO |
+| C | Size-gate error tier 6 → **0** | GO |
+| D | ConnectionPager + admin cursor UI | GO |
+| E | GraphQL domain folders | GO |
+| F | Warn tier 18 → **15** (partial) | GO |
 
 ---
 
-## Size-gate tracker (error tier)
+## Size-gate (warn tier remaining)
 
-| File | Effective L | Status |
-|------|-------------|--------|
-| `tournaments/_form/_steps/StepCategories.tsx` | 912 | pending C1 |
-| `registrations/_components/LateEntryModal.tsx` | 656 | pending C3 |
-| `settings/.../OtpTestPhoneRegistrySettings.tsx` | 489 | pending C6 |
-| `(auth)/forgot-password/.../ForgotPasswordForm.tsx` | 465 | pending C5 |
-| `lib/apollo/client.ts` | 436 | pending C4 |
-| `tournaments/_form/_parts/CategoryFormCard.tsx` | 401 | pending C2 |
-
----
-
-## Size-gate tracker (warn tier — top)
-
-| File | Effective L | Status |
-|------|-------------|--------|
-| `OtpTestUserGrantSettings.tsx` | 395 | pending F |
-| `StepReview.tsx` | 360 | pending F |
-| `ScheduleTimelineView.tsx` | 299 | pending B |
-| `TournamentFormWizard.tsx` | 300 | pending F |
-| `RegistrationsTableSection.tsx` | 318 | pending F |
+| File | Effective L |
+|------|-------------|
+| OtpTestUserGrantSettings.tsx | 395 |
+| StepReview.tsx | 360 |
+| CategoryApiCardEditForm.tsx | 357 |
+| ProvisionPlayerDialog.tsx | 319 |
+| TournamentFormWizard.tsx | 300 |
+| ReferralCodeManager.tsx | 299 |
+| StepRegistration.tsx | 297 |
+| StepScheduleVenue.tsx | 279 |
+| PartnerLeaderboard.tsx | 274 |
+| TournamentStatusActions.tsx | 274 |
+| ProfileSettings.tsx | 264 |
+| VenueRequestDetail.tsx | 264 |
+| RegistrationDetailModal.tsx | 258 |
+| venue-requests/page.tsx | 256 |
+| NotificationDropdown/index.tsx | 252 |
 
 ---
 
@@ -62,6 +72,14 @@
 
 - [ ] Schedule grid DnD + auto-scroll
 - [ ] Schedule list filter
-- [ ] Admin tables ConnectionPager
+- [ ] Admin tables ConnectionPager (users, audit, cms, moderation, venue/claim)
 - [ ] Tournament form categories step
 - [ ] Late entry modal 4 steps
+- [ ] Forgot password 3-step flow
+
+---
+
+## Related docs
+
+- Shared package proposal: [`docs/architecture/schedule-dnd-shared-package.md`](../../docs/architecture/schedule-dnd-shared-package.md)
+- Monorepo audit: [`docs/refactor/wave2-a-plus-audit.md`](../../docs/refactor/wave2-a-plus-audit.md)

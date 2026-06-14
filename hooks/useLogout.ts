@@ -20,7 +20,7 @@ import { useAuthStore } from '@/stores/auth';
 import { setClientAccessToken } from '@/lib/apollo/client';
 import { showSuccess } from '@/lib/toast';
 import { AUTH } from '@/lib/strings';
-import { REMOVE_FCM_TOKEN } from '@/graphql/mutations/notification';
+import { REMOVE_FCM_TOKEN } from '@/graphql/notification/mutations';
 import { getFcmToken, clearStoredFcmToken } from '@/hooks/notification';
 
 export function useLogout() {

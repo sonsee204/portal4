@@ -37,16 +37,19 @@ import type {
 import type { GetQrCampaignsQuery } from '@/graphql/generated';
 import {
   connectionNodes,
+  mergeConnectionEdges,
   resolveConnectionFirst,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
 
 export function useQrCampaigns(
   filter?: QrCampaignFilterInput,
-  pagination?: { page?: number; limit?: number; first?: number; after?: string | null },
+  pagination?: LegacyPagePagination,
 ) {
   const first = resolveConnectionFirst(pagination);
 
-  const { data, loading, error, refetch } = useQuery<GetQrCampaignsQuery>(
+  const { data, loading, error, refetch, fetchMore } = useQuery<GetQrCampaignsQuery>(
     GET_QR_CAMPAIGNS,
     {
       variables: {
@@ -59,11 +62,37 @@ export function useQrCampaigns(
 
   const connection = data?.qrCampaignsConnection;
   const campaigns = connectionNodes(connection?.edges) as QrCampaign[];
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      filter,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      qrCampaignsConnection: {
+        ...next.qrCampaignsConnection!,
+        edges: mergeConnectionEdges(
+          prev.qrCampaignsConnection?.edges ?? [],
+          next.qrCampaignsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   return {
     campaigns,
-    total: connection?.totalCount ?? 0,
-    hasMore: connection?.pageInfo?.hasNextPage ?? false,
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading,
     error,
     refetch,

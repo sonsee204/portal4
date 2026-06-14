@@ -15,8 +15,8 @@
 
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { MARK_ALL_NOTIFICATIONS_AS_READ } from '@/graphql/mutations/notification';
-import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/queries/notification';
+import { MARK_ALL_NOTIFICATIONS_AS_READ } from '@/graphql/notification/mutations';
+import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/notification/queries';
 import type { MarkAllAsReadResponse, NotificationType } from '@/types/notification';
 
 export function useMarkAllAsRead() {

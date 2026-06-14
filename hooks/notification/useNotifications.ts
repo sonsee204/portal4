@@ -15,7 +15,7 @@
 
 import { useQuery } from '@apollo/client/react';
 import { useMemo } from 'react';
-import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/queries/notification';
+import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/notification/queries';
 import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,

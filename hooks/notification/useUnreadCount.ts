@@ -14,7 +14,7 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/queries/notification';
+import { GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/notification/queries';
 
 const POLL_INTERVAL = 30_000;
 

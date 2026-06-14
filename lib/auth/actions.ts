@@ -11,8 +11,7 @@
  * is strictly prohibited without prior written consent.
  */
 
-'use server';
-
+/** Re-export barrel — server actions live in session-actions / password-actions. */
 export {
   loginAction,
   refreshAction,
