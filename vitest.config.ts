@@ -16,7 +16,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['**/schedule-page.derived.test.ts'],
+    include: [
+      '**/schedule-page.derived.test.ts',
+      '**/draw-page.derived.test.ts',
+    ],
     environment: 'node',
   },
   resolve: {
