@@ -28,7 +28,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   iconLeft?: string;
   iconRight?: string;
-  href?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -40,21 +39,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       iconLeft,
       iconRight,
       children,
-      href,
       ...props
     },
     ref
   ) => {
-    const inner = (
-      <>
-        {iconLeft && <IonIcon name={iconLeft} size="sm" className="-ml-0.5" />}
-        {children}
-        {iconRight && (
-          <IonIcon name={iconRight} size="sm" className="-mr-0.5" />
-        )}
-      </>
-    );
-
     return (
       <button
         ref={ref}
@@ -69,7 +57,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {inner}
+        {iconLeft && <IonIcon name={iconLeft} size="sm" className="-ml-0.5" />}
+        {children}
+        {iconRight && (
+          <IonIcon name={iconRight} size="sm" className="-mr-0.5" />
+        )}
       </button>
     );
   }

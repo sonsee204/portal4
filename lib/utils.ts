@@ -35,6 +35,21 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
+ * Format amount for display - accepts string (e.g. "50000", "50.000đ") or number.
+ * Uses unified VND format. Returns as-is if not parseable (e.g. "Miễn phí").
+ */
+export function formatCurrencyDisplay(value: string | number | undefined | null): string {
+  if (value == null || value === '') return '';
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return VND_FORMATTER.format(value);
+  }
+  const str = String(value).trim();
+  const num = parseInt(str.replace(/[.\sđ,]/g, ''), 10);
+  if (!Number.isNaN(num)) return VND_FORMATTER.format(num);
+  return str;
+}
+
+/**
  * Format date for display (Vietnamese locale)
  */
 export function formatDate(

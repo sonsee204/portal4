@@ -72,6 +72,6 @@ export function isAuthError(error: ErrorLike): boolean {
     (err) =>
       err.extensions?.code === 'UNAUTHENTICATED' ||
       err.message.includes('Unauthorized') ||
-      err.message.includes('Token'),
+      err.message.includes('Token')
   );
 }
