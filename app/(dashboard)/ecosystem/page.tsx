@@ -24,7 +24,7 @@ import { DonutChart } from './_components/DonutChart';
 import { QueryState } from '@/components/molecules/QueryState';
 import { useSports } from '@/hooks/sport';
 import { useAuditLogs } from '@/hooks/audit';
-import type { SportType } from '@/types/mock';
+import type { SportType } from '@/graphql/generated';
 
 const RECENT_LOGS_LIMIT = 5;
 

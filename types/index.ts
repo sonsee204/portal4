@@ -15,7 +15,6 @@
  * Centralized type exports for the portal.
  *
  * Import from '@/types' for all domain types.
- * Import from '@/types/mock' for tournament / shared component types.
  */
 
 // Auth & roles

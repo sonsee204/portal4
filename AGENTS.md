@@ -98,10 +98,10 @@ Atomic design — `components/atoms/` → `molecules/` → `organisms/` → `tem
 - Sync từ web: `pnpm schedule-dnd:sync` — **không** sửa bản web-only trong portal
 - Thay đổi schedule lib → sync web trước, rồi chạy sync script
 
-## Dead code (đang dọn P2)
+## Dead code (đang dọn P2+)
 
-- `types/mock.ts` + import mock — thay bằng types từ `graphql/generated.ts`
-- `app/test-icon/` (route rỗng), stub page không có hook — xoá khi xác nhận không dùng
+- GraphQL orphan ops (~25) — chạy dead-code-gate khi thêm script (wave sau)
+- `app/(dashboard)/cms/page.tsx` — **tính năng thật** (`useAdminAllBookings`, `useAuditLogs`); giữ nguyên
 
 ## Cấm
 
@@ -111,7 +111,7 @@ Atomic design — `components/atoms/` → `molecules/` → `organisms/` → `tem
 - Offset pagination mới `{ page, limit }`
 - God file > 400 effective lines (đang ratchet baseline — siết dần)
 - Sửa tay `graphql/generated.ts`
-- Mock types (`types/mock.ts`) cho data production — dùng generated types
+- Mock types (`types/mock.ts`) cho data production — dùng generated types (file đã xoá P2)
 - Hardcode hex/rgb trong JSX — dùng Tailwind token / theme
 - Copy/sửa logic schedule từ web thủ công — dùng `schedule-dnd:sync`
 - File source mới không có copyright header Ao Trình — `pnpm run check:copyright-header`

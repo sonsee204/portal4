@@ -14,7 +14,15 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { CalendarBooking } from '@/types/mock';
+export type CalendarBooking = {
+  _id: string;
+  venue: string;
+  court: string;
+  startHour: number;
+  endHour: number;
+  status: 'paid' | 'pending' | 'maintenance';
+  userName?: string;
+};
 
 const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 07:00 - 18:00
 

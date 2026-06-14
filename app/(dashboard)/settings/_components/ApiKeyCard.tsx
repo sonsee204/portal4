@@ -16,7 +16,15 @@
 import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { ApiKey } from '@/types/mock';
+/** Dev placeholder until API key management is backed by GraphQL. */
+export type ApiKey = {
+  _id: string;
+  name: string;
+  clientId: string;
+  secret: string;
+  status: 'active' | 'test';
+  createdAt: string;
+};
 
 export function ApiKeyCard({ apiKey }: { apiKey: ApiKey }) {
   return (

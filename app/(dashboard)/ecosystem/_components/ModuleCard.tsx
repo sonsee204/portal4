@@ -17,7 +17,16 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import { Toggle } from '@/components/atoms/Toggle';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import type { SportModule } from '@/types/mock';
+import type { SportType } from '@/graphql/generated';
+
+export type SportModule = {
+  sport: SportType;
+  label: string;
+  activeUsers: string;
+  status: 'online' | 'maintenance' | 'offline';
+  enabled: boolean;
+  icon: string;
+};
 
 const statusVariant: Record<string, 'success' | 'warning' | 'danger'> = {
   online: 'success',
