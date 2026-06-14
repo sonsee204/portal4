@@ -1,4 +1,4 @@
-image: node:24
+image: node:22
 
 definitions:
   caches:
@@ -17,13 +17,9 @@ definitions:
           - corepack prepare pnpm@10.26.2 --activate
           - export GRAPHQL_SCHEMA_PATH=schema.gql
           - HUSKY=0 pnpm install --frozen-lockfile
-          - pnpm run typecheck
-          - pnpm run check:copyright-header
-          - pnpm run lint
-          - pnpm run size-gate:strict
-          - pnpm run dead-code-gate
+          - pnpm run check:schema-drift
           - pnpm run check:codegen-drift
-          - pnpm run build
+          - pnpm run verify:a-plus
         artifacts:
           - .next/**
           - public/**

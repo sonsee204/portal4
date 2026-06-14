@@ -22,8 +22,9 @@ GraphQL schema: `../nalee-sports-backend/src/schema.gql` (hoặc `schema.gql` sa
 
 ```bash
 pnpm run verify:quick    # typecheck + copyright + size-gate:strict + dead-code-gate
-pnpm run verify:a-plus   # + lint + build
+pnpm run verify:a-plus   # + lint + test + build + check:shared-sync
 pnpm run verify:go       # working-tree-clean + schema-drift + codegen-drift + verify:a-plus
+pnpm run sync:shared     # pull shared kernel from web (manifest v1)
 ```
 
 Sau đổi GraphQL documents: `pnpm schema:sync` (nếu cần) + `pnpm codegen` — 0 drift.
@@ -41,9 +42,7 @@ God pages đã split (P4): schedule, draw, registrations, moderation. Mỗi file
 
 ## GraphQL
 
-**Đích:** `graphql/<domain>/{queries,mutations,fragments}.ts`
-
-**Hiện tại (legacy):** `graphql/queries/`, `graphql/mutations/`, … — migrate dần (Phase E).
+**Chuẩn:** `graphql/<domain>/{queries,mutations,fragments}.ts` — legacy `graphql/queries|mutations/` đã gỡ (Wave G).
 
 - **Không** `gql` inline trong `app/` hoặc `components/`
 - Dead-code gate: **0** orphan exports (`pnpm run dead-code-gate`)
