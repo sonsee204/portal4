@@ -16,7 +16,7 @@ Admin dashboard (port **3001**). Bề mặt lớn nhất trong stack FE (~389 fi
 | Schedule DnD sync (từ web) | `pnpm schedule-dnd:sync` |
 | Lint | `pnpm lint` |
 | Format | `pnpm run format` |
-| Typecheck | `pnpm exec tsc --noEmit` (script `typecheck` sau F2) |
+| Typecheck | `pnpm typecheck` |
 | Icons | `pnpm icons:sync` |
 | Version sync | `pnpm version:sync` |
 
@@ -25,11 +25,12 @@ GraphQL schema: `../nalee-sports-backend/src/schema.gql` (hoặc `schema.gql` sa
 ## Verify (chạy sau mỗi thay đổi)
 
 ```bash
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm lint
-# Sau Wave 0 F2:
-pnpm run verify:quick    # pre-push: typecheck + size-gate:strict
-pnpm run verify:a-plus   # typecheck + lint + size-gate:strict + build
+pnpm run size-gate:strict
+pnpm build
+pnpm run verify:quick    # pre-push: typecheck + copyright + size-gate:strict
+pnpm run verify:a-plus   # typecheck + copyright + lint + size-gate:strict + build
 pnpm run verify:go       # working-tree-clean + codegen drift + verify:a-plus
 ```
 

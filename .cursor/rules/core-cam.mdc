@@ -30,10 +30,12 @@ Block Ao Trình ở **đầu file**, trước `'use client'` / imports. Gate: `c
 ## Verify
 
 ```bash
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm lint
-pnpm run verify:a-plus   # typecheck + copyright + lint + size-gate:strict + build
-pnpm run verify:quick  # pre-push: typecheck + copyright + size-gate:strict
+pnpm run size-gate:strict
+pnpm build
+pnpm run verify:quick    # pre-push: typecheck + copyright + size-gate:strict
+pnpm run verify:a-plus # typecheck + copyright + lint + size-gate:strict + build
 ```
 
 Sau đổi GraphQL: `pnpm schema:sync` + `pnpm codegen`
