@@ -13,8 +13,8 @@
 
 'use client';
 
-import { useCallback } from 'react';
-import { useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
+import { useCallback, useEffect } from 'react';
+import { useApolloClient, useQuery, useMutation, useLazyQuery } from '@apollo/client/react';
 import {
   GET_TOURNAMENT_MATCHES,
   GET_REFEREE_MATCHES,
@@ -33,36 +33,79 @@ import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';
 import type {
   TournamentMatch,
-  MatchList,
   MatchFilterInput,
-  PaginationInput,
   ScheduleMatchInput,
   CascadeRescheduleInput,
   CascadeRescheduleResult,
   RepackCourtScheduleInput,
   RepackCourtScheduleResult,
   RepackCourtSchedulePreviewResult,
+  GetTournamentMatchesQuery,
 } from '@/graphql/generated';
+import {
+  resolveConnectionFirst,
+  totalPagesFromCount,
+  connectionNodes,
+} from '@/hooks/shared/useCursorConnection';
+import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
+import type { LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 interface UseTournamentMatchesOptions {
   tournamentId: string;
   filter?: MatchFilterInput;
-  pagination?: PaginationInput;
+  pagination?: LegacyPagePagination;
   skip?: boolean;
 }
 
 export function useTournamentMatches(options: UseTournamentMatchesOptions) {
   const { tournamentId, filter, pagination, skip } = options;
+  const page = pagination?.page ?? 1;
+  const first = resolveConnectionFirst(pagination);
+  const resetKey = JSON.stringify({ tournamentId, filter });
 
-  const { data, loading, error, refetch, subscribeToMore } = useQuery<{
-    tournamentMatches: MatchList;
-  }>(GET_TOURNAMENT_MATCHES, {
-    variables: { tournamentId, filter, pagination },
-    fetchPolicy: 'cache-and-network',
-    skip: skip || !tournamentId,
+  const client = useApolloClient();
+  const prefetchPage = useCallback(
+    async (after: string | null, pageSize: number) => {
+      const { data } = await client.query<GetTournamentMatchesQuery>({
+        query: GET_TOURNAMENT_MATCHES,
+        variables: {
+          tournamentId,
+          filter,
+          pagination: { first: pageSize, after },
+        },
+        fetchPolicy: 'network-only',
+      });
+      const conn = data?.tournamentMatchesConnection;
+      return {
+        endCursor: conn?.pageInfo?.endCursor,
+        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
+      };
+    },
+    [client, tournamentId, filter],
+  );
+
+  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
+    page,
+    first,
+    resetKey,
+    prefetchPage,
   });
 
-  const result = data?.tournamentMatches;
+  const { data, loading, error, refetch, subscribeToMore } =
+    useQuery<GetTournamentMatchesQuery>(GET_TOURNAMENT_MATCHES, {
+      variables: {
+        tournamentId,
+        filter,
+        pagination: { first, after },
+      },
+      fetchPolicy: 'cache-and-network',
+      skip: skip || !tournamentId || (page > 1 && resolving),
+    });
+
+  const connection = data?.tournamentMatchesConnection;
+  useEffect(() => {
+    rememberEndCursor(page, connection?.pageInfo?.endCursor);
+  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
 
   const subscribeToMatchUpdates = useCallback(
     () => createMatchSubscription(subscribeToMore, refetch, tournamentId),
@@ -70,11 +113,11 @@ export function useTournamentMatches(options: UseTournamentMatchesOptions) {
   );
 
   return {
-    matches: result?.matches ?? [],
-    total: result?.total ?? 0,
-    page: result?.page ?? 1,
-    totalPages: result?.totalPages ?? 1,
-    loading,
+    matches: connectionNodes(connection?.edges) ?? [],
+    total: connection?.totalCount ?? 0,
+    page,
+    totalPages: totalPagesFromCount(connection?.totalCount ?? 0, first),
+    loading: loading || resolving,
     error,
     refetch,
     subscribeToMatchUpdates,
