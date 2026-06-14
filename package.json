@@ -12,6 +12,7 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "size-gate": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all",
     "size-gate:strict": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --strict --warn-baseline",
     "size-gate:warn-baseline:update": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --update-warn-baseline",
@@ -68,6 +69,7 @@
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }
