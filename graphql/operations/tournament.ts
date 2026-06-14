@@ -11,5 +11,8 @@
  * is strictly prohibited without prior written consent.
  */
 
-/** @deprecated Import from @/graphql/admin/queries — re-export for backward compat (E2 removal). */
-export * from '@/graphql/admin/queries';
+/** @deprecated Import from @/graphql/tournament/{queries,mutations,fragments,subscriptions} — barrel for backward compat (E1 removal). */
+export * from '../tournament/fragments';
+export * from '../tournament/queries';
+export * from '../tournament/mutations';
+export * from '../tournament/subscriptions';

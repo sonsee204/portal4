@@ -15,7 +15,7 @@ import type { DocumentNode } from '@apollo/client';
 import {
   TOURNAMENT_MATCHES_UPDATED_SUB,
   TOURNAMENT_STATUS_CHANGED_SUB,
-} from '@/graphql/mutations/tournament';
+} from '@/graphql/tournament/subscriptions';
 
 export const SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS = 3_000;
 

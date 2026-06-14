@@ -15,8 +15,8 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_TOURNAMENT_BRACKET } from '@/graphql/queries/tournament';
-import { GENERATE_BRACKET, RESET_BRACKET, SEED_PLAYERS } from '@/graphql/mutations/tournament';
+import { GET_TOURNAMENT_BRACKET } from '@/graphql/tournament/queries';
+import { GENERATE_BRACKET, RESET_BRACKET, SEED_PLAYERS } from '@/graphql/tournament/mutations/bracket';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';

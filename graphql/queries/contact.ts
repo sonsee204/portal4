@@ -11,54 +11,5 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
-
-export const GET_CONTACT_INQUIRIES = gql`
-  query GetContactInquiries(
-    $filter: ContactInquiryFilterInput
-    $pagination: CursorPageInput
-  ) {
-    contactInquiriesConnection(filter: $filter, pagination: $pagination) {
-      edges {
-        cursor
-        node {
-          _id
-          name
-          phone
-          email
-          subject
-          message
-          status
-          adminNote
-          repliedBy
-          repliedAt
-          repliedByUser {
-            _id
-            fullName
-          }
-          createdAt
-          updatedAt
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
-      totalCount
-    }
-  }
-`;
-
-export const GET_CONTACT_INQUIRY_STATS = gql`
-  query GetContactInquiryStats {
-    getContactInquiryStats {
-      total
-      newCount
-      inProgressCount
-      repliedCount
-      closedCount
-    }
-  }
-`;
+/** @deprecated Import from @/graphql/contact/queries — re-export for backward compat (E2 removal). */
+export * from '@/graphql/contact/queries';

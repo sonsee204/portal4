@@ -11,29 +11,5 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
-
-export const NOTIFICATION_FRAGMENT = gql`
-  fragment NotificationFields on Notification {
-    _id
-    userId
-    type
-    title
-    description
-    icon
-    imageUrl
-    data {
-      screen
-      targetId
-      action
-      requesterId
-      initialTab
-      actionTaken
-      secondaryTargetId
-    }
-    isRead
-    readAt
-    createdAt
-    updatedAt
-  }
-`;
+/** @deprecated Import from @/graphql/notification/fragments — re-export for backward compat (E2 removal). */
+export * from '@/graphql/notification/fragments';

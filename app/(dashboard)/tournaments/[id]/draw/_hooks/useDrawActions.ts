@@ -19,7 +19,7 @@ import {
   useGenerateBracket,
   useResetBracket,
 } from '@/hooks/tournament';
-import { SEED_KNOCKOUT_BRACKET } from '@/graphql/mutations/tournament';
+import { SEED_KNOCKOUT_BRACKET } from '@/graphql/tournament/mutations/bracket';
 import { showError } from '@/lib/toast';
 import type {
   SeedKnockoutBracketMutation,

@@ -18,7 +18,7 @@ import { useApolloClient, useQuery, useMutation, useLazyQuery } from '@apollo/cl
 import {
   GET_TOURNAMENT_MATCHES,
   GET_REFEREE_MATCHES,
-} from '@/graphql/queries/tournament';
+} from '@/graphql/tournament/queries';
 import {
   SCHEDULE_MATCH,
   BULK_SCHEDULE_MATCHES,
@@ -26,8 +26,8 @@ import {
   ASSIGN_REFEREE,
   CASCADE_RESCHEDULE,
   REPACK_COURT_SCHEDULE,
-} from '@/graphql/mutations/tournament';
-import { PREVIEW_REPACK_COURT_SCHEDULE } from '@/graphql/queries/tournament';
+} from '@/graphql/tournament/mutations/schedule';
+import { PREVIEW_REPACK_COURT_SCHEDULE } from '@/graphql/tournament/queries';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { createMatchSubscription } from '@/lib/utils/subscription';
 import { TOURNAMENT } from '@/lib/strings';

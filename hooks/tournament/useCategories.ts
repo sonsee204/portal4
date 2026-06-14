@@ -15,8 +15,8 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_TOURNAMENT_CATEGORIES } from '@/graphql/queries/tournament';
-import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY } from '@/graphql/mutations/tournament';
+import { GET_TOURNAMENT_CATEGORIES } from '@/graphql/tournament/queries';
+import { CREATE_CATEGORY, UPDATE_CATEGORY, DELETE_CATEGORY } from '@/graphql/tournament/mutations/category';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
 import type {

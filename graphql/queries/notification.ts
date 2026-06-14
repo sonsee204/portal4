@@ -11,35 +11,5 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
-import { NOTIFICATION_FRAGMENT } from '../fragments/notification';
-
-export const GET_NOTIFICATIONS = gql`
-  query GetNotifications(
-    $filter: NotificationFilterInput
-    $pagination: CursorPageInput
-  ) {
-    notificationsConnection(filter: $filter, pagination: $pagination) {
-      edges {
-        cursor
-        node {
-          ...NotificationFields
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
-      totalCount
-    }
-  }
-  ${NOTIFICATION_FRAGMENT}
-`;
-
-export const GET_UNREAD_NOTIFICATION_COUNT = gql`
-  query GetUnreadNotificationCount {
-    getUnreadNotificationCount
-  }
-`;
+/** @deprecated Import from @/graphql/notification/queries — re-export for backward compat (E2 removal). */
+export * from '@/graphql/notification/queries';

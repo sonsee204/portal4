@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client/react';
-import { GET_TOURNAMENT_MATCHES } from '@/graphql/queries/tournament';
+import { GET_TOURNAMENT_MATCHES } from '@/graphql/tournament/queries';
 import type {
   GetTournamentMatchesQuery,
   GetTournamentMatchesQueryVariables,

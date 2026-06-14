@@ -6,12 +6,12 @@ alwaysApply: false
 
 # GraphQL Documents
 
-**Target:** `graphql/<domain>/queries.ts`, `mutations.ts`, `fragments.ts`
+**Target:** `graphql/<domain>/{queries,mutations,fragments,subscriptions}.ts`
 
-**Legacy (đang migrate):** `graphql/queries/`, `graphql/mutations/`, `graphql/fragments/`, `graphql/subscriptions/` — gom theo domain khi sửa (`tournament`, `admin`, `moderation`, `contact`, …).
+**Legacy (đang migrate):** `graphql/queries/`, `graphql/mutations/`, `graphql/fragments/`, `graphql/subscriptions/` — deprecated re-exports; import from `graphql/tournament/` instead.
 
 - Types từ `graphql/generated.ts` — **không sửa tay**
-- Hooks import documents: `hooks/tournament/useTournament.ts` → `@/graphql/queries/tournament`
+- Hooks import documents: `hooks/tournament/useTournament.ts` → `@/graphql/tournament/queries`
 - **Không** `gql` inline trong `app/` hoặc `components/`
 - **Không** god file GraphQL (>400L)
 - Sau đổi schema BE: `pnpm schema:sync` + `pnpm codegen`
@@ -23,7 +23,7 @@ alwaysApply: false
 
 ```typescript
 import type { GetTournamentQuery, GetTournamentQueryVariables } from '@/graphql/generated';
-import { GET_TOURNAMENT } from '@/graphql/queries/tournament';
+import { GET_TOURNAMENT } from '@/graphql/tournament/queries';
 
 const { data, loading } = useQuery<GetTournamentQuery, GetTournamentQueryVariables>(
   GET_TOURNAMENT,

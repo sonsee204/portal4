@@ -11,5 +11,9 @@
  * is strictly prohibited without prior written consent.
  */
 
-/** @deprecated Import from @/graphql/admin/queries — re-export for backward compat (E2 removal). */
-export * from '@/graphql/admin/queries';
+export * from './lifecycle';
+export * from './category';
+export * from './registration';
+export * from './bracket';
+export * from './schedule';
+export * from './scoring';

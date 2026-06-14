@@ -23,7 +23,7 @@ import {
 import {
   GET_TOURNAMENT_GROUP_RANKINGS,
   GET_TOURNAMENT_RANKINGS,
-} from '@/graphql/queries/tournament';
+} from '@/graphql/tournament/queries';
 import {
   RegistrationStatus,
   TournamentFormat,

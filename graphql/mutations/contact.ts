@@ -11,30 +11,5 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
-
-export const UPDATE_CONTACT_INQUIRY_STATUS = gql`
-  mutation UpdateContactInquiryStatus(
-    $id: ID!
-    $input: UpdateInquiryStatusInput!
-  ) {
-    updateContactInquiryStatus(id: $id, input: $input) {
-      _id
-      name
-      phone
-      email
-      subject
-      message
-      status
-      adminNote
-      repliedBy
-      repliedAt
-      repliedByUser {
-        _id
-        fullName
-      }
-      createdAt
-      updatedAt
-    }
-  }
-`;
+/** @deprecated Import from @/graphql/contact/mutations — re-export for backward compat (E2 removal). */
+export * from '@/graphql/contact/mutations';

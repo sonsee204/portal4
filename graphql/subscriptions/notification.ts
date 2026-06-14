@@ -11,14 +11,5 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
-import { NOTIFICATION_FRAGMENT } from '../fragments/notification';
-
-export const NOTIFICATION_CREATED_SUBSCRIPTION = gql`
-  subscription NotificationCreated($userId: ID!) {
-    notificationCreated(userId: $userId) {
-      ...NotificationFields
-    }
-  }
-  ${NOTIFICATION_FRAGMENT}
-`;
+/** @deprecated Import from @/graphql/notification/subscriptions — re-export for backward compat (E2 removal). */
+export * from '@/graphql/notification/subscriptions';

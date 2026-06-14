@@ -11,5 +11,14 @@
  * is strictly prohibited without prior written consent.
  */
 
-/** @deprecated Import from @/graphql/admin/queries — re-export for backward compat (E2 removal). */
-export * from '@/graphql/admin/queries';
+import { gql } from 'graphql-tag';
+import { NOTIFICATION_FRAGMENT } from '@/graphql/notification/fragments';
+
+export const NOTIFICATION_CREATED_SUBSCRIPTION = gql`
+  subscription NotificationCreated($userId: ID!) {
+    notificationCreated(userId: $userId) {
+      ...NotificationFields
+    }
+  }
+  ${NOTIFICATION_FRAGMENT}
+`;
