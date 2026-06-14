@@ -19,6 +19,7 @@ export default defineConfig({
     include: [
       '**/schedule-page.derived.test.ts',
       '**/draw-page.derived.test.ts',
+      '**/registrations-page.derived.test.ts',
     ],
     environment: 'node',
   },
