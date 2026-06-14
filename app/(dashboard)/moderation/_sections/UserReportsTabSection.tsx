@@ -20,11 +20,10 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { cn, formatDateTime } from '@/lib/utils';
 import { UserReportDetail } from '../_components/UserReportDetail';
 import {
-  PAGE_SIZE,
   USER_FILTER_CHIPS,
 } from '../_hooks/moderation-page.constants';
 import { shortDisplayId } from '../_hooks/moderation-page.derived';
@@ -52,10 +51,10 @@ export function UserReportsTabSection({
     userReportsLoading,
     userReportsError,
     refetchUserReports,
-    userTotalPages,
     userTotal,
-    userPage,
-    setUserPage,
+    userTotalCount,
+    userHasNextPage,
+    loadMoreUserReports,
     setSelectedUserReportId,
     effectiveUserReportId,
     selectedUserReport,
@@ -159,18 +158,16 @@ export function UserReportsTabSection({
             }}
           />
         </QueryState>
-        {userTotalPages > 1 && (
-          <Pagination
-            currentPage={userPage}
-            totalPages={userTotalPages}
-            totalItems={userTotal}
-            pageSize={PAGE_SIZE}
-            onPageChange={(p) => {
-              setUserPage(p);
-              setSelectedUserReportId(null);
-            }}
-          />
-        )}
+        <ConnectionPager
+          loadedCount={userReports.length}
+          totalCount={userTotalCount ?? userTotal}
+          hasNextPage={userHasNextPage}
+          onNext={() => {
+            void loadMoreUserReports();
+            setSelectedUserReportId(null);
+          }}
+          loading={userReportsLoading}
+        />
       </GlassPanel>
 
       {selectedUserReport ? (

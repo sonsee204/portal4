@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { UserCell } from '@/components/molecules/UserCell';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
@@ -60,21 +60,27 @@ function getStatusBadge(user: User) {
 }
 
 export default function UsersPage() {
-  const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showProvisionDialog, setShowProvisionDialog] = useState(false);
   const router = useRouter();
 
-  const { users, total, loading, error, refetch } = useAdminUsers({
+  const {
+    users,
+    total,
+    totalCount,
+    hasNextPage,
+    loadMore,
+    loading,
+    error,
+    refetch,
+  } = useAdminUsers({
     searchQuery,
-    pagination: { page, limit: PAGE_SIZE },
+    pagination: { limit: PAGE_SIZE },
   });
-  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setPage(1);
   }, []);
 
   const handleCreateSuccess = useCallback(() => {
@@ -192,16 +198,14 @@ export default function UsersPage() {
         </QueryState>
       </div>
 
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalItems={total}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
-          className="mt-4"
-        />
-      )}
+      <ConnectionPager
+        loadedCount={users.length}
+        totalCount={totalCount ?? total}
+        hasNextPage={hasNextPage}
+        onNext={() => void loadMore()}
+        loading={loading}
+        className="mt-4"
+      />
 
       {/* Create User Dialog */}
       <CreateUserDialog

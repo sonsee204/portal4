@@ -23,7 +23,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { QueryState } from '@/components/molecules/QueryState';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { COMMON } from '@/lib/strings';
 import {
   BOOKING_STATUS_VARIANT,
@@ -41,26 +41,31 @@ const PAGE_SIZE = 10;
 
 export default function CmsPage() {
   const [tab, setTab] = useState('bookings');
-  const [page, setPage] = useState(1);
 
   const {
     bookings,
     total: bookingTotal,
+    totalCount: bookingTotalCount,
+    hasNextPage: bookingsHasNextPage,
+    loadMore: loadMoreBookings,
     loading: bookingsLoading,
     error: bookingsError,
     refetch: bookingsRefetch,
   } = useAdminAllBookings(
-    { pagination: { page, limit: PAGE_SIZE } },
+    { pagination: { limit: PAGE_SIZE } },
     { skip: tab !== 'bookings' }
   );
 
   const {
     logs: auditLogs,
     total: auditTotal,
+    totalCount: auditTotalCount,
+    hasNextPage: auditHasNextPage,
+    loadMore: loadMoreAudit,
     loading: auditLoading,
     error: auditError,
   } = useAuditLogs(
-    { pagination: { page, limit: PAGE_SIZE } },
+    { pagination: { limit: PAGE_SIZE } },
     { skip: tab !== 'audit' }
   );
 
@@ -108,7 +113,6 @@ export default function CmsPage() {
           active={tab}
           onChange={(v) => {
             setTab(v);
-            setPage(1);
           }}
           className="mt-6"
         />
@@ -171,16 +175,14 @@ export default function CmsPage() {
                     </tr>
                   )}
                 />
-                {bookingTotal > PAGE_SIZE && (
-                  <Pagination
-                    currentPage={page}
-                    totalPages={Math.ceil(bookingTotal / PAGE_SIZE)}
-                    totalItems={bookingTotal}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setPage}
-                    className="mt-4"
-                  />
-                )}
+                <ConnectionPager
+                  loadedCount={bookings.length}
+                  totalCount={bookingTotalCount ?? bookingTotal}
+                  hasNextPage={bookingsHasNextPage}
+                  onNext={() => void loadMoreBookings()}
+                  loading={bookingsLoading}
+                  className="mt-4"
+                />
               </>
             )}
           </GlassPanel>
@@ -238,16 +240,14 @@ export default function CmsPage() {
                     </tr>
                   )}
                 />
-                {auditTotal > PAGE_SIZE && (
-                  <Pagination
-                    currentPage={page}
-                    totalPages={Math.ceil(auditTotal / PAGE_SIZE)}
-                    totalItems={auditTotal}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setPage}
-                    className="mt-4"
-                  />
-                )}
+                <ConnectionPager
+                  loadedCount={auditLogs.length}
+                  totalCount={auditTotalCount ?? auditTotal}
+                  hasNextPage={auditHasNextPage}
+                  onNext={() => void loadMoreAudit()}
+                  loading={auditLoading}
+                  className="mt-4"
+                />
               </>
             )}
           </GlassPanel>

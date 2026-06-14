@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import { ADMIN_RESET_USER_PASSWORD } from '@/graphql/mutations/admin';
+import { ADMIN_RESET_USER_PASSWORD } from '@/graphql/admin/mutations';
 import type { AdminResetUserPasswordMutation } from '@/graphql/generated';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import {

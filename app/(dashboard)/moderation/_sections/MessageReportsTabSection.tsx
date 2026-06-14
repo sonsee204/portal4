@@ -20,12 +20,11 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { cn, formatDateTime } from '@/lib/utils';
 import { MessageReportDetail } from '../_components/MessageReportDetail';
 import {
   MESSAGE_FILTER_CHIPS,
-  PAGE_SIZE,
 } from '../_hooks/moderation-page.constants';
 import { shortDisplayId, truncateText } from '../_hooks/moderation-page.derived';
 import type { ModerationPageActions } from '../_hooks/useModerationPageActions';
@@ -48,10 +47,10 @@ export function MessageReportsTabSection({
     msgReportsLoading,
     msgReportsError,
     refetchMsgReports,
-    msgTotalPages,
     msgTotal,
-    msgPage,
-    setMsgPage,
+    msgTotalCount,
+    msgHasNextPage,
+    loadMoreMsgReports,
     setSelectedMsgReportId,
     effectiveMsgReportId,
     selectedMsgReport,
@@ -144,18 +143,16 @@ export function MessageReportsTabSection({
             }}
           />
         </QueryState>
-        {msgTotalPages > 1 && (
-          <Pagination
-            currentPage={msgPage}
-            totalPages={msgTotalPages}
-            totalItems={msgTotal}
-            pageSize={PAGE_SIZE}
-            onPageChange={(p) => {
-              setMsgPage(p);
-              setSelectedMsgReportId(null);
-            }}
-          />
-        )}
+        <ConnectionPager
+          loadedCount={msgReports.length}
+          totalCount={msgTotalCount ?? msgTotal}
+          hasNextPage={msgHasNextPage}
+          onNext={() => {
+            void loadMoreMsgReports();
+            setSelectedMsgReportId(null);
+          }}
+          loading={msgReportsLoading}
+        />
       </GlassPanel>
 
       {selectedMsgReport ? (

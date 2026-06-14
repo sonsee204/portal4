@@ -24,10 +24,11 @@ import type {
   VenueRequestStatus,
 } from '@/app/(dashboard)/venue-requests/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 export function useVenueRequests(
   status?: VenueRequestStatus,
-  pagination?: { page: number; limit: number },
+  pagination?: LegacyPagePagination,
 ) {
   const result = usePagedConnectionQuery<
     GetAllVenueRequestsQuery,
@@ -39,12 +40,25 @@ export function useVenueRequests(
     resetKey: JSON.stringify(status ?? null),
     variables: { status },
     getConnection: (data) => data?.allVenueRequestsConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      allVenueRequestsConnection: {
+        ...next.allVenueRequestsConnection!,
+        edges: mergeConnectionEdges(
+          prev.allVenueRequestsConnection?.edges ?? [],
+          next.allVenueRequestsConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
     requests: result.items,
     total: result.total,
+    totalCount: result.totalCount,
     hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

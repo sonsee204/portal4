@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import { ADMIN_PROVISION_PLAYER } from '@/graphql/mutations/admin';
+import { ADMIN_PROVISION_PLAYER } from '@/graphql/admin/mutations';
 import type { AdminProvisionPlayerMutation } from '@/graphql/generated';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import {

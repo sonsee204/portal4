@@ -25,7 +25,7 @@ import { ROLE_DISPLAY_NAMES, isSuperAdminRole } from '@/lib/permissions';
 import {
   ADMIN_SUSPEND_USER,
   ADMIN_UNSUSPEND_USER,
-} from '@/graphql/mutations/admin';
+} from '@/graphql/admin/mutations';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { useAuthStore } from '@/stores/auth';
 import { USERS } from '@/lib/strings';

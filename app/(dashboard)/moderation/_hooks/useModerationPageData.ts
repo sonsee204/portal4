@@ -35,7 +35,6 @@ import {
   buildStatusFilter,
   findReportById,
   resolveEffectiveReportId,
-  totalPagesFromCount,
 } from './moderation-page.derived';
 
 export function useModerationPageData() {
@@ -44,13 +43,11 @@ export function useModerationPageData() {
   const [statusFilter, setStatusFilter] = useState<PostReportStatus | 'ALL'>(
     PostReportStatus.Pending,
   );
-  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [userStatusFilter, setUserStatusFilter] = useState<
     UserReportStatus | 'ALL'
   >('PENDING');
-  const [userPage, setUserPage] = useState(1);
   const [selectedUserReportId, setSelectedUserReportId] = useState<
     string | null
   >(null);
@@ -58,17 +55,19 @@ export function useModerationPageData() {
   const [msgStatusFilter, setMsgStatusFilter] = useState<
     MessageReportStatus | 'ALL'
   >('PENDING');
-  const [msgPage, setMsgPage] = useState(1);
   const [selectedMsgReportId, setSelectedMsgReportId] = useState<string | null>(
     null,
   );
 
   const postFilterVar = buildStatusFilter(statusFilter);
-  const postPaginationVar = { page, limit: PAGE_SIZE };
+  const postPaginationVar = { limit: PAGE_SIZE };
 
   const {
     reports,
     total: postTotal,
+    totalCount: postTotalCount,
+    hasNextPage: postHasNextPage,
+    loadMore: loadMorePostReports,
     loading: reportsLoading,
     error: reportsError,
     refetch: refetchReports,
@@ -76,11 +75,14 @@ export function useModerationPageData() {
   const { stats: postStats } = usePostReportStats();
 
   const userFilterVar = buildStatusFilter(userStatusFilter);
-  const userPaginationVar = { page: userPage, limit: PAGE_SIZE };
+  const userPaginationVar = { limit: PAGE_SIZE };
 
   const {
     reports: userReports,
     total: userTotal,
+    totalCount: userTotalCount,
+    hasNextPage: userHasNextPage,
+    loadMore: loadMoreUserReports,
     loading: userReportsLoading,
     error: userReportsError,
     refetch: refetchUserReports,
@@ -88,22 +90,23 @@ export function useModerationPageData() {
   const { stats: userStats } = useUserReportStats();
 
   const msgFilterVar = buildStatusFilter(msgStatusFilter);
-  const msgPaginationVar = { page: msgPage, limit: PAGE_SIZE };
+  const msgPaginationVar = { limit: PAGE_SIZE };
 
   const {
     reports: msgReports,
     total: msgTotal,
+    totalCount: msgTotalCount,
+    hasNextPage: msgHasNextPage,
+    loadMore: loadMoreMsgReports,
     loading: msgReportsLoading,
     error: msgReportsError,
     refetch: refetchMsgReports,
   } = useMessageReports(msgFilterVar, msgPaginationVar);
   const { stats: msgStats } = useMessageReportStats();
 
-  const postTotalPages = totalPagesFromCount(postTotal, PAGE_SIZE);
   const effectiveId = resolveEffectiveReportId(reports, selectedId);
   const selectedReport = findReportById(reports, effectiveId);
 
-  const userTotalPages = totalPagesFromCount(userTotal, PAGE_SIZE);
   const effectiveUserReportId = resolveEffectiveReportId(
     userReports,
     selectedUserReportId,
@@ -113,7 +116,6 @@ export function useModerationPageData() {
     effectiveUserReportId,
   );
 
-  const msgTotalPages = totalPagesFromCount(msgTotal, PAGE_SIZE);
   const effectiveMsgReportId = resolveEffectiveReportId(
     msgReports,
     selectedMsgReportId,
@@ -135,26 +137,23 @@ export function useModerationPageData() {
     setActiveTab,
     statusFilter,
     setStatusFilter,
-    page,
-    setPage,
     selectedId,
     setSelectedId,
     userStatusFilter,
     setUserStatusFilter,
-    userPage,
-    setUserPage,
     selectedUserReportId,
     setSelectedUserReportId,
     msgStatusFilter,
     setMsgStatusFilter,
-    msgPage,
-    setMsgPage,
     selectedMsgReportId,
     setSelectedMsgReportId,
     postFilterVar,
     postPaginationVar,
     reports,
     postTotal,
+    postTotalCount,
+    postHasNextPage,
+    loadMorePostReports,
     reportsLoading,
     reportsError,
     refetchReports,
@@ -163,6 +162,9 @@ export function useModerationPageData() {
     userPaginationVar,
     userReports,
     userTotal,
+    userTotalCount,
+    userHasNextPage,
+    loadMoreUserReports,
     userReportsLoading,
     userReportsError,
     refetchUserReports,
@@ -171,17 +173,17 @@ export function useModerationPageData() {
     msgPaginationVar,
     msgReports,
     msgTotal,
+    msgTotalCount,
+    msgHasNextPage,
+    loadMoreMsgReports,
     msgReportsLoading,
     msgReportsError,
     refetchMsgReports,
     msgStats,
-    postTotalPages,
     effectiveId,
     selectedReport,
-    userTotalPages,
     effectiveUserReportId,
     selectedUserReport,
-    msgTotalPages,
     effectiveMsgReportId,
     selectedMsgReport,
     activeStats,

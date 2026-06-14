@@ -24,10 +24,11 @@ import type {
   ClaimRequestStatus,
 } from '@/app/(dashboard)/claim-requests/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 export function useClaimRequests(
   filter?: { status?: ClaimRequestStatus },
-  pagination?: { page: number; limit: number },
+  pagination?: LegacyPagePagination,
 ) {
   const result = usePagedConnectionQuery<
     GetClaimRequestsQuery,
@@ -39,12 +40,25 @@ export function useClaimRequests(
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.claimRequestsConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      claimRequestsConnection: {
+        ...next.claimRequestsConnection!,
+        edges: mergeConnectionEdges(
+          prev.claimRequestsConnection?.edges ?? [],
+          next.claimRequestsConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
     requests: result.items,
     total: result.total,
+    totalCount: result.totalCount,
     hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

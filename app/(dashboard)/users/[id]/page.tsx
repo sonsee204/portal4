@@ -19,7 +19,7 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { TabGroup } from '@/components/molecules/TabGroup';
 import { FilterChips } from '@/components/molecules/FilterChips';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { Button } from '@/components/atoms/Button';
 import { ProfileCard } from './_components/ProfileCard';
 import { BookingCard } from './_components/BookingCard';
@@ -41,19 +41,21 @@ export default function UserDetailPage() {
   const userId = params?.id as string | undefined;
   const [tab, setTab] = useState('bookings');
   const [filter, setFilter] = useState('all');
-  const [page, setPage] = useState(1);
 
   const { user, loading, error, refetch } = useUserProfile(userId);
 
   const {
     bookings: userBookings,
     total: bookingTotal,
+    totalCount: bookingTotalCount,
+    hasNextPage: bookingsHasNextPage,
+    loadMore: loadMoreBookings,
     loading: bookingsLoading,
   } = useAdminUserBookings(
     userId ?? '',
     {
       statuses: filter === 'all' ? undefined : [filter],
-      pagination: { page, limit: BOOKING_PAGE_SIZE },
+      pagination: { limit: BOOKING_PAGE_SIZE },
     },
     { skip: !userId || tab !== 'bookings' }
   );
@@ -145,7 +147,6 @@ export default function UserDetailPage() {
                       active={filter}
                       onChange={(v) => {
                         setFilter(v);
-                        setPage(1);
                       }}
                     />
                     {bookingsLoading && userBookings.length === 0 ? (
@@ -176,15 +177,13 @@ export default function UserDetailPage() {
                         </p>
                       </div>
                     )}
-                    {bookingTotal > BOOKING_PAGE_SIZE && (
-                      <Pagination
-                        currentPage={page}
-                        totalPages={Math.ceil(bookingTotal / BOOKING_PAGE_SIZE)}
-                        totalItems={bookingTotal}
-                        pageSize={BOOKING_PAGE_SIZE}
-                        onPageChange={setPage}
-                      />
-                    )}
+                    <ConnectionPager
+                      loadedCount={userBookings.length}
+                      totalCount={bookingTotalCount ?? bookingTotal}
+                      hasNextPage={bookingsHasNextPage}
+                      onNext={() => void loadMoreBookings()}
+                      loading={bookingsLoading}
+                    />
                   </div>
                 )}
 

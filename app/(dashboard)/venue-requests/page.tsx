@@ -23,7 +23,7 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 import { StatCard } from '@/components/molecules/StatCard';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { Badge } from '@/components/atoms/Badge';
 import { VenueRequestDetail } from './_components/VenueRequestDetail';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -55,23 +55,31 @@ const FILTER_CHIPS = [
 
 export default function VenueRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('PENDING');
-  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filterVar =
     statusFilter === 'ALL' ? undefined : (statusFilter as VenueRequestStatus);
 
-  const paginationVar = { page, limit: PAGE_SIZE };
+  const paginationVar = { limit: PAGE_SIZE };
 
   const {
     requests,
     total,
+    totalCount,
+    hasNextPage,
+    loadMore,
     loading: requestsLoading,
     error: requestsError,
     refetch: refetchRequests,
   } = useVenueRequests(filterVar, paginationVar);
 
   const { stats } = useVenueRequestStats();
+
+  const effectiveId =
+    requests.find((r) => r._id === selectedId)?._id ?? requests[0]?._id ?? null;
+  const selectedRequest = effectiveId
+    ? requests.find((r) => r._id === effectiveId)
+    : undefined;
 
   const [approveRequest, { loading: approving }] = useMutation(
     APPROVE_VENUE_REQUEST,
@@ -83,17 +91,8 @@ export default function VenueRequestsPage() {
     createMutationOptions('RejectVenueRequest', 'Đã từ chối yêu cầu')
   );
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-
-  const effectiveId =
-    requests.find((r) => r._id === selectedId)?._id ?? requests[0]?._id ?? null;
-  const selectedRequest = effectiveId
-    ? requests.find((r) => r._id === effectiveId)
-    : undefined;
-
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
-    setPage(1);
     setSelectedId(null);
   };
 
@@ -255,18 +254,16 @@ export default function VenueRequestsPage() {
               }}
             />
           </QueryState>
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={total}
-              pageSize={PAGE_SIZE}
-              onPageChange={(p) => {
-                setPage(p);
-                setSelectedId(null);
-              }}
-            />
-          )}
+          <ConnectionPager
+            loadedCount={requests.length}
+            totalCount={totalCount ?? total}
+            hasNextPage={hasNextPage}
+            onNext={() => {
+              void loadMore();
+              setSelectedId(null);
+            }}
+            loading={requestsLoading}
+          />
         </GlassPanel>
 
         {selectedRequest ? (

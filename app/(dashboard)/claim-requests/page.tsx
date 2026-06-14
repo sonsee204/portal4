@@ -23,7 +23,7 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 import { StatCard } from '@/components/molecules/StatCard';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { Badge } from '@/components/atoms/Badge';
 import { ClaimRequestDetail } from './_components/ClaimRequestDetail';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -51,7 +51,6 @@ const FILTER_CHIPS = [
 
 export default function ClaimRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('PENDING');
-  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filterVar =
@@ -59,11 +58,14 @@ export default function ClaimRequestsPage() {
       ? undefined
       : { status: statusFilter as ClaimRequestStatus };
 
-  const paginationVar = { page, limit: PAGE_SIZE };
+  const paginationVar = { limit: PAGE_SIZE };
 
   const {
     requests,
     total,
+    totalCount,
+    hasNextPage,
+    loadMore,
     loading: requestsLoading,
     error: requestsError,
     refetch: refetchRequests,
@@ -79,8 +81,6 @@ export default function ClaimRequestsPage() {
     )
   );
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-
   const effectiveId =
     requests.find((r) => r._id === selectedId)?._id ?? requests[0]?._id ?? null;
   const selectedRequest = effectiveId
@@ -89,7 +89,6 @@ export default function ClaimRequestsPage() {
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
-    setPage(1);
     setSelectedId(null);
   };
 
@@ -235,18 +234,16 @@ export default function ClaimRequestsPage() {
               }}
             />
           </QueryState>
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={total}
-              pageSize={PAGE_SIZE}
-              onPageChange={(p) => {
-                setPage(p);
-                setSelectedId(null);
-              }}
-            />
-          )}
+          <ConnectionPager
+            loadedCount={requests.length}
+            totalCount={totalCount ?? total}
+            hasNextPage={hasNextPage}
+            onNext={() => {
+              void loadMore();
+              setSelectedId(null);
+            }}
+            loading={requestsLoading}
+          />
         </GlassPanel>
 
         {selectedRequest ? (

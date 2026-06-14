@@ -12,6 +12,7 @@ import { useApolloClient, useQuery } from '@apollo/client/react';
 import {
   connectionNodes,
   resolveConnectionFirst,
+  useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
 import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
@@ -32,6 +33,7 @@ export function usePagedConnectionQuery<TData, TNode, TVariables extends Record<
   resetKey: string;
   variables: TVariables;
   getConnection: (data: TData | undefined) => ConnectionShape<TNode> | null | undefined;
+  mergeConnection?: (prev: TData, next: TData) => TData;
   skip?: boolean;
   fetchPolicy?: WatchQueryFetchPolicy;
 }) {
@@ -65,7 +67,7 @@ export function usePagedConnectionQuery<TData, TNode, TVariables extends Record<
     prefetchPage,
   });
 
-  const { data, loading, error, refetch } = useQuery<TData>(config.query, {
+  const { data, loading, error, refetch, fetchMore } = useQuery<TData>(config.query, {
     variables: {
       ...config.variables,
       pagination: { first, after },
@@ -75,14 +77,32 @@ export function usePagedConnectionQuery<TData, TNode, TVariables extends Record<
   });
 
   const connection = config.getConnection(data);
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
   useEffect(() => {
     rememberEndCursor(page, connection?.pageInfo?.endCursor);
   }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
 
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (nextAfter) => ({
+      ...config.variables,
+      pagination: { first, after: nextAfter },
+    }),
+    mergeResults: config.mergeConnection ?? ((prev, next) => next),
+  });
+
   return {
     items: connectionNodes(connection?.edges) ?? [],
-    total: connection?.totalCount ?? 0,
-    hasMore: connection?.pageInfo?.hasNextPage ?? false,
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading: loading || resolving,
     error,
     refetch,

@@ -15,7 +15,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { PageHeader } from '@/components/organisms/PageHeader';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { QueryState } from '@/components/molecules/QueryState';
 import { useAuditLogs, useAuditStats, type AuditLogEntry } from '@/hooks/audit';
 import type { AuditCategory, AuditStatus } from '@/types';
@@ -33,7 +33,6 @@ export default function AuditPage() {
   const [category, setCategory] = useState<AuditCategory | undefined>();
   const [status, setStatus] = useState<AuditStatus | undefined>();
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
 
   // Detail drawer
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
@@ -46,13 +45,16 @@ export default function AuditPage() {
     if (search.trim()) filter.search = search.trim();
     return {
       filter: Object.keys(filter).length > 0 ? filter : undefined,
-      pagination: { page, limit: PAGE_SIZE },
+      pagination: { limit: PAGE_SIZE },
     };
-  }, [category, status, search, page]);
+  }, [category, status, search]);
 
   const {
     logs,
     total: totalItems,
+    totalCount,
+    hasNextPage,
+    loadMore,
     loading: logsLoading,
     error: logsError,
     refetch: refetchLogs,
@@ -64,8 +66,6 @@ export default function AuditPage() {
     refetch: refetchStats,
   } = useAuditStats({ fetchPolicy: 'cache-and-network' });
 
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-
   // Build category counts from stats
   const totalByCategory = useMemo(() => {
     if (!stats?.byCategory) return undefined;
@@ -76,20 +76,16 @@ export default function AuditPage() {
     return map;
   }, [stats]);
 
-  // Handlers
   const handleCategoryChange = useCallback((val: AuditCategory | undefined) => {
     setCategory(val);
-    setPage(1);
   }, []);
 
   const handleStatusChange = useCallback((val: AuditStatus | undefined) => {
     setStatus(val);
-    setPage(1);
   }, []);
 
   const handleSearchChange = useCallback((val: string) => {
     setSearch(val);
-    setPage(1);
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -151,17 +147,14 @@ export default function AuditPage() {
         </QueryState>
       </div>
 
-      {/* Pagination */}
-      {totalItems > 0 && (
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
-          className="mt-4"
-        />
-      )}
+      <ConnectionPager
+        loadedCount={logs.length}
+        totalCount={totalCount ?? totalItems}
+        hasNextPage={hasNextPage}
+        onNext={() => void loadMore()}
+        loading={logsLoading}
+        className="mt-4"
+      />
 
       {/* Detail drawer */}
       <AuditDetailDrawer log={selectedLog} onClose={handleCloseDetail} />

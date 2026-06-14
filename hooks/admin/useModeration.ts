@@ -21,7 +21,7 @@ import {
   GET_USER_REPORT_STATS,
   GET_MESSAGE_REPORTS_FOR_ADMIN,
   GET_MESSAGE_REPORT_STATS,
-} from '@/graphql/queries/moderation';
+} from '@/graphql/moderation/queries';
 import type {
   GetMessageReportsForAdminQuery,
   GetPostReportsForAdminQuery,
@@ -36,10 +36,11 @@ import type {
   UserReportStatus,
 } from '@/app/(dashboard)/moderation/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 export function usePostReports(
   filter?: { status?: PostReportStatus },
-  pagination?: { page: number; limit: number },
+  pagination?: LegacyPagePagination,
 ) {
   const result = usePagedConnectionQuery<
     GetPostReportsForAdminQuery,
@@ -51,12 +52,25 @@ export function usePostReports(
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.getPostReportsForAdminConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      getPostReportsForAdminConnection: {
+        ...next.getPostReportsForAdminConnection!,
+        edges: mergeConnectionEdges(
+          prev.getPostReportsForAdminConnection?.edges ?? [],
+          next.getPostReportsForAdminConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
     reports: result.items,
     total: result.total,
+    totalCount: result.totalCount,
     hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,
@@ -79,7 +93,7 @@ export function usePostReportStats() {
 
 export function useUserReports(
   filter?: { status?: UserReportStatus },
-  pagination?: { page: number; limit: number },
+  pagination?: LegacyPagePagination,
 ) {
   const result = usePagedConnectionQuery<
     GetUserReportsForAdminQuery,
@@ -91,12 +105,25 @@ export function useUserReports(
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.getUserReportsForAdminConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      getUserReportsForAdminConnection: {
+        ...next.getUserReportsForAdminConnection!,
+        edges: mergeConnectionEdges(
+          prev.getUserReportsForAdminConnection?.edges ?? [],
+          next.getUserReportsForAdminConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
     reports: result.items,
     total: result.total,
+    totalCount: result.totalCount,
     hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,
@@ -119,7 +146,7 @@ export function useUserReportStats() {
 
 export function useMessageReports(
   filter?: { status?: MessageReportStatus },
-  pagination?: { page: number; limit: number },
+  pagination?: LegacyPagePagination,
 ) {
   const result = usePagedConnectionQuery<
     GetMessageReportsForAdminQuery,
@@ -131,12 +158,25 @@ export function useMessageReports(
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.messageReportsConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      messageReportsConnection: {
+        ...next.messageReportsConnection!,
+        edges: mergeConnectionEdges(
+          prev.messageReportsConnection?.edges ?? [],
+          next.messageReportsConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
     reports: result.items,
     total: result.total,
+    totalCount: result.totalCount,
     hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

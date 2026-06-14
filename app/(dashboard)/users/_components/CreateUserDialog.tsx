@@ -21,7 +21,7 @@ import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
 import { Select } from '@/components/atoms/Select';
 import { IonIcon } from '@/components/atoms/IonIcon';
-import { ADMIN_CREATE_USER } from '@/graphql/mutations/admin';
+import { ADMIN_CREATE_USER } from '@/graphql/admin/mutations';
 import { useAuthStore } from '@/stores/auth';
 import { showSuccess } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';

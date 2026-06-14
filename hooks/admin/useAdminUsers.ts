@@ -13,66 +13,30 @@
 
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import { useApolloClient, useQuery } from '@apollo/client/react';
-import { ADMIN_GET_USERS } from '@/graphql/queries/admin';
+import { useQuery } from '@apollo/client/react';
+import { ADMIN_GET_USERS } from '@/graphql/admin/queries';
 import type { AdminGetUsersQuery } from '@/graphql/generated';
 import type { UserRole, User } from '@/types';
 import {
   connectionNodes,
+  mergeConnectionEdges,
   resolveConnectionFirst,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
-import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
 
 interface AdminUsersVariables {
   role?: UserRole;
   isActive?: boolean;
   isSuspended?: boolean;
   searchQuery?: string;
-  pagination?: { page?: number; limit?: number; first?: number; after?: string | null };
+  pagination?: LegacyPagePagination;
 }
 
 export function useAdminUsers(variables: AdminUsersVariables) {
-  const page = variables.pagination?.page ?? 1;
   const first = resolveConnectionFirst(variables.pagination);
-  const resetKey = JSON.stringify({
-    role: variables.role,
-    isActive: variables.isActive,
-    isSuspended: variables.isSuspended,
-    searchQuery: variables.searchQuery || undefined,
-  });
 
-  const client = useApolloClient();
-  const prefetchPage = useCallback(
-    async (after: string | null, pageSize: number) => {
-      const { data } = await client.query<AdminGetUsersQuery>({
-        query: ADMIN_GET_USERS,
-        variables: {
-          role: variables.role,
-          isActive: variables.isActive,
-          isSuspended: variables.isSuspended,
-          searchQuery: variables.searchQuery || undefined,
-          pagination: { first: pageSize, after },
-        },
-        fetchPolicy: 'network-only',
-      });
-      const conn = data?.adminUsersConnection;
-      return {
-        endCursor: conn?.pageInfo?.endCursor,
-        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
-      };
-    },
-    [client, variables.role, variables.isActive, variables.isSuspended, variables.searchQuery],
-  );
-
-  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
-    page,
-    first,
-    resetKey,
-    prefetchPage,
-  });
-
-  const { data, loading, error, refetch } = useQuery<AdminGetUsersQuery>(
+  const { data, loading, error, refetch, fetchMore } = useQuery<AdminGetUsersQuery>(
     ADMIN_GET_USERS,
     {
       variables: {
@@ -80,22 +44,47 @@ export function useAdminUsers(variables: AdminUsersVariables) {
         isActive: variables.isActive,
         isSuspended: variables.isSuspended,
         searchQuery: variables.searchQuery || undefined,
-        pagination: { first, after },
+        pagination: { first, after: variables.pagination?.after ?? null },
       },
-      skip: page > 1 && resolving,
       fetchPolicy: 'cache-and-network',
     },
   );
 
   const connection = data?.adminUsersConnection;
-  useEffect(() => {
-    rememberEndCursor(page, connection?.pageInfo?.endCursor);
-  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      role: variables.role,
+      isActive: variables.isActive,
+      isSuspended: variables.isSuspended,
+      searchQuery: variables.searchQuery || undefined,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      adminUsersConnection: {
+        ...next.adminUsersConnection!,
+        edges: mergeConnectionEdges(
+          prev.adminUsersConnection?.edges ?? [],
+          next.adminUsersConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   return {
     users: (connectionNodes(connection?.edges) ?? []) as User[],
-    total: connection?.totalCount ?? 0,
-    loading: loading || resolving,
+    total: totalCount,
+    totalCount,
+    hasNextPage,
+    loadMore,
+    loading,
     error,
     refetch,
   };

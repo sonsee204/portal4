@@ -20,12 +20,11 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { cn, formatDateTime } from '@/lib/utils';
 import { ReportDetail } from '../_components/ReportDetail';
 import {
   POST_FILTER_CHIPS,
-  PAGE_SIZE,
 } from '../_hooks/moderation-page.constants';
 import { shortDisplayId, truncateText } from '../_hooks/moderation-page.derived';
 import type { ModerationPageActions } from '../_hooks/useModerationPageActions';
@@ -52,10 +51,10 @@ export function PostReportsTabSection({
     reportsLoading,
     reportsError,
     refetchReports,
-    postTotalPages,
     postTotal,
-    page,
-    setPage,
+    postTotalCount,
+    postHasNextPage,
+    loadMorePostReports,
     setSelectedId,
     effectiveId,
     selectedReport,
@@ -160,18 +159,16 @@ export function PostReportsTabSection({
             }}
           />
         </QueryState>
-        {postTotalPages > 1 && (
-          <Pagination
-            currentPage={page}
-            totalPages={postTotalPages}
-            totalItems={postTotal}
-            pageSize={PAGE_SIZE}
-            onPageChange={(p) => {
-              setPage(p);
-              setSelectedId(null);
-            }}
-          />
-        )}
+        <ConnectionPager
+          loadedCount={reports.length}
+          totalCount={postTotalCount ?? postTotal}
+          hasNextPage={postHasNextPage}
+          onNext={() => {
+            void loadMorePostReports();
+            setSelectedId(null);
+          }}
+          loading={reportsLoading}
+        />
       </GlassPanel>
 
       {selectedReport ? (

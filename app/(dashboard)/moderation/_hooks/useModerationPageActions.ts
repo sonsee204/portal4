@@ -21,15 +21,15 @@ import {
   GET_POST_REPORT_STATS,
   GET_USER_REPORTS_FOR_ADMIN,
   GET_USER_REPORT_STATS,
-} from '@/graphql/queries/moderation';
+} from '@/graphql/moderation/queries';
 import {
   DELETE_MESSAGE_BY_ADMIN,
   DELETE_POST_BY_ADMIN,
   UPDATE_MESSAGE_REPORT_STATUS,
   UPDATE_REPORT_STATUS,
   UPDATE_USER_REPORT_STATUS,
-} from '@/graphql/mutations/moderation';
-import { ADMIN_SUSPEND_USER } from '@/graphql/mutations/admin';
+} from '@/graphql/moderation/mutations';
+import { ADMIN_SUSPEND_USER } from '@/graphql/admin/mutations';
 import { PostReportStatus } from '@/graphql/generated';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import type {
@@ -47,13 +47,10 @@ export function useModerationPageActions(data: ModerationPageData) {
     msgFilterVar,
     msgPaginationVar,
     setStatusFilter,
-    setPage,
     setSelectedId,
     setUserStatusFilter,
-    setUserPage,
     setSelectedUserReportId,
     setMsgStatusFilter,
-    setMsgPage,
     setSelectedMsgReportId,
   } = data;
 
@@ -98,19 +95,16 @@ export function useModerationPageActions(data: ModerationPageData) {
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value as PostReportStatus | 'ALL');
-    setPage(1);
     setSelectedId(null);
   };
 
   const handleUserStatusFilterChange = (value: string) => {
     setUserStatusFilter(value as UserReportStatus | 'ALL');
-    setUserPage(1);
     setSelectedUserReportId(null);
   };
 
   const handleMsgStatusFilterChange = (value: string) => {
     setMsgStatusFilter(value as MessageReportStatus | 'ALL');
-    setMsgPage(1);
     setSelectedMsgReportId(null);
   };
 

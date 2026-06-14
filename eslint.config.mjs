@@ -17,11 +17,9 @@ import nextTs from "eslint-config-next/typescript";
 
 /** Legacy offset pagination — shrink allowlist as hooks migrate to cursor. */
 const OFFSET_PAGINATION_ALLOWLIST = [
-  "hooks/admin/useVenueRequests.ts",
-  "hooks/admin/useClaimRequests.ts",
-  "hooks/admin/useModeration.ts",
   "hooks/shared/useConnectionPageAfter.ts",
   "hooks/shared/useCursorConnection.ts",
+  "hooks/shared/usePagedConnectionQuery.ts",
 ];
 
 const eslintConfig = defineConfig([
