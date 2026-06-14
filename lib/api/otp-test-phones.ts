@@ -22,6 +22,8 @@ import {
   SET_OTP_TEST_PHONE_ENABLED,
   UPDATE_OTP_TEST_PHONE,
 } from '@/graphql/queries/otp-test-phones';
+import type { GetOtpTestPhonesQuery } from '@/graphql/generated';
+import { connectionNodes } from '@/hooks/shared/useCursorConnection';
 
 export type OtpTestPhonePurpose =
   | 'SIGN_UP_PHONE'
@@ -70,13 +72,14 @@ export async function fetchOtpTestPhones(options?: {
   search?: string;
   enabled?: boolean;
 }): Promise<OtpTestPhoneList> {
+  const limit = options?.limit ?? 50;
   const client = getApolloClient();
-  const result = await client.query<{ otpTestPhones: OtpTestPhoneList }>({
+  const result = await client.query<GetOtpTestPhonesQuery>({
     query: GET_OTP_TEST_PHONES,
     variables: {
       pagination: {
-        page: options?.page ?? 1,
-        limit: options?.limit ?? 50,
+        first: limit,
+        after: null,
       },
       filter: {
         search: options?.search,
@@ -85,15 +88,14 @@ export async function fetchOtpTestPhones(options?: {
     },
     fetchPolicy: 'network-only',
   });
-  return (
-    result.data?.otpTestPhones ?? {
-      items: [],
-      total: 0,
-      page: 1,
-      limit: 50,
-      hasMore: false,
-    }
-  );
+  const conn = result.data?.otpTestPhonesConnection;
+  return {
+    items: (connectionNodes(conn?.edges) ?? []) as OtpTestPhone[],
+    total: conn?.totalCount ?? 0,
+    page: options?.page ?? 1,
+    limit,
+    hasMore: conn?.pageInfo?.hasNextPage ?? false,
+  };
 }
 
 export async function createOtpTestPhone(

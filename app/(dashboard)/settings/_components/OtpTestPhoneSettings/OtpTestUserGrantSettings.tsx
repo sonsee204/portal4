@@ -338,7 +338,7 @@ export function OtpTestUserGrantSettings() {
                 <button
                   key={user._id}
                   type="button"
-                  onClick={() => setSelectedUser(user)}
+                  onClick={() => setSelectedUser(user as User)}
                   className={`hover:bg-surface-hover flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
                     selectedUser?._id === user._id ? 'bg-primary/10' : ''
                   }`}
