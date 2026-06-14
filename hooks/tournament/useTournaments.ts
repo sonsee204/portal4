@@ -16,41 +16,80 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_MY_TOURNAMENTS } from '@/graphql/queries/tournament';
 import type {
-  TournamentList,
+  GetMyTournamentsQuery,
+  GetMyTournamentsQueryVariables,
   TournamentFilterInput,
-  PaginationInput,
 } from '@/graphql/generated';
+import {
+  connectionNodes,
+  mergeConnectionEdges,
+  resolveConnectionFirst,
+  totalPagesFromCount,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
+} from '@/hooks/shared/useCursorConnection';
 
 interface UseMyTournamentsOptions {
   filter?: TournamentFilterInput;
-  pagination?: PaginationInput;
+  pagination?: LegacyPagePagination;
   skip?: boolean;
 }
 
 export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
   const { filter, pagination, skip } = options;
+  const first = resolveConnectionFirst(pagination);
 
-  const { data, loading, error, refetch, subscribeToMore } = useQuery<{
-    myTournaments: TournamentList;
-  }>(GET_MY_TOURNAMENTS, {
-    variables: { filter, pagination },
+  const { data, loading, error, refetch, fetchMore, subscribeToMore } = useQuery<
+    GetMyTournamentsQuery,
+    GetMyTournamentsQueryVariables
+  >(GET_MY_TOURNAMENTS, {
+    variables: {
+      filter,
+      pagination: { first, after: pagination?.after ?? null },
+    },
     fetchPolicy: 'cache-and-network',
     skip,
   });
 
-  const result = data?.myTournaments;
-  const tournaments = result?.tournaments ?? [];
+  const connection = data?.myTournamentsConnection;
+  const tournaments = connectionNodes(connection?.edges);
+  const pageInfo = connection?.pageInfo;
+  const total = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage: pageInfo?.hasNextPage ?? false,
+    endCursor: pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      filter,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...prev,
+      myTournamentsConnection: {
+        ...next.myTournamentsConnection!,
+        edges: mergeConnectionEdges(
+          prev.myTournamentsConnection?.edges ?? [],
+          next.myTournamentsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
+
+  const page = pagination?.page ?? 1;
 
   return {
     tournaments,
-    total: result?.total ?? 0,
-    page: result?.page ?? 1,
-    totalPages: result?.totalPages ?? 1,
-    hasNextPage: result?.hasNextPage ?? false,
-    hasPrevPage: result?.hasPrevPage ?? false,
+    total,
+    page,
+    totalPages: totalPagesFromCount(total, first),
+    hasNextPage: pageInfo?.hasNextPage ?? false,
+    hasPrevPage: pageInfo?.hasPreviousPage ?? false,
     loading,
     error,
     refetch,
     subscribeToMore,
+    loadMore,
   };
 }
