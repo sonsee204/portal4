@@ -18,60 +18,48 @@ import {
   GET_ALL_VENUE_REQUESTS,
   GET_VENUE_REQUEST_STATS,
 } from '@/graphql/queries/venue-requests';
+import type { GetAllVenueRequestsQuery } from '@/graphql/generated';
 import type {
   VenueRequestItem,
   VenueRequestStatus,
 } from '@/app/(dashboard)/venue-requests/types';
-
-interface VenueRequestsQueryData {
-  allVenueRequests: {
-    requests: VenueRequestItem[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface VenueRequestStatsQueryData {
-  venueRequestStats: {
-    totalRequests: number;
-    pendingRequests: number;
-    approvedRequests: number;
-    rejectedRequests: number;
-  };
-}
+import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
 
 export function useVenueRequests(
   status?: VenueRequestStatus,
   pagination?: { page: number; limit: number },
 ) {
-  const { data, loading, error, refetch } = useQuery<VenueRequestsQueryData>(
-    GET_ALL_VENUE_REQUESTS,
-    {
-      variables: { status, pagination },
-      fetchPolicy: 'cache-and-network',
-    },
-  );
+  const result = usePagedConnectionQuery<
+    GetAllVenueRequestsQuery,
+    VenueRequestItem,
+    { status?: VenueRequestStatus }
+  >({
+    query: GET_ALL_VENUE_REQUESTS,
+    pagination,
+    resetKey: JSON.stringify(status ?? null),
+    variables: { status },
+    getConnection: (data) => data?.allVenueRequestsConnection,
+  });
 
   return {
-    requests: data?.allVenueRequests?.requests ?? [],
-    total: data?.allVenueRequests?.total ?? 0,
-    hasMore: data?.allVenueRequests?.hasMore ?? false,
-    loading,
-    error,
-    refetch,
+    requests: result.items,
+    total: result.total,
+    hasMore: result.hasMore,
+    loading: result.loading,
+    error: result.error,
+    refetch: result.refetch,
   };
 }
 
 export function useVenueRequestStats() {
-  const { data, loading, error, refetch } =
-    useQuery<VenueRequestStatsQueryData>(GET_VENUE_REQUEST_STATS);
+  const { data, loading, error, refetch } = useQuery<{
+    venueRequestStats: {
+      totalRequests: number;
+      pendingRequests: number;
+      approvedRequests: number;
+      rejectedRequests: number;
+    };
+  }>(GET_VENUE_REQUEST_STATS);
 
-  return {
-    stats: data?.venueRequestStats,
-    loading,
-    error,
-    refetch,
-  };
+  return { stats: data?.venueRequestStats, loading, error, refetch };
 }
