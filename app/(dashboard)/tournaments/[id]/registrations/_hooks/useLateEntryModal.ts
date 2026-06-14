@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { TOURNAMENT } from '@/lib/strings';
 import {
   usePreviewLateEntryPlacement,
@@ -82,13 +82,22 @@ export function useLateEntryModal({
     [categories]
   );
 
+  const effectiveCategoryId = useMemo(
+    () =>
+      categoryId ||
+      (eligibleCategories.length === 1
+        ? (eligibleCategories[0]?._id ?? '')
+        : ''),
+    [categoryId, eligibleCategories],
+  );
+
   const selectedCategory = useMemo(
-    () => eligibleCategories.find((c) => c._id === categoryId),
-    [eligibleCategories, categoryId]
+    () => eligibleCategories.find((c) => c._id === effectiveCategoryId),
+    [eligibleCategories, effectiveCategoryId],
   );
 
   const { preview, loading: previewLoading } = usePreviewLateEntryPlacement(
-    categoryId || null
+    effectiveCategoryId || null,
   );
 
   const { addLateEntry, loading: submitting } = useAddLateEntryToByeSlot({
@@ -120,13 +129,6 @@ export function useLateEntryModal({
     resetState();
     onClose();
   }, [step, result, onSuccess, resetState, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (eligibleCategories.length === 1 && !categoryId) {
-      setCategoryId(eligibleCategories[0]._id);
-    }
-  }, [open, eligibleCategories, categoryId]);
 
   const validateForm = useCallback((): boolean => {
     if (!selectedCategory) return false;
@@ -165,7 +167,7 @@ export function useLateEntryModal({
   const buildInput = useCallback(() => {
     const matchType = selectedCategory?.matchType;
     const base = {
-      categoryId,
+      categoryId: effectiveCategoryId,
       reason: reason.trim(),
       athleteName:
         matchType === MatchType.Doubles
@@ -205,7 +207,7 @@ export function useLateEntryModal({
     return base;
   }, [
     selectedCategory,
-    categoryId,
+    effectiveCategoryId,
     reason,
     athleteName,
     phone,
@@ -245,12 +247,12 @@ export function useLateEntryModal({
   }, []);
 
   const canProceedFromCategory =
-    !!categoryId && preview?.canProceed && !previewLoading;
+    !!effectiveCategoryId && preview?.canProceed && !previewLoading;
 
   return {
     step,
     setStep,
-    categoryId,
+    categoryId: effectiveCategoryId,
     setCategoryId,
     athleteName,
     setAthleteName,
