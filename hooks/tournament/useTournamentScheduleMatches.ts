@@ -17,12 +17,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { GET_TOURNAMENT_MATCHES } from '@/graphql/queries/tournament';
 import type {
+  GetTournamentMatchesQuery,
+  GetTournamentMatchesQueryVariables,
   MatchFilterInput,
-  MatchList,
+  ScoreSummary,
   TournamentMatch,
 } from '@/graphql/generated';
-
-const SCHEDULE_MATCHES_PAGE_SIZE = 500;
+import { fetchAllConnectionPages } from '@/hooks/shared/useCursorConnection';
+import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 interface UseTournamentScheduleMatchesOptions {
   tournamentId: string;
@@ -44,12 +46,13 @@ export function useTournamentScheduleMatches(
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
 
-  const { subscribeToMore } = useQuery<{ tournamentMatches: MatchList }>(
+  const { subscribeToMore } = useQuery<GetTournamentMatchesQuery>(
     GET_TOURNAMENT_MATCHES,
     {
       variables: {
         tournamentId,
-        pagination: { page: 1, limit: 1 },
+        filter: filter ?? undefined,
+        pagination: { first: 1, after: null },
       },
       skip: skip || !tournamentId,
       fetchPolicy: 'cache-only',
@@ -63,32 +66,36 @@ export function useTournamentScheduleMatches(
     if (!hasLoadedRef.current) setInitialLoading(true);
 
     try {
-      const all: TournamentMatch[] = [];
-      let page = 1;
-      let hasNextPage = true;
       let totalCount = 0;
-
-      while (hasNextPage) {
-        const { data } = await client.query<{ tournamentMatches: MatchList }>({
-          query: GET_TOURNAMENT_MATCHES,
-          variables: {
-            tournamentId,
-            filter: filter ?? undefined,
-            pagination: { page, limit: SCHEDULE_MATCHES_PAGE_SIZE },
-          },
-          fetchPolicy: 'network-only',
-        });
-        const result = data?.tournamentMatches;
-        if (!result) break;
-        all.push(...result.matches);
-        totalCount = result.total;
-        hasNextPage = result.hasNextPage;
-        page += 1;
-      }
+      const all = await fetchAllConnectionPages<TournamentMatch>({
+        fetchPage: async (after) => {
+          const { data } = await client.query<
+            GetTournamentMatchesQuery,
+            GetTournamentMatchesQueryVariables
+          >({
+            query: GET_TOURNAMENT_MATCHES,
+            variables: {
+              tournamentId,
+              filter: filter ?? undefined,
+              pagination: { first: CURSOR_PAGE_MAX, after: after ?? null },
+            },
+            fetchPolicy: 'network-only',
+          });
+          const conn = data?.tournamentMatchesConnection;
+          totalCount = conn?.totalCount ?? totalCount;
+          return {
+            edges: conn?.edges ?? [],
+            pageInfo: {
+              hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
+              endCursor: conn?.pageInfo?.endCursor,
+            },
+          };
+        },
+      });
 
       if (!mountedRef.current) return;
       setMatches(all);
-      setTotal(totalCount);
+      setTotal(totalCount || all.length);
       hasLoadedRef.current = true;
     } catch (err) {
       if (!mountedRef.current) return;
@@ -102,6 +109,22 @@ export function useTournamentScheduleMatches(
   const refetch = useCallback(() => {
     void loadAll();
   }, [loadAll]);
+
+  const patchMatch = useCallback(
+    (matchId: string, patch: Partial<TournamentMatch>) => {
+      setMatches((prev) =>
+        prev.map((m) => (m._id === matchId ? { ...m, ...patch } : m)),
+      );
+    },
+    [],
+  );
+
+  const patchMatchScore = useCallback(
+    (matchId: string, scoreSummary: ScoreSummary) => {
+      patchMatch(matchId, { scoreSummary });
+    },
+    [patchMatch],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -124,6 +147,8 @@ export function useTournamentScheduleMatches(
     loading: initialLoading,
     error,
     refetch,
+    patchMatch,
+    patchMatchScore,
     subscribeToMore,
   };
 }
