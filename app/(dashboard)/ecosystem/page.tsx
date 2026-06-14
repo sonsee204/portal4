@@ -63,9 +63,9 @@ export default function EcosystemPage() {
         .slice(0, 3)
         .map(
           (log: {
-            actorName?: string;
+            actorName?: string | null;
             action: string;
-            target?: string;
+            target?: string | null;
             createdAt: string;
           }) => ({
             icon:
