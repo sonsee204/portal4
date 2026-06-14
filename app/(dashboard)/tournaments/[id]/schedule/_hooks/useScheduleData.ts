@@ -15,6 +15,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
+  useScheduleAutoRepackBanner,
+  useScheduleDriftBanner,
   useTournament,
   useTournamentCategories,
   useTournamentMatches,
@@ -28,6 +30,10 @@ import {
 } from '@/graphql/generated';
 import { ALL_MATCH_STATUS } from './schedule-page.constants';
 import { findPortalRepackOverdueMatchIds } from './schedule-page.derived';
+import { useScheduleGridDerived } from './useScheduleGridDerived';
+import { useScheduleMutations } from './useScheduleMutations';
+import { useScheduleRealtime } from './useScheduleRealtime';
+import { useScheduleUiState } from './useScheduleUiState';
 
 export type ScheduleViewMode = 'grid' | 'list';
 
@@ -57,17 +63,45 @@ export function useScheduleData(tournamentId: string) {
 
   const { tournament } = useTournament(tournamentId);
   const { categories } = useTournamentCategories(tournamentId);
-  const { matches: scheduleRawMatches } = useTournamentScheduleMatches({
-    tournamentId,
-  });
+
+  const {
+    matches: scheduleRawMatches,
+    loading: scheduleLoading,
+    refetch: refetchSchedule,
+    subscribeToMore,
+  } = useTournamentScheduleMatches({ tournamentId });
 
   const scheduleMatchesMapped = useMemo(
     () => mapMatchesToSchedule(scheduleRawMatches, categories),
     [scheduleRawMatches, categories],
   );
 
-  const courtBufferMinutes =
-    tournament?.scheduleConfig?.courtBufferMinutes ?? 5;
+  const mutations = useScheduleMutations(refetchSchedule);
+
+  const displayMatches = useMemo(
+    () => mutations.patchMatches(scheduleMatchesMapped),
+    [scheduleMatchesMapped, mutations],
+  );
+
+  const ui = useScheduleUiState();
+
+  const grid = useScheduleGridDerived({
+    tournament,
+    displayMatches,
+    gridSelectedDate: ui.gridSelectedDate,
+  });
+
+  const { autoRepackBanner, dismissAutoRepackBanner } =
+    useScheduleAutoRepackBanner(scheduleMatchesMapped, grid.courts);
+  const { driftBanner, dismissDriftBanner } =
+    useScheduleDriftBanner(scheduleRawMatches);
+
+  useScheduleRealtime({
+    tournamentId,
+    subscribeToMore,
+    refetchSchedule,
+    hasPendingMoves: mutations.hasPendingMoves,
+  });
 
   const availableCourts = useMemo(
     () =>
@@ -85,11 +119,6 @@ export function useScheduleData(tournamentId: string) {
       })),
     [availableCourts],
   );
-
-  const { matches: gridRawMatches } = useTournamentScheduleMatches({
-    tournamentId,
-    skip: viewMode !== 'grid',
-  });
 
   const { matches, loading, refetch, subscribeToMatchUpdates } =
     useTournamentMatches({
@@ -136,9 +165,17 @@ export function useScheduleData(tournamentId: string) {
     categories,
     scheduleRawMatches,
     scheduleMatchesMapped,
-    courtBufferMinutes,
+    displayMatches,
+    scheduleLoading,
+    refetchSchedule,
     courtOptions,
-    gridRawMatches,
+    ...ui,
+    ...grid,
+    ...mutations,
+    autoRepackBanner,
+    dismissAutoRepackBanner,
+    driftBanner,
+    dismissDriftBanner,
     matches,
     loading,
     refetch,

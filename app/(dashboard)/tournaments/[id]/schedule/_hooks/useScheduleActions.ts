@@ -19,12 +19,11 @@ import {
   useCascadeReschedule,
   usePreviewRepackCourtSchedule,
   useRepackCourtSchedule,
-  useScheduleMatch,
-  useUnscheduleMatch,
 } from '@/hooks/tournament';
 import { computeRefereeScheduleIssues } from '@/lib/tournament/referee-schedule-conflicts';
 import type { TournamentMatch } from '@/graphql/generated';
 import { calendarKeyFromIso } from './schedule-page.derived';
+import { useScheduleDndActions } from './useScheduleDndActions';
 import type { SchedulePageData } from './useScheduleData';
 
 export function useScheduleActions(data: SchedulePageData) {
@@ -43,17 +42,23 @@ export function useScheduleActions(data: SchedulePageData) {
     setRepackOpen,
     setCascadeOpen,
     refetch,
+    refetchSchedule,
+    scheduleMatch,
+    unscheduleMatch,
+    scheduling,
+    unscheduling,
   } = data;
 
-  const onSuccess = useCallback(() => void refetch(), [refetch]);
+  const onMutationSuccess = useCallback(() => {
+    void refetch();
+    void refetchSchedule();
+  }, [refetch, refetchSchedule]);
 
-  const { scheduleMatch, loading: scheduling } = useScheduleMatch({ onSuccess });
-  const { unscheduleMatch, loading: unscheduling } = useUnscheduleMatch({
-    onSuccess,
+  const { assignReferee, loading: assigning } = useAssignReferee({
+    onSuccess: onMutationSuccess,
   });
-  const { assignReferee, loading: assigning } = useAssignReferee({ onSuccess });
   const { cascadeReschedule, loading: cascading } = useCascadeReschedule({
-    onSuccess,
+    onSuccess: onMutationSuccess,
   });
   const {
     previewRepackCourtSchedule,
@@ -62,8 +67,10 @@ export function useScheduleActions(data: SchedulePageData) {
     error: repackPreviewQueryError,
   } = usePreviewRepackCourtSchedule();
   const { repackCourtSchedule, loading: repacking } = useRepackCourtSchedule({
-    onSuccess,
+    onSuccess: onMutationSuccess,
   });
+
+  const dnd = useScheduleDndActions(data);
 
   const isActionLoading =
     scheduling || unscheduling || assigning || cascading || repacking;
@@ -187,6 +194,7 @@ export function useScheduleActions(data: SchedulePageData) {
   );
 
   return {
+    ...dnd,
     isActionLoading,
     repackPreviewData,
     repackPreviewLoading,

@@ -15,7 +15,9 @@ import { describe, expect, it } from 'vitest';
 import {
   calendarKeyFromIso,
   formatScheduleDate,
+  isPastScheduleDate,
   selectedGridDateTime,
+  todayCalendarDate,
 } from './schedule-page.derived';
 
 describe('schedule-page.derived', () => {
@@ -32,5 +34,15 @@ describe('schedule-page.derived', () => {
   it('selectedGridDateTime combines today date with court time', () => {
     const value = selectedGridDateTime('court-1', '09:30');
     expect(value).toMatch(/^\d{4}-\d{2}-\d{2}T09:30$/);
+  });
+
+  it('isPastScheduleDate compares calendar strings', () => {
+    expect(isPastScheduleDate('2026-06-10', '2026-06-13')).toBe(true);
+    expect(isPastScheduleDate('2026-06-13', '2026-06-13')).toBe(false);
+    expect(isPastScheduleDate('', '2026-06-13')).toBe(false);
+  });
+
+  it('todayCalendarDate returns YYYY-MM-DD format', () => {
+    expect(todayCalendarDate()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

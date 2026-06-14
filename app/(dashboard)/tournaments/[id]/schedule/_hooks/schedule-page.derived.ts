@@ -14,6 +14,17 @@
 import type { ScheduleShiftPreview, TournamentMatch } from '@/graphql/generated';
 import { isPortalMatchOverdue } from '@/lib/tournament/schedule-overdue';
 
+export function todayCalendarDate(): string {
+  return new Date().toLocaleDateString('en-CA');
+}
+
+export function isPastScheduleDate(
+  selectedDate: string,
+  today: string,
+): boolean {
+  return selectedDate !== '' && selectedDate < today;
+}
+
 export function calendarKeyFromIso(iso: string): string {
   const d = new Date(iso);
   const y = d.getFullYear();
