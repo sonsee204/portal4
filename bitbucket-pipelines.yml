@@ -21,6 +21,8 @@ definitions:
           - pnpm run check:copyright-header
           - pnpm run lint
           - pnpm run size-gate:strict
+          - pnpm run dead-code-gate
+          - pnpm run check:codegen-drift
           - pnpm run build
         artifacts:
           - .next/**
