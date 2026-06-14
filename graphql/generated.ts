@@ -1757,14 +1757,6 @@ export type ContactInquiryFilterInput = {
   to?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type ContactInquiryList = {
-  __typename?: 'ContactInquiryList';
-  items: Array<ContactInquiry>;
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  totalPages: Scalars['Int']['output'];
-};
-
 export type ContactInquiryStats = {
   __typename?: 'ContactInquiryStats';
   closedCount: Scalars['Int']['output'];
@@ -9451,8 +9443,6 @@ export type Query = {
   getAvailableOrderPromotions: Array<Promotion>;
   /** Get list of blocked users */
   getBlockedUsers: Array<UserBlock>;
-  /** @deprecated Use contactInquiriesConnection. Legacy offset pagination for portal until web refactor. */
-  getContactInquiries: ContactInquiryList;
   /** Get a single contact inquiry by ID (Admin only) */
   getContactInquiry: ContactInquiry;
   /** Get contact inquiry stats by status (Admin only) */
@@ -10071,11 +10061,6 @@ export type QueryGenerateQrCodeArgs = {
 export type QueryGetAvailableOrderPromotionsArgs = {
   productCategoryIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   venueId: Scalars['ID']['input'];
-};
-
-
-export type QueryGetContactInquiriesArgs = {
-  filter?: InputMaybe<ContactInquiryFilterInput>;
 };
 
 
@@ -15198,6 +15183,46 @@ export type AdminGetUserBookingsQueryVariables = Exact<{
 
 export type AdminGetUserBookingsQuery = { __typename?: 'Query', adminUserBookingsConnection: { __typename?: 'AdminBookingItemConnection', totalCount: number, edges: Array<{ __typename?: 'AdminBookingItemEdge', cursor: string, node: { __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type AuditGetLogsQueryVariables = Exact<{
+  filter?: InputMaybe<AuditFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type AuditGetLogsQuery = { __typename?: 'Query', auditLogsConnection: { __typename?: 'AuditLogConnection', totalCount: number, edges: Array<{ __typename?: 'AuditLogEdge', cursor: string, node: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type AuditGetStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AuditGetStatsQuery = { __typename?: 'Query', auditStats: { __typename?: 'AuditStats', totalEvents: number, failedLast24h: number, securityLast7d: number, authLast24h: number, byCategory: Array<{ __typename?: 'AuditCategoryCount', category: string, count: number }> } };
+
+export type ResetPasswordMutationVariables = Exact<{
+  input: ResetPasswordInput;
+}>;
+
+
+export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
+export type ReviewClaimRequestMutationVariables = Exact<{
+  input: ReviewClaimRequestInput;
+}>;
+
+
+export type ReviewClaimRequestMutation = { __typename?: 'Mutation', reviewClaimRequest: { __typename?: 'VenueClaimRequest', _id: string, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, reviewedAt?: string | null, reviewedById?: string | null } };
+
+export type GetClaimRequestsQueryVariables = Exact<{
+  filter?: InputMaybe<ClaimRequestFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetClaimRequestsQuery = { __typename?: 'Query', claimRequestsConnection: { __typename?: 'VenueClaimRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueClaimRequestEdge', cursor: string, node: { __typename?: 'VenueClaimRequest', _id: string, venueId: string, userId: string, venueName: string, venueAddress?: string | null, phoneNumber: string, email?: string | null, notes?: string | null, proofDocuments?: Array<string> | null, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedById?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetClaimRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetClaimRequestStatsQuery = { __typename?: 'Query', claimRequestStats: { __typename?: 'ClaimRequestStats', total: number, pending: number, approved: number, rejected: number, cancelled: number, thisWeek: number, thisMonth: number } };
+
 export type UpdateContactInquiryStatusMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: UpdateInquiryStatusInput;
@@ -15293,109 +15318,6 @@ export type GetMessageReportStatsQueryVariables = Exact<{ [key: string]: never; 
 
 export type GetMessageReportStatsQuery = { __typename?: 'Query', getMessageReportStats: { __typename?: 'MessageReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
 
-export type ResetPasswordMutationVariables = Exact<{
-  input: ResetPasswordInput;
-}>;
-
-
-export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: { __typename?: 'SuccessResponse', success: boolean, message: string } };
-
-export type ReviewClaimRequestMutationVariables = Exact<{
-  input: ReviewClaimRequestInput;
-}>;
-
-
-export type ReviewClaimRequestMutation = { __typename?: 'Mutation', reviewClaimRequest: { __typename?: 'VenueClaimRequest', _id: string, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, reviewedAt?: string | null, reviewedById?: string | null } };
-
-export type CreatePickupGameCampaignMutationVariables = Exact<{
-  input: CreatePickupGameCampaignInput;
-}>;
-
-
-export type CreatePickupGameCampaignMutation = { __typename?: 'Mutation', createPickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
-
-export type UpdatePickupGameCampaignMutationVariables = Exact<{
-  campaignId: Scalars['ID']['input'];
-  input: UpdatePickupGameCampaignInput;
-}>;
-
-
-export type UpdatePickupGameCampaignMutation = { __typename?: 'Mutation', updatePickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
-
-export type AddGamesToCampaignMutationVariables = Exact<{
-  input: AddGamesToCampaignInput;
-}>;
-
-
-export type AddGamesToCampaignMutation = { __typename?: 'Mutation', addGamesToCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
-
-export type RemoveGamesFromCampaignMutationVariables = Exact<{
-  input: RemoveGamesFromCampaignInput;
-}>;
-
-
-export type RemoveGamesFromCampaignMutation = { __typename?: 'Mutation', removeGamesFromCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
-
-export type CreateQrCampaignMutationVariables = Exact<{
-  input: CreateQrCampaignInput;
-}>;
-
-
-export type CreateQrCampaignMutation = { __typename?: 'Mutation', createQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, expiresAt?: string | null, createdAt: string } };
-
-export type UpdateQrCampaignMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateQrCampaignInput;
-}>;
-
-
-export type UpdateQrCampaignMutation = { __typename?: 'Mutation', updateQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, expiresAt?: string | null, updatedAt: string } };
-
-export type ToggleQrCampaignMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  isActive: Scalars['Boolean']['input'];
-}>;
-
-
-export type ToggleQrCampaignMutation = { __typename?: 'Mutation', toggleQrCampaign: { __typename?: 'QrCampaign', _id: string, isActive: boolean, updatedAt: string } };
-
-export type UploadTournamentImageMutationVariables = Exact<{
-  input: UploadTournamentImageInput;
-}>;
-
-
-export type UploadTournamentImageMutation = { __typename?: 'Mutation', uploadTournamentImage: { __typename?: 'UploadPostMediaResponse', url: string, key: string } };
-
-export type UploadAvatarMutationVariables = Exact<{
-  input: UploadAvatarInput;
-}>;
-
-
-export type UploadAvatarMutation = { __typename?: 'Mutation', uploadAvatar: { __typename?: 'UploadResponse', key: string, url: string, user: { __typename?: 'User', _id: string, photoURL?: string | null } } };
-
-export type UpdateProfileMutationVariables = Exact<{
-  input: UpdateProfileInput;
-}>;
-
-
-export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
-
-export type ApproveVenueRequestMutationVariables = Exact<{
-  requestId: Scalars['ID']['input'];
-  adminNote?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type ApproveVenueRequestMutation = { __typename?: 'Mutation', approveVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, reviewedAt?: string | null, reviewedBy?: string | null, adminNote?: string | null } };
-
-export type RejectVenueRequestMutationVariables = Exact<{
-  requestId: Scalars['ID']['input'];
-  rejectionReason: Scalars['String']['input'];
-}>;
-
-
-export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, rejectionReason?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
-
 export type NotificationFieldsFragment = { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null };
 
 export type MarkNotificationAsReadMutationVariables = Exact<{
@@ -15453,40 +15375,6 @@ export type NotificationCreatedSubscriptionVariables = Exact<{
 
 export type NotificationCreatedSubscription = { __typename?: 'Subscription', notificationCreated: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
 
-export type AuditGetLogsQueryVariables = Exact<{
-  filter?: InputMaybe<AuditFilterInput>;
-  pagination?: InputMaybe<CursorPageInput>;
-}>;
-
-
-export type AuditGetLogsQuery = { __typename?: 'Query', auditLogsConnection: { __typename?: 'AuditLogConnection', totalCount: number, edges: Array<{ __typename?: 'AuditLogEdge', cursor: string, node: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
-export type AuditGetStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AuditGetStatsQuery = { __typename?: 'Query', auditStats: { __typename?: 'AuditStats', totalEvents: number, failedLast24h: number, securityLast7d: number, authLast24h: number, byCategory: Array<{ __typename?: 'AuditCategoryCount', category: string, count: number }> } };
-
-export type GetClaimRequestsQueryVariables = Exact<{
-  filter?: InputMaybe<ClaimRequestFilterInput>;
-  pagination?: InputMaybe<CursorPageInput>;
-}>;
-
-
-export type GetClaimRequestsQuery = { __typename?: 'Query', claimRequestsConnection: { __typename?: 'VenueClaimRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueClaimRequestEdge', cursor: string, node: { __typename?: 'VenueClaimRequest', _id: string, venueId: string, userId: string, venueName: string, venueAddress?: string | null, phoneNumber: string, email?: string | null, notes?: string | null, proofDocuments?: Array<string> | null, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedById?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
-export type GetClaimRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetClaimRequestStatsQuery = { __typename?: 'Query', claimRequestStats: { __typename?: 'ClaimRequestStats', total: number, pending: number, approved: number, rejected: number, cancelled: number, thisWeek: number, thisMonth: number } };
-
-export type GetOtpTestPhonesQueryVariables = Exact<{
-  pagination?: InputMaybe<CursorPageInput>;
-  filter?: InputMaybe<OtpTestPhoneFilterInput>;
-}>;
-
-
-export type GetOtpTestPhonesQuery = { __typename?: 'Query', otpTestPhonesConnection: { __typename?: 'OtpTestPhoneConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestPhoneEdge', cursor: string, node: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
 export type CreateOtpTestPhoneMutationVariables = Exact<{
   input: CreateOtpTestPhoneInput;
 }>;
@@ -15510,13 +15398,13 @@ export type SetOtpTestPhoneEnabledMutationVariables = Exact<{
 
 export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTestPhoneEnabled: { __typename?: 'OtpTestPhone', _id: string, enabled: boolean, updatedAt: string } };
 
-export type GetOtpTestUserGrantsQueryVariables = Exact<{
+export type GetOtpTestPhonesQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
-  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+  filter?: InputMaybe<OtpTestPhoneFilterInput>;
 }>;
 
 
-export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetOtpTestPhonesQuery = { __typename?: 'Query', otpTestPhonesConnection: { __typename?: 'OtpTestPhoneConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestPhoneEdge', cursor: string, node: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CreateOtpTestUserGrantMutationVariables = Exact<{
   input: CreateOtpTestUserGrantInput;
@@ -15532,7 +15420,44 @@ export type RevokeOtpTestUserGrantMutationVariables = Exact<{
 
 export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, enabled: boolean, revokedAt?: string | null, updatedAt: string } };
 
+export type GetOtpTestUserGrantsQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+}>;
+
+
+export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
+
+export type CreatePickupGameCampaignMutationVariables = Exact<{
+  input: CreatePickupGameCampaignInput;
+}>;
+
+
+export type CreatePickupGameCampaignMutation = { __typename?: 'Mutation', createPickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type UpdatePickupGameCampaignMutationVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+  input: UpdatePickupGameCampaignInput;
+}>;
+
+
+export type UpdatePickupGameCampaignMutation = { __typename?: 'Mutation', updatePickupGameCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type AddGamesToCampaignMutationVariables = Exact<{
+  input: AddGamesToCampaignInput;
+}>;
+
+
+export type AddGamesToCampaignMutation = { __typename?: 'Mutation', addGamesToCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
+
+export type RemoveGamesFromCampaignMutationVariables = Exact<{
+  input: RemoveGamesFromCampaignInput;
+}>;
+
+
+export type RemoveGamesFromCampaignMutation = { __typename?: 'Mutation', removeGamesFromCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
 
 export type MyCampaignsQueryVariables = Exact<{
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
@@ -15554,6 +15479,29 @@ export type CampaignStatsQueryVariables = Exact<{
 
 
 export type CampaignStatsQuery = { __typename?: 'Query', campaignStats: { __typename?: 'CampaignStats', totalGames: number, totalSlots: number, totalCheckIns: number, uniqueParticipants: number, avgFillRate: number, returnRate: number, avgCheckInDeltaMinutes?: number | null, qrScanCount: number, manualCount: number, bulkCount: number, checkInsByGame: Array<{ __typename?: 'CheckInByGame', gameId: string, gameName: string, sportType?: string | null, date?: string | null, venueName?: string | null, maxSlots: number, checkIns: number, fillRate: number, qrScanCount: number, manualCount: number, bulkCount: number }>, checkInsByDate: Array<{ __typename?: 'CheckInByDate', date: string, count: number }>, topParticipants: Array<{ __typename?: 'TopCampaignParticipant', userId: string, displayName: string, avatarUrl?: string | null, gamesJoined: number, gamesCheckedIn: number, attendanceRate: number }> } };
+
+export type CreateQrCampaignMutationVariables = Exact<{
+  input: CreateQrCampaignInput;
+}>;
+
+
+export type CreateQrCampaignMutation = { __typename?: 'Mutation', createQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, expiresAt?: string | null, createdAt: string } };
+
+export type UpdateQrCampaignMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateQrCampaignInput;
+}>;
+
+
+export type UpdateQrCampaignMutation = { __typename?: 'Mutation', updateQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, expiresAt?: string | null, updatedAt: string } };
+
+export type ToggleQrCampaignMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleQrCampaignMutation = { __typename?: 'Mutation', toggleQrCampaign: { __typename?: 'QrCampaign', _id: string, isActive: boolean, updatedAt: string } };
 
 export type GetQrCampaignsQueryVariables = Exact<{
   filter?: InputMaybe<QrCampaignFilterInput>;
@@ -15592,6 +15540,21 @@ export type GenerateQrCodeQueryVariables = Exact<{
 
 export type GenerateQrCodeQuery = { __typename?: 'Query', generateQrCode: string };
 
+export type CreateReferralCodeMutationVariables = Exact<{
+  input: CreateReferralCodeInput;
+}>;
+
+
+export type CreateReferralCodeMutation = { __typename?: 'Mutation', createReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string } };
+
+export type ToggleReferralCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleReferralCodeMutation = { __typename?: 'Mutation', toggleReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, isActive: boolean, updatedAt: string } };
+
 export type GetGrowthStatsQueryVariables = Exact<{
   filter?: InputMaybe<ReferralFilterInput>;
 }>;
@@ -15613,50 +15576,10 @@ export type GetReferralCodesQueryVariables = Exact<{
 
 export type GetReferralCodesQuery = { __typename?: 'Query', getReferralCodes: Array<{ __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
 
-export type CreateReferralCodeMutationVariables = Exact<{
-  input: CreateReferralCodeInput;
-}>;
-
-
-export type CreateReferralCodeMutation = { __typename?: 'Mutation', createReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string } };
-
-export type ToggleReferralCodeMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  isActive: Scalars['Boolean']['input'];
-}>;
-
-
-export type ToggleReferralCodeMutation = { __typename?: 'Mutation', toggleReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, isActive: boolean, updatedAt: string } };
-
 export type GetSportsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSportsQuery = { __typename?: 'Query', sports: Array<{ __typename?: 'Sport', _id: string, type: SportType, name: string, nameEn?: string | null, icon: string, emoji?: string | null, colorKey: string, isPopular: boolean, isActive: boolean, displayOrder: number }> };
-
-export type MeQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
-
-export type GetUserProfileQueryVariables = Exact<{
-  userId: Scalars['String']['input'];
-}>;
-
-
-export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
-
-export type GetAllVenueRequestsQueryVariables = Exact<{
-  status?: InputMaybe<VenueRequestStatus>;
-  pagination?: InputMaybe<CursorPageInput>;
-}>;
-
-
-export type GetAllVenueRequestsQuery = { __typename?: 'Query', allVenueRequestsConnection: { __typename?: 'VenueRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueRequestEdge', cursor: string, node: { __typename?: 'VenueRequest', _id: string, requesterId: string, name: string, description?: string | null, sportTypes: Array<SportType>, status: VenueRequestStatus, phoneNumber?: string | null, email?: string | null, coverImageUrl?: string | null, images?: Array<string> | null, rejectionReason?: string | null, adminNote?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, location: { __typename?: 'RequestLocation', address: string, city?: string | null, district?: string | null, ward?: string | null, latitude?: number | null, longitude?: number | null }, courts: Array<{ __typename?: 'RequestCourtInfo', name: string, sportType: SportType, pricePerHour: number, peakPricePerHour: number, isIndoor?: boolean | null }>, requester?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reviewedByAdmin?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
-export type GetVenueRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetVenueRequestStatsQuery = { __typename?: 'Query', venueRequestStats: { __typename?: 'VenueRequestStats', totalRequests: number, pendingRequests: number, approvedRequests: number, rejectedRequests: number } };
 
 export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
 
@@ -16075,3 +15998,65 @@ export type TournamentStatusChangedSubscriptionVariables = Exact<{
 
 
 export type TournamentStatusChangedSubscription = { __typename?: 'Subscription', tournamentStatusChanged: string };
+
+export type UploadTournamentImageMutationVariables = Exact<{
+  input: UploadTournamentImageInput;
+}>;
+
+
+export type UploadTournamentImageMutation = { __typename?: 'Mutation', uploadTournamentImage: { __typename?: 'UploadPostMediaResponse', url: string, key: string } };
+
+export type UploadAvatarMutationVariables = Exact<{
+  input: UploadAvatarInput;
+}>;
+
+
+export type UploadAvatarMutation = { __typename?: 'Mutation', uploadAvatar: { __typename?: 'UploadResponse', key: string, url: string, user: { __typename?: 'User', _id: string, photoURL?: string | null } } };
+
+export type UpdateProfileMutationVariables = Exact<{
+  input: UpdateProfileInput;
+}>;
+
+
+export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+
+export type GetUserProfileQueryVariables = Exact<{
+  userId: Scalars['String']['input'];
+}>;
+
+
+export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
+
+export type ApproveVenueRequestMutationVariables = Exact<{
+  requestId: Scalars['ID']['input'];
+  adminNote?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ApproveVenueRequestMutation = { __typename?: 'Mutation', approveVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, reviewedAt?: string | null, reviewedBy?: string | null, adminNote?: string | null } };
+
+export type RejectVenueRequestMutationVariables = Exact<{
+  requestId: Scalars['ID']['input'];
+  rejectionReason: Scalars['String']['input'];
+}>;
+
+
+export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, rejectionReason?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
+
+export type GetAllVenueRequestsQueryVariables = Exact<{
+  status?: InputMaybe<VenueRequestStatus>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetAllVenueRequestsQuery = { __typename?: 'Query', allVenueRequestsConnection: { __typename?: 'VenueRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueRequestEdge', cursor: string, node: { __typename?: 'VenueRequest', _id: string, requesterId: string, name: string, description?: string | null, sportTypes: Array<SportType>, status: VenueRequestStatus, phoneNumber?: string | null, email?: string | null, coverImageUrl?: string | null, images?: Array<string> | null, rejectionReason?: string | null, adminNote?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, location: { __typename?: 'RequestLocation', address: string, city?: string | null, district?: string | null, ward?: string | null, latitude?: number | null, longitude?: number | null }, courts: Array<{ __typename?: 'RequestCourtInfo', name: string, sportType: SportType, pricePerHour: number, peakPricePerHour: number, isIndoor?: boolean | null }>, requester?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reviewedByAdmin?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetVenueRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetVenueRequestStatsQuery = { __typename?: 'Query', venueRequestStats: { __typename?: 'VenueRequestStats', totalRequests: number, pendingRequests: number, approvedRequests: number, rejectedRequests: number } };

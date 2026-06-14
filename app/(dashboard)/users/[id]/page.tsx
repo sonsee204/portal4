@@ -14,7 +14,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { TabGroup } from '@/components/molecules/TabGroup';
@@ -37,6 +37,7 @@ const detailTabs = [
 const BOOKING_PAGE_SIZE = 6;
 
 export default function UserDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const userId = params?.id as string | undefined;
   const [tab, setTab] = useState('bookings');
@@ -67,7 +68,7 @@ export default function UserDetailPage() {
           variant="ghost"
           size="sm"
           iconLeft="arrow-back-outline"
-          href="/users"
+          onClick={() => router.push('/users')}
         >
           Quay lại
         </Button>
@@ -94,7 +95,7 @@ export default function UserDetailPage() {
                 variant="ghost"
                 size="sm"
                 iconLeft="arrow-back-outline"
-                href="/users"
+                onClick={() => router.push('/users')}
               >
                 Quay lại
               </Button>

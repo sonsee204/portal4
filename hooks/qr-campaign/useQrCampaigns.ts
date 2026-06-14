@@ -20,12 +20,12 @@ import {
   GET_QR_CAMPAIGN_STATS,
   GET_QR_ANALYTICS_SUMMARY,
   GENERATE_QR_CODE,
-} from '@/graphql/queries/qr-campaign';
+} from '@/graphql/qr-campaign/queries';
 import {
   CREATE_QR_CAMPAIGN,
   UPDATE_QR_CAMPAIGN,
   TOGGLE_QR_CAMPAIGN,
-} from '@/graphql/mutations/qr-campaign';
+} from '@/graphql/qr-campaign/mutations';
 import type {
   QrCampaign,
   QrCampaignStats,

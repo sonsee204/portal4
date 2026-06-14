@@ -17,10 +17,12 @@
 
 import { getApolloClient } from '@/lib/apollo/client';
 import {
-  CREATE_OTP_TEST_USER_GRANT,
   GET_OTP_TEST_USER_GRANTS,
+} from '@/graphql/otp-test-user-grant/queries';
+import {
+  CREATE_OTP_TEST_USER_GRANT,
   REVOKE_OTP_TEST_USER_GRANT,
-} from '@/graphql/queries/otp-test-user-grants';
+} from '@/graphql/otp-test-user-grant/mutations';
 import type { GetOtpTestUserGrantsQuery } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
 

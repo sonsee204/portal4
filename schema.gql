@@ -2093,13 +2093,6 @@ input ContactInquiryFilterInput {
   to: DateTime
 }
 
-type ContactInquiryList {
-  items: [ContactInquiry!]!
-  page: Int!
-  total: Int!
-  totalPages: Int!
-}
-
 type ContactInquiryStats {
   closedCount: Int!
   inProgressCount: Int!
@@ -9716,11 +9709,6 @@ type Query {
 
   """Get list of blocked users"""
   getBlockedUsers: [UserBlock!]!
-
-  """
-  @deprecated Use contactInquiriesConnection. Legacy offset pagination for portal until web refactor.
-  """
-  getContactInquiries(filter: ContactInquiryFilterInput): ContactInquiryList!
 
   """Get a single contact inquiry by ID (Admin only)"""
   getContactInquiry(id: ID!): ContactInquiry!

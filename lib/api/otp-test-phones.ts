@@ -17,11 +17,13 @@
 
 import { getApolloClient } from '@/lib/apollo/client';
 import {
-  CREATE_OTP_TEST_PHONE,
   GET_OTP_TEST_PHONES,
+} from '@/graphql/otp-test-phone/queries';
+import {
+  CREATE_OTP_TEST_PHONE,
   SET_OTP_TEST_PHONE_ENABLED,
   UPDATE_OTP_TEST_PHONE,
-} from '@/graphql/queries/otp-test-phones';
+} from '@/graphql/otp-test-phone/mutations';
 import type { GetOtpTestPhonesQuery } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
 

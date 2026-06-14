@@ -17,7 +17,7 @@ import { useQuery } from '@apollo/client/react';
 import {
   GET_CLAIM_REQUESTS,
   GET_CLAIM_REQUEST_STATS,
-} from '@/graphql/queries/claim-requests';
+} from '@/graphql/claim-request/queries';
 import type { GetClaimRequestsQuery } from '@/graphql/generated';
 import type {
   ClaimRequestItem,

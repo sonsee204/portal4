@@ -14,7 +14,7 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { GET_SPORTS } from '@/graphql/queries/sport';
+import { GET_SPORTS } from '@/graphql/sport/queries';
 
 export interface SportData {
   _id: string;

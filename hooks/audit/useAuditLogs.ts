@@ -16,7 +16,7 @@
 import type { AuditFilterInput } from '@/types';
 import type { WatchQueryFetchPolicy } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
-import { AUDIT_GET_LOGS } from '@/graphql/queries/audit';
+import { AUDIT_GET_LOGS } from '@/graphql/audit/queries';
 import type { AuditGetLogsQuery } from '@/graphql/generated';
 import {
   connectionNodes,

@@ -30,8 +30,8 @@ import { cn, formatDateTime } from '@/lib/utils';
 import {
   GET_CLAIM_REQUESTS,
   GET_CLAIM_REQUEST_STATS,
-} from '@/graphql/queries/claim-requests';
-import { REVIEW_CLAIM_REQUEST } from '@/graphql/mutations/claim-requests';
+} from '@/graphql/claim-request/queries';
+import { REVIEW_CLAIM_REQUEST } from '@/graphql/claim-request/mutations';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { useClaimRequests, useClaimRequestStats } from '@/hooks/admin';
 import {

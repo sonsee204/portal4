@@ -17,7 +17,7 @@ import { useQuery } from '@apollo/client/react';
 import {
   GET_ALL_VENUE_REQUESTS,
   GET_VENUE_REQUEST_STATS,
-} from '@/graphql/queries/venue-requests';
+} from '@/graphql/venue-request/queries';
 import type { GetAllVenueRequestsQuery } from '@/graphql/generated';
 import type {
   VenueRequestItem,

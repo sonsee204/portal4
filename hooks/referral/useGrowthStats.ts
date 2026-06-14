@@ -17,7 +17,7 @@ import { useQuery } from '@apollo/client/react';
 import {
   GET_GROWTH_STATS,
   GET_PARTNER_LEADERBOARD,
-} from '@/graphql/queries/referral';
+} from '@/graphql/referral/queries';
 import type {
   GrowthStats,
   PartnerLeaderboard,

@@ -14,7 +14,7 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { GET_USER_PROFILE } from '@/graphql/queries/user';
+import { GET_USER_PROFILE } from '@/graphql/user/queries';
 import type { GetUserProfileResponse } from '@/types';
 
 export function useUserProfile(userId: string | undefined) {
