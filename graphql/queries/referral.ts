@@ -72,28 +72,6 @@ export const GET_REFERRAL_CODES = gql`
   }
 `;
 
-export const GET_REFERRAL_CODE_DETAIL = gql`
-  query GetReferralCodeDetail($id: ID!) {
-    getReferralCodeDetail(id: $id) {
-      _id
-      code
-      ownerId
-      ownerName
-      ownerRole
-      isActive
-      maxUses
-      currentUses
-      totalSignups
-      totalActiveUsers
-      totalRevenue
-      expiresAt
-      metadata
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
 // ==================== MUTATIONS ====================
 
 export const CREATE_REFERRAL_CODE = gql`
@@ -112,20 +90,6 @@ export const CREATE_REFERRAL_CODE = gql`
       totalRevenue
       expiresAt
       createdAt
-    }
-  }
-`;
-
-export const UPDATE_REFERRAL_CODE = gql`
-  mutation UpdateReferralCode($id: ID!, $input: UpdateReferralCodeInput!) {
-    updateReferralCode(id: $id, input: $input) {
-      _id
-      code
-      ownerName
-      ownerRole
-      maxUses
-      expiresAt
-      updatedAt
     }
   }
 `;

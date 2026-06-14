@@ -48,29 +48,6 @@ export const AUDIT_GET_LOGS = gql`
   }
 `;
 
-export const AUDIT_GET_LOG_DETAIL = gql`
-  query AuditGetLogDetail($id: ID!) {
-    auditLogDetail(id: $id) {
-      _id
-      actor
-      actorName
-      actorRole
-      action
-      category
-      status
-      target
-      targetId
-      ip
-      userAgent
-      correlationId
-      metadata
-      errorMessage
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
 export const AUDIT_GET_STATS = gql`
   query AuditGetStats {
     auditStats {

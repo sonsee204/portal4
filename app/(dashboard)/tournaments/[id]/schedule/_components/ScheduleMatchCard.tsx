@@ -21,7 +21,7 @@ import {
   SCHEDULE_MATCH_SLOT_SURFACE,
 } from '@/lib/tournament/category-schedule-accent';
 import type { TimelineCardSizing } from './timeline-card-layout';
-import { isScheduleMatchEnded } from '../_utils/schedule-helpers';
+import { isScheduleMatchEnded } from '@/lib/tournament/match-ended';
 import { isScheduleMatchOverdue } from '@/lib/tournament/schedule-overdue';
 import {
   getEffectiveDurationMinutes,

@@ -158,24 +158,6 @@ export const GET_TOURNAMENT_MATCHES = gql`
   ${MATCH_CORE_FRAGMENT}
 `;
 
-export const GET_LIVE_MATCHES = gql`
-  query GetLiveMatches($tournamentId: ID!) {
-    liveMatches(tournamentId: $tournamentId) {
-      ...MatchCore
-    }
-  }
-  ${MATCH_CORE_FRAGMENT}
-`;
-
-export const GET_MATCH_DETAIL = gql`
-  query GetMatchDetail($matchId: ID!) {
-    matchDetail(matchId: $matchId) {
-      ...MatchCore
-    }
-  }
-  ${MATCH_CORE_FRAGMENT}
-`;
-
 export const GET_MATCH_SCORECARD = gql`
   query GetMatchScorecard($matchId: ID!) {
     matchScorecard(matchId: $matchId) {
@@ -231,29 +213,6 @@ export const GET_TOURNAMENT_GROUP_RANKINGS = gql`
       pointsLost
       winRate
       groupPoints
-    }
-  }
-`;
-
-export const GET_TOURNAMENT_RESULTS = gql`
-  query GetTournamentResults($tournamentId: ID!) {
-    tournamentResults(tournamentId: $tournamentId) {
-      categoryId
-      categoryTitle
-      goldName
-      silverName
-      bronzeNames
-    }
-  }
-`;
-
-export const GET_TOURNAMENT_STATS = gql`
-  query GetTournamentStats($tournamentId: ID!) {
-    tournamentStats(tournamentId: $tournamentId) {
-      totalCategories
-      totalRegistrations
-      totalMatches
-      completedMatches
     }
   }
 `;

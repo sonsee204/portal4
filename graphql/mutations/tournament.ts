@@ -337,19 +337,6 @@ export const REPACK_COURT_SCHEDULE = gql`
   ${MATCH_CORE_FRAGMENT}
 `;
 
-export const AUTO_SCHEDULE_MATCHES = gql`
-  mutation AutoScheduleMatches($input: AutoScheduleInput!) {
-    autoScheduleMatches(input: $input) {
-      scheduledMatches {
-        ...MatchCore
-      }
-      totalScheduled
-      warnings
-    }
-  }
-  ${MATCH_CORE_FRAGMENT}
-`;
-
 export const ASSIGN_REFEREE = gql`
   mutation AssignReferee($input: AssignRefereeInput!) {
     assignReferee(input: $input) {

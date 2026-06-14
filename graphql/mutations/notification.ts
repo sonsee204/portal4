@@ -42,18 +42,6 @@ export const MARK_NOTIFICATION_ACTION_TAKEN = gql`
   ${NOTIFICATION_FRAGMENT}
 `;
 
-export const DELETE_NOTIFICATION = gql`
-  mutation DeleteNotification($notificationId: ID!) {
-    deleteNotification(notificationId: $notificationId)
-  }
-`;
-
-export const CLEAR_READ_NOTIFICATIONS = gql`
-  mutation ClearReadNotifications {
-    clearReadNotifications
-  }
-`;
-
 export const SAVE_FCM_TOKEN = gql`
   mutation SaveFcmToken($token: String!) {
     saveFcmToken(token: $token)

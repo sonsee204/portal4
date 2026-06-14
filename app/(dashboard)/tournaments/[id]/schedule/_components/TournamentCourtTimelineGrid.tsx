@@ -18,7 +18,7 @@ import { useDroppable } from '@dnd-kit/react';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import type { ScheduleMatch, ScheduleCourt } from '@/types/tournament-schedule';
-import { minutesToTime } from '../_utils/schedule-helpers';
+import { minutesToTime } from '@/lib/tournament/schedule-time';
 import {
   resolveTimelineDropFromClick,
   TIMELINE_TOP_INSET_PX,
@@ -241,6 +241,7 @@ export function TournamentCourtTimelineGrid({
       <div
         className="overflow-x-auto overflow-y-auto"
         style={{ maxHeight: '72vh' }}
+        data-schedule-timeline-scroll
       >
         <div
           className={cn(!isFluidCourts && 'flex w-full')}

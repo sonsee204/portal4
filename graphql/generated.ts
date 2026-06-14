@@ -15141,8 +15141,6 @@ export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', 
 
 export type ScorecardCoreFragment = { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, matchSetup?: { __typename?: 'MatchSetupSnapshot', setupMethod: MatchSetupMethod, coinTossWinner?: number | null, coinTossChoice?: CoinTossChoice | null, decidedAt: string } | null, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, correctionHistory?: Array<{ __typename?: 'CorrectionEvent', id: string, actorId: string, reason: string, action: MatchCorrectionAction, timestamp: string }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
 
-export type UserCoreFragment = { __typename?: 'User', _id: string, userName: string, fullName: string, displayName: string, photoURL?: string | null };
-
 export type AdminCreateUserMutationVariables = Exact<{
   input: AdminCreateUserInput;
 }>;
@@ -15165,14 +15163,6 @@ export type AdminUnsuspendUserMutationVariables = Exact<{
 
 export type AdminUnsuspendUserMutation = { __typename?: 'Mutation', adminUnsuspendUser: { __typename?: 'User', _id: string, isActive: boolean, isSuspended: boolean } };
 
-export type AdminChangeUserRoleMutationVariables = Exact<{
-  userId: Scalars['ID']['input'];
-  role: UserRole;
-}>;
-
-
-export type AdminChangeUserRoleMutation = { __typename?: 'Mutation', adminChangeUserRole: { __typename?: 'User', _id: string, role: UserRole } };
-
 export type AdminProvisionPlayerMutationVariables = Exact<{
   input: AdminProvisionPlayerInput;
 }>;
@@ -15186,13 +15176,6 @@ export type AdminResetUserPasswordMutationVariables = Exact<{
 
 
 export type AdminResetUserPasswordMutation = { __typename?: 'Mutation', adminResetUserPassword: { __typename?: 'AdminResetUserPasswordResponse', success: boolean, generatedPassword?: string | null, message: string } };
-
-export type RequestPasswordResetMutationVariables = Exact<{
-  emailOrPhone: Scalars['String']['input'];
-}>;
-
-
-export type RequestPasswordResetMutation = { __typename?: 'Mutation', requestPasswordReset: { __typename?: 'SuccessResponse', success: boolean, message: string } };
 
 export type ResetPasswordMutationVariables = Exact<{
   input: ResetPasswordInput;
@@ -15271,18 +15254,6 @@ export type MarkNotificationActionTakenMutationVariables = Exact<{
 
 
 export type MarkNotificationActionTakenMutation = { __typename?: 'Mutation', markNotificationActionTaken: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
-
-export type DeleteNotificationMutationVariables = Exact<{
-  notificationId: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteNotificationMutation = { __typename?: 'Mutation', deleteNotification: boolean };
-
-export type ClearReadNotificationsMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ClearReadNotificationsMutation = { __typename?: 'Mutation', clearReadNotifications: number };
 
 export type SaveFcmTokenMutationVariables = Exact<{
   token: Scalars['String']['input'];
@@ -15567,13 +15538,6 @@ export type RepackCourtScheduleMutationVariables = Exact<{
 
 export type RepackCourtScheduleMutation = { __typename?: 'Mutation', repackCourtSchedule: { __typename?: 'RepackCourtScheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
 
-export type AutoScheduleMatchesMutationVariables = Exact<{
-  input: AutoScheduleInput;
-}>;
-
-
-export type AutoScheduleMatchesMutation = { __typename?: 'Mutation', autoScheduleMatches: { __typename?: 'AutoScheduleResult', totalScheduled: number, warnings: Array<string>, scheduledMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
-
 export type AssignRefereeMutationVariables = Exact<{
   input: AssignRefereeInput;
 }>;
@@ -15738,13 +15702,6 @@ export type AuditGetLogsQueryVariables = Exact<{
 
 export type AuditGetLogsQuery = { __typename?: 'Query', auditLogsConnection: { __typename?: 'AuditLogConnection', totalCount: number, edges: Array<{ __typename?: 'AuditLogEdge', cursor: string, node: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
-export type AuditGetLogDetailQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type AuditGetLogDetailQuery = { __typename?: 'Query', auditLogDetail: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } };
-
 export type AuditGetStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -15771,27 +15728,10 @@ export type GetContactInquiriesQueryVariables = Exact<{
 
 export type GetContactInquiriesQuery = { __typename?: 'Query', contactInquiriesConnection: { __typename?: 'ContactInquiryConnection', totalCount: number, edges: Array<{ __typename?: 'ContactInquiryEdge', cursor: string, node: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
-export type GetContactInquiryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetContactInquiryQuery = { __typename?: 'Query', getContactInquiry: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } };
-
 export type GetContactInquiryStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetContactInquiryStatsQuery = { __typename?: 'Query', getContactInquiryStats: { __typename?: 'ContactInquiryStats', total: number, newCount: number, inProgressCount: number, repliedCount: number, closedCount: number } };
-
-export type HealthCheckQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HealthCheckQuery = { __typename?: 'Query', healthCheck: { __typename?: 'HealthStatus', status: string, database: string, timestamp: string, uptime?: number | null } };
-
-export type HealthQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HealthQuery = { __typename?: 'Query', health: string };
 
 export type GetPostReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<PostReportFilterInput>;
@@ -15844,13 +15784,6 @@ export type GetUnreadNotificationCountQueryVariables = Exact<{ [key: string]: ne
 
 
 export type GetUnreadNotificationCountQuery = { __typename?: 'Query', getUnreadNotificationCount: number };
-
-export type GetNotificationQueryVariables = Exact<{
-  notificationId: Scalars['ID']['input'];
-}>;
-
-
-export type GetNotificationQuery = { __typename?: 'Query', getNotification: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
 
 export type GetOtpTestPhonesQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
@@ -15986,27 +15919,12 @@ export type GetReferralCodesQueryVariables = Exact<{
 
 export type GetReferralCodesQuery = { __typename?: 'Query', getReferralCodes: Array<{ __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
 
-export type GetReferralCodeDetailQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetReferralCodeDetailQuery = { __typename?: 'Query', getReferralCodeDetail: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, metadata?: string | null, createdAt: string, updatedAt: string } };
-
 export type CreateReferralCodeMutationVariables = Exact<{
   input: CreateReferralCodeInput;
 }>;
 
 
 export type CreateReferralCodeMutation = { __typename?: 'Mutation', createReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string } };
-
-export type UpdateReferralCodeMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateReferralCodeInput;
-}>;
-
-
-export type UpdateReferralCodeMutation = { __typename?: 'Mutation', updateReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerName: string, ownerRole?: string | null, maxUses?: number | null, expiresAt?: string | null, updatedAt: string } };
 
 export type ToggleReferralCodeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -16082,20 +16000,6 @@ export type GetTournamentMatchesQueryVariables = Exact<{
 
 export type GetTournamentMatchesQuery = { __typename?: 'Query', tournamentMatchesConnection: { __typename?: 'TournamentMatchConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentMatchEdge', cursor: string, node: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
-export type GetLiveMatchesQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetLiveMatchesQuery = { __typename?: 'Query', liveMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
-
-export type GetMatchDetailQueryVariables = Exact<{
-  matchId: Scalars['ID']['input'];
-}>;
-
-
-export type GetMatchDetailQuery = { __typename?: 'Query', matchDetail: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
-
 export type GetMatchScorecardQueryVariables = Exact<{
   matchId: Scalars['ID']['input'];
 }>;
@@ -16124,20 +16028,6 @@ export type GetTournamentGroupRankingsQueryVariables = Exact<{
 
 
 export type GetTournamentGroupRankingsQuery = { __typename?: 'Query', tournamentGroupRankings: Array<{ __typename?: 'PlayerRanking', registrationId: string, playerName?: string | null, avatarUrl?: string | null, club?: string | null, seed?: number | null, rank: number, matchesPlayed: number, matchesWon: number, matchesLost: number, setsWon: number, setsLost: number, pointsWon: number, pointsLost: number, winRate: number, groupPoints?: number | null }> };
-
-export type GetTournamentResultsQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetTournamentResultsQuery = { __typename?: 'Query', tournamentResults: Array<{ __typename?: 'TournamentChampion', categoryId: string, categoryTitle: string, goldName?: string | null, silverName?: string | null, bronzeNames?: Array<string> | null }> };
-
-export type GetTournamentStatsQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetTournamentStatsQuery = { __typename?: 'Query', tournamentStats: { __typename?: 'TournamentStats', totalCategories: number, totalRegistrations: number, totalMatches: number, completedMatches: number } };
 
 export type ExportTournamentRegistrationsQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];

@@ -11,21 +11,12 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
+import type { ScheduleDropPreview } from '../schedule-dnd-types';
 
-export const HEALTH_CHECK = gql`
-  query HealthCheck {
-    healthCheck {
-      status
-      database
-      timestamp
-      uptime
-    }
-  }
-`;
-
-export const HEALTH = gql`
-  query Health {
-    health
-  }
-`;
+export function previewTopPx(
+  preview: ScheduleDropPreview,
+  dayStart: number,
+  pxPerMinute: number,
+): number {
+  return (preview.snappedMinutes - dayStart) * pxPerMinute;
+}

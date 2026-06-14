@@ -51,29 +51,6 @@ export const GET_CONTACT_INQUIRIES = gql`
   }
 `;
 
-export const GET_CONTACT_INQUIRY = gql`
-  query GetContactInquiry($id: ID!) {
-    getContactInquiry(id: $id) {
-      _id
-      name
-      phone
-      email
-      subject
-      message
-      status
-      adminNote
-      repliedBy
-      repliedAt
-      repliedByUser {
-        _id
-        fullName
-      }
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
 export const GET_CONTACT_INQUIRY_STATS = gql`
   query GetContactInquiryStats {
     getContactInquiryStats {

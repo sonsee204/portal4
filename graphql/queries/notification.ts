@@ -43,12 +43,3 @@ export const GET_UNREAD_NOTIFICATION_COUNT = gql`
     getUnreadNotificationCount
   }
 `;
-
-export const GET_NOTIFICATION = gql`
-  query GetNotification($notificationId: ID!) {
-    getNotification(notificationId: $notificationId) {
-      ...NotificationFields
-    }
-  }
-  ${NOTIFICATION_FRAGMENT}
-`;

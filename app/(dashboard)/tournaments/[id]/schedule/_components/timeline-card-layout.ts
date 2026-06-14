@@ -12,7 +12,7 @@
  */
 
 import type { ScheduleMatch } from '@/types/tournament-schedule';
-import { timeToMinutes } from '../_utils/schedule-helpers';
+import { timeToMinutes } from '@/lib/tournament/schedule-time';
 import {
   getEffectiveDurationMinutes,
   getTimelineStartTime,

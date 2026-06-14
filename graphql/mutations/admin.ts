@@ -52,15 +52,6 @@ export const ADMIN_UNSUSPEND_USER = gql`
   }
 `;
 
-export const ADMIN_CHANGE_USER_ROLE = gql`
-  mutation AdminChangeUserRole($userId: ID!, $role: UserRole!) {
-    adminChangeUserRole(userId: $userId, role: $role) {
-      _id
-      role
-    }
-  }
-`;
-
 export const ADMIN_PROVISION_PLAYER = gql`
   mutation AdminProvisionPlayer($input: AdminProvisionPlayerInput!) {
     adminProvisionPlayer(input: $input) {

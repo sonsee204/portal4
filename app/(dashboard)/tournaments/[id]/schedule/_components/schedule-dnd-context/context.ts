@@ -11,14 +11,19 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { gql } from 'graphql-tag';
+'use client';
 
-export const USER_CORE_FRAGMENT = gql`
-  fragment UserCore on User {
-    _id
-    userName
-    fullName
-    displayName
-    photoURL
-  }
-`;
+import { createContext, useContext } from 'react';
+import type { ScheduleDndContextValue } from './types';
+
+const ScheduleDndCtx = createContext<ScheduleDndContextValue>({
+  enabled: false,
+  registerCourtColumn: () => {},
+  preview: null,
+});
+
+export function useScheduleDnd() {
+  return useContext(ScheduleDndCtx);
+}
+
+export { ScheduleDndCtx };
