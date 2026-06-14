@@ -17,15 +17,22 @@ import { NOTIFICATION_FRAGMENT } from '../fragments/notification';
 export const GET_NOTIFICATIONS = gql`
   query GetNotifications(
     $filter: NotificationFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    getNotifications(filter: $filter, pagination: $pagination) {
-      notifications {
-        ...NotificationFields
+    notificationsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          ...NotificationFields
+        }
       }
-      total
-      unreadCount
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
   ${NOTIFICATION_FRAGMENT}

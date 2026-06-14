@@ -440,8 +440,8 @@ export const CORRECT_FINISHED_MATCH_RESULT = gql`
 // ==================== SUBSCRIPTIONS ====================
 
 export const MATCH_SCORE_UPDATED_SUB = gql`
-  subscription MatchScoreUpdated($matchId: ID!) {
-    matchScoreUpdated(matchId: $matchId) {
+  subscription MatchScoreUpdated($_matchId: ID!) {
+    matchScoreUpdated(_matchId: $_matchId) {
       ...ScorecardCore
     }
   }
@@ -449,13 +449,13 @@ export const MATCH_SCORE_UPDATED_SUB = gql`
 `;
 
 export const TOURNAMENT_MATCHES_UPDATED_SUB = gql`
-  subscription TournamentMatchesUpdated($tournamentId: ID!) {
-    tournamentMatchesUpdated(tournamentId: $tournamentId)
+  subscription TournamentMatchesUpdated($_tournamentId: ID!) {
+    tournamentMatchesUpdated(_tournamentId: $_tournamentId)
   }
 `;
 
 export const TOURNAMENT_STATUS_CHANGED_SUB = gql`
-  subscription TournamentStatusChanged($tournamentId: ID!) {
-    tournamentStatusChanged(tournamentId: $tournamentId)
+  subscription TournamentStatusChanged($_tournamentId: ID!) {
+    tournamentStatusChanged(_tournamentId: $_tournamentId)
   }
 `;

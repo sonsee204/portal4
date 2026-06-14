@@ -22,17 +22,21 @@ import {
 } from '@/graphql/fragments/tournament';
 
 export const GET_MY_TOURNAMENTS = gql`
-  query GetMyTournaments($filter: TournamentFilterInput, $pagination: PaginationInput) {
-    myTournaments(filter: $filter, pagination: $pagination) {
-      tournaments {
-        ...TournamentCore
+  query GetMyTournaments($filter: TournamentFilterInput, $pagination: CursorPageInput) {
+    myTournamentsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          ...TournamentCore
+        }
       }
-      total
-      page
-      totalPages
-      limit
-      hasNextPage
-      hasPrevPage
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
   ${TOURNAMENT_CORE_FRAGMENT}
@@ -91,18 +95,26 @@ export const GET_TOURNAMENT_REGISTRATIONS = gql`
   query GetTournamentRegistrations(
     $tournamentId: ID!
     $filter: RegistrationFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    tournamentRegistrations(tournamentId: $tournamentId, filter: $filter, pagination: $pagination) {
-      registrations {
-        ...RegistrationCore
+    tournamentRegistrationsConnection(
+      tournamentId: $tournamentId
+      filter: $filter
+      pagination: $pagination
+    ) {
+      edges {
+        cursor
+        node {
+          ...RegistrationCore
+        }
       }
-      total
-      page
-      totalPages
-      limit
-      hasNextPage
-      hasPrevPage
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
   ${REGISTRATION_CORE_FRAGMENT}
@@ -121,18 +133,26 @@ export const GET_TOURNAMENT_MATCHES = gql`
   query GetTournamentMatches(
     $tournamentId: ID!
     $filter: MatchFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    tournamentMatches(tournamentId: $tournamentId, filter: $filter, pagination: $pagination) {
-      matches {
-        ...MatchCore
+    tournamentMatchesConnection(
+      tournamentId: $tournamentId
+      filter: $filter
+      pagination: $pagination
+    ) {
+      edges {
+        cursor
+        node {
+          ...MatchCore
+        }
       }
-      total
-      page
-      totalPages
-      limit
-      hasNextPage
-      hasPrevPage
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
   ${MATCH_CORE_FRAGMENT}

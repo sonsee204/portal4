@@ -15,28 +15,34 @@ import { gql } from 'graphql-tag';
 
 export const GET_OTP_TEST_USER_GRANTS = gql`
   query GetOtpTestUserGrants(
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
     $filter: OtpTestUserGrantFilterInput
   ) {
-    otpTestUserGrants(pagination: $pagination, filter: $filter) {
-      items {
-        _id
-        userId
-        userDisplayName
-        userRole
-        phone
-        testCode
-        reason
-        enabled
-        allowedPurposes
-        expiresAt
-        createdAt
-        updatedAt
+    otpTestUserGrantsConnection(pagination: $pagination, filter: $filter) {
+      edges {
+        cursor
+        node {
+          _id
+          userId
+          userDisplayName
+          userRole
+          phone
+          testCode
+          reason
+          enabled
+          allowedPurposes
+          expiresAt
+          createdAt
+          updatedAt
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

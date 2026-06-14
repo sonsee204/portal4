@@ -15,25 +15,31 @@ import { gql } from 'graphql-tag';
 
 export const GET_OTP_TEST_PHONES = gql`
   query GetOtpTestPhones(
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
     $filter: OtpTestPhoneFilterInput
   ) {
-    otpTestPhones(pagination: $pagination, filter: $filter) {
-      items {
-        _id
-        phone
-        testCode
-        label
-        enabled
-        allowedPurposes
-        expiresAt
-        createdAt
-        updatedAt
+    otpTestPhonesConnection(pagination: $pagination, filter: $filter) {
+      edges {
+        cursor
+        node {
+          _id
+          phone
+          testCode
+          label
+          enabled
+          allowedPurposes
+          expiresAt
+          createdAt
+          updatedAt
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

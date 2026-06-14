@@ -16,56 +16,62 @@ import { gql } from 'graphql-tag';
 export const GET_ALL_VENUE_REQUESTS = gql`
   query GetAllVenueRequests(
     $status: VenueRequestStatus
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    allVenueRequests(status: $status, pagination: $pagination) {
-      requests {
-        _id
-        requesterId
-        name
-        description
-        sportTypes
-        status
-        phoneNumber
-        email
-        coverImageUrl
-        images
-        rejectionReason
-        adminNote
-        createdAt
-        updatedAt
-        reviewedAt
-        reviewedBy
-        location {
-          address
-          city
-          district
-          ward
-          latitude
-          longitude
-        }
-        courts {
+    allVenueRequestsConnection(status: $status, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          _id
+          requesterId
           name
-          sportType
-          pricePerHour
-          peakPricePerHour
-          isIndoor
-        }
-        requester {
-          _id
-          displayName
-          userName
-          photoURL
-        }
-        reviewedByAdmin {
-          _id
-          displayName
+          description
+          sportTypes
+          status
+          phoneNumber
+          email
+          coverImageUrl
+          images
+          rejectionReason
+          adminNote
+          createdAt
+          updatedAt
+          reviewedAt
+          reviewedBy
+          location {
+            address
+            city
+            district
+            ward
+            latitude
+            longitude
+          }
+          courts {
+            name
+            sportType
+            pricePerHour
+            peakPricePerHour
+            isIndoor
+          }
+          requester {
+            _id
+            displayName
+            userName
+            photoURL
+          }
+          reviewedByAdmin {
+            _id
+            displayName
+          }
         }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

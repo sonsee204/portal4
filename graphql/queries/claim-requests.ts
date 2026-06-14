@@ -16,45 +16,51 @@ import { gql } from 'graphql-tag';
 export const GET_CLAIM_REQUESTS = gql`
   query GetClaimRequests(
     $filter: ClaimRequestFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    claimRequests(filter: $filter, pagination: $pagination) {
-      requests {
-        _id
-        venueId
-        userId
-        venueName
-        venueAddress
-        phoneNumber
-        email
-        notes
-        proofDocuments
-        status
-        rejectionReason
-        adminNotes
-        createdAt
-        updatedAt
-        reviewedAt
-        reviewedById
-        user {
+    claimRequestsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
           _id
-          displayName
-          userName
-          photoURL
-        }
-        venue {
-          _id
-          name
-        }
-        reviewer {
-          _id
-          displayName
+          venueId
+          userId
+          venueName
+          venueAddress
+          phoneNumber
+          email
+          notes
+          proofDocuments
+          status
+          rejectionReason
+          adminNotes
+          createdAt
+          updatedAt
+          reviewedAt
+          reviewedById
+          user {
+            _id
+            displayName
+            userName
+            photoURL
+          }
+          venue {
+            _id
+            name
+          }
+          reviewer {
+            _id
+            displayName
+          }
         }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

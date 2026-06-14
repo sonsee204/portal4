@@ -19,34 +19,40 @@ export const ADMIN_GET_USERS = gql`
     $isActive: Boolean
     $isSuspended: Boolean
     $searchQuery: String
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    adminGetUsers(
+    adminUsersConnection(
       role: $role
       isActive: $isActive
       isSuspended: $isSuspended
       searchQuery: $searchQuery
       pagination: $pagination
     ) {
-      users {
-        _id
-        email
-        phone
-        fullName
-        displayName
-        userName
-        role
-        isActive
-        isSuspended
-        photoURL
-        accountOrigin
-        lastLoginAt
-        createdAt
+      edges {
+        cursor
+        node {
+          _id
+          email
+          phone
+          fullName
+          displayName
+          userName
+          role
+          isActive
+          isSuspended
+          photoURL
+          accountOrigin
+          lastLoginAt
+          createdAt
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;
@@ -71,29 +77,35 @@ export const ADMIN_GET_ALL_BOOKINGS = gql`
     $statuses: [String!]
     $fromDate: String
     $toDate: String
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    adminGetAllBookings(
+    adminAllBookingsConnection(
       statuses: $statuses
       fromDate: $fromDate
       toDate: $toDate
       pagination: $pagination
     ) {
-      bookings {
-        _id
-        venueName
-        venueAddress
-        date
-        timeSlots
-        status
-        totalPrice
-        courtName
-      }
       customerNamesJson
-      total
-      page
-      limit
-      hasMore
+      edges {
+        cursor
+        node {
+          _id
+          venueName
+          venueAddress
+          date
+          timeSlots
+          status
+          totalPrice
+          courtName
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;
@@ -102,27 +114,33 @@ export const ADMIN_GET_USER_BOOKINGS = gql`
   query AdminGetUserBookings(
     $userId: ID!
     $statuses: [String!]
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    adminGetUserBookings(
+    adminUserBookingsConnection(
       userId: $userId
       statuses: $statuses
       pagination: $pagination
     ) {
-      bookings {
-        _id
-        venueName
-        venueAddress
-        date
-        timeSlots
-        status
-        totalPrice
-        courtName
+      edges {
+        cursor
+        node {
+          _id
+          venueName
+          venueAddress
+          date
+          timeSlots
+          status
+          totalPrice
+          courtName
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

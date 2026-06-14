@@ -14,29 +14,36 @@
 import { gql } from 'graphql-tag';
 
 export const AUDIT_GET_LOGS = gql`
-  query AuditGetLogs($filter: AuditFilterInput, $pagination: PaginationInput) {
-    auditLogs(filter: $filter, pagination: $pagination) {
-      logs {
-        _id
-        actor
-        actorName
-        actorRole
-        action
-        category
-        status
-        target
-        targetId
-        ip
-        userAgent
-        correlationId
-        metadata
-        errorMessage
-        createdAt
+  query AuditGetLogs($filter: AuditFilterInput, $pagination: CursorPageInput) {
+    auditLogsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          _id
+          actor
+          actorName
+          actorRole
+          action
+          category
+          status
+          target
+          targetId
+          ip
+          userAgent
+          correlationId
+          metadata
+          errorMessage
+          createdAt
+          updatedAt
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

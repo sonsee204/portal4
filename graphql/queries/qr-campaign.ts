@@ -13,25 +13,35 @@
 
 import { gql } from 'graphql-tag';
 
-// ==================== QUERIES ====================
-
 export const GET_QR_CAMPAIGNS = gql`
-  query GetQrCampaigns($filter: QrCampaignFilterInput, $pagination: PaginationInput) {
-    getQrCampaigns(filter: $filter, pagination: $pagination) {
-      _id
-      slug
-      name
-      description
-      location
-      isActive
-      totalScans
-      uniqueDevices
-      iosScans
-      androidScans
-      unknownScans
-      expiresAt
-      createdAt
-      updatedAt
+  query GetQrCampaigns($filter: QrCampaignFilterInput, $pagination: CursorPageInput) {
+    qrCampaignsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          _id
+          slug
+          name
+          description
+          location
+          isActive
+          totalScans
+          uniqueDevices
+          iosScans
+          androidScans
+          unknownScans
+          expiresAt
+          createdAt
+          updatedAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;

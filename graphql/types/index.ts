@@ -21,7 +21,7 @@
 
 // Re-export commonly used generated types for convenience
 export type {
-  PaginationInput,
+  CursorPageInput,
   HealthStatus,
   VenueLocation,
   PriceRange,

@@ -16,46 +16,52 @@ import { gql } from 'graphql-tag';
 export const GET_POST_REPORTS_FOR_ADMIN = gql`
   query GetPostReportsForAdmin(
     $filter: PostReportFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    getPostReportsForAdmin(filter: $filter, pagination: $pagination) {
-      reports {
-        _id
-        postId
-        reason
-        status
-        description
-        notes
-        createdAt
-        updatedAt
-        reporterId
-        reporter {
+    getPostReportsForAdminConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
           _id
-          displayName
-          userName
-          photoURL
-        }
-        post {
-          _id
-          content
-          author {
+          postId
+          reason
+          status
+          description
+          notes
+          createdAt
+          updatedAt
+          reporterId
+          reporter {
             _id
             displayName
             userName
             photoURL
           }
-        }
-        reviewedAt
-        reviewedBy
-        reviewer {
-          _id
-          displayName
+          post {
+            _id
+            content
+            author {
+              _id
+              displayName
+              userName
+              photoURL
+            }
+          }
+          reviewedAt
+          reviewedBy
+          reviewer {
+            _id
+            displayName
+          }
         }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;
@@ -75,42 +81,48 @@ export const GET_POST_REPORT_STATS = gql`
 export const GET_USER_REPORTS_FOR_ADMIN = gql`
   query GetUserReportsForAdmin(
     $filter: UserReportFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    getUserReportsForAdmin(filter: $filter, pagination: $pagination) {
-      reports {
-        _id
-        reportedUserId
-        reporterId
-        reason
-        status
-        description
-        notes
-        createdAt
-        updatedAt
-        reviewer {
+    getUserReportsForAdminConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
           _id
-          displayName
+          reportedUserId
+          reporterId
+          reason
+          status
+          description
+          notes
+          createdAt
+          updatedAt
+          reviewer {
+            _id
+            displayName
+          }
+          reporter {
+            _id
+            displayName
+            userName
+            photoURL
+          }
+          reportedUser {
+            _id
+            displayName
+            userName
+            photoURL
+          }
+          reviewedAt
+          reviewedBy
         }
-        reporter {
-          _id
-          displayName
-          userName
-          photoURL
-        }
-        reportedUser {
-          _id
-          displayName
-          userName
-          photoURL
-        }
-        reviewedAt
-        reviewedBy
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;
@@ -130,25 +142,31 @@ export const GET_USER_REPORT_STATS = gql`
 export const GET_MESSAGE_REPORTS_FOR_ADMIN = gql`
   query GetMessageReportsForAdmin(
     $filter: MessageReportFilterInput
-    $pagination: PaginationInput
+    $pagination: CursorPageInput
   ) {
-    getMessageReportsForAdmin(filter: $filter, pagination: $pagination) {
-      reports {
-        _id
-        messageId
-        reporterId
-        reason
-        status
-        notes
-        createdAt
-        updatedAt
-        reviewedAt
-        reviewedBy
+    messageReportsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          _id
+          messageId
+          reporterId
+          reason
+          status
+          notes
+          createdAt
+          updatedAt
+          reviewedAt
+          reviewedBy
+        }
       }
-      total
-      page
-      limit
-      hasMore
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 `;
