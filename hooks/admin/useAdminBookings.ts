@@ -13,12 +13,21 @@
 
 'use client';
 
-import { useMemo } from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useApolloClient, useQuery } from '@apollo/client/react';
 import {
   ADMIN_GET_ALL_BOOKINGS,
   ADMIN_GET_USER_BOOKINGS,
 } from '@/graphql/queries/admin';
+import type {
+  AdminGetAllBookingsQuery,
+  AdminGetUserBookingsQuery,
+} from '@/graphql/generated';
+import {
+  connectionNodes,
+  resolveConnectionFirst,
+} from '@/hooks/shared/useCursorConnection';
+import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
 
 export interface AdminBooking {
   _id: string;
@@ -31,64 +40,88 @@ export interface AdminBooking {
   courtName: string;
 }
 
-interface AllBookingsResult {
-  adminGetAllBookings: {
-    bookings: AdminBooking[];
-    customerNamesJson: string;
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface UserBookingsResult {
-  adminGetUserBookings: {
-    bookings: AdminBooking[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
 interface AllBookingsVariables {
   statuses?: string[];
   fromDate?: string;
   toDate?: string;
-  pagination?: { page: number; limit: number };
+  pagination?: { page?: number; limit?: number; first?: number; after?: string | null };
 }
 
 export function useAdminAllBookings(
   variables: AllBookingsVariables,
   options?: { skip?: boolean },
 ) {
-  const { data, loading, error, refetch } = useQuery<AllBookingsResult>(
+  const page = variables.pagination?.page ?? 1;
+  const first = resolveConnectionFirst(variables.pagination);
+  const resetKey = JSON.stringify({
+    statuses: variables.statuses,
+    fromDate: variables.fromDate,
+    toDate: variables.toDate,
+  });
+
+  const client = useApolloClient();
+  const prefetchPage = useCallback(
+    async (after: string | null, pageSize: number) => {
+      const { data } = await client.query<AdminGetAllBookingsQuery>({
+        query: ADMIN_GET_ALL_BOOKINGS,
+        variables: {
+          statuses: variables.statuses,
+          fromDate: variables.fromDate,
+          toDate: variables.toDate,
+          pagination: { first: pageSize, after },
+        },
+        fetchPolicy: 'network-only',
+      });
+      const conn = data?.adminAllBookingsConnection;
+      return {
+        endCursor: conn?.pageInfo?.endCursor,
+        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
+      };
+    },
+    [client, variables.statuses, variables.fromDate, variables.toDate],
+  );
+
+  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
+    page,
+    first,
+    resetKey,
+    prefetchPage,
+  });
+
+  const { data, loading, error, refetch } = useQuery<AdminGetAllBookingsQuery>(
     ADMIN_GET_ALL_BOOKINGS,
     {
-      variables,
-      skip: options?.skip,
+      variables: {
+        statuses: variables.statuses,
+        fromDate: variables.fromDate,
+        toDate: variables.toDate,
+        pagination: { first, after },
+      },
+      skip: options?.skip || (page > 1 && resolving),
     },
   );
 
-  const result = data?.adminGetAllBookings;
+  const connection = data?.adminAllBookingsConnection;
+  useEffect(() => {
+    rememberEndCursor(page, connection?.pageInfo?.endCursor);
+  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
 
   const customerNames: Record<string, string> = useMemo(() => {
     try {
-      return result?.customerNamesJson
-        ? JSON.parse(result.customerNamesJson)
+      return connection?.customerNamesJson
+        ? JSON.parse(connection.customerNamesJson)
         : {};
     } catch {
       return {};
     }
-  }, [result?.customerNamesJson]);
+  }, [connection?.customerNamesJson]);
 
   return {
-    bookings: result?.bookings ?? [],
+    bookings: connectionNodes(connection?.edges) ?? [],
     customerNames,
-    total: result?.total ?? 0,
-    hasMore: result?.hasMore ?? false,
-    loading,
+    total: connection?.totalCount ?? 0,
+    hasMore: connection?.pageInfo?.hasNextPage ?? false,
+    loading: loading || resolving,
     error,
     refetch,
   };
@@ -96,24 +129,66 @@ export function useAdminAllBookings(
 
 export function useAdminUserBookings(
   userId: string,
-  variables: { statuses?: string[]; pagination?: { page: number; limit: number } },
+  variables: {
+    statuses?: string[];
+    pagination?: { page?: number; limit?: number; first?: number; after?: string | null };
+  },
   options?: { skip?: boolean },
 ) {
-  const { data, loading, error, refetch } = useQuery<UserBookingsResult>(
+  const page = variables.pagination?.page ?? 1;
+  const first = resolveConnectionFirst(variables.pagination);
+  const resetKey = JSON.stringify({ userId, statuses: variables.statuses });
+
+  const client = useApolloClient();
+  const prefetchPage = useCallback(
+    async (after: string | null, pageSize: number) => {
+      const { data } = await client.query<AdminGetUserBookingsQuery>({
+        query: ADMIN_GET_USER_BOOKINGS,
+        variables: {
+          userId,
+          statuses: variables.statuses,
+          pagination: { first: pageSize, after },
+        },
+        fetchPolicy: 'network-only',
+      });
+      const conn = data?.adminUserBookingsConnection;
+      return {
+        endCursor: conn?.pageInfo?.endCursor,
+        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
+      };
+    },
+    [client, userId, variables.statuses],
+  );
+
+  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
+    page,
+    first,
+    resetKey,
+    prefetchPage,
+  });
+
+  const { data, loading, error, refetch } = useQuery<AdminGetUserBookingsQuery>(
     ADMIN_GET_USER_BOOKINGS,
     {
-      variables: { userId, ...variables },
-      skip: options?.skip || !userId,
+      variables: {
+        userId,
+        statuses: variables.statuses,
+        pagination: { first, after },
+      },
+      skip: options?.skip || !userId || (page > 1 && resolving),
     },
   );
 
-  const result = data?.adminGetUserBookings;
+  const connection = data?.adminUserBookingsConnection;
+  useEffect(() => {
+    rememberEndCursor(page, connection?.pageInfo?.endCursor);
+  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
 
   return {
-    bookings: result?.bookings ?? [],
-    total: result?.total ?? 0,
-    hasMore: result?.hasMore ?? false,
-    loading,
+    bookings: connectionNodes(connection?.edges) ?? [],
+    total: connection?.totalCount ?? 0,
+    hasMore: connection?.pageInfo?.hasNextPage ?? false,
+    loading: loading || resolving,
     error,
     refetch,
   };
