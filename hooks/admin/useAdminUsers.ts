@@ -13,34 +13,89 @@
 
 'use client';
 
-import { useQuery } from '@apollo/client/react';
+import { useCallback, useEffect } from 'react';
+import { useApolloClient, useQuery } from '@apollo/client/react';
 import { ADMIN_GET_USERS } from '@/graphql/queries/admin';
-import type { AdminGetUsersResponse, UserRole } from '@/types';
+import type { AdminGetUsersQuery } from '@/graphql/generated';
+import type { UserRole, User } from '@/types';
+import {
+  connectionNodes,
+  resolveConnectionFirst,
+} from '@/hooks/shared/useCursorConnection';
+import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
 
 interface AdminUsersVariables {
   role?: UserRole;
   isActive?: boolean;
   isSuspended?: boolean;
   searchQuery?: string;
-  pagination?: { page: number; limit: number };
+  pagination?: { page?: number; limit?: number; first?: number; after?: string | null };
 }
 
 export function useAdminUsers(variables: AdminUsersVariables) {
-  const { data, loading, error, refetch } = useQuery<AdminGetUsersResponse>(
+  const page = variables.pagination?.page ?? 1;
+  const first = resolveConnectionFirst(variables.pagination);
+  const resetKey = JSON.stringify({
+    role: variables.role,
+    isActive: variables.isActive,
+    isSuspended: variables.isSuspended,
+    searchQuery: variables.searchQuery || undefined,
+  });
+
+  const client = useApolloClient();
+  const prefetchPage = useCallback(
+    async (after: string | null, pageSize: number) => {
+      const { data } = await client.query<AdminGetUsersQuery>({
+        query: ADMIN_GET_USERS,
+        variables: {
+          role: variables.role,
+          isActive: variables.isActive,
+          isSuspended: variables.isSuspended,
+          searchQuery: variables.searchQuery || undefined,
+          pagination: { first: pageSize, after },
+        },
+        fetchPolicy: 'network-only',
+      });
+      const conn = data?.adminUsersConnection;
+      return {
+        endCursor: conn?.pageInfo?.endCursor,
+        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
+      };
+    },
+    [client, variables.role, variables.isActive, variables.isSuspended, variables.searchQuery],
+  );
+
+  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
+    page,
+    first,
+    resetKey,
+    prefetchPage,
+  });
+
+  const { data, loading, error, refetch } = useQuery<AdminGetUsersQuery>(
     ADMIN_GET_USERS,
     {
       variables: {
-        ...variables,
+        role: variables.role,
+        isActive: variables.isActive,
+        isSuspended: variables.isSuspended,
         searchQuery: variables.searchQuery || undefined,
+        pagination: { first, after },
       },
+      skip: page > 1 && resolving,
       fetchPolicy: 'cache-and-network',
     },
   );
 
+  const connection = data?.adminUsersConnection;
+  useEffect(() => {
+    rememberEndCursor(page, connection?.pageInfo?.endCursor);
+  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
+
   return {
-    users: data?.adminGetUsers.users ?? [],
-    total: data?.adminGetUsers.total ?? 0,
-    loading,
+    users: (connectionNodes(connection?.edges) ?? []) as User[],
+    total: connection?.totalCount ?? 0,
+    loading: loading || resolving,
     error,
     refetch,
   };
