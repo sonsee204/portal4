@@ -13,6 +13,28 @@
 
 import type { PrintMatchInput } from './types';
 
+/** GROUP_KNOCKOUT knockout phase uses round 100+ in the backend. */
+export const KNOCKOUT_ROUND_OFFSET = 100;
+
+/** Map backend knockout rounds (100, 101, …) to elimination depth (1, 2, …). */
+export function normalizeEliminationRound(round: number): number {
+  return round >= KNOCKOUT_ROUND_OFFSET
+    ? round - KNOCKOUT_ROUND_OFFSET + 1
+    : round;
+}
+
+/** Normalize GROUP_KNOCKOUT knockout matches for single-elim layout math. */
+export function normalizeMatchesForEliminationPrint(
+  matches: PrintMatchInput[],
+): PrintMatchInput[] {
+  const hasKnockout = matches.some((m) => m.round >= KNOCKOUT_ROUND_OFFSET);
+  if (!hasKnockout) return matches;
+  return matches.map((m) => ({
+    ...m,
+    round: normalizeEliminationRound(m.round),
+  }));
+}
+
 /** Number of elimination rounds for a power-of-two draw size. */
 export function eliminationRoundCount(bracketSize: number): number {
   const size = Math.max(2, bracketSize);

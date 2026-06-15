@@ -35,3 +35,35 @@ export function formatPrintScheduledLabel(
   const base = `${parts.time} · ${parts.date}`;
   return court ? `${base} · ${court}` : base;
 }
+
+const FINISHED_STATUSES = new Set(['FINISHED', 'WALKOVER', 'COMPLETED']);
+
+export function formatPrintScoreLabel(
+  m: Pick<PrintMatchInput, 'status' | 'scoreSummary'>,
+): string | undefined {
+  if (!FINISHED_STATUSES.has(m.status)) return undefined;
+
+  const sets = m.scoreSummary?.sets?.filter(
+    (s): s is { player1?: number | null; player2?: number | null } => Boolean(s),
+  );
+  if (sets && sets.length > 0) {
+    return sets
+      .map((s) => `${s.player1 ?? 0}-${s.player2 ?? 0}`)
+      .join(', ');
+  }
+
+  const finalScore = m.scoreSummary?.finalScore;
+  if (finalScore && finalScore.length >= 2) {
+    return `${finalScore[0]}-${finalScore[1]}`;
+  }
+  return undefined;
+}
+
+export function resolvePrintWinnerSide(
+  m: Pick<PrintMatchInput, 'status' | 'winner'>,
+): 1 | 2 | undefined {
+  if (!FINISHED_STATUSES.has(m.status)) return undefined;
+  if (m.winner === 1) return 1;
+  if (m.winner === 2) return 2;
+  return undefined;
+}

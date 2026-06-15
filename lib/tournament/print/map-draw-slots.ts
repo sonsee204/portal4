@@ -15,6 +15,7 @@ import {
   formatPrintPlayerClub,
   formatPrintPlayerName,
 } from './format-player-name';
+import { KNOCKOUT_ROUND_OFFSET } from './bracket-row-layout';
 import type { PrintBracketEntryRow, PrintMatchInput } from './types';
 
 export interface PrintDrawSlot {
@@ -29,8 +30,16 @@ export function mapMatchesToPrintDrawSlots(
   allMatches: PrintMatchInput[],
   bracketSize: number,
 ): PrintDrawSlot[] {
+  const entryRound = allMatches.some((m) => m.round >= KNOCKOUT_ROUND_OFFSET)
+    ? Math.min(
+        ...allMatches
+          .filter((m) => m.round >= KNOCKOUT_ROUND_OFFSET)
+          .map((m) => m.round),
+      )
+    : 1;
+
   const round1 = allMatches
-    .filter((m) => m.round === 1)
+    .filter((m) => m.round === entryRound)
     .sort((a, b) => (a.bracketPosition ?? 0) - (b.bracketPosition ?? 0));
 
   const slots: PrintDrawSlot[] = Array.from({ length: bracketSize }, (_, i) => ({
