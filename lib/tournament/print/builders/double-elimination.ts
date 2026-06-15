@@ -11,6 +11,11 @@
  * is strictly prohibited without prior written consent.
  */
 
+import {
+  intersectHalfSpan,
+  matchGlobalRowSpan,
+  resolveEffectiveBracketPositions,
+} from '../bracket-row-layout';
 import { formatPrintMatchPair } from '../format-player-name';
 import {
   mapMatchesToPrintDrawSlots,
@@ -28,32 +33,36 @@ function isLosersBracketMatch(m: PrintMatchInput): boolean {
   return !!m.losersNextMatchId || m.roundLabel.toLowerCase().includes('thua');
 }
 
-function buildRoundColumnsForSubset(
+function buildRoundColumnsWithTree(
   matches: PrintMatchInput[],
-  entryCount: number,
+  bracketSize: number,
 ): PrintBracketRoundColumn[] {
+  const bpMap = resolveEffectiveBracketPositions(matches);
+
   const roundsMap = new Map<number, PrintMatchInput[]>();
   for (const m of matches) {
     const list = roundsMap.get(m.round) ?? [];
     list.push(m);
     roundsMap.set(m.round, list);
   }
+
   const roundNums = [...roundsMap.keys()].sort((a, b) => a - b);
   const totalRounds = roundNums.length;
 
   return roundNums.map((roundNum, ri) => {
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
-      (a, b) =>
-        (a.bracketPosition ?? a.matchNumber) -
-        (b.bracketPosition ?? b.matchNumber),
+      (a, b) => (bpMap.get(a.id) ?? 0) - (bpMap.get(b.id) ?? 0),
     );
     const label = roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`;
-    const span = Math.max(1, entryCount / Math.max(1, roundMatches.length));
+    const shortLabel = roundShortLabel(ri, totalRounds, label);
 
-    return {
-      label,
-      shortLabel: roundShortLabel(ri, totalRounds, label),
-      matches: roundMatches.map((m, mi) => {
+    const positionedMatches = roundMatches
+      .map((m) => {
+        const bp = bpMap.get(m.id) ?? 0;
+        const { globalFrom, globalTo } = matchGlobalRowSpan(roundNum, bp, bp);
+        const local = intersectHalfSpan(globalFrom, globalTo, 0, bracketSize);
+        if (!local) return null;
+
         const pair = formatPrintMatchPair(
           m.player1,
           m.player2,
@@ -64,13 +73,15 @@ function buildRoundColumnsForSubset(
         return {
           matchNumber: m.matchNumber,
           matchId: m.id,
-          rowIndexFrom: Math.floor(mi * span),
-          rowIndexTo: Math.floor((mi + 1) * span) - 1,
+          rowIndexFrom: local.localFrom,
+          rowIndexTo: local.localTo,
           player1Label: pair.player1,
           player2Label: pair.player2,
         };
-      }),
-    };
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
+
+    return { label, shortLabel, matches: positionedMatches };
   });
 }
 
@@ -83,7 +94,7 @@ function buildBracketHalf(
   return {
     title,
     entries: slotsToEntryRows(slots),
-    rounds: buildRoundColumnsForSubset(matches, slots.length),
+    rounds: buildRoundColumnsWithTree(matches, slots.length),
   };
 }
 
