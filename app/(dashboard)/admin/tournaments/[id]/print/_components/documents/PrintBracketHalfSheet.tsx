@@ -17,7 +17,7 @@ import type { PrintBracketHalf } from '@/lib/tournament/print/types';
 
 const ROW_H = 28;
 const COL_ENTRY = 220;
-const COL_ROUND = 88;
+const COL_ROUND = 96;
 const ENTRY_GAP = 36;
 
 interface PrintBracketHalfSheetProps {
@@ -31,7 +31,7 @@ function rowCenterY(rowIndexFrom: number, rowIndexTo: number): number {
 }
 
 function formatMatchNumber(n: number): string {
-  return String(n).padStart(2, '0');
+  return String(n);
 }
 
 function roundColumnLeft(roundIndex: number): number {
@@ -173,21 +173,19 @@ export function PrintBracketHalfSheet({
                 className="relative"
               >
                 {round.matches.map((m) => {
-                  const hasSchedule = Boolean(m.scheduledLabel);
-                  const boxHeight = hasSchedule ? 26 : 16;
-                  const top =
-                    rowCenterY(m.rowIndexFrom, m.rowIndexTo) - boxHeight / 2;
+                  const top = rowCenterY(m.rowIndexFrom, m.rowIndexTo) - 10;
                   return (
                     <div
                       key={m.matchId}
-                      className="absolute right-0.5 left-0.5 rounded border border-gray-500 bg-white px-0.5 text-center leading-tight"
-                      style={{ top, fontSize: hasSchedule ? 8 : 9 }}
+                      className="absolute right-0 left-0 rounded border border-gray-500 bg-white px-0.5 py-0.5 text-center leading-none"
+                      style={{ top }}
                     >
-                      <div className="font-semibold">
-                        {formatMatchNumber(m.matchNumber)}
-                      </div>
+                      <div className="text-[9px] font-semibold">{formatMatchNumber(m.matchNumber)}</div>
                       {m.scheduledLabel ? (
-                        <div className="text-[7px] text-gray-700">
+                        <div
+                          className="mt-0.5 truncate text-[7px] text-gray-700"
+                          title={m.scheduledLabel}
+                        >
                           {m.scheduledLabel}
                         </div>
                       ) : null}

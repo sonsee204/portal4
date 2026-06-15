@@ -141,7 +141,7 @@ export function buildSingleEliminationBracket(
   const effectiveSize = resolveBracketSize(category, matches);
   const slots = mapMatchesToPrintDrawSlots(matches, effectiveSize);
 
-  if (effectiveSize > 32) {
+  if (effectiveSize >= 32) {
     const { halfA, halfB } = splitSlotsIntoHalves(slots);
     const halfBStart = halfA.length;
     return [
@@ -181,7 +181,7 @@ export function buildKnockoutHalvesFromMatches(
           matches,
         );
   const slots = mapMatchesToPrintDrawSlots(matches, effectiveSize);
-  if (effectiveSize > 32) {
+  if (effectiveSize >= 32) {
     const { halfA, halfB } = splitSlotsIntoHalves(slots);
     const halfBStart = halfA.length;
     return [
