@@ -12,6 +12,7 @@
  */
 
 import {
+  eliminationRoundCount,
   intersectHalfSpan,
   matchGlobalRowSpan,
   resolveEffectiveBracketPositions,
@@ -34,6 +35,13 @@ function isLosersBracketMatch(m: PrintMatchInput): boolean {
   return !!m.losersNextMatchId || m.roundLabel.toLowerCase().includes('thua');
 }
 
+/**
+ * Build round columns for a half of an elimination bracket.
+ *
+ * Always generates ALL expected round columns up to max(log₂(bracketSize),
+ * highestDataRound) so the printed sheet always shows the full bracket
+ * skeleton even when later rounds have not been played yet.
+ */
 function buildRoundColumnsWithTree(
   matches: PrintMatchInput[],
   bracketSize: number,
@@ -48,14 +56,21 @@ function buildRoundColumnsWithTree(
   }
 
   const roundNums = [...roundsMap.keys()].sort((a, b) => a - b);
-  const totalRounds = roundNums.length;
+  const maxDataRound = roundNums[roundNums.length - 1] ?? 0;
+  // Use the larger of the structurally-expected count vs actual data rounds so
+  // we never under-render (missing structural columns) or over-render (spurious
+  // columns beyond what the bracket format calls for).
+  const totalRounds = Math.max(eliminationRoundCount(bracketSize), maxDataRound);
 
-  return roundNums.map((roundNum, ri) => {
+  return Array.from({ length: totalRounds }, (_, idx) => {
+    const roundNum = idx + 1;
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
       (a, b) => (bpMap.get(a.id) ?? 0) - (bpMap.get(b.id) ?? 0),
     );
-    const label = roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`;
-    const shortLabel = roundShortLabel(ri, totalRounds, label);
+
+    const dataLabel = roundMatches[0]?.roundLabel ?? '';
+    const shortLabel = roundShortLabel(idx, totalRounds, dataLabel);
+    const label = dataLabel || shortLabel;
 
     const positionedMatches = roundMatches
       .map((m) => {
