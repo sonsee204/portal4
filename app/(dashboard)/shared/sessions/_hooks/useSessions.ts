@@ -13,80 +13,99 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
-import {
-  MY_SESSIONS,
-  REVOKE_SESSION,
-  REVOKE_OTHER_SESSIONS,
-} from '@/graphql/auth/sessions';
-import type { MySessionsQuery } from '@/graphql/generated';
-import { setClientAccessToken } from '@/lib/apollo/client';
+import { useCallback, useEffect, useState } from 'react';
+import type { ErrorLike } from '@apollo/client';
 import { showError, showSuccess } from '@/lib/toast';
-import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 
-/** Fetch the current access token from the server cookie and hydrate the
- *  Apollo in-memory store. Returns `true` when the token was successfully
- *  synced so callers can gate mutations on it. */
-async function syncTokenFromCookie(): Promise<boolean> {
-  try {
-    const res = await fetch('/api/auth/session', { credentials: 'include' });
-    if (!res.ok) return false;
-
-    const payload = (await res.json()) as { accessToken?: string | null };
-    if (payload.accessToken) {
-      setClientAccessToken(payload.accessToken);
-      return true;
-    }
-  } catch {
-    // Ignore — fall back to whatever the Apollo client already has.
-  }
-  return false;
+export interface SessionDeviceInfo {
+  deviceId?: string | null;
+  deviceName?: string | null;
+  platform?: string | null;
+  osVersion?: string | null;
+  appVersion?: string | null;
 }
 
-export function useSessions() {
-  const { data, loading, error, refetch } = useQuery<MySessionsQuery>(
-    MY_SESSIONS,
-    { fetchPolicy: 'network-only' },
-  );
+export interface SessionItem {
+  id: string;
+  deviceName?: string | null;
+  platform?: string | null;
+  ipAddress?: string | null;
+  loginLocation?: string | null;
+  clientSource?: string | null;
+  lastUsedAt?: string | null;
+  createdAt: string;
+  isCurrent: boolean;
+  deviceInfo?: SessionDeviceInfo | null;
+}
 
-  /** Whether the access token has been synced from the cookie at least once. */
-  const tokenSyncedRef = useRef(false);
+/**
+ * Sessions are read and revoked exclusively through the BFF (`/api/auth/sessions`),
+ * which uses the HttpOnly cookie access token server-side. This guarantees the
+ * authoritative session `sid` for THIS browser is always used — both for the
+ * `isCurrent` badge and for revoke operations — instead of the in-memory Apollo
+ * token singleton, which can diverge or be contaminated across requests.
+ */
+export function useSessions() {
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ErrorLike | undefined>(undefined);
+  const [revoking, setRevoking] = useState(false);
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const res = await fetch('/api/auth/sessions', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        throw new Error('Không thể tải danh sách phiên đăng nhập');
+      }
+      const payload = (await res.json()) as { sessions?: SessionItem[] };
+      setSessions(payload.sessions ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    void syncTokenFromCookie().then((synced) => {
-      tokenSyncedRef.current = synced;
-      if (synced) void refetch();
-    });
+    void refetch();
   }, [refetch]);
 
-  const [revokeSessionMut, { loading: revokingOne }] = useMutation(REVOKE_SESSION, {
-    onCompleted: () => {
-      showSuccess('Đã đăng xuất thiết bị');
-      void refetch();
-    },
-    onError: (err) => showError(formatMutationError(err)),
-  });
+  const revoke = useCallback(
+    async (
+      body: { mode: 'others' } | { mode: 'one'; sessionId: string },
+      successMessage: string,
+    ) => {
+      setRevoking(true);
+      try {
+        const res = await fetch('/api/auth/sessions', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
 
-  const [revokeOthers, { loading: revokingOthers }] = useMutation(
-    REVOKE_OTHER_SESSIONS,
-    {
-      onCompleted: () => {
-        showSuccess('Đã đăng xuất tất cả thiết bị khác');
-        void refetch();
-      },
-      onError: (err) => showError(formatMutationError(err)),
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(payload?.error ?? 'Thao tác thất bại');
+        }
+
+        showSuccess(successMessage);
+        await refetch();
+      } catch (err) {
+        showError(err instanceof Error ? err.message : 'Thao tác thất bại');
+      } finally {
+        setRevoking(false);
+      }
     },
+    [refetch],
   );
-
-  const sessions = data?.mySessions ?? [];
-
-  /** Before firing a destructive session mutation, always re-sync the access
-   *  token so the Bearer header carries the correct session `sid`. */
-  async function withFreshToken<T>(fn: () => Promise<T>): Promise<T> {
-    await syncTokenFromCookie();
-    return fn();
-  }
 
   return {
     sessions,
@@ -94,8 +113,9 @@ export function useSessions() {
     error,
     refetch,
     revokeSessionById: (sessionId: string) =>
-      withFreshToken(() => revokeSessionMut({ variables: { sessionId } })),
-    revokeOtherSessions: () => withFreshToken(() => revokeOthers()),
-    revoking: revokingOne || revokingOthers,
+      revoke({ mode: 'one', sessionId }, 'Đã đăng xuất thiết bị'),
+    revokeOtherSessions: () =>
+      revoke({ mode: 'others' }, 'Đã đăng xuất tất cả thiết bị khác'),
+    revoking,
   };
 }
