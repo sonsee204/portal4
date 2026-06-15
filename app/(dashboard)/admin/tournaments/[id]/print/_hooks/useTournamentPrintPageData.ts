@@ -17,12 +17,12 @@ import { useMemo, useState } from 'react';
 import {
   useTournament,
   useTournamentCategories,
-  useTournamentScheduleMatches,
 } from '@/hooks/tournament';
 import { mapMatchesToSchedule } from '@/lib/tournament/mappers/schedule';
 import {
   buildMasterSchedule,
   computePrintReadiness,
+  isCategoryDrawnForPrint,
 } from '@/lib/tournament/print';
 import type { PrintCategoryInput } from '@/lib/tournament/print/types';
 import {
@@ -31,6 +31,7 @@ import {
   mapTournamentToPrintInput,
 } from '@/lib/tournament/print/adapters';
 import { useCategoryBracketDoc } from './useCategoryBracketDoc';
+import { useAllCategoryBracketMatches } from './useAllCategoryBracketMatches';
 
 export type PrintPageTab = 'schedule' | 'bracket';
 
@@ -42,16 +43,6 @@ export function useTournamentPrintPageData(tournamentId: string) {
     useTournament(tournamentId);
   const { categories, loading: cLoading } =
     useTournamentCategories(tournamentId);
-  const {
-    matches: rawMatches,
-    loading: mLoading,
-    error: mError,
-  } = useTournamentScheduleMatches({ tournamentId });
-
-  const scheduleMatches = useMemo(
-    () => mapMatchesToSchedule(rawMatches, categories),
-    [rawMatches, categories],
-  );
 
   const printCategories = useMemo(
     () => categories.map(mapCategoryToPrintInput),
@@ -61,6 +52,29 @@ export function useTournamentPrintPageData(tournamentId: string) {
   const printTournament = useMemo(
     () => (tournament ? mapTournamentToPrintInput(tournament) : null),
     [tournament],
+  );
+
+  // Derive drawn category IDs early — needed to drive per-category bracket
+  // fetches before `readiness` is available.
+  const drawnCategoryIds = useMemo(
+    () =>
+      printCategories
+        .filter((c) => isCategoryDrawnForPrint(c.status))
+        .map((c) => c.id),
+    [printCategories],
+  );
+
+  // Fetch ALL matches for ALL drawn categories via per-category bracket
+  // queries (`tournamentBracket(categoryId)`), which return every round in one
+  // response.  The paginated tournament-wide connection stops at round 1 for
+  // large tournaments — the cursor sort puts round-1 matches first and the
+  // backend returns hasNextPage=false before later rounds appear.
+  const { matches: allCategoryMatches, loading: mLoading } =
+    useAllCategoryBracketMatches(drawnCategoryIds, cLoading || !tournamentId);
+
+  const scheduleMatches = useMemo(
+    () => mapMatchesToSchedule(allCategoryMatches, categories),
+    [allCategoryMatches, categories],
   );
 
   const scheduleInputs = useMemo(
@@ -79,18 +93,18 @@ export function useTournamentPrintPageData(tournamentId: string) {
       printTournament,
       printCategories,
       scheduleInputs,
-      rawMatches.length,
+      allCategoryMatches.length,
     );
-  }, [printTournament, printCategories, scheduleInputs, rawMatches.length]);
+  }, [printTournament, printCategories, scheduleInputs, allCategoryMatches.length]);
 
   const readiness = useMemo(
     () =>
       computePrintReadiness(
         printCategories,
         scheduledCount,
-        rawMatches.length,
+        allCategoryMatches.length,
       ),
-    [printCategories, scheduledCount, rawMatches.length],
+    [printCategories, scheduledCount, allCategoryMatches.length],
   );
 
   const effectiveCategoryId =
@@ -125,7 +139,7 @@ export function useTournamentPrintPageData(tournamentId: string) {
   );
 
   const loading = tLoading || cLoading || mLoading;
-  const error = tError ?? mError;
+  const error = tError;
 
   return {
     tournamentId,
