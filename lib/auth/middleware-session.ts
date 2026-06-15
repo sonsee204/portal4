@@ -83,6 +83,21 @@ function applySessionCookies(
   response.cookies.set(config.cookieNames.USER_ROLE, role, options.role);
 }
 
+/**
+ * Mark a response as never-cacheable by any shared cache. MUST be applied to
+ * every response that reads or mutates auth cookies — otherwise a CDN/edge
+ * proxy can store a response carrying one user's `Set-Cookie` and replay it to
+ * another user, which makes sessions bleed across devices.
+ */
+export function applyNoStore(response: NextResponse): void {
+  response.headers.set(
+    'Cache-Control',
+    'private, no-store, no-cache, max-age=0, must-revalidate',
+  );
+  response.headers.set('CDN-Cache-Control', 'no-store');
+  response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+}
+
 export function clearAuthCookies(
   response: NextResponse,
   cookieNames: SessionCookieNames,
@@ -96,6 +111,7 @@ export function clearAuthCookies(
   if (cookieNames.IS_OWNER) {
     response.cookies.delete(cookieNames.IS_OWNER);
   }
+  applyNoStore(response);
 }
 
 export async function resolveAuthSession(
@@ -227,6 +243,10 @@ export function enrichAuthResponse(
   if (session.role) {
     response.headers.set('x-user-role', session.role);
   }
+
+  // Authenticated responses may carry refreshed `Set-Cookie` headers — never
+  // let a shared cache store them.
+  applyNoStore(response);
 
   return response;
 }
