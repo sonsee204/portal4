@@ -46,6 +46,30 @@ function resolveBracketSize(
 }
 
 /**
+ * Compute how many slots to actually render.
+ *
+ * Trailing slots where every player is a Bye (no registered participant) are
+ * stripped so the printed half doesn't show empty rows at the bottom.  The
+ * count is always rounded up to the next even number so every displayed pair
+ * stays intact.
+ */
+function computeVisibleSlotCount(slots: PrintDrawSlot[]): number {
+  let lastNonByeIdx = -1;
+  for (let i = slots.length - 1; i >= 0; i--) {
+    if (!slots[i]?.isBye) {
+      lastNonByeIdx = i;
+      break;
+    }
+  }
+  if (lastNonByeIdx < 0) {
+    // All slots are Bye – keep the minimum (2 rows = 1 pair) rather than hiding the half entirely.
+    return Math.min(slots.length, 2);
+  }
+  // Round up to the next even number so the last pair is always complete.
+  return Math.min(slots.length, Math.ceil((lastNonByeIdx + 1) / 2) * 2);
+}
+
+/**
  * Build round columns for one half of the bracket.
  *
  * Always generates ALL expected round columns (log₂(fullBracketSize)), even
@@ -70,8 +94,6 @@ function buildRoundColumns(
 
   const totalRounds = eliminationRoundCount(fullBracketSize);
 
-  // Pre-generate every round column (1 … totalRounds) so the bracket always
-  // shows the full skeleton even before later rounds are played.
   return Array.from({ length: totalRounds }, (_, idx) => {
     const roundNum = idx + 1;
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
@@ -79,7 +101,6 @@ function buildRoundColumns(
     );
 
     const dataLabel = roundMatches[0]?.roundLabel ?? '';
-    // Compute label purely from position when no match data exists for this round.
     const shortLabel = roundShortLabel(idx, totalRounds, dataLabel);
     const label = dataLabel || shortLabel;
 
@@ -126,20 +147,16 @@ function buildHalfFromSlots(
   halfSlotStart: number,
   fullBracketSize: number,
 ): PrintBracketHalf {
-  const halfMatches = filterMatchesForHalf(
-    matches,
-    halfSlotStart,
-    slots.length,
-  );
+  // Trim trailing all-Bye rows so printed halves don't show empty rows when
+  // fewer participants are registered than the bracket size.
+  const visibleCount = computeVisibleSlotCount(slots);
+  const visibleSlots = slots.slice(0, visibleCount);
+
+  const halfMatches = filterMatchesForHalf(matches, halfSlotStart, visibleCount);
   return {
     title,
-    entries: slotsToEntryRows(slots),
-    rounds: buildRoundColumns(
-      halfMatches,
-      halfSlotStart,
-      slots.length,
-      fullBracketSize,
-    ),
+    entries: slotsToEntryRows(visibleSlots),
+    rounds: buildRoundColumns(halfMatches, halfSlotStart, visibleCount, fullBracketSize),
   };
 }
 

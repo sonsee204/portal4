@@ -15,13 +15,26 @@
 
 import type { PrintBracketHalf } from '@/lib/tournament/print/types';
 
+/**
+ * ROW_H is the single source of truth for bracket row height (px).
+ *
+ * Every table row AND every bracket column row must be exactly this tall so
+ * that the SVG connector coordinates stay aligned with the entry table.
+ * We use an inner-div technique inside each <td> to enforce the fixed height
+ * regardless of how long player names are.
+ */
 const ROW_H = 28;
-const COL_ENTRY = 220;
+const COL_ENTRY = 224;
 const COL_ROUND = 96;
 const ENTRY_GAP = 36;
 
-/** Height of a match box with schedule info vs without. */
-const BOX_H_SCHEDULED = 28;
+/** STT column width */
+const W_STT = 28;
+/** Club column width */
+const W_CLUB = 64;
+
+/** Match box heights – centered exactly on rowCenterY. */
+const BOX_H_WITH_SCHEDULE = 28;
 const BOX_H_PLAIN = 18;
 
 interface PrintBracketHalfSheetProps {
@@ -34,10 +47,6 @@ function rowCenterY(rowIndexFrom: number, rowIndexTo: number): number {
   return ((rowIndexFrom + rowIndexTo) / 2 + 0.5) * ROW_H;
 }
 
-function formatMatchNumber(n: number): string {
-  return String(n);
-}
-
 function roundColumnLeft(roundIndex: number): number {
   return ENTRY_GAP + roundIndex * COL_ROUND;
 }
@@ -46,8 +55,7 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
   const entryCount = half.entries.length;
   if (entryCount === 0 || half.rounds.length === 0) return null;
 
-  const roundColCount = half.rounds.length;
-  const width = ENTRY_GAP + roundColCount * COL_ROUND;
+  const width = ENTRY_GAP + half.rounds.length * COL_ROUND;
   const height = entryCount * ROW_H;
   const hw = ENTRY_GAP / 2;
 
@@ -62,7 +70,7 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
     segments.push({ x1: x, y1, x2: x, y2 });
   };
 
-  // ── Entry stubs: connect entry table rows to round-1 match boxes ──────────
+  // ── Entry stubs: connect each round-1 match to the two player rows ───────
   const firstRound = half.rounds[0];
   if (firstRound) {
     const r1Left = roundColumnLeft(0);
@@ -81,12 +89,12 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
     const current = half.rounds[ri]!;
     const next = half.rounds[ri + 1]!;
     const colExit = roundColumnLeft(ri) + COL_ROUND * 0.55;
-    const colMid = roundColumnLeft(ri) + COL_ROUND + ENTRY_GAP * 0.35;
+    const colMid  = roundColumnLeft(ri) + COL_ROUND + ENTRY_GAP * 0.35;
     const colEntry = roundColumnLeft(ri + 1) + COL_ROUND * 0.12;
 
     if (next.matches.length === 0) {
-      // Next round has no data yet: draw individual exit stubs for each match
-      // so the bracket structure is still visually communicated.
+      // Next round has no data yet → draw individual exit stubs so the bracket
+      // structure is still visually communicated.
       for (const m of current.matches) {
         const yMid = rowCenterY(m.rowIndexFrom, m.rowIndexTo);
         pushH(colExit, yMid, colMid);
@@ -120,17 +128,44 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
       aria-hidden
     >
       {segments.map((l, i) => (
-        <line
-          key={i}
-          x1={l.x1}
-          y1={l.y1}
-          x2={l.x2}
-          y2={l.y2}
-          stroke="#333"
-          strokeWidth={1}
-        />
+        <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#333" strokeWidth={1} />
       ))}
     </svg>
+  );
+}
+
+/**
+ * Inner-div technique: each <td> contains a fixed-height flex div that clips
+ * its content.  This ensures every table row renders at exactly ROW_H pixels
+ * regardless of player name length, keeping SVG connector coordinates aligned.
+ */
+function EntryCell({
+  children,
+  center = false,
+  nowrap = false,
+}: {
+  children: React.ReactNode;
+  center?: boolean;
+  nowrap?: boolean;
+}) {
+  return (
+    <td style={{ padding: 0 }}>
+      <div
+        style={{
+          height: ROW_H,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: center ? 'center' : 'flex-start',
+          overflow: 'hidden',
+          padding: '0 3px',
+          fontSize: 8,
+          lineHeight: 1.2,
+          whiteSpace: nowrap ? 'nowrap' : undefined,
+        }}
+      >
+        {children}
+      </div>
+    </td>
   );
 }
 
@@ -148,25 +183,41 @@ export function PrintBracketHalfSheet({
         </h3>
       ) : null}
       <div className="flex gap-0">
-        <table style={{ width: COL_ENTRY, flexShrink: 0 }}>
+        {/*
+         * Entry table – uses inner-div technique so row heights are always
+         * exactly ROW_H pixels, keeping the SVG connector aligned.
+         */}
+        <table
+          style={{
+            width: COL_ENTRY,
+            flexShrink: 0,
+            tableLayout: 'fixed',
+          }}
+        >
+          <colgroup>
+            <col style={{ width: W_STT }} />
+            <col style={{ width: W_CLUB }} />
+            <col />
+          </colgroup>
           <thead>
             <tr>
-              <th style={{ width: 32 }}>STT</th>
-              <th>Đơn vị</th>
-              <th>VĐV</th>
+              <th style={{ padding: '2px 3px', fontSize: 9 }}>STT</th>
+              <th style={{ padding: '2px 3px', fontSize: 9 }}>Đơn vị</th>
+              <th style={{ padding: '2px 3px', fontSize: 9 }}>VĐV</th>
             </tr>
           </thead>
           <tbody>
             {half.entries.map((e) => (
-              <tr key={e.index} style={{ height: ROW_H }}>
-                <td className="text-center">{e.index}</td>
-                <td>{e.club ?? '—'}</td>
-                <td>{e.athleteLabel}</td>
+              <tr key={e.index}>
+                <EntryCell center>{e.index}</EntryCell>
+                <EntryCell>{e.club ?? '—'}</EntryCell>
+                <EntryCell>{e.athleteLabel}</EntryCell>
               </tr>
             ))}
           </tbody>
         </table>
 
+        {/* Bracket column area */}
         <div
           className="relative flex"
           style={{
@@ -191,7 +242,7 @@ export function PrintBracketHalfSheet({
               >
                 {round.matches.map((m) => {
                   const boxH = m.scheduledLabel
-                    ? BOX_H_SCHEDULED
+                    ? BOX_H_WITH_SCHEDULE
                     : BOX_H_PLAIN;
                   const top =
                     rowCenterY(m.rowIndexFrom, m.rowIndexTo) - boxH / 2;
@@ -202,7 +253,7 @@ export function PrintBracketHalfSheet({
                       style={{ top, height: boxH }}
                     >
                       <div className="text-[9px] font-semibold leading-none">
-                        {formatMatchNumber(m.matchNumber)}
+                        {m.matchNumber}
                       </div>
                       {m.scheduledLabel ? (
                         <div
