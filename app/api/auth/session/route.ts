@@ -12,15 +12,34 @@
  */
 
 import { NextResponse } from 'next/server';
-import { decodeJwtExp } from '@/lib/auth/session-core';
+import { decodeJwtExp, isJwtExpired } from '@/lib/auth/session-core';
 import { getAccessToken, getRefreshToken } from '@/lib/auth/session';
+import { refreshSessionFromCookie } from '@/lib/auth/refresh-server';
 
 export async function GET() {
-  const accessToken = await getAccessToken();
+  let accessToken = await getAccessToken();
   const refreshToken = await getRefreshToken();
 
   if (!accessToken && !refreshToken) {
     return NextResponse.json({ isAuthenticated: false });
+  }
+
+  if (
+    accessToken &&
+    isJwtExpired(accessToken, 0) &&
+    refreshToken
+  ) {
+    const refreshed = await refreshSessionFromCookie();
+    if (refreshed.ok) {
+      accessToken = refreshed.accessToken;
+    }
+  }
+
+  if (!accessToken && refreshToken) {
+    const refreshed = await refreshSessionFromCookie();
+    if (refreshed.ok) {
+      accessToken = refreshed.accessToken;
+    }
   }
 
   const accessExpiresAt = accessToken
@@ -29,6 +48,7 @@ export async function GET() {
 
   return NextResponse.json({
     isAuthenticated: Boolean(accessToken || refreshToken),
+    accessToken: accessToken ?? null,
     accessExpiresAt,
     hasRefreshToken: Boolean(refreshToken),
   });
