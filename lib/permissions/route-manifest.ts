@@ -134,6 +134,13 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     pattern: '/admin/tournaments/:id/schedule',
   },
   {
+    path: '/admin/tournaments/:id/print',
+    workspace: 'admin',
+    permission: 'tournaments.platform',
+    status: 'live',
+    pattern: '/admin/tournaments/:id/print',
+  },
+  {
     path: '/admin/tournaments/:id/scoring/:matchId',
     workspace: 'admin',
     permission: 'tournaments.platform',
@@ -354,6 +361,13 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     permission: 'tournaments.organize',
     status: 'live',
     pattern: '/organizer/tournaments/:id/schedule',
+  },
+  {
+    path: '/organizer/tournaments/:id/print',
+    workspace: 'organizer',
+    permission: 'tournaments.organize',
+    status: 'live',
+    pattern: '/organizer/tournaments/:id/print',
   },
   {
     path: '/organizer/tournaments/:id/scoring/:matchId',

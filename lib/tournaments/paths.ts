@@ -33,6 +33,7 @@ export interface TournamentRoutePaths {
   registrations: (id: string) => string;
   draw: (id: string) => string;
   schedule: (id: string) => string;
+  print: (id: string) => string;
   scoring: (id: string, matchId: string) => string;
 }
 
@@ -45,6 +46,7 @@ export function tournamentRoutes(base: string): TournamentRoutePaths {
     registrations: (id: string) => `${base}/${id}/registrations`,
     draw: (id: string) => `${base}/${id}/draw`,
     schedule: (id: string) => `${base}/${id}/schedule`,
+    print: (id: string) => `${base}/${id}/print`,
     scoring: (id: string, matchId: string) => `${base}/${id}/scoring/${matchId}`,
   };
 }

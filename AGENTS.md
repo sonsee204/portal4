@@ -13,6 +13,7 @@ Admin dashboard (port **3001**). `lib/tournament/` sync từ web qua `pnpm sched
 | Codegen | `pnpm codegen` |
 | Schema sync (từ BE) | `pnpm schema:sync` → `pnpm codegen` |
 | Schedule DnD sync (từ web) | `pnpm schedule-dnd:sync` |
+| Print kernel sync (từ web) | `pnpm print-kernel:sync` |
 | Lint | `pnpm lint` |
 | Typecheck | `pnpm typecheck` |
 
@@ -64,7 +65,9 @@ Token-first — `config/theme.ts`, `ThemeProvider`. Atoms → molecules → orga
 
 ## Domain logic (`lib/tournament/`)
 
-Schedule DnD kernel sync từ web — `pnpm schedule-dnd:sync`.
+Schedule DnD kernel sync từ web — `pnpm schedule-dnd:sync`. Print kernel (`lib/tournament/print/`) sync từ web — `pnpm print-kernel:sync` (source: `nalee-sports-web/lib/tournament/print/`).
+
+Routes in: `/admin/tournaments/[id]/print`, `/organizer/tournaments/[id]/print` (re-export).
 
 ## Audit
 

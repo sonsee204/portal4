@@ -31,6 +31,8 @@
     "schema:sync": "node ../scripts/sync-schema.mjs",
     "check:shared-sync": "node scripts/check-shared-sync.mjs",
     "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
+    "print-kernel:sync": "node ../scripts/sync-tournament-print-kernel.mjs",
+    "check:print-kernel-sync": "node ../scripts/sync-tournament-print-kernel.mjs --check",
     "sync:shared": "node ../scripts/sync-shared-kernel.mjs --target=nalee-sports-portal",
     "version:sync": "node ../scripts/sync-version.mjs",
     "prepare": "husky"
@@ -54,6 +56,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
+    "react-to-print": "^3.0.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",

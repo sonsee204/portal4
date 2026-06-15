@@ -18,7 +18,10 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { TOURNAMENT } from '@/lib/strings';
-import { formatDate, getEditQuickLinkLabel } from '../_hooks/tournament-detail-page.derived';
+import {
+  formatDate,
+  getEditQuickLinkLabel,
+} from '../_hooks/tournament-detail-page.derived';
 import type { TournamentDetailPageData } from '../_hooks/useTournamentDetailPageData';
 
 interface TournamentDetailContentSectionProps {
@@ -72,7 +75,7 @@ export function TournamentDetailContentSection({
         <h2 className="text-heading mb-4 text-sm font-semibold">
           Thao tác nhanh
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <Link
             href={routes.edit(tournamentId)}
             className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
@@ -87,7 +90,9 @@ export function TournamentDetailContentSection({
             className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
           >
             <IonIcon name="person-add-outline" size="md" />
-            <span className="font-medium">{TOURNAMENT.LABEL_REGISTRATIONS}</span>
+            <span className="font-medium">
+              {TOURNAMENT.LABEL_REGISTRATIONS}
+            </span>
           </Link>
           <Link
             href={routes.draw(tournamentId)}
@@ -102,6 +107,15 @@ export function TournamentDetailContentSection({
           >
             <IonIcon name="calendar-outline" size="md" />
             <span className="font-medium">{TOURNAMENT.LABEL_SCHEDULE}</span>
+          </Link>
+          <Link
+            href={routes.print(tournamentId)}
+            className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+          >
+            <IonIcon name="print-outline" size="md" />
+            <span className="font-medium">
+              {TOURNAMENT.LABEL_PRINT_DOCUMENTS}
+            </span>
           </Link>
         </div>
       </div>
