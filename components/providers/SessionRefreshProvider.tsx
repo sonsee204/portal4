@@ -16,6 +16,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { refreshViaApiRoute } from '@/lib/auth/session-core';
 import { reconnectWebSocket, setClientAccessToken } from '@/lib/apollo/client';
+import { redirectToLogin } from '@/lib/apollo/token';
 import { useAuthStore } from '@/stores/auth';
 
 const FALLBACK_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
@@ -81,6 +82,9 @@ export function SessionRefreshProvider({ children }: { children: ReactNode }) {
       if (result.status === 'success') {
         setClientAccessToken(result.accessToken);
         reconnectWebSocket();
+      } else if (result.status === 'auth_failed') {
+        setClientAccessToken(null);
+        redirectToLogin();
       }
 
       if (!cancelled) {
