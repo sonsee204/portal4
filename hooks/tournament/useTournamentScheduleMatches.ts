@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { GET_TOURNAMENT_MATCHES } from '@/graphql/tournament/queries';
 import type {
@@ -47,6 +47,13 @@ export function useTournamentScheduleMatches(
   options: UseTournamentScheduleMatchesOptions,
 ) {
   const { tournamentId, skip = false, filter } = options;
+  const filterKey = useMemo(() => JSON.stringify(filter ?? null), [filter]);
+  const stableFilter = useMemo(
+    () => filter,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable by serialized filter
+    [filterKey],
+  );
+
   const client = useApolloClient();
   const [matches, setMatches] = useState<TournamentMatch[]>([]);
   const [total, setTotal] = useState(0);
@@ -56,13 +63,14 @@ export function useTournamentScheduleMatches(
   const hasLoadedRef = useRef(false);
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
+  const requestEpochRef = useRef(0);
 
   const { subscribeToMore } = useQuery<GetTournamentMatchesQuery>(
     GET_TOURNAMENT_MATCHES,
     {
       variables: {
         tournamentId,
-        filter: filter ?? undefined,
+        filter: stableFilter ?? undefined,
         pagination: { first: 1, after: null },
       },
       skip: skip || !tournamentId,
@@ -72,14 +80,28 @@ export function useTournamentScheduleMatches(
 
   const loadAll = useCallback(async () => {
     if (skip || !tournamentId || !mountedRef.current) return;
+
+    const epochAtStart = requestEpochRef.current;
     if (inFlightRef.current) return;
+
     inFlightRef.current = true;
     if (!hasLoadedRef.current) setInitialLoading(true);
 
     try {
       let totalCount = 0;
       const all = await fetchAllConnectionPages<TournamentMatch>({
+        getMaxPages: () =>
+          totalCount > 0
+            ? Math.ceil(totalCount / CURSOR_PAGE_MAX) + 2
+            : 500,
         fetchPage: async (after) => {
+          if (
+            !mountedRef.current ||
+            requestEpochRef.current !== epochAtStart
+          ) {
+            return { edges: [], pageInfo: { hasNextPage: false } };
+          }
+
           const { data } = await client.query<
             GetTournamentMatchesQuery,
             GetTournamentMatchesQueryVariables
@@ -87,7 +109,7 @@ export function useTournamentScheduleMatches(
             query: GET_TOURNAMENT_MATCHES,
             variables: {
               tournamentId,
-              filter: filter ?? undefined,
+              filter: stableFilter ?? undefined,
               pagination: { first: CURSOR_PAGE_MAX, after: after ?? null },
             },
             fetchPolicy: 'network-only',
@@ -104,20 +126,39 @@ export function useTournamentScheduleMatches(
         },
       });
 
-      if (!mountedRef.current) return;
+      if (
+        !mountedRef.current ||
+        requestEpochRef.current !== epochAtStart
+      ) {
+        return;
+      }
+
       setMatches(dedupeTournamentMatchesById(all));
       setTotal(totalCount || all.length);
       hasLoadedRef.current = true;
     } catch (err) {
-      if (!mountedRef.current) return;
+      if (
+        !mountedRef.current ||
+        requestEpochRef.current !== epochAtStart
+      ) {
+        return;
+      }
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
-      inFlightRef.current = false;
-      if (mountedRef.current) setInitialLoading(false);
+      if (
+        mountedRef.current &&
+        requestEpochRef.current === epochAtStart
+      ) {
+        inFlightRef.current = false;
+        setInitialLoading(false);
+      } else {
+        inFlightRef.current = false;
+      }
     }
-  }, [client, tournamentId, skip, filter]);
+  }, [client, tournamentId, skip, stableFilter]);
 
   const refetch = useCallback(() => {
+    hasLoadedRef.current = false;
     void loadAll();
   }, [loadAll]);
 
@@ -138,19 +179,27 @@ export function useTournamentScheduleMatches(
   );
 
   useEffect(() => {
+    requestEpochRef.current += 1;
     mountedRef.current = true;
+
     if (skip || !tournamentId) {
+      hasLoadedRef.current = false;
+      inFlightRef.current = false;
       setMatches([]);
       setTotal(0);
       setInitialLoading(false);
       return;
     }
+
     hasLoadedRef.current = false;
     void loadAll();
+
     return () => {
+      requestEpochRef.current += 1;
       mountedRef.current = false;
+      inFlightRef.current = false;
     };
-  }, [tournamentId, skip, loadAll]);
+  }, [tournamentId, skip, filterKey, loadAll]);
 
   return {
     matches,
