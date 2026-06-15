@@ -16,12 +16,23 @@ import { decodeJwtExp, isJwtExpired } from '@/lib/auth/session-core';
 import { getAccessToken, getRefreshToken } from '@/lib/auth/session';
 import { refreshSessionFromCookie } from '@/lib/auth/refresh-server';
 
+// Never cache: response carries a per-user access token (and may set cookies).
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate, private',
+} as const;
+
 export async function GET() {
   let accessToken = await getAccessToken();
   const refreshToken = await getRefreshToken();
 
   if (!accessToken && !refreshToken) {
-    return NextResponse.json({ isAuthenticated: false });
+    return NextResponse.json(
+      { isAuthenticated: false },
+      { headers: NO_STORE_HEADERS },
+    );
   }
 
   if (
@@ -46,10 +57,13 @@ export async function GET() {
     ? (decodeJwtExp(accessToken) ?? null)
     : null;
 
-  return NextResponse.json({
-    isAuthenticated: Boolean(accessToken || refreshToken),
-    accessToken: accessToken ?? null,
-    accessExpiresAt,
-    hasRefreshToken: Boolean(refreshToken),
-  });
+  return NextResponse.json(
+    {
+      isAuthenticated: Boolean(accessToken || refreshToken),
+      accessToken: accessToken ?? null,
+      accessExpiresAt,
+      hasRefreshToken: Boolean(refreshToken),
+    },
+    { headers: NO_STORE_HEADERS },
+  );
 }

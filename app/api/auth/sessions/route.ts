@@ -27,6 +27,14 @@ import { GRAPHQL_URL } from '@/lib/auth/constants';
  * session is "current").
  */
 
+// Never cache: uses per-user cookie token and may refresh/rotate cookies.
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate, private',
+} as const;
+
 const PORTAL_GQL_HEADERS = {
   'Content-Type': 'application/json',
   'x-client-source': 'portal',
@@ -111,7 +119,10 @@ async function callGraphql<T>(
 export async function GET() {
   const accessToken = await resolveAccessToken();
   if (!accessToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401, headers: NO_STORE_HEADERS },
+    );
   }
 
   const result = await callGraphql<{ mySessions: unknown[] }>(
@@ -122,11 +133,14 @@ export async function GET() {
   if (result.errors?.length) {
     return NextResponse.json(
       { error: result.errors[0].message },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  return NextResponse.json({ sessions: result.data?.mySessions ?? [] });
+  return NextResponse.json(
+    { sessions: result.data?.mySessions ?? [] },
+    { headers: NO_STORE_HEADERS },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -136,16 +150,25 @@ export async function POST(request: NextRequest) {
   } | null;
 
   if (!body?.mode) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid request' },
+      { status: 400, headers: NO_STORE_HEADERS },
+    );
   }
 
   if (body.mode === 'one' && !body.sessionId) {
-    return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Missing sessionId' },
+      { status: 400, headers: NO_STORE_HEADERS },
+    );
   }
 
   const accessToken = await resolveAccessToken();
   if (!accessToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401, headers: NO_STORE_HEADERS },
+    );
   }
 
   const result =
@@ -163,9 +186,9 @@ export async function POST(request: NextRequest) {
   if (result.errors?.length) {
     return NextResponse.json(
       { error: result.errors[0].message },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
 }

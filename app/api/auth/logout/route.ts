@@ -15,6 +15,14 @@ import { NextResponse } from 'next/server';
 import { getAccessToken, clearSession } from '@/lib/auth/session';
 import { GRAPHQL_URL } from '@/lib/auth/constants';
 
+// Never cache: clears per-user cookies.
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate, private',
+} as const;
+
 /**
  * API route to logout the user.
  * Called from the client-side useLogout hook so that client state
@@ -49,5 +57,5 @@ export async function POST() {
 
   await clearSession();
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
 }
