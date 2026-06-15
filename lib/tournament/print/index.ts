@@ -18,6 +18,7 @@ export {
   formatPrintPlayerClub,
   formatPrintMatchPair,
 } from './format-player-name';
+export { formatPrintScheduledLabel } from './format-print-scheduled-label';
 export {
   roundShortLabel,
   formatViDate,

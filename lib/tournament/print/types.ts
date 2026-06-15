@@ -36,6 +36,7 @@ export interface PrintMatchInput {
   status: string;
   isBye: boolean;
   scheduledAt?: string | null;
+  courtName?: string | null;
   player1?: PrintPlayerInput | null;
   player2?: PrintPlayerInput | null;
   player1SlotLabel?: string | null;
@@ -125,6 +126,7 @@ export interface PrintBracketRoundColumn {
     rowIndexTo: number;
     player1Label?: string;
     player2Label?: string;
+    scheduledLabel?: string;
   }>;
 }
 

@@ -19,6 +19,7 @@ import {
   resolveEffectiveBracketPositions,
 } from '../bracket-row-layout';
 import { formatPrintMatchPair } from '../format-player-name';
+import { formatPrintScheduledLabel } from '../format-print-scheduled-label';
 import {
   mapMatchesToPrintDrawSlots,
   slotsToEntryRows,
@@ -96,6 +97,7 @@ function buildRoundColumns(
           rowIndexTo: local.localTo,
           player1Label: pair.player1,
           player2Label: pair.player2,
+          scheduledLabel: formatPrintScheduledLabel(m),
         };
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
