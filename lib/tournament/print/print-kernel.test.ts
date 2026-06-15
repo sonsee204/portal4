@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { buildMasterSchedule } from './build-master-schedule';
 import { buildBracketDocument, computePrintReadiness } from './build-bracket-sheet';
 import { dedupePrintMatchesById } from './dedupe-matches';
+import { formatDateRangeLabel } from './round-labels';
 import type {
   PrintCategoryInput,
   PrintMatchInput,
@@ -132,5 +133,14 @@ describe('print kernel', () => {
     );
     expect(r.unscheduledCount).toBe(7);
     expect(r.undrawnCategoryIds).toEqual(['c2']);
+  });
+
+  it('formatDateRangeLabel accepts ISO datetime from GraphQL', () => {
+    const label = formatDateRangeLabel(
+      '2026-06-04T12:30:04.784Z',
+      '2026-06-08T18:00:00.000Z',
+    );
+    expect(label).not.toContain('Invalid');
+    expect(label).toContain('2026');
   });
 });

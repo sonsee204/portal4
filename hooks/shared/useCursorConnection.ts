@@ -96,23 +96,45 @@ export function useConnectionLoadMore<TData>(config: {
   return { loadMore, isLoadingMore: isLoadingMoreRef };
 }
 
+const FETCH_ALL_PAGES_ABSOLUTE_MAX = 500;
+
 /** Fetch all pages via repeated client.query until hasNextPage is false. */
 export async function fetchAllConnectionPages<TNode>(config: {
   fetchPage: (after?: string | null) => Promise<{
     edges: Array<{ cursor: string; node: TNode }>;
     pageInfo: { hasNextPage: boolean; endCursor?: string | null };
   }>;
+  /** Optional cap — e.g. ceil(totalCount / pageSize) + 1 once totalCount is known. */
+  getMaxPages?: () => number;
 }): Promise<TNode[]> {
   const all: TNode[] = [];
   let after: string | null | undefined;
   let hasNextPage = true;
+  let pageIndex = 0;
+  const seenEndCursors = new Set<string>();
 
   while (hasNextPage) {
-    const page = await config.fetchPage(after);
-    all.push(...connectionNodes(page.edges));
+    pageIndex += 1;
+    const maxPages = config.getMaxPages?.() ?? FETCH_ALL_PAGES_ABSOLUTE_MAX;
+    if (pageIndex > maxPages) break;
+
+    const requestAfter = after ?? null;
+    const page = await config.fetchPage(requestAfter);
+    const nodes = connectionNodes(page.edges);
+    if (nodes.length === 0) break;
+
     hasNextPage = page.pageInfo.hasNextPage;
-    after = page.pageInfo.endCursor;
-    if (hasNextPage && !after) break;
+    const nextCursor = page.pageInfo.endCursor ?? null;
+
+    if (requestAfter !== null && nextCursor === requestAfter) break;
+
+    all.push(...nodes);
+
+    if (!hasNextPage) break;
+    if (!nextCursor) break;
+    if (seenEndCursors.has(nextCursor)) break;
+    seenEndCursors.add(nextCursor);
+    after = nextCursor;
   }
 
   return all;

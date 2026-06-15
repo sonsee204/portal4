@@ -39,8 +39,18 @@ export function roundShortLabel(
   return roundLabel.slice(0, 6);
 }
 
+/** Accept YYYY-MM-DD or ISO datetime from GraphQL. */
+export function normalizePrintDateKey(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.includes('T')) return trimmed.slice(0, 10);
+  return trimmed;
+}
+
 export function formatViDate(dateKey: string): string {
-  const d = new Date(`${dateKey}T12:00:00`);
+  const normalized = normalizePrintDateKey(dateKey);
+  const d = new Date(`${normalized}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return dateKey;
   return d.toLocaleDateString('vi-VN', {
     weekday: 'long',
     day: '2-digit',
@@ -55,8 +65,10 @@ export function formatDateRangeLabel(
 ): string {
   if (!startDate) return '—';
   const start = formatViDate(startDate);
-  if (!endDate || endDate === startDate) return start;
-  return `${start} – ${formatViDate(endDate)}`;
+  const endKey = endDate ? normalizePrintDateKey(endDate) : null;
+  const startKey = normalizePrintDateKey(startDate);
+  if (!endKey || endKey === startKey) return start;
+  return `${start} – ${formatViDate(endDate!)}`;
 }
 
 export function formatTimeRangeFromBlocks(

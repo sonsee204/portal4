@@ -22,6 +22,7 @@ export default defineConfig({
       '**/registrations-page.derived.test.ts',
       '**/moderation-page.derived.test.ts',
       '**/lib/permissions/access.test.ts',
+      '**/hooks/shared/useCursorConnection.test.ts',
     ],
     environment: 'node',
   },
