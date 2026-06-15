@@ -517,6 +517,8 @@ enum AuditAction {
   OTP_VERIFY_FAILED
   PASSWORD_CHANGE
   PASSWORD_RESET
+  PORTAL_CAPABILITY_GRANTED
+  PORTAL_CAPABILITY_REVOKED
   RATE_LIMIT_HIT
   SYSTEM_ERROR
   TOKEN_REFRESH_FAILED
@@ -4208,6 +4210,16 @@ input GenerateBracketInput {
   categoryId: ID!
 }
 
+input GrantPortalCapabilityInput {
+  capability: PortalCapability!
+
+  """Reason / ticket reference (min 10 chars)"""
+  reason: String!
+
+  """Target user ID"""
+  userId: String!
+}
+
 type Group {
   _id: ID!
 
@@ -5508,9 +5520,7 @@ type Mutation {
   """Change user role (Super Admin only)"""
   adminChangeUserRole(role: UserRole!, userId: ID!): User!
 
-  """
-  Create a new user account (SUPER_ADMIN can create ADMIN/FACILITY_OWNER, ADMIN can create FACILITY_OWNER)
-  """
+  """Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER)"""
   adminCreateUser(input: AdminCreateUserInput!): User!
 
   """Provision a PLAYER account on behalf of a user (Super Admin only)"""
@@ -5522,13 +5532,13 @@ type Mutation {
   """Reset password for a PLAYER account (Super Admin only)"""
   adminResetUserPassword(input: AdminResetUserPasswordInput!): AdminResetUserPasswordResponse!
 
-  """Suspend a user (Admin only)"""
+  """Suspend a user (Super Admin only)"""
   adminSuspendUser(reason: String, userId: ID!): User!
 
   """Suspend venue (Admin only)"""
   adminSuspendVenue(reason: String, venueId: ID!): Venue!
 
-  """Unsuspend a user (Admin only)"""
+  """Unsuspend a user (Super Admin only)"""
   adminUnsuspendUser(userId: ID!): User!
 
   """Approve a group join request (admin only)"""
@@ -5947,6 +5957,9 @@ type Mutation {
   """Generate bracket for category"""
   generateBracket(input: GenerateBracketInput!): [TournamentMatch!]!
 
+  """Grant portal capability to user (SUPER_ADMIN only)"""
+  grantPortalCapability(input: GrantPortalCapabilityInput!): PortalCapabilityGrant!
+
   """Import stock for a product"""
   importStock(input: ImportStockInput!, venueId: ID!): StockMovement!
 
@@ -6202,6 +6215,9 @@ type Mutation {
 
   """Revoke OTP test user login grant (SUPER_ADMIN only)"""
   revokeOtpTestUserGrant(id: ID!): OtpTestUserGrant!
+
+  """Revoke portal capability grant (SUPER_ADMIN only)"""
+  revokePortalCapability(id: ID!): PortalCapabilityGrant!
 
   """Save FCM token"""
   saveFcmToken(token: String!): Boolean!
@@ -8045,6 +8061,69 @@ type PointEvent {
   timestamp: String!
 }
 
+"""Portal capability grants (independent of UserRole)"""
+enum PortalCapability {
+  TOURNAMENT_ORGANIZER
+}
+
+type PortalCapabilityGrant {
+  _id: ID!
+  capability: PortalCapability!
+  createdAt: DateTime!
+  enabled: Boolean!
+  grantedAt: DateTime
+  grantedBy: ID
+
+  """Reason / ticket reference for audit trail"""
+  reason: String!
+  revokedAt: DateTime
+  revokedBy: ID
+  updatedAt: DateTime!
+
+  """Denormalized display name at grant time"""
+  userDisplayName: String!
+
+  """User receiving the capability"""
+  userId: ID!
+
+  """Denormalized user role at grant time"""
+  userRole: UserRole!
+}
+
+"""A Relay-style connection for PortalCapabilityGrant items."""
+type PortalCapabilityGrantConnection {
+  """List of edges (each contains a node + cursor)."""
+  edges: [PortalCapabilityGrantEdge!]!
+
+  """Pagination metadata (next/prev page, start/end cursor)."""
+  pageInfo: PageInfo!
+
+  """
+  Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
+  """
+  totalCount: Int!
+}
+
+"""An edge in the PortalCapabilityGrantConnection."""
+type PortalCapabilityGrantEdge {
+  """Opaque cursor pointing to this node."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: PortalCapabilityGrant!
+}
+
+input PortalCapabilityGrantFilterInput {
+  capability: PortalCapability
+  enabled: Boolean
+
+  """Search reason or display name"""
+  search: String
+
+  """Filter by user ID"""
+  userId: String
+}
+
 type Post {
   _id: ID!
 
@@ -9574,10 +9653,10 @@ type Query {
   """Get pending venue requests (Admin only, cursor)"""
   adminPendingVenuesConnection(pagination: CursorPageInput): VenueConnection!
 
-  """Get bookings for a specific user (Admin only, cursor)"""
+  """Get bookings for a specific user (Super Admin only, cursor)"""
   adminUserBookingsConnection(pagination: CursorPageInput, statuses: [String!], userId: ID!): AdminBookingItemConnection!
 
-  """Get all users (Admin only, cursor)"""
+  """Get all users (Super Admin only, cursor)"""
   adminUsersConnection(isActive: Boolean, isSuspended: Boolean, pagination: CursorPageInput, role: UserRole, searchQuery: String): UserConnection!
 
   """Get all venue requests with filters (Admin only, cursor)"""
@@ -9791,7 +9870,7 @@ type Query {
   """Get user by username"""
   getUserByUserName(userName: String!): User!
 
-  """Get user profile by ID"""
+  """Get user profile by ID (authenticated)"""
   getUserProfile(userId: String!): User!
 
   """Get a single user report by ID (Admin only)"""
@@ -10025,6 +10104,9 @@ type Query {
   """Get popular/featured sports"""
   popularSports: [Sport!]!
 
+  """List portal capability grants (SUPER_ADMIN only, cursor)"""
+  portalCapabilityGrantsConnection(filter: PortalCapabilityGrantFilterInput, pagination: CursorPageInput): PortalCapabilityGrantConnection!
+
   """Cursor-paginated top-level comments of a post."""
   postCommentsConnection(pagination: CursorPageInput, postId: ID!): PostCommentConnection!
 
@@ -10107,7 +10189,7 @@ type Query {
   """Search user by phone number (venue staff or admin only, for booking)"""
   searchUserByPhone(phone: String!): UserContactLookup
 
-  """Search users by username"""
+  """Search users by username (authenticated)"""
   searchUsersByUserName(limit: Float = 20, searchTerm: String!): [User!]!
 
   """Server information"""
@@ -14010,6 +14092,9 @@ type User {
   Plain avatar URL. Kept for backward compat with mobile builds < 1.7. Prefer `avatar.url` (with blurhash placeholder).
   """
   photoURL: String
+
+  """Active portal capability grants (resolved at query time)"""
+  portalCapabilities: [PortalCapability!]!
 
   """Personal referral code (unique per user)"""
   referralCode: String

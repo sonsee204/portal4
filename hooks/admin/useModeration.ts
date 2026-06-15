@@ -34,7 +34,7 @@ import type {
   ModerationReport,
   UserModerationReport,
   UserReportStatus,
-} from '@/app/(dashboard)/moderation/types';
+} from '@/app/(dashboard)/admin/moderation/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
 import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 

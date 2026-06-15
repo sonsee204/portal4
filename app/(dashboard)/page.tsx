@@ -11,28 +11,9 @@
  * is strictly prohibited without prior written consent.
  */
 
-'use client';
+import { redirect } from 'next/navigation';
 
-import { QueryState } from '@/components/molecules/QueryState';
-import { useDashboardPageData } from './_hooks/useDashboardPageData';
-import { DashboardHeaderSection } from './_sections/DashboardHeaderSection';
-import { DashboardMainSection } from './_sections/DashboardMainSection';
-import { DashboardStatsSection } from './_sections/DashboardStatsSection';
-
-export default function DashboardPage() {
-  const data = useDashboardPageData();
-
-  return (
-    <>
-      <DashboardHeaderSection data={data} />
-      <QueryState
-        loading={data.loading && !data.stats}
-        error={data.error}
-        onRetry={() => void data.refetch()}
-      >
-        <DashboardStatsSection data={data} />
-        <DashboardMainSection data={data} />
-      </QueryState>
-    </>
-  );
+/** Role redirect hub — middleware also redirects `/` when authenticated. */
+export default function DashboardHubPage() {
+  redirect('/admin');
 }

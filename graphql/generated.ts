@@ -462,6 +462,8 @@ export enum AuditAction {
   OtpVerifyFailed = 'OTP_VERIFY_FAILED',
   PasswordChange = 'PASSWORD_CHANGE',
   PasswordReset = 'PASSWORD_RESET',
+  PortalCapabilityGranted = 'PORTAL_CAPABILITY_GRANTED',
+  PortalCapabilityRevoked = 'PORTAL_CAPABILITY_REVOKED',
   RateLimitHit = 'RATE_LIMIT_HIT',
   SystemError = 'SYSTEM_ERROR',
   TokenRefreshFailed = 'TOKEN_REFRESH_FAILED',
@@ -3393,6 +3395,14 @@ export type GenerateBracketInput = {
   categoryId: Scalars['ID']['input'];
 };
 
+export type GrantPortalCapabilityInput = {
+  capability: PortalCapability;
+  /** Reason / ticket reference (min 10 chars) */
+  reason: Scalars['String']['input'];
+  /** Target user ID */
+  userId: Scalars['String']['input'];
+};
+
 export type Group = {
   __typename?: 'Group';
   _id: Scalars['ID']['output'];
@@ -4500,7 +4510,7 @@ export type Mutation = {
   adminApproveVenue: Venue;
   /** Change user role (Super Admin only) */
   adminChangeUserRole: User;
-  /** Create a new user account (SUPER_ADMIN can create ADMIN/FACILITY_OWNER, ADMIN can create FACILITY_OWNER) */
+  /** Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER) */
   adminCreateUser: User;
   /** Provision a PLAYER account on behalf of a user (Super Admin only) */
   adminProvisionPlayer: AdminProvisionPlayerResponse;
@@ -4508,11 +4518,11 @@ export type Mutation = {
   adminRejectVenue: Venue;
   /** Reset password for a PLAYER account (Super Admin only) */
   adminResetUserPassword: AdminResetUserPasswordResponse;
-  /** Suspend a user (Admin only) */
+  /** Suspend a user (Super Admin only) */
   adminSuspendUser: User;
   /** Suspend venue (Admin only) */
   adminSuspendVenue: Venue;
-  /** Unsuspend a user (Admin only) */
+  /** Unsuspend a user (Super Admin only) */
   adminUnsuspendUser: User;
   /** Approve a group join request (admin only) */
   approveGroupJoinRequest: GroupMember;
@@ -4774,6 +4784,8 @@ export type Mutation = {
   forwardMessage: Array<Message>;
   /** Generate bracket for category */
   generateBracket: Array<TournamentMatch>;
+  /** Grant portal capability to user (SUPER_ADMIN only) */
+  grantPortalCapability: PortalCapabilityGrant;
   /** Import stock for a product */
   importStock: StockMovement;
   /** Atomically bump a post view count. Fire-and-forget from the client; returns the new view count or null if the post does not exist. */
@@ -4934,6 +4946,8 @@ export type Mutation = {
   reviewPromotion: Promotion;
   /** Revoke OTP test user login grant (SUPER_ADMIN only) */
   revokeOtpTestUserGrant: OtpTestUserGrant;
+  /** Revoke portal capability grant (SUPER_ADMIN only) */
+  revokePortalCapability: PortalCapabilityGrant;
   /** Save FCM token */
   saveFcmToken: Scalars['Boolean']['output'];
   /** Lưu kèo */
@@ -5957,6 +5971,11 @@ export type MutationGenerateBracketArgs = {
 };
 
 
+export type MutationGrantPortalCapabilityArgs = {
+  input: GrantPortalCapabilityInput;
+};
+
+
 export type MutationImportStockArgs = {
   input: ImportStockInput;
   venueId: Scalars['ID']['input'];
@@ -6367,6 +6386,11 @@ export type MutationReviewPromotionArgs = {
 
 
 export type MutationRevokeOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRevokePortalCapabilityArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -8148,6 +8172,61 @@ export type PointEvent = {
   timestamp: Scalars['String']['output'];
 };
 
+/** Portal capability grants (independent of UserRole) */
+export enum PortalCapability {
+  TournamentOrganizer = 'TOURNAMENT_ORGANIZER'
+}
+
+export type PortalCapabilityGrant = {
+  __typename?: 'PortalCapabilityGrant';
+  _id: Scalars['ID']['output'];
+  capability: PortalCapability;
+  createdAt: Scalars['DateTime']['output'];
+  enabled: Scalars['Boolean']['output'];
+  grantedAt?: Maybe<Scalars['DateTime']['output']>;
+  grantedBy?: Maybe<Scalars['ID']['output']>;
+  /** Reason / ticket reference for audit trail */
+  reason: Scalars['String']['output'];
+  revokedAt?: Maybe<Scalars['DateTime']['output']>;
+  revokedBy?: Maybe<Scalars['ID']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  /** Denormalized display name at grant time */
+  userDisplayName: Scalars['String']['output'];
+  /** User receiving the capability */
+  userId: Scalars['ID']['output'];
+  /** Denormalized user role at grant time */
+  userRole: UserRole;
+};
+
+/** A Relay-style connection for PortalCapabilityGrant items. */
+export type PortalCapabilityGrantConnection = {
+  __typename?: 'PortalCapabilityGrantConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PortalCapabilityGrantEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PortalCapabilityGrantConnection. */
+export type PortalCapabilityGrantEdge = {
+  __typename?: 'PortalCapabilityGrantEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: PortalCapabilityGrant;
+};
+
+export type PortalCapabilityGrantFilterInput = {
+  capability?: InputMaybe<PortalCapability>;
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search reason or display name */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by user ID */
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Post = {
   __typename?: 'Post';
   _id: Scalars['ID']['output'];
@@ -9355,9 +9434,9 @@ export type Query = {
   adminGetSystemStats: SystemStats;
   /** Get pending venue requests (Admin only, cursor) */
   adminPendingVenuesConnection: VenueConnection;
-  /** Get bookings for a specific user (Admin only, cursor) */
+  /** Get bookings for a specific user (Super Admin only, cursor) */
   adminUserBookingsConnection: AdminBookingItemConnection;
-  /** Get all users (Admin only, cursor) */
+  /** Get all users (Super Admin only, cursor) */
   adminUsersConnection: UserConnection;
   /** Get all venue requests with filters (Admin only, cursor) */
   allVenueRequestsConnection: VenueRequestConnection;
@@ -9497,7 +9576,7 @@ export type Query = {
   getUnreadNotificationCount: Scalars['Int']['output'];
   /** Get user by username */
   getUserByUserName: User;
-  /** Get user profile by ID */
+  /** Get user profile by ID (authenticated) */
   getUserProfile: User;
   /** Get a single user report by ID (Admin only) */
   getUserReportById: UserReport;
@@ -9653,6 +9732,8 @@ export type Query = {
   pickupGamesConnection: PickupGameConnection;
   /** Get popular/featured sports */
   popularSports: Array<Sport>;
+  /** List portal capability grants (SUPER_ADMIN only, cursor) */
+  portalCapabilityGrantsConnection: PortalCapabilityGrantConnection;
   /** Cursor-paginated top-level comments of a post. */
   postCommentsConnection: PostCommentConnection;
   /** Cursor-paginated likers of a post. */
@@ -9705,7 +9786,7 @@ export type Query = {
   searchMessagesConnection: MessageConnection;
   /** Search user by phone number (venue staff or admin only, for booking) */
   searchUserByPhone?: Maybe<UserContactLookup>;
-  /** Search users by username */
+  /** Search users by username (authenticated) */
   searchUsersByUserName: Array<User>;
   /** Server information */
   serverInfo: ServerInfo;
@@ -10546,6 +10627,12 @@ export type QueryPickupGameCampaignArgs = {
 
 export type QueryPickupGamesConnectionArgs = {
   filter?: InputMaybe<PickupGameFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPortalCapabilityGrantsConnectionArgs = {
+  filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
 };
 
@@ -14158,6 +14245,8 @@ export type User = {
   phoneVerified: Scalars['Boolean']['output'];
   /** Plain avatar URL. Kept for backward compat with mobile builds < 1.7. Prefer `avatar.url` (with blurhash placeholder). */
   photoURL?: Maybe<Scalars['String']['output']>;
+  /** Active portal capability grants (resolved at query time) */
+  portalCapabilities: Array<PortalCapability>;
   /** Personal referral code (unique per user) */
   referralCode?: Maybe<Scalars['String']['output']>;
   /** User ID of the person who referred this user */
@@ -15428,6 +15517,52 @@ export type GetOtpTestUserGrantsQueryVariables = Exact<{
 
 export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type GetMyVenuesStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMyVenuesStatsQuery = { __typename?: 'Query', myVenuesStats: { __typename?: 'MyVenuesStats', totalVenues: number, todayBookings: number, totalRevenue: number } };
+
+export type MyVenuesConnectionQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<BookingFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, totalPrice: number, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueRevenueStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
+
+export type BookingStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  fromDate?: InputMaybe<Scalars['String']['input']>;
+  toDate?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, confirmedBookings: number, cancelledBookings: number, todayBookings: number } };
+
+export type VenueAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }> } };
+
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
 export type CreatePickupGameCampaignMutationVariables = Exact<{
@@ -15479,6 +15614,28 @@ export type CampaignStatsQueryVariables = Exact<{
 
 
 export type CampaignStatsQuery = { __typename?: 'Query', campaignStats: { __typename?: 'CampaignStats', totalGames: number, totalSlots: number, totalCheckIns: number, uniqueParticipants: number, avgFillRate: number, returnRate: number, avgCheckInDeltaMinutes?: number | null, qrScanCount: number, manualCount: number, bulkCount: number, checkInsByGame: Array<{ __typename?: 'CheckInByGame', gameId: string, gameName: string, sportType?: string | null, date?: string | null, venueName?: string | null, maxSlots: number, checkIns: number, fillRate: number, qrScanCount: number, manualCount: number, bulkCount: number }>, checkInsByDate: Array<{ __typename?: 'CheckInByDate', date: string, count: number }>, topParticipants: Array<{ __typename?: 'TopCampaignParticipant', userId: string, displayName: string, avatarUrl?: string | null, gamesJoined: number, gamesCheckedIn: number, attendanceRate: number }> } };
+
+export type GrantPortalCapabilityMutationVariables = Exact<{
+  input: GrantPortalCapabilityInput;
+}>;
+
+
+export type GrantPortalCapabilityMutation = { __typename?: 'Mutation', grantPortalCapability: { __typename?: 'PortalCapabilityGrant', _id: string, userId: string, capability: PortalCapability, reason: string, enabled: boolean, grantedAt?: string | null } };
+
+export type RevokePortalCapabilityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokePortalCapabilityMutation = { __typename?: 'Mutation', revokePortalCapability: { __typename?: 'PortalCapabilityGrant', _id: string, enabled: boolean, revokedAt?: string | null } };
+
+export type PortalCapabilityGrantsConnectionQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+  filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
+}>;
+
+
+export type PortalCapabilityGrantsConnectionQuery = { __typename?: 'Query', portalCapabilityGrantsConnection: { __typename?: 'PortalCapabilityGrantConnection', totalCount: number, edges: Array<{ __typename?: 'PortalCapabilityGrantEdge', node: { __typename?: 'PortalCapabilityGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, capability: PortalCapability, reason: string, enabled: boolean, grantedAt?: string | null, revokedAt?: string | null, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type CreateQrCampaignMutationVariables = Exact<{
   input: CreateQrCampaignInput;
@@ -16023,14 +16180,14 @@ export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
+export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
 
 export type ApproveVenueRequestMutationVariables = Exact<{
   requestId: Scalars['ID']['input'];

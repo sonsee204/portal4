@@ -13,9 +13,45 @@
 
 import type { UserRole } from '@/types';
 
-/**
- * Portal feature identifiers
- */
+export type {
+  PortalCapability,
+  PortalPermission,
+  PortalWorkspace,
+} from './portal-permissions';
+export {
+  CAPABILITY_PERMISSIONS,
+  ROLE_HOME_PATH,
+  ROLE_PERMISSIONS,
+  WORKSPACE_ROLES,
+} from './portal-permissions';
+
+export type { RouteManifestEntry, RouteNavMeta } from './route-manifest';
+export {
+  ROUTE_MANIFEST,
+  getBreadcrumbLabel,
+  getNavRoutesForWorkspace,
+  matchRouteManifest,
+} from './route-manifest';
+
+export {
+  can,
+  canAll,
+  canAny,
+  canAccessRoute,
+  canAccessWorkspace,
+  canWithCapabilities,
+  getAccessibleWorkspaces,
+  getEffectivePermissions,
+  getHomePath,
+  getHomePathForRole,
+  getPermissionsForRole,
+  getRouteManifestEntry,
+  hasOrganizerCapability,
+  isAdminRole,
+  isSuperAdminRole,
+} from './access';
+
+/** @deprecated Use PortalPermission + can() instead. */
 export type PortalFeature =
   | 'dashboard'
   | 'user_management'
@@ -24,134 +60,76 @@ export type PortalFeature =
   | 'player_provision'
   | 'player_password_reset'
   | 'system_settings'
-  | 'all_venues'
-  | 'own_venues'
-  | 'analytics'
-  | 'own_analytics'
   | 'audit'
   | 'moderation'
   | 'calendar'
   | 'tournaments'
-  | 'cms'
-  | 'ecosystem'
   | 'finance'
-  | 'own_finance'
   | 'support'
-  | 'own_bookings'
-  | 'growth';
+  | 'growth'
+  | 'own_venues'
+  | 'own_analytics'
+  | 'own_finance'
+  | 'own_bookings';
 
-/**
- * Feature access map per role
- */
-const PORTAL_FEATURES: Record<UserRole, PortalFeature[]> = {
-  SUPER_ADMIN: [
-    'dashboard',
-    'user_management',
-    'admin_creation',
-    'facility_owner_creation',
-    'player_provision',
-    'player_password_reset',
-    'system_settings',
-    'all_venues',
-    'own_venues',
-    'analytics',
-    'own_analytics',
-    'audit',
-    'moderation',
-    'calendar',
-    'tournaments',
-    'cms',
-    'ecosystem',
-    'finance',
-    'own_finance',
-    'support',
-    'own_bookings',
-    'growth',
-  ],
-  ADMIN: [
-    'dashboard',
-    'user_management',
-    'facility_owner_creation',
-    'all_venues',
-    'analytics',
-    'moderation',
-    'calendar',
-    'tournaments',
-    'cms',
-    'support',
-    'growth',
-  ],
-  FACILITY_OWNER: [
-    'dashboard',
-    'own_venues',
-    'own_analytics',
-    'own_finance',
-    'own_bookings',
-    'calendar',
-  ],
-  PLAYER: [], // Players cannot access portal
+const LEGACY_FEATURE_MAP: Record<PortalFeature, import('./portal-permissions').PortalPermission> = {
+  dashboard: 'platform.dashboard',
+  user_management: 'users.manage',
+  admin_creation: 'users.create_admin',
+  facility_owner_creation: 'users.create_owner',
+  player_provision: 'users.provision_player',
+  player_password_reset: 'users.reset_player_password',
+  system_settings: 'system.settings',
+  audit: 'audit.view',
+  moderation: 'moderation.manage',
+  calendar: 'calendar.platform',
+  tournaments: 'tournaments.platform',
+  finance: 'finance.platform',
+  support: 'support.manage',
+  growth: 'growth.manage',
+  own_venues: 'owner.dashboard',
+  own_analytics: 'analytics.venue',
+  own_finance: 'finance.venue',
+  own_bookings: 'bookings.venue',
 };
 
-/**
- * Check if a role can access a specific feature
- */
+import { can as checkPermission } from './access';
+
+/** @deprecated Use can(role, permission) instead. */
 export function canAccess(
   role: UserRole | null | undefined,
   feature: PortalFeature,
 ): boolean {
-  if (!role) return false;
-  return PORTAL_FEATURES[role]?.includes(feature) ?? false;
+  if (
+    role === 'FACILITY_OWNER' &&
+    (feature === 'dashboard' || feature === 'calendar')
+  ) {
+    const ownerPerm =
+      feature === 'dashboard' ? 'owner.dashboard' : 'calendar.venue';
+    return checkPermission(role, ownerPerm);
+  }
+
+  const permission = LEGACY_FEATURE_MAP[feature];
+  if (!permission) return false;
+  return checkPermission(role, permission);
 }
 
-/**
- * Check if a role can access any of the specified features
- */
+/** @deprecated Use canAny(role, permissions) instead. */
 export function canAccessAny(
   role: UserRole | null | undefined,
   features: PortalFeature[],
 ): boolean {
-  if (!role) return false;
   return features.some((f) => canAccess(role, f));
 }
 
-/**
- * Check if a role can access all of the specified features
- */
+/** @deprecated Use canAll(role, permissions) instead. */
 export function canAccessAll(
   role: UserRole | null | undefined,
   features: PortalFeature[],
 ): boolean {
-  if (!role) return false;
   return features.every((f) => canAccess(role, f));
 }
 
-/**
- * Get all features available to a role
- */
-export function getRoleFeatures(
-  role: UserRole | null | undefined,
-): PortalFeature[] {
-  if (!role) return [];
-  return PORTAL_FEATURES[role] ?? [];
-}
-
-/**
- * Check if a role is admin-level (ADMIN or SUPER_ADMIN)
- */
-export function isAdminRole(role: UserRole | null | undefined): boolean {
-  return role === 'ADMIN' || role === 'SUPER_ADMIN';
-}
-
-/**
- * Check if a role is super admin
- */
-export function isSuperAdminRole(role: UserRole | null | undefined): boolean {
-  return role === 'SUPER_ADMIN';
-}
-
-/**
- * Role display names
- */
 export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
   SUPER_ADMIN: 'Siêu quản trị',
   ADMIN: 'Quản trị viên',
@@ -159,9 +137,6 @@ export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
   PLAYER: 'Người chơi',
 };
 
-/**
- * Role badge colors
- */
 export const ROLE_COLORS: Record<
   UserRole,
   { bg: string; text: string; border: string }
@@ -186,4 +161,14 @@ export const ROLE_COLORS: Record<
     text: 'text-slate-400',
     border: 'border-slate-500/30',
   },
+};
+
+export const WORKSPACE_LABELS: Record<
+  import('./portal-permissions').PortalWorkspace,
+  string
+> = {
+  admin: 'Platform Admin',
+  owner: 'Venue Operator',
+  organizer: 'Tournament Organizer',
+  shared: 'Portal',
 };

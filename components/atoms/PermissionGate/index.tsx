@@ -16,6 +16,11 @@
 import type { ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import type { UserRole } from '@/types';
+import {
+  can,
+  canAny,
+  type PortalPermission,
+} from '@/lib/permissions';
 import { canAccess, canAccessAny, type PortalFeature } from '@/lib/permissions';
 
 interface PermissionGateProps {
@@ -45,7 +50,28 @@ interface FeaturesBasedProps extends PermissionGateProps {
   feature?: never;
 }
 
-type Props = RoleBasedProps | FeatureBasedProps | FeaturesBasedProps;
+interface PermissionBasedProps extends PermissionGateProps {
+  permission: PortalPermission;
+  roles?: never;
+  feature?: never;
+  features?: never;
+  permissions?: never;
+}
+
+interface PermissionsBasedProps extends PermissionGateProps {
+  permissions: PortalPermission[];
+  roles?: never;
+  feature?: never;
+  features?: never;
+  permission?: never;
+}
+
+type Props =
+  | RoleBasedProps
+  | FeatureBasedProps
+  | FeaturesBasedProps
+  | PermissionBasedProps
+  | PermissionsBasedProps;
 
 /**
  * Conditionally render content based on user role or feature access.
@@ -75,6 +101,10 @@ export function PermissionGate({ children, fallback = null, ...props }: Props) {
 
   if ('roles' in props && props.roles) {
     hasAccess = userRole !== null && props.roles.includes(userRole);
+  } else if ('permission' in props && props.permission) {
+    hasAccess = can(userRole, props.permission);
+  } else if ('permissions' in props && props.permissions) {
+    hasAccess = canAny(userRole, props.permissions);
   } else if ('feature' in props && props.feature) {
     hasAccess = canAccess(userRole, props.feature);
   } else if ('features' in props && props.features) {

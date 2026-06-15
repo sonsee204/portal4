@@ -26,6 +26,7 @@ import {
 } from '@/graphql/otp-test-phone/mutations';
 import type { GetOtpTestPhonesQuery } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 export type OtpTestPhonePurpose =
   | 'SIGN_UP_PHONE'
@@ -74,7 +75,7 @@ export async function fetchOtpTestPhones(options?: {
   search?: string;
   enabled?: boolean;
 }): Promise<OtpTestPhoneList> {
-  const limit = options?.limit ?? 50;
+  const limit = Math.min(options?.limit ?? CURSOR_PAGE_MAX, CURSOR_PAGE_MAX);
   const client = getApolloClient();
   const result = await client.query<GetOtpTestPhonesQuery>({
     query: GET_OTP_TEST_PHONES,

@@ -117,17 +117,27 @@ export async function loginAction(
 
     const { accessToken, refreshToken, user } = result.data.signIn;
 
-    await setSession({ accessToken, refreshToken }, user.role);
+    const me = await fetchMe(accessToken);
+    const capabilities = me?.portalCapabilities ?? [];
+
+    await setSession(
+      { accessToken, refreshToken },
+      user.role,
+      capabilities,
+    );
 
     return {
       success: true,
-      user: {
-        _id: user._id,
-        email: user.email,
-        fullName: user.fullName,
-        displayName: user.fullName,
-        role: user.role as AuthUser['role'],
-      },
+      user:
+        me ??
+        ({
+          _id: user._id,
+          email: user.email,
+          fullName: user.fullName,
+          displayName: user.fullName,
+          role: user.role as AuthUser['role'],
+          portalCapabilities: capabilities,
+        } satisfies AuthUser),
     };
   } catch {
     return {
@@ -166,6 +176,7 @@ const ME_QUERY = `
           longitude
         }
       }
+      portalCapabilities
     }
   }
 `;

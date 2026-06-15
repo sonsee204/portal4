@@ -22,7 +22,7 @@ import type { GetAllVenueRequestsQuery } from '@/graphql/generated';
 import type {
   VenueRequestItem,
   VenueRequestStatus,
-} from '@/app/(dashboard)/venue-requests/types';
+} from '@/app/(dashboard)/admin/venue-requests/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
 import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 

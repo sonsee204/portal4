@@ -25,6 +25,7 @@ import {
 } from '@/graphql/otp-test-user-grant/mutations';
 import type { GetOtpTestUserGrantsQuery } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 export type OtpTestUserGrantPurpose = 'SIGN_IN_PHONE';
 
@@ -65,7 +66,7 @@ export async function fetchOtpTestUserGrants(options?: {
   enabled?: boolean;
   userId?: string;
 }): Promise<OtpTestUserGrantList> {
-  const limit = options?.limit ?? 50;
+  const limit = Math.min(options?.limit ?? CURSOR_PAGE_MAX, CURSOR_PAGE_MAX);
   const client = getApolloClient();
   const result = await client.query<GetOtpTestUserGrantsQuery>({
     query: GET_OTP_TEST_USER_GRANTS,

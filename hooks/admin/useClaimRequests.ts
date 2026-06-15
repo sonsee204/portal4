@@ -22,7 +22,7 @@ import type { GetClaimRequestsQuery } from '@/graphql/generated';
 import type {
   ClaimRequestItem,
   ClaimRequestStatus,
-} from '@/app/(dashboard)/claim-requests/types';
+} from '@/app/(dashboard)/admin/claim-requests/types';
 import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
 import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 

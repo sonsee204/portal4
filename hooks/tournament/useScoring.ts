@@ -44,7 +44,7 @@ export function useMatchScorecard(matchId: string, skip = false) {
   const subscribeToScoreUpdates = () =>
     subscribeToMore<{ matchScoreUpdated: MatchScorecard }>({
       document: MATCH_SCORE_UPDATED_SUB,
-      variables: { matchId },
+      variables: { _matchId: matchId },
       updateQuery: (prev, { subscriptionData }) => {
         const incoming = subscriptionData.data?.matchScoreUpdated;
         if (!incoming) return prev as { matchScorecard: MatchScorecard | null };

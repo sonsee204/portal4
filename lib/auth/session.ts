@@ -12,6 +12,7 @@
  */
 
 import { cookies } from 'next/headers';
+import type { PortalCapability } from '@/lib/permissions/portal-permissions';
 import { buildSessionCookieOptions } from '@/lib/auth/session-core';
 import { AUTH_COOKIES, COOKIE_OPTIONS } from './constants';
 import type { SessionTokens } from '@/types';
@@ -21,6 +22,7 @@ export type { SessionTokens };
 export async function setSession(
   tokens: SessionTokens,
   userRole: string,
+  portalCapabilities: PortalCapability[] = [],
 ): Promise<void> {
   const cookieStore = await cookies();
   const options = buildSessionCookieOptions(tokens, COOKIE_OPTIONS);
@@ -32,6 +34,11 @@ export async function setSession(
     options.refresh,
   );
   cookieStore.set(AUTH_COOKIES.USER_ROLE, userRole, options.role);
+  cookieStore.set(
+    AUTH_COOKIES.PORTAL_CAPABILITIES,
+    portalCapabilities.join(','),
+    options.role,
+  );
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -55,6 +62,7 @@ export async function clearSession(): Promise<void> {
   cookieStore.delete(AUTH_COOKIES.ACCESS_TOKEN);
   cookieStore.delete(AUTH_COOKIES.REFRESH_TOKEN);
   cookieStore.delete(AUTH_COOKIES.USER_ROLE);
+  cookieStore.delete(AUTH_COOKIES.PORTAL_CAPABILITIES);
 }
 
 export async function hasSession(): Promise<boolean> {

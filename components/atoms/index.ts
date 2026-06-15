@@ -26,3 +26,4 @@ export { GradientText } from './GradientText';
 export { ProgressBar } from './ProgressBar';
 export { Checkbox } from './Checkbox';
 export { PermissionGate } from './PermissionGate';
+export { AccessGuard } from './AccessGuard';

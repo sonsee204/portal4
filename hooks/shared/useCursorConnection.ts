@@ -13,7 +13,7 @@
 
 import { useCallback, useRef } from 'react';
 
-import { DEFAULT_CONNECTION_FIRST } from '@/lib/constants/pagination';
+import { CURSOR_PAGE_MAX, DEFAULT_CONNECTION_FIRST } from '@/lib/constants/pagination';
 
 export interface CursorPageInput {
   first?: number | undefined;
@@ -45,9 +45,13 @@ export function resolveConnectionFirst(
   pagination?: LegacyPagePagination,
   defaultFirst = DEFAULT_CONNECTION_FIRST,
 ): number {
-  if (pagination?.first != null) return pagination.first;
-  if (pagination?.limit != null) return pagination.limit;
-  return defaultFirst;
+  const requested =
+    pagination?.first != null
+      ? pagination.first
+      : pagination?.limit != null
+        ? pagination.limit
+        : defaultFirst;
+  return Math.min(requested, CURSOR_PAGE_MAX);
 }
 
 export function totalPagesFromCount(totalCount: number, pageSize: number): number {

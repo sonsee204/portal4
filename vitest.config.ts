@@ -21,6 +21,7 @@ export default defineConfig({
       '**/draw-page.derived.test.ts',
       '**/registrations-page.derived.test.ts',
       '**/moderation-page.derived.test.ts',
+      '**/lib/permissions/access.test.ts',
     ],
     environment: 'node',
   },

@@ -53,7 +53,7 @@ export function createMatchSubscription(
 
   return subscribeToMore({
     document: TOURNAMENT_MATCHES_UPDATED_SUB,
-    variables: { tournamentId },
+    variables: { _tournamentId: tournamentId },
     updateQuery: () => {
       debouncedRefetch();
     },
@@ -73,10 +73,12 @@ export function createTournamentStatusSubscriptions(
   refetch: () => void,
   tournamentIds: string[],
 ) {
-  const unsubscribes = tournamentIds.map((tournamentId) =>
+  const unsubscribes = tournamentIds
+    .filter((id) => id.length > 0)
+    .map((tournamentId) =>
     subscribeToMore({
       document: TOURNAMENT_STATUS_CHANGED_SUB,
-      variables: { tournamentId },
+      variables: { _tournamentId: tournamentId },
       updateQuery: () => {
         void refetch();
       },

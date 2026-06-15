@@ -19,6 +19,7 @@ export const AUTH_COOKIES = {
   ACCESS_TOKEN: 'portal_access_token',
   REFRESH_TOKEN: 'portal_refresh_token',
   USER_ROLE: 'portal_user_role',
+  PORTAL_CAPABILITIES: 'portal_capabilities',
 } as const;
 
 /**
