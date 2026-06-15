@@ -11,95 +11,21 @@
  * is strictly prohibited without prior written consent.
  */
 
-import {
-  eliminationRoundCount,
-  intersectHalfSpan,
-  matchGlobalRowSpan,
-  resolveEffectiveBracketPositions,
-} from '../bracket-row-layout';
-import { formatPrintMatchPair } from '../format-player-name';
-import { formatPrintScheduledLabel } from '../format-print-scheduled-label';
+import { eliminationRoundCount, normalizeMatchesForEliminationPrint } from '../bracket-row-layout';
 import {
   mapMatchesToPrintDrawSlots,
   slotsToEntryRows,
 } from '../map-draw-slots';
-import { nextPowerOf2, roundShortLabel } from '../round-labels';
+import { nextPowerOf2 } from '../round-labels';
 import type {
   PrintBracketHalf,
-  PrintBracketRoundColumn,
   PrintCategoryInput,
   PrintMatchInput,
 } from '../types';
+import { buildEliminationRoundColumns } from './single-elimination';
 
 function isLosersBracketMatch(m: PrintMatchInput): boolean {
   return !!m.losersNextMatchId || m.roundLabel.toLowerCase().includes('thua');
-}
-
-/**
- * Build round columns for a half of an elimination bracket.
- *
- * Always generates ALL expected round columns up to max(log₂(bracketSize),
- * highestDataRound) so the printed sheet always shows the full bracket
- * skeleton even when later rounds have not been played yet.
- */
-function buildRoundColumnsWithTree(
-  matches: PrintMatchInput[],
-  bracketSize: number,
-): PrintBracketRoundColumn[] {
-  const bpMap = resolveEffectiveBracketPositions(matches);
-
-  const roundsMap = new Map<number, PrintMatchInput[]>();
-  for (const m of matches) {
-    const list = roundsMap.get(m.round) ?? [];
-    list.push(m);
-    roundsMap.set(m.round, list);
-  }
-
-  const roundNums = [...roundsMap.keys()].sort((a, b) => a - b);
-  const maxDataRound = roundNums[roundNums.length - 1] ?? 0;
-  // Use the larger of the structurally-expected count vs actual data rounds so
-  // we never under-render (missing structural columns) or over-render (spurious
-  // columns beyond what the bracket format calls for).
-  const totalRounds = Math.max(eliminationRoundCount(bracketSize), maxDataRound);
-
-  return Array.from({ length: totalRounds }, (_, idx) => {
-    const roundNum = idx + 1;
-    const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
-      (a, b) => (bpMap.get(a.id) ?? 0) - (bpMap.get(b.id) ?? 0),
-    );
-
-    const dataLabel = roundMatches[0]?.roundLabel ?? '';
-    const shortLabel = roundShortLabel(idx, totalRounds, dataLabel);
-    const label = dataLabel || shortLabel;
-
-    const positionedMatches = roundMatches
-      .map((m) => {
-        const bp = bpMap.get(m.id) ?? 0;
-        const { globalFrom, globalTo } = matchGlobalRowSpan(roundNum, bp, bp);
-        const local = intersectHalfSpan(globalFrom, globalTo, 0, bracketSize);
-        if (!local) return null;
-
-        const pair = formatPrintMatchPair(
-          m.player1,
-          m.player2,
-          m.player1SlotLabel,
-          m.player2SlotLabel,
-          m.isBye,
-        );
-        return {
-          matchNumber: m.matchNumber,
-          matchId: m.id,
-          rowIndexFrom: local.localFrom,
-          rowIndexTo: local.localTo,
-          player1Label: pair.player1,
-          player2Label: pair.player2,
-          scheduledLabel: formatPrintScheduledLabel(m),
-        };
-      })
-      .filter((m): m is NonNullable<typeof m> => m !== null);
-
-    return { label, shortLabel, matches: positionedMatches };
-  });
 }
 
 function buildBracketHalf(
@@ -107,11 +33,29 @@ function buildBracketHalf(
   matches: PrintMatchInput[],
   bracketSize: number,
 ): PrintBracketHalf {
-  const slots = mapMatchesToPrintDrawSlots(matches, bracketSize);
+  const normalized = normalizeMatchesForEliminationPrint(matches);
+  const slots = mapMatchesToPrintDrawSlots(normalized, bracketSize);
+
+  const maxDataRound = normalized.reduce(
+    (max, m) => Math.max(max, m.round),
+    0,
+  );
+  const totalRounds = Math.max(
+    eliminationRoundCount(slots.length),
+    maxDataRound,
+  );
+
   return {
     title,
     entries: slotsToEntryRows(slots),
-    rounds: buildRoundColumnsWithTree(matches, slots.length),
+    rounds: buildEliminationRoundColumns(
+      normalized,
+      0,
+      slots.length,
+      slots.length,
+      totalRounds,
+      false,
+    ),
   };
 }
 

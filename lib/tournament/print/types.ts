@@ -25,6 +25,11 @@ export interface PrintPlayerInput {
   members?: Array<{ name?: string | null; club?: string | null } | null> | null;
 }
 
+export interface PrintScoreSummary {
+  finalScore?: number[] | null;
+  sets?: Array<{ player1?: number | null; player2?: number | null } | null> | null;
+}
+
 export interface PrintMatchInput {
   id: string;
   matchNumber: number;
@@ -41,6 +46,8 @@ export interface PrintMatchInput {
   player2?: PrintPlayerInput | null;
   player1SlotLabel?: string | null;
   player2SlotLabel?: string | null;
+  winner?: number | null;
+  scoreSummary?: PrintScoreSummary | null;
   nextMatchId?: string | null;
   losersNextMatchId?: string | null;
 }
@@ -120,13 +127,19 @@ export interface PrintBracketRoundColumn {
   label: string;
   shortLabel: string;
   matches: Array<{
-    matchNumber: number;
+    /** Undefined for skeleton placeholder boxes (match not created/played yet). */
+    matchNumber?: number;
     matchId: string;
     rowIndexFrom: number;
     rowIndexTo: number;
     player1Label?: string;
     player2Label?: string;
     scheduledLabel?: string;
+    scoreLabel?: string;
+    /** 1 or 2 when the match is finished and a winner is recorded. */
+    winnerSide?: 1 | 2;
+    /** True when this box is a structural placeholder with no real match data. */
+    isPlaceholder?: boolean;
   }>;
 }
 

@@ -19,7 +19,7 @@ import {
   matchGlobalRowSpan,
   eliminationRoundCount,
 } from './bracket-row-layout';
-import { buildSingleEliminationBracket } from './builders/single-elimination';
+import { buildKnockoutHalvesFromMatches, buildSingleEliminationBracket } from './builders/single-elimination';
 import { dedupePrintMatchesById } from './dedupe-matches';
 import { formatPrintScheduledLabel } from './format-print-scheduled-label';
 import { formatDateRangeLabel } from './round-labels';
@@ -176,8 +176,154 @@ describe('print kernel', () => {
     expect(halves[0]?.rounds[1]?.shortLabel).toBe('TK');
     expect(halves[0]?.rounds[2]?.shortLabel).toBe('BK');
     expect(halves[0]?.rounds[3]?.shortLabel).toBe('CK');
-    // Empty rounds have no matches
-    expect(halves[0]?.rounds[1]?.matches).toHaveLength(0);
+    // Later rounds render structural placeholder boxes (full skeleton) so the
+    // printed sheet shows the whole bracket; they carry no real match data.
+    const laterRound = halves[0]?.rounds[1];
+    expect(laterRound?.matches.length).toBeGreaterThan(0);
+    expect(
+      laterRound?.matches.every(
+        (m) => m.isPlaceholder === true && m.matchNumber === undefined,
+      ),
+    ).toBe(true);
+  });
+
+  it('renders full skeleton: missing semifinal + final still get boxes', () => {
+    // 8-player bracket = 4 QF + 2 SF + 1 final. Provide all 4 QF but only ONE
+    // semifinal (and no final) → BK column must still show 2 boxes and CK 1 box.
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 8 };
+    const qf: PrintMatchInput[] = Array.from({ length: 4 }, (_, i) =>
+      match({
+        id: `qf-${i}`,
+        matchNumber: 95 + i,
+        round: 1,
+        bracketPosition: i,
+        player1: { name: `A${i}` },
+        player2: { name: `B${i}` },
+      }),
+    );
+    const sf0 = match({
+      id: 'sf-0',
+      matchNumber: 99,
+      round: 2,
+      bracketPosition: 0,
+    });
+    const halves = buildSingleEliminationBracket(category, [...qf, sf0]);
+    const half = halves[0]!;
+    expect(half.rounds.map((r) => r.shortLabel)).toEqual(['TK', 'BK', 'CK']);
+    expect(half.rounds[0]?.matches).toHaveLength(4);
+    // BK: 2 boxes (one real #99, one placeholder for the missing semifinal).
+    expect(half.rounds[1]?.matches).toHaveLength(2);
+    expect(half.rounds[1]?.matches[0]?.matchNumber).toBe(99);
+    expect(half.rounds[1]?.matches[1]?.isPlaceholder).toBe(true);
+    // CK: 1 placeholder box for the not-yet-created final.
+    expect(half.rounds[2]?.matches).toHaveLength(1);
+    expect(half.rounds[2]?.matches[0]?.isPlaceholder).toBe(true);
+  });
+
+  it('fills player names, schedule and score on later-round matches', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 8 };
+    const qf: PrintMatchInput[] = Array.from({ length: 4 }, (_, i) =>
+      match({
+        id: `qf-${i}`,
+        matchNumber: 95 + i,
+        round: 1,
+        bracketPosition: i,
+        player1: { name: `A${i}` },
+        player2: { name: `B${i}` },
+      }),
+    );
+    const matches: PrintMatchInput[] = [
+      ...qf,
+      match({
+        id: 'sf-0',
+        matchNumber: 99,
+        round: 2,
+        bracketPosition: 0,
+        status: 'FINISHED',
+        winner: 1,
+        player1: { name: 'Winner A', members: [{ name: 'Winner A' }] },
+        player2: { name: 'Loser B' },
+        scheduledAt: '2026-03-21T09:15:00.000Z',
+        courtName: 'S2',
+        scoreSummary: {
+          sets: [
+            { player1: 21, player2: 15 },
+            { player1: 21, player2: 18 },
+          ],
+        },
+      }),
+      match({
+        id: 'sf-1',
+        matchNumber: 100,
+        round: 2,
+        bracketPosition: 1,
+        player1SlotLabel: 'Thắng trận #97',
+        player2SlotLabel: 'Thắng trận #98',
+        scheduledAt: '2026-03-21T09:30:00.000Z',
+        courtName: 'S2',
+      }),
+      match({
+        id: 'f-0',
+        matchNumber: 101,
+        round: 3,
+        bracketPosition: 0,
+        scheduledAt: '2026-03-21T10:00:00.000Z',
+        courtName: 'S1',
+      }),
+    ];
+    const halves = buildSingleEliminationBracket(category, matches);
+    const half = halves[0]!;
+    const sfTop = half.rounds[1]?.matches[0];
+    const sfBot = half.rounds[1]?.matches[1];
+    const finalMatch = half.rounds[2]?.matches[0];
+
+    expect(sfTop?.player1Label).toContain('Winner');
+    expect(sfTop?.scheduledLabel).toContain('S2');
+    expect(sfTop?.scoreLabel).toBe('21-15, 21-18');
+    expect(sfTop?.winnerSide).toBe(1);
+    expect(sfBot?.matchNumber).toBe(100);
+    expect(sfBot?.player1Label).toBe('Thắng trận #97');
+    expect(sfBot?.scheduledLabel).toContain('S2');
+    expect(finalMatch?.matchNumber).toBe(101);
+    expect(finalMatch?.scheduledLabel).toContain('S1');
+  });
+
+  it('normalizes GROUP_KNOCKOUT knockout rounds (100+) onto bracket layout', () => {
+    const matches: PrintMatchInput[] = Array.from({ length: 4 }, (_, i) =>
+      match({
+        id: `ko-r1-${i}`,
+        matchNumber: 95 + i,
+        round: 100,
+        bracketPosition: i,
+        player1: { name: `A${i}` },
+        player2: { name: `B${i}` },
+      }),
+    );
+    matches.push(
+      match({
+        id: 'ko-sf-0',
+        matchNumber: 99,
+        round: 101,
+        bracketPosition: 0,
+        scheduledAt: '2026-03-21T09:15:00.000Z',
+        courtName: 'S2',
+      }),
+      match({
+        id: 'ko-sf-1',
+        matchNumber: 100,
+        round: 101,
+        bracketPosition: 1,
+        player1: { name: 'C' },
+        player2: { name: 'D' },
+      }),
+    );
+    const halves = buildKnockoutHalvesFromMatches('Knockout', matches, 8);
+    const half = halves[0]!;
+    expect(half.entries.length).toBe(8);
+    expect(half.rounds[0]?.matches).toHaveLength(4);
+    expect(half.rounds[1]?.matches).toHaveLength(2);
+    expect(half.rounds[1]?.matches[1]?.matchNumber).toBe(100);
+    expect(half.rounds[1]?.matches[1]?.player1Label).toBe('C');
   });
 
   it('pre-generates all columns for 128-player bracket (7 rounds)', () => {
@@ -215,6 +361,27 @@ describe('print kernel', () => {
     expect(halves[0]?.rounds.length).toBe(eliminationRoundCount(32)); // 5
     expect(halves[0]?.rounds[0]?.matches.length).toBe(8);
     expect(halves[1]?.rounds[0]?.matches.length).toBe(8);
+  });
+
+  it('trims trailing all-Bye rows from each half', () => {
+    // 32-player bracket: only 4 real matches in the first 8 slots of Nhánh 2,
+    // the remaining 8 slots in Nhánh 2 are phantom Byes (no match).
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 32 };
+    // Build 8 matches for Nhánh 1 (bp 0-7) and 4 matches for Nhánh 2 (bp 8-11)
+    const r1: PrintMatchInput[] = [
+      ...Array.from({ length: 8 }, (_, i) =>
+        match({ id: `h1-${i}`, round: 1, bracketPosition: i, matchNumber: 100 + i, player1: { name: `A${i}` }, player2: { name: `B${i}` } }),
+      ),
+      ...Array.from({ length: 4 }, (_, i) =>
+        match({ id: `h2-${i}`, round: 1, bracketPosition: 8 + i, matchNumber: 200 + i, player1: { name: `C${i}` }, player2: i === 0 ? undefined : { name: `D${i}` } }),
+      ),
+    ];
+    const halves = buildSingleEliminationBracket(category, r1);
+    // Nhánh 1: all 8 matches have real players → 16 entries
+    expect(halves[0]?.entries.length).toBe(16);
+    // Nhánh 2: only bp 8-11 have real players → slots 0-7 in half (8 entries, trailing Byes trimmed)
+    expect(halves[1]?.entries.length).toBe(8);
+    expect(halves[1]?.rounds[0]?.matches.length).toBe(4);
   });
 
   // ── row layout ───────────────────────────────────────────────────────────
