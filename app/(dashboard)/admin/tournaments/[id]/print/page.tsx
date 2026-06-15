@@ -95,7 +95,7 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
     value: c._id,
   }));
 
-  const allBracketDocs = data.drawnBracketDocs.map((x) => x.doc);
+  const drawnCategoryCount = data.drawnPrintCategories.length;
   const tournamentTitle = data.tournament?.title ?? '';
 
   const previewContent =
@@ -109,9 +109,12 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
     ) : null;
 
   const printContent =
-    printScope === 'all-brackets' && allBracketDocs.length > 0 ? (
+    printScope === 'all-brackets' &&
+    data.printTournament &&
+    drawnCategoryCount > 0 ? (
       <AllBracketsDocument
-        docs={allBracketDocs}
+        tournament={data.printTournament}
+        categories={data.drawnPrintCategories}
         tournamentTitle={tournamentTitle}
       />
     ) : (
@@ -161,7 +164,7 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
             <GlassPanel card className="border-amber-500/30 bg-amber-500/5">
               <p className="text-heading text-sm">
                 {TOURNAMENT.PRINT_UNSCHEDULED_WARNING(
-                  data.readiness.unscheduledCount,
+                  data.readiness.unscheduledCount
                 )}{' '}
                 <button
                   type="button"
@@ -220,7 +223,7 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
                   variant="outline"
                   iconLeft="print-outline"
                   onClick={() => triggerPrint('all-brackets')}
-                  disabled={allBracketDocs.length === 0}
+                  disabled={drawnCategoryCount === 0}
                 >
                   In tất cả nội dung
                 </Button>

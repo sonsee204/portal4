@@ -14,7 +14,12 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { PrintBracketDocument } from '@/lib/tournament/print/types';
+import type {
+  PrintBracketDocument,
+  PrintCategoryInput,
+  PrintTournamentInput,
+} from '@/lib/tournament/print/types';
+import { useCategoryBracketDoc } from '../../_hooks/useCategoryBracketDoc';
 import { PrintDocumentShell } from '../PrintPreviewFrame';
 import { BracketRoundRobinSheet } from './BracketRoundRobinSheet';
 import { PrintBracketHalfSheet } from './PrintBracketHalfSheet';
@@ -103,23 +108,51 @@ export function BracketDocument({
   );
 }
 
-/** Renders multiple category bracket documents with page breaks. */
+/**
+ * Loads one category's FULL bracket (via the dedicated `tournamentBracket`
+ * query) and renders it. Each section owns its own data fetch so that "print
+ * all" never depends on the paginated tournament-wide match connection.
+ */
+function CategoryBracketSection({
+  tournament,
+  category,
+  tournamentTitle,
+  pageBreak,
+}: {
+  tournament: PrintTournamentInput;
+  category: PrintCategoryInput;
+  tournamentTitle: string;
+  pageBreak: boolean;
+}) {
+  const { doc } = useCategoryBracketDoc(tournament, category);
+  if (!doc) return null;
+  return (
+    <div className={pageBreak ? 'print-page-break-before' : undefined}>
+      <BracketDocument doc={doc} tournamentTitle={tournamentTitle} />
+    </div>
+  );
+}
+
+/** Renders every drawn category's bracket with page breaks between them. */
 export function AllBracketsDocument({
-  docs,
+  tournament,
+  categories,
   tournamentTitle,
 }: {
-  docs: PrintBracketDocument[];
+  tournament: PrintTournamentInput;
+  categories: PrintCategoryInput[];
   tournamentTitle: string;
 }) {
   return (
     <div>
-      {docs.map((doc, i) => (
-        <div
-          key={doc.categoryId}
-          className={i > 0 ? 'print-page-break-before' : undefined}
-        >
-          <BracketDocument doc={doc} tournamentTitle={tournamentTitle} />
-        </div>
+      {categories.map((category, i) => (
+        <CategoryBracketSection
+          key={category.id}
+          tournament={tournament}
+          category={category}
+          tournamentTitle={tournamentTitle}
+          pageBreak={i > 0}
+        />
       ))}
     </div>
   );

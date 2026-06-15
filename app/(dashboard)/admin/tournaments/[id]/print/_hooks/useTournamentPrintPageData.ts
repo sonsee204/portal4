@@ -21,17 +21,16 @@ import {
 } from '@/hooks/tournament';
 import { mapMatchesToSchedule } from '@/lib/tournament/mappers/schedule';
 import {
-  buildBracketDocument,
   buildMasterSchedule,
   computePrintReadiness,
 } from '@/lib/tournament/print';
-import type { PrintBracketDocument } from '@/lib/tournament/print/types';
+import type { PrintCategoryInput } from '@/lib/tournament/print/types';
 import {
   mapCategoryToPrintInput,
-  mapGqlMatchToPrintInput,
   mapScheduleMatchToPrintScheduleInput,
   mapTournamentToPrintInput,
 } from '@/lib/tournament/print/adapters';
+import { useCategoryBracketDoc } from './useCategoryBracketDoc';
 
 export type PrintPageTab = 'schedule' | 'bracket';
 
@@ -64,11 +63,6 @@ export function useTournamentPrintPageData(tournamentId: string) {
     [tournament],
   );
 
-  const printMatches = useMemo(
-    () => rawMatches.map(mapGqlMatchToPrintInput),
-    [rawMatches],
-  );
-
   const scheduleInputs = useMemo(
     () => scheduleMatches.map(mapScheduleMatchToPrintScheduleInput),
     [scheduleMatches],
@@ -89,16 +83,6 @@ export function useTournamentPrintPageData(tournamentId: string) {
     );
   }, [printTournament, printCategories, scheduleInputs, rawMatches.length]);
 
-  const bracketDocsByCategoryId = useMemo(() => {
-    if (!printTournament) return new Map<string, PrintBracketDocument>();
-    const map = new Map<string, PrintBracketDocument>();
-    for (const cat of printCategories) {
-      const doc = buildBracketDocument(printTournament, cat, printMatches);
-      if (doc) map.set(cat.id, doc);
-    }
-    return map;
-  }, [printTournament, printCategories, printMatches]);
-
   const readiness = useMemo(
     () =>
       computePrintReadiness(
@@ -115,21 +99,29 @@ export function useTournamentPrintPageData(tournamentId: string) {
     categories[0]?._id ||
     '';
 
-  const activeBracketDoc =
-    bracketDocsByCategoryId.get(effectiveCategoryId) ?? null;
+  const activeCategory = useMemo(
+    () => printCategories.find((c) => c.id === effectiveCategoryId),
+    [printCategories, effectiveCategoryId],
+  );
 
-  const drawnBracketDocs = useMemo(
+  // Fetch the selected category's FULL bracket (every round) directly instead
+  // of slicing it out of the paginated tournament-wide match connection, which
+  // can drop later rounds for large tournaments.
+  const { doc: activeBracketDoc } = useCategoryBracketDoc(
+    printTournament,
+    activeCategory,
+    activeTab !== 'bracket' || !activeCategory,
+  );
+
+  // Drawn categories (status-derived, independent of match data) used to drive
+  // the "print all brackets" action — each is fetched on demand by its own
+  // bracket loader component.
+  const drawnPrintCategories = useMemo<PrintCategoryInput[]>(
     () =>
-      [...bracketDocsByCategoryId.entries()]
-        .map(([id, doc]) => ({ categoryId: id, doc }))
-        .sort((a, b) => {
-          const oa =
-            printCategories.find((c) => c.id === a.categoryId)?.displayOrder ?? 0;
-          const ob =
-            printCategories.find((c) => c.id === b.categoryId)?.displayOrder ?? 0;
-          return oa - ob;
-        }),
-    [bracketDocsByCategoryId, printCategories],
+      printCategories
+        .filter((c) => readiness.drawnCategoryIds.includes(c.id))
+        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
+    [printCategories, readiness.drawnCategoryIds],
   );
 
   const loading = tLoading || cLoading || mLoading;
@@ -138,6 +130,7 @@ export function useTournamentPrintPageData(tournamentId: string) {
   return {
     tournamentId,
     tournament,
+    printTournament,
     categories,
     activeTab,
     setActiveTab,
@@ -145,7 +138,7 @@ export function useTournamentPrintPageData(tournamentId: string) {
     setSelectedCategoryId,
     masterScheduleDoc,
     activeBracketDoc,
-    drawnBracketDocs,
+    drawnPrintCategories,
     readiness,
     loading,
     error,
