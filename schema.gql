@@ -1987,6 +1987,15 @@ enum ClaimRequestStatus {
   REJECTED
 }
 
+"""Identifies which client app made the request"""
+enum ClientSource {
+  LANDING_PAGE
+  MOBILE
+  PORTAL
+  UNKNOWN
+  WEB_APP
+}
+
 """What the coin-toss winner chose: serve or court side"""
 enum CoinTossChoice {
   SERVE
@@ -3770,19 +3779,6 @@ type DeviceInfo {
   platform: String
 }
 
-type SessionInfo {
-  clientSource: String
-  createdAt: DateTime!
-  deviceInfo: DeviceInfo
-  deviceName: String
-  id: ID!
-  ipAddress: String
-  isCurrent: Boolean!
-  lastUsedAt: DateTime
-  loginLocation: String
-  platform: String
-}
-
 type DiscountCalculationResult {
   """Applied promotions"""
   appliedPromotions: [AppliedPromotion!]!
@@ -5530,7 +5526,7 @@ type Mutation {
   """Approve venue request (Admin only)"""
   adminApproveVenue(venueId: ID!): Venue!
 
-  """Change user role (Super Admin only)"""
+  """Change user role (Owner only — centralized access control)"""
   adminChangeUserRole(role: UserRole!, userId: ID!): User!
 
   """Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER)"""
@@ -6226,11 +6222,17 @@ type Mutation {
   """Review promotion (owner approves/rejects)"""
   reviewPromotion(input: ReviewPromotionInput!): Promotion!
 
+  """Revoke all login sessions except the current one"""
+  revokeOtherSessions: Boolean!
+
   """Revoke OTP test user login grant (SUPER_ADMIN only)"""
   revokeOtpTestUserGrant(id: ID!): OtpTestUserGrant!
 
   """Revoke portal capability grant (SUPER_ADMIN only)"""
   revokePortalCapability(id: ID!): PortalCapabilityGrant!
+
+  """Revoke a specific login session (not the current one)"""
+  revokeSession(sessionId: ID!): Boolean!
 
   """Save FCM token"""
   saveFcmToken(token: String!): Boolean!
@@ -6320,12 +6322,6 @@ type Mutation {
 
   """Logout from all devices"""
   signOutAllDevices: Boolean!
-
-  """Revoke all login sessions except the current one"""
-  revokeOtherSessions: Boolean!
-
-  """Revoke a specific login session (not the current one)"""
-  revokeSession(sessionId: ID!): Boolean!
 
   """
   Sign up with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
@@ -9976,9 +9972,6 @@ type Query {
   """Get current user profile"""
   me: User!
 
-  """List active login sessions for the current user"""
-  mySessions: [SessionInfo!]!
-
   """Get all message reports (cursor, Admin only)"""
   messageReportsConnection(filter: MessageReportFilterInput, pagination: CursorPageInput): MessageReportConnection!
 
@@ -10047,6 +10040,9 @@ type Query {
 
   """Kèo đã lưu (cursor)"""
   mySavedGamesConnection(pagination: CursorPageInput): SavedGameConnection!
+
+  """List active login sessions for the current user"""
+  mySessions: [SessionInfo!]!
 
   """Cursor-paginated tournaments organized by current user"""
   myTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
@@ -11710,6 +11706,21 @@ type ServicePerformance {
 
   """Trend percentage vs previous period"""
   trend: Float!
+}
+
+type SessionInfo {
+  clientSource: ClientSource
+  createdAt: DateTime!
+  deviceInfo: DeviceInfo
+  deviceName: String
+  id: ID!
+  ipAddress: String
+  isCurrent: Boolean!
+  lastUsedAt: DateTime
+
+  """Approximate login location resolved from IP (city, country)"""
+  loginLocation: String
+  platform: String
 }
 
 input SetMatchWalkoverInput {
@@ -14094,8 +14105,6 @@ type User {
   fullName: String!
   gender: Gender
   isActive: Boolean!
-
-  """Whether this user is the platform owner (immutable OWNER_PHONE identity)"""
   isOwner: Boolean!
 
   """Is user suspended"""
