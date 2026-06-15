@@ -14,6 +14,11 @@
 import { describe, expect, it } from 'vitest';
 import { buildMasterSchedule } from './build-master-schedule';
 import { buildBracketDocument, computePrintReadiness } from './build-bracket-sheet';
+import {
+  intersectHalfSpan,
+  matchGlobalRowSpan,
+} from './bracket-row-layout';
+import { buildSingleEliminationBracket } from './builders/single-elimination';
 import { dedupePrintMatchesById } from './dedupe-matches';
 import { formatDateRangeLabel } from './round-labels';
 import type {
@@ -110,6 +115,58 @@ describe('print kernel', () => {
     const doc = buildBracketDocument(tournament, cat('SINGLE_ELIMINATION'), matches);
     expect(doc?.format).toBe('SINGLE_ELIMINATION');
     expect(doc?.halves?.[0]?.entries.length).toBeGreaterThan(0);
+  });
+
+  it('single elimination rows pair entries in round 1', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 16 };
+    const matches: PrintMatchInput[] = [
+      match({
+        id: 'r1m0',
+        matchNumber: 1,
+        round: 1,
+        bracketPosition: 0,
+        player1: { name: 'A' },
+        player2: { name: 'B' },
+      }),
+      match({
+        id: 'r1m1',
+        matchNumber: 2,
+        round: 1,
+        bracketPosition: 1,
+        player1: { name: 'C' },
+        player2: { name: 'D' },
+      }),
+      match({
+        id: 'r2m0',
+        matchNumber: 5,
+        round: 2,
+        roundLabel: 'Vòng 2',
+        bracketPosition: 0,
+        player1: { name: 'A' },
+        player2: { name: 'C' },
+      }),
+    ];
+    const halves = buildSingleEliminationBracket(category, matches);
+    const half = halves[0]!;
+    expect(half.rounds.length).toBe(2);
+    expect(half.rounds[0]?.shortLabel).toBe('R16');
+    expect(half.rounds[0]?.matches[0]).toMatchObject({
+      rowIndexFrom: 0,
+      rowIndexTo: 1,
+    });
+    expect(half.rounds[1]?.matches[0]).toMatchObject({
+      rowIndexFrom: 0,
+      rowIndexTo: 3,
+    });
+  });
+
+  it('matchGlobalRowSpan follows bracket tree depth', () => {
+    expect(matchGlobalRowSpan(1, 0, 0)).toEqual({ globalFrom: 0, globalTo: 1 });
+    expect(matchGlobalRowSpan(2, 0, 0)).toEqual({ globalFrom: 0, globalTo: 3 });
+    expect(
+      intersectHalfSpan(0, 3, 0, 16),
+    ).toEqual({ localFrom: 0, localTo: 3 });
+    expect(intersectHalfSpan(8, 11, 0, 8)).toBeNull();
   });
 
   it('buildBracketDocument round robin', () => {
