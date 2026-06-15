@@ -45,18 +45,44 @@ export function intersectHalfSpan(
   };
 }
 
+/**
+ * Pre-assign bracketPosition fallbacks for matches whose bracketPosition is
+ * null/undefined by using their ordinal rank within the round, sorted by
+ * matchNumber.  The backend always creates matches in bracketPosition order
+ * (pos=0,1,2… → matchNumber increments), so rank-by-matchNumber is
+ * equivalent to bracketPosition when the field is missing.
+ */
+export function resolveEffectiveBracketPositions(
+  matches: PrintMatchInput[],
+): Map<string, number> {
+  const roundGroups = new Map<number, PrintMatchInput[]>();
+  for (const m of matches) {
+    const group = roundGroups.get(m.round) ?? [];
+    group.push(m);
+    roundGroups.set(m.round, group);
+  }
+
+  const result = new Map<string, number>();
+  for (const group of roundGroups.values()) {
+    group.sort((a, b) => a.matchNumber - b.matchNumber);
+    for (let i = 0; i < group.length; i++) {
+      const m = group[i]!;
+      result.set(m.id, m.bracketPosition ?? i);
+    }
+  }
+  return result;
+}
+
 export function filterMatchesForHalf(
   matches: PrintMatchInput[],
   halfSlotStart: number,
   halfSlotCount: number,
 ): PrintMatchInput[] {
+  const bpMap = resolveEffectiveBracketPositions(matches);
   const out: PrintMatchInput[] = [];
   for (const m of matches) {
-    const { globalFrom, globalTo } = matchGlobalRowSpan(
-      m.round,
-      m.bracketPosition,
-      m.matchNumber - 1,
-    );
+    const bp = bpMap.get(m.id) ?? m.bracketPosition ?? 0;
+    const { globalFrom, globalTo } = matchGlobalRowSpan(m.round, bp, bp);
     if (intersectHalfSpan(globalFrom, globalTo, halfSlotStart, halfSlotCount)) {
       out.push(m);
     }

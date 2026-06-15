@@ -16,6 +16,7 @@ import {
   filterMatchesForHalf,
   intersectHalfSpan,
   matchGlobalRowSpan,
+  resolveEffectiveBracketPositions,
 } from '../bracket-row-layout';
 import { formatPrintMatchPair } from '../format-player-name';
 import {
@@ -49,6 +50,8 @@ function buildRoundColumns(
   halfSlotCount: number,
   fullBracketSize: number,
 ): PrintBracketRoundColumn[] {
+  const bpMap = resolveEffectiveBracketPositions(matches);
+
   const roundsMap = new Map<number, PrintMatchInput[]>();
   for (const m of matches) {
     const list = roundsMap.get(m.round) ?? [];
@@ -61,20 +64,15 @@ function buildRoundColumns(
 
   return roundNums.map((roundNum) => {
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
-      (a, b) =>
-        (a.bracketPosition ?? a.matchNumber) -
-        (b.bracketPosition ?? b.matchNumber),
+      (a, b) => (bpMap.get(a.id) ?? 0) - (bpMap.get(b.id) ?? 0),
     );
     const label = roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`;
     const shortLabel = roundShortLabel(roundNum - 1, totalRounds, label);
 
     const positionedMatches = roundMatches
-      .map((m, mi) => {
-        const { globalFrom, globalTo } = matchGlobalRowSpan(
-          roundNum,
-          m.bracketPosition,
-          mi,
-        );
+      .map((m) => {
+        const bp = bpMap.get(m.id) ?? 0;
+        const { globalFrom, globalTo } = matchGlobalRowSpan(roundNum, bp, bp);
         const local = intersectHalfSpan(
           globalFrom,
           globalTo,

@@ -169,6 +169,47 @@ describe('print kernel', () => {
     expect(intersectHalfSpan(8, 11, 0, 8)).toBeNull();
   });
 
+  it('single elim: null bracketPosition inferred from matchNumber rank', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 64, status: 'COMPLETED' };
+    const makeMatch = (id: string, round: number, bp: number | null, mn: number): PrintMatchInput => ({
+      id,
+      matchNumber: mn,
+      categoryId: 'c1',
+      round,
+      roundLabel: `V${round}`,
+      bracketPosition: bp,
+      status: 'FINISHED',
+      isBye: false,
+      player1: { name: `P${mn}a` },
+      player2: { name: `P${mn}b` },
+    });
+
+    // Simulate 64-draw: R1 has 32 matches (mn=500-531), R2 has 16 (mn=532-547)
+    // bracketPosition is null for R2 (old data scenario)
+    const r1: PrintMatchInput[] = Array.from({ length: 32 }, (_, i) =>
+      makeMatch(`r1m${i}`, 1, i, 500 + i),
+    );
+    const r2: PrintMatchInput[] = Array.from({ length: 16 }, (_, i) =>
+      makeMatch(`r2m${i}`, 2, null, 532 + i), // null bracketPosition!
+    );
+    const allMatches = [...r1, ...r2];
+    const halves = buildSingleEliminationBracket(category, allMatches);
+
+    // Both halves should have 2 round columns
+    expect(halves[0]?.rounds.length).toBe(2);
+    expect(halves[1]?.rounds.length).toBe(2);
+
+    // Nhánh 1 R1 should have 16 matches (bp 0-15), Nhánh 1 R2 should have 8
+    expect(halves[0]?.rounds[0]?.matches.length).toBe(16);
+    expect(halves[0]?.rounds[1]?.matches.length).toBe(8);
+
+    // Row position of first R2 match in half 1 spans rows 0-3
+    expect(halves[0]?.rounds[1]?.matches[0]).toMatchObject({
+      rowIndexFrom: 0,
+      rowIndexTo: 3,
+    });
+  });
+
   it('buildBracketDocument round robin', () => {
     const matches: PrintMatchInput[] = [
       match({ id: 'm1', matchNumber: 1, player1: { name: 'A' }, player2: { name: 'B' } }),
