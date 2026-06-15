@@ -1,13 +1,26 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { PREVIEW_LATE_ENTRY_PLACEMENT } from '@/graphql/queries/tournament';
-import { ADD_LATE_ENTRY_TO_BYE_SLOT } from '@/graphql/mutations/tournament';
+import { PREVIEW_LATE_ENTRY_PLACEMENT } from '@/graphql/tournament/queries';
+import { ADD_LATE_ENTRY_TO_BYE_SLOT } from '@/graphql/tournament/mutations/registration';
 import {
   GET_TOURNAMENT_REGISTRATIONS,
   GET_TOURNAMENT_CATEGORIES,
-} from '@/graphql/queries/tournament';
+} from '@/graphql/tournament/queries';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import { showSuccess, showError, showInfo } from '@/lib/toast';
 import { TOURNAMENT } from '@/lib/strings';

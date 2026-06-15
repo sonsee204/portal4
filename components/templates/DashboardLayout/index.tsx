@@ -1,23 +1,39 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Sidebar } from '@/components/organisms/Sidebar';
 import { TopHeader } from '@/components/organisms/TopHeader';
-import { sidebarNav } from '@/config/navigation';
 import type { BreadcrumbItem } from '@/components/molecules/Breadcrumb';
+import type { SidebarNavSection } from '@/lib/permissions/navigation';
 
 export interface DashboardLayoutProps {
   children: React.ReactNode;
+  nav: SidebarNavSection[];
   breadcrumbs?: BreadcrumbItem[];
-  /** Optional actions slot for the top header (e.g. "Save Changes" button) */
+  workspaceLabel?: string;
   headerActions?: React.ReactNode;
   className?: string;
 }
 
 export function DashboardLayout({
   children,
+  nav,
   breadcrumbs,
+  workspaceLabel,
   headerActions,
   className,
 }: DashboardLayoutProps) {
@@ -25,11 +41,13 @@ export function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar nav={sidebarNav} activePath={pathname} />
+      <Sidebar
+        nav={nav}
+        activePath={pathname}
+        workspaceLabel={workspaceLabel}
+      />
 
-      {/* Main area — offset by sidebar width on desktop */}
       <div className="flex flex-1 flex-col lg:ml-72">
-        {/* Ambient background glow */}
         <div className="bg-primary/5 pointer-events-none absolute top-0 left-0 h-96 w-full blur-3xl" />
 
         <TopHeader breadcrumbs={breadcrumbs} actions={headerActions} />

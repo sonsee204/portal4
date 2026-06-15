@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 import type { TournamentMatch as GqlMatch, TournamentCategory as GqlCategory } from '@/graphql/generated';
 import type {
   MatchStatus,
@@ -41,8 +54,12 @@ export function mapMatchesToSchedule(matches: GqlMatch[], categories: GqlCategor
     .filter((m) => !m.isBye)
     .map((m) => {
       const cat = categories.find((c) => c._id === m.categoryId);
-      const parsedSchedule = m.scheduledAt
-        ? parseScheduledAtLocal(m.scheduledAt)
+      // For finished tournaments, later-round matches may not have
+      // `scheduledAt` (only round 1 is pre-scheduled).  Fall back to
+      // `matchStartedAt` so all played matches appear in the schedule.
+      const timeSource = m.scheduledAt ?? m.matchStartedAt ?? undefined;
+      const parsedSchedule = timeSource
+        ? parseScheduledAtLocal(timeSource)
         : undefined;
       const scheduledDate = parsedSchedule?.scheduledDate;
       const startTime = parsedSchedule?.startTime;

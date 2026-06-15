@@ -1,0 +1,23 @@
+---
+description: Shared FE kernel — synced from web; edit source in web only
+globs: "{scripts/size-gate.mjs,scripts/dead-code-gate.mjs,scripts/check-*.mjs,lib/apollo/urls.ts,lib/apollo/token.ts,lib/errors/format-graphql-error.ts,lib/utils.ts,components/atoms/Button/**,components/molecules/QueryState/**,components/molecules/ConnectionPager/connection-pager.utils.ts}"
+alwaysApply: false
+---
+
+# Shared FE kernel (portal)
+
+File trong manifest **sync từ `nalee-sports-web`** — **không sửa trực tiếp** trên portal trừ transform `x-client-source: 'portal'`.
+
+## Workflow
+
+1. Sửa trên **web** (source of truth)
+2. `node scripts/sync-shared-kernel.mjs` (workspace root)
+3. `pnpm check:shared-sync` trong portal — phải pass trước merge
+
+Manifest: [`scripts/shared-kernel-manifest.json`](../../../scripts/shared-kernel-manifest.json)  
+ADR: [`docs/architecture/shared-fe-kernel-sync.md`](../../../docs/architecture/shared-fe-kernel-sync.md)
+
+## App-local (KHÔNG sync)
+
+- `lib/apollo/links.ts`, `client.ts`, `cache-type-policies.ts`
+- `middleware.ts`, `lib/validation/schemas.ts`

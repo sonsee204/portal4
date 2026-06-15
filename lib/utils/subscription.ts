@@ -1,8 +1,21 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 import type { DocumentNode } from '@apollo/client';
 import {
   TOURNAMENT_MATCHES_UPDATED_SUB,
   TOURNAMENT_STATUS_CHANGED_SUB,
-} from '@/graphql/mutations/tournament';
+} from '@/graphql/tournament/subscriptions';
 
 export const SCHEDULE_SUBSCRIPTION_REFETCH_DEBOUNCE_MS = 3_000;
 
@@ -40,7 +53,7 @@ export function createMatchSubscription(
 
   return subscribeToMore({
     document: TOURNAMENT_MATCHES_UPDATED_SUB,
-    variables: { tournamentId },
+    variables: { _tournamentId: tournamentId },
     updateQuery: () => {
       debouncedRefetch();
     },
@@ -60,10 +73,12 @@ export function createTournamentStatusSubscriptions(
   refetch: () => void,
   tournamentIds: string[],
 ) {
-  const unsubscribes = tournamentIds.map((tournamentId) =>
+  const unsubscribes = tournamentIds
+    .filter((id) => id.length > 0)
+    .map((tournamentId) =>
     subscribeToMore({
       document: TOURNAMENT_STATUS_CHANGED_SUB,
-      variables: { tournamentId },
+      variables: { _tournamentId: tournamentId },
       updateQuery: () => {
         void refetch();
       },

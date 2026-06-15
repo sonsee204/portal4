@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 import { jwtVerify, errors as joseErrors } from 'jose';
 import type { NextRequest, NextResponse } from 'next/server';
 import {
@@ -72,6 +85,11 @@ export function clearAuthCookies(
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
   response.cookies.delete(cookieNames.USER_ROLE);
+  if ('PORTAL_CAPABILITIES' in cookieNames) {
+    response.cookies.delete(
+      (cookieNames as { PORTAL_CAPABILITIES: string }).PORTAL_CAPABILITIES,
+    );
+  }
 }
 
 export async function resolveAuthSession(

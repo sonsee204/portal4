@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 import type { ScheduleMatch } from '@/types/tournament-schedule';
 import { isScheduleMatchEnded } from '@/lib/tournament/match-ended';
 import {
@@ -67,6 +80,7 @@ function blocksOverlap(
   courtBufferMinutes: number,
 ): boolean {
   if (aOccupied && !bOccupied) {
+    // Scheduled tail repacked after anchor: starts at or after occupied end → no conflict.
     if (b.startMin >= a.endMin) return false;
     return b.startMin < a.endMin && b.endMin > a.startMin;
   }
@@ -77,6 +91,7 @@ function blocksOverlap(
   if (aOccupied && bOccupied) {
     return a.startMin < b.endMin && a.endMin > b.startMin;
   }
+  // Two planned (NOT_STARTED / LIVE treated as planned for mutual buffer) — mirrors backend validateScheduleConflicts court check.
   return (
     a.startMin < b.endMin + courtBufferMinutes &&
     a.endMin + courtBufferMinutes > b.startMin

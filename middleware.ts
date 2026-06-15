@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import {
   clearAuthCookies,
@@ -10,9 +23,48 @@ import {
   SKIP_MIDDLEWARE_PREFIXES,
 } from '@/lib/auth/constants';
 import { createPortalMiddlewareAuthConfig } from '@/lib/auth/middleware-config';
+import {
+  canAccessWorkspace,
+  getHomePath,
+  hasOrganizerCapability,
+} from '@/lib/permissions/access';
+import type { PortalCapability } from '@/lib/permissions/portal-permissions';
+import type { PortalWorkspace } from '@/lib/permissions/portal-permissions';
+import type { UserRole } from '@/types';
 
-const ALLOWED_PORTAL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'FACILITY_OWNER'];
+const STAFF_PORTAL_ROLES: UserRole[] = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'FACILITY_OWNER',
+];
 const middlewareAuthConfig = createPortalMiddlewareAuthConfig();
+
+function parsePortalCapabilitiesCookie(
+  value?: string | null,
+): PortalCapability[] {
+  if (!value?.trim()) return [];
+  return value
+    .split(',')
+    .map((c) => c.trim())
+    .filter((c): c is PortalCapability => c === 'TOURNAMENT_ORGANIZER');
+}
+
+function getWorkspaceFromPath(pathname: string): PortalWorkspace | null {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/owner')) return 'owner';
+  if (pathname.startsWith('/organizer')) return 'organizer';
+  if (pathname.startsWith('/shared') || pathname === '/forbidden') return 'shared';
+  return null;
+}
+
+function canAccessPortal(
+  role: UserRole,
+  capabilities: PortalCapability[],
+): boolean {
+  if (STAFF_PORTAL_ROLES.includes(role)) return true;
+  if (role === 'PLAYER' && hasOrganizerCapability(capabilities)) return true;
+  return false;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,6 +78,9 @@ export async function middleware(request: NextRequest) {
   );
 
   const session = await resolveAuthSession(request, middlewareAuthConfig);
+  const capabilities = parsePortalCapabilitiesCookie(
+    request.cookies.get(AUTH_COOKIES.PORTAL_CAPABILITIES)?.value,
+  );
 
   if (session.authFailure) {
     if (isPublicRoute) {
@@ -51,9 +106,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = session.role;
+  const role = session.role as UserRole | null;
 
-  if (role && !ALLOWED_PORTAL_ROLES.includes(role)) {
+  if (role && !canAccessPortal(role, capabilities)) {
     if (!isPublicRoute) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'unauthorized');
@@ -63,8 +118,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isPublicRoute && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url));
+  if (isPublicRoute && pathname === '/login' && role) {
+    const home = getHomePath(role, capabilities);
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  if (pathname === '/' && role) {
+    const home = getHomePath(role, capabilities);
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  if (pathname === '/calendar' && role) {
+    const calendarPath =
+      role === 'FACILITY_OWNER' ? '/owner/calendar' : '/admin/calendar';
+    return NextResponse.redirect(new URL(calendarPath, request.url));
+  }
+
+  const workspace = getWorkspaceFromPath(pathname);
+  if (workspace && role && !canAccessWorkspace(role, workspace, capabilities)) {
+    return NextResponse.redirect(new URL('/forbidden', request.url));
   }
 
   const response = NextResponse.next();

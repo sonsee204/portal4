@@ -92,6 +92,26 @@ export type Activity = {
   venueId: Scalars['ID']['output'];
 };
 
+/** A Relay-style connection for Activity items. */
+export type ActivityConnection = {
+  __typename?: 'ActivityConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ActivityEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ActivityConnection. */
+export type ActivityEdge = {
+  __typename?: 'ActivityEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Activity;
+};
+
 export type ActivityFilterInput = {
   /** Filter by activity types */
   activityTypes?: InputMaybe<Array<ActivityType>>;
@@ -101,20 +121,6 @@ export type ActivityFilterInput = {
   resourceTypes?: InputMaybe<Array<ResourceType>>;
   /** To date (ISO string) */
   toDate?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ActivityList = {
-  __typename?: 'ActivityList';
-  /** List of activities */
-  activities: Array<Activity>;
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
 };
 
 /** Type of activity */
@@ -214,15 +220,19 @@ export type AdjustStockInput = {
   variantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type AdminAllBookingList = {
-  __typename?: 'AdminAllBookingList';
-  bookings: Array<AdminBookingItem>;
+export type AdminAllBookingConnection = {
+  __typename?: 'AdminAllBookingConnection';
   /** JSON map of bookingId -> customerName */
   customerNamesJson: Scalars['String']['output'];
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
+  edges: Array<AdminAllBookingEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AdminAllBookingEdge = {
+  __typename?: 'AdminAllBookingEdge';
+  cursor: Scalars['String']['output'];
+  node: AdminBookingItem;
 };
 
 export type AdminBookingItem = {
@@ -237,13 +247,24 @@ export type AdminBookingItem = {
   venueName: Scalars['String']['output'];
 };
 
-export type AdminBookingList = {
-  __typename?: 'AdminBookingList';
-  bookings: Array<AdminBookingItem>;
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for AdminBookingItem items. */
+export type AdminBookingItemConnection = {
+  __typename?: 'AdminBookingItemConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<AdminBookingItemEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the AdminBookingItemConnection. */
+export type AdminBookingItemEdge = {
+  __typename?: 'AdminBookingItemEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: AdminBookingItem;
 };
 
 export type AdminCreateUserInput = {
@@ -426,8 +447,23 @@ export enum AuditAction {
   LoginFailed = 'LOGIN_FAILED',
   Logout = 'LOGOUT',
   LogoutAll = 'LOGOUT_ALL',
+  OtpChannelFallback = 'OTP_CHANNEL_FALLBACK',
+  OtpDeliveryUpdate = 'OTP_DELIVERY_UPDATE',
+  OtpRequested = 'OTP_REQUESTED',
+  OtpTestPhoneCreated = 'OTP_TEST_PHONE_CREATED',
+  OtpTestPhoneDisabled = 'OTP_TEST_PHONE_DISABLED',
+  OtpTestPhoneEnabled = 'OTP_TEST_PHONE_ENABLED',
+  OtpTestPhoneUpdated = 'OTP_TEST_PHONE_UPDATED',
+  OtpTestUserGrantCreated = 'OTP_TEST_USER_GRANT_CREATED',
+  OtpTestUserGrantReplaced = 'OTP_TEST_USER_GRANT_REPLACED',
+  OtpTestUserGrantRevoked = 'OTP_TEST_USER_GRANT_REVOKED',
+  OtpThrottled = 'OTP_THROTTLED',
+  OtpVerified = 'OTP_VERIFIED',
+  OtpVerifyFailed = 'OTP_VERIFY_FAILED',
   PasswordChange = 'PASSWORD_CHANGE',
   PasswordReset = 'PASSWORD_RESET',
+  PortalCapabilityGranted = 'PORTAL_CAPABILITY_GRANTED',
+  PortalCapabilityRevoked = 'PORTAL_CAPABILITY_REVOKED',
   RateLimitHit = 'RATE_LIMIT_HIT',
   SystemError = 'SYSTEM_ERROR',
   TokenRefreshFailed = 'TOKEN_REFRESH_FAILED',
@@ -453,6 +489,7 @@ export enum AuditAction {
 export enum AuditCategory {
   Admin = 'ADMIN',
   Auth = 'AUTH',
+  Otp = 'OTP',
   Security = 'SECURITY',
   System = 'SYSTEM',
   Tournament = 'TOURNAMENT'
@@ -497,13 +534,24 @@ export type AuditLog = {
   userAgent?: Maybe<Scalars['String']['output']>;
 };
 
-export type AuditLogList = {
-  __typename?: 'AuditLogList';
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  logs: Array<AuditLog>;
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for AuditLog items. */
+export type AuditLogConnection = {
+  __typename?: 'AuditLogConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<AuditLogEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the AuditLogConnection. */
+export type AuditLogEdge = {
+  __typename?: 'AuditLogEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: AuditLog;
 };
 
 export type AuditStats = {
@@ -602,8 +650,24 @@ export type AvailablePassesFilterInput = {
   district?: InputMaybe<Scalars['String']['input']>;
   /** Filter from date (YYYY-MM-DD) */
   fromDate?: InputMaybe<Scalars['String']['input']>;
+  /** Toạ độ user — vĩ độ (cần kèm longitude để bật geo filter) */
+  latitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Toạ độ user — kinh độ (cần kèm latitude để bật geo filter) */
+  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Giá tối đa (VND) */
+  maxPrice?: InputMaybe<Scalars['Int']['input']>;
+  /** Giá tối thiểu (VND) */
+  minPrice?: InputMaybe<Scalars['Int']['input']>;
+  /** Bán kính tìm kiếm (km) — mặc định 10km, tối đa 50km */
+  radiusKm?: InputMaybe<Scalars['Float']['input']>;
+  /** Cách sắp xếp kết quả */
+  sort?: InputMaybe<BookingPassSortOrder>;
+  /** Lọc theo nguồn pass (mặc định trả cả 2 nếu không truyền). Truyền [INTERNAL] để chỉ xem pass đã xác thực. */
+  sources?: InputMaybe<Array<BookingPassSource>>;
   /** Filter by sport type */
   sportType?: InputMaybe<SportType>;
+  /** Khung giờ trong ngày: MORNING / AFTERNOON / EVENING / NIGHT */
+  timeOfDay?: InputMaybe<TimeOfDay>;
   /** Filter to date (YYYY-MM-DD) */
   toDate?: InputMaybe<Scalars['String']['input']>;
   /** Filter by venue ID */
@@ -620,6 +684,35 @@ export type AvailablePromotionsForBooking = {
   hasPromotions: Scalars['Boolean']['output'];
   /** Pre-calculated discount if auto promotions apply */
   preCalculatedDiscount?: Maybe<DiscountCalculationResult>;
+};
+
+export type BadmintonCourtSlotGql = {
+  __typename?: 'BadmintonCourtSlotGql';
+  playerIndex: Scalars['Int']['output'];
+  quadrant: CourtQuadrant;
+};
+
+export enum BadmintonFormat {
+  Doubles = 'DOUBLES',
+  Mixed = 'MIXED',
+  Singles = 'SINGLES'
+}
+
+export type BadmintonMatchStateGql = {
+  __typename?: 'BadmintonMatchStateGql';
+  courtSlots?: Maybe<Array<BadmintonCourtSlotGql>>;
+  endsSwapped: Scalars['Boolean']['output'];
+  format: BadmintonFormat;
+  gameNumber: Scalars['Int']['output'];
+  intervalTakenAt11: Scalars['Boolean']['output'];
+  lastServiceOverAt?: Maybe<Scalars['String']['output']>;
+  receiverPlayerIndex?: Maybe<Scalars['Int']['output']>;
+  receiverSide: Scalars['Int']['output'];
+  rotationIndex?: Maybe<Scalars['Int']['output']>;
+  rotationOrder?: Maybe<Array<Scalars['String']['output']>>;
+  serverPlayerIndex?: Maybe<Scalars['Int']['output']>;
+  serverSide: Scalars['Int']['output'];
+  serviceCourt?: Maybe<ServiceCourtSide>;
 };
 
 export type BlockUserInput = {
@@ -763,6 +856,17 @@ export type Booking = {
   venueId: Scalars['ID']['output'];
 };
 
+/** A Relay-style connection for Booking items. */
+export type BookingConnection = {
+  __typename?: 'BookingConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<BookingEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type BookingDistribution = {
   __typename?: 'BookingDistribution';
   /** Color for chart (hex) */
@@ -773,6 +877,15 @@ export type BookingDistribution = {
   percentage: Scalars['Int']['output'];
   /** Number of bookings */
   value: Scalars['Int']['output'];
+};
+
+/** An edge in the BookingConnection. */
+export type BookingEdge = {
+  __typename?: 'BookingEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Booking;
 };
 
 export type BookingFilterInput = {
@@ -844,20 +957,6 @@ export type BookingLink = {
   totalPrice: Scalars['Int']['output'];
 };
 
-export type BookingList = {
-  __typename?: 'BookingList';
-  /** List of bookings */
-  bookings: Array<Booking>;
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
-};
-
 export type BookingPass = {
   __typename?: 'BookingPass';
   _id: Scalars['ID']['output'];
@@ -865,12 +964,12 @@ export type BookingPass = {
   acceptedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Asking price set by owner */
   askingPrice: Scalars['Int']['output'];
-  /** The booking being passed */
-  booking: Booking;
+  /** The booking being passed (chỉ có với pass INTERNAL — null cho EXTERNAL) */
+  booking?: Maybe<Booking>;
   /** Booking date (YYYY-MM-DD) */
   bookingDate: Scalars['String']['output'];
-  /** Booking being passed */
-  bookingId: Scalars['ID']['output'];
+  /** Booking ID — chỉ có với pass INTERNAL */
+  bookingId?: Maybe<Scalars['ID']['output']>;
   /** Cancellation reason */
   cancellationReason?: Maybe<Scalars['String']['output']>;
   /** When pass was cancelled */
@@ -880,6 +979,8 @@ export type BookingPass = {
   description?: Maybe<Scalars['String']['output']>;
   /** When pass expires (booking start time) */
   expiresAt: Scalars['DateTime']['output'];
+  /** Thông tin lịch đặt do user khai báo (chỉ khi source=EXTERNAL) */
+  externalBooking?: Maybe<ExternalBookingSnapshot>;
   /** Users who expressed interest */
   interestedUserDetails: Array<User>;
   /** List of interested users (for public pass) */
@@ -894,6 +995,8 @@ export type BookingPass = {
   selectedUser?: Maybe<User>;
   /** Selected user ID */
   selectedUserId?: Maybe<Scalars['ID']['output']>;
+  /** Nguồn gốc pass: INTERNAL (booking hệ thống) hoặc EXTERNAL (user tự khai báo) */
+  source: BookingPassSource;
   /** Pass status */
   status: BookingPassStatus;
   /** When transfer was completed */
@@ -907,27 +1010,121 @@ export type BookingPass = {
   /** Original owner (transferrer) */
   transferrerId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
-  /** Venue of the booking */
-  venue: Venue;
-  /** Venue ID */
-  venueId: Scalars['ID']['output'];
+  /** Venue của pass (EXTERNAL có thể null nếu user chưa khai báo sân nào) */
+  venue?: Maybe<Venue>;
+  /** Venue ID — INTERNAL luôn có; EXTERNAL có thể null nếu sân chưa được khai báo */
+  venueId?: Maybe<Scalars['ID']['output']>;
   /** Pass visibility */
   visibility: BookingPassVisibility;
 };
 
-export type BookingPassList = {
-  __typename?: 'BookingPassList';
-  /** Has more pages */
-  hasMore: Scalars['Boolean']['output'];
-  /** List of booking passes */
-  items: Array<BookingPass>;
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Page size */
-  pageSize: Scalars['Int']['output'];
-  /** Total number of passes */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for BookingPass items. */
+export type BookingPassConnection = {
+  __typename?: 'BookingPassConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<BookingPassEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
 };
+
+/** An edge in the BookingPassConnection. */
+export type BookingPassEdge = {
+  __typename?: 'BookingPassEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: BookingPass;
+};
+
+export type BookingPassReport = {
+  __typename?: 'BookingPassReport';
+  _id: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Mô tả chi tiết */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Ghi chú admin / kết quả xử lý */
+  notes?: Maybe<Scalars['String']['output']>;
+  pass?: Maybe<BookingPass>;
+  /** ID của pass bị báo cáo */
+  passId: Scalars['ID']['output'];
+  /** Lý do báo cáo */
+  reason: BookingPassReportReason;
+  reporter?: Maybe<User>;
+  /** User báo cáo */
+  reporterId: Scalars['ID']['output'];
+  /** Thời điểm xử lý */
+  reviewedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Admin xử lý */
+  reviewedBy?: Maybe<Scalars['ID']['output']>;
+  reviewer?: Maybe<User>;
+  /** Trạng thái */
+  status: BookingPassReportStatus;
+  transferrer?: Maybe<User>;
+  /** ID của user pass (transferrer) */
+  transferrerId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+/** A Relay-style connection for BookingPassReport items. */
+export type BookingPassReportConnection = {
+  __typename?: 'BookingPassReportConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<BookingPassReportEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the BookingPassReportConnection. */
+export type BookingPassReportEdge = {
+  __typename?: 'BookingPassReportEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: BookingPassReport;
+};
+
+export type BookingPassReportFilterInput = {
+  reason?: InputMaybe<BookingPassReportReason>;
+  status?: InputMaybe<BookingPassReportStatus>;
+  transferrerId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** Lý do báo cáo pass sân */
+export enum BookingPassReportReason {
+  AlreadyTransferred = 'ALREADY_TRANSFERRED',
+  FakeBooking = 'FAKE_BOOKING',
+  Inappropriate = 'INAPPROPRIATE',
+  Other = 'OTHER',
+  PriceGouging = 'PRICE_GOUGING',
+  Scam = 'SCAM'
+}
+
+/** Trạng thái báo cáo pass sân */
+export enum BookingPassReportStatus {
+  Dismissed = 'DISMISSED',
+  Pending = 'PENDING',
+  Resolved = 'RESOLVED',
+  Reviewed = 'REVIEWED'
+}
+
+/** Cách sắp xếp danh sách pass */
+export enum BookingPassSortOrder {
+  CreatedDesc = 'CREATED_DESC',
+  DiscountDesc = 'DISCOUNT_DESC',
+  ExpiresAsc = 'EXPIRES_ASC',
+  PriceAsc = 'PRICE_ASC',
+  PriceDesc = 'PRICE_DESC'
+}
+
+/** Nguồn gốc của booking pass: INTERNAL = lịch hệ thống, EXTERNAL = lịch tự khai báo */
+export enum BookingPassSource {
+  External = 'EXTERNAL',
+  Internal = 'INTERNAL'
+}
 
 /** Status of the booking pass */
 export enum BookingPassStatus {
@@ -1000,18 +1197,12 @@ export enum BookingTypeFilter {
   Single = 'SINGLE'
 }
 
-export type BookmarkList = {
-  __typename?: 'BookmarkList';
-  /** List of bookmarks */
-  bookmarks: Array<PostBookmark>;
-  /** Whether there are more bookmarks */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** Total number of bookmarks */
-  total: Scalars['Int']['output'];
+export type BookingWithOrderPayload = {
+  __typename?: 'BookingWithOrderPayload';
+  /** The confirmed booking */
+  booking: Booking;
+  /** Order created for the booking */
+  order: Order;
 };
 
 export type BracketDrawPreview = {
@@ -1288,20 +1479,6 @@ export type CategoryFilterInput = {
   venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type CategoryList = {
-  __typename?: 'CategoryList';
-  /** List of categories */
-  categories: Array<ProductCategory>;
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
-};
-
 export type CategoryRevenue = {
   __typename?: 'CategoryRevenue';
   /** Category name */
@@ -1461,20 +1638,6 @@ export type ClaimRequestFilterInput = {
   venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type ClaimRequestList = {
-  __typename?: 'ClaimRequestList';
-  /** Has more results */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** List of claim requests */
-  requests: Array<VenueClaimRequest>;
-  /** Total count */
-  total: Scalars['Int']['output'];
-};
-
 export type ClaimRequestStats = {
   __typename?: 'ClaimRequestStats';
   /** Total approved claims */
@@ -1508,14 +1671,13 @@ export enum CoinTossChoice {
   Side = 'SIDE'
 }
 
-export type CommentList = {
-  __typename?: 'CommentList';
-  /** List of comments */
-  comments: Array<PostComment>;
-  /** Whether there are more comments to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Total number of comments */
-  total: Scalars['Int']['output'];
+/** Payload for the commentDeleted subscription. */
+export type CommentDeletedPayload = {
+  __typename?: 'CommentDeletedPayload';
+  _id: Scalars['ID']['output'];
+  commentId: Scalars['ID']['output'];
+  parentId?: Maybe<Scalars['ID']['output']>;
+  postId: Scalars['ID']['output'];
 };
 
 export type CompleteSetInput = {
@@ -1531,8 +1693,10 @@ export type ConfirmEmailUpdateInput = {
 };
 
 export type ConfirmPhoneUpdateInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
   newPhone: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ContactInquiry = {
@@ -1562,6 +1726,26 @@ export type ContactInquiry = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for ContactInquiry items. */
+export type ContactInquiryConnection = {
+  __typename?: 'ContactInquiryConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ContactInquiryEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ContactInquiryConnection. */
+export type ContactInquiryEdge = {
+  __typename?: 'ContactInquiryEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: ContactInquiry;
+};
+
 export type ContactInquiryFilterInput = {
   /** Filter from date */
   from?: InputMaybe<Scalars['DateTime']['input']>;
@@ -1573,14 +1757,6 @@ export type ContactInquiryFilterInput = {
   subject?: InputMaybe<ContactSubject>;
   /** Filter to date */
   to?: InputMaybe<Scalars['DateTime']['input']>;
-};
-
-export type ContactInquiryList = {
-  __typename?: 'ContactInquiryList';
-  items: Array<ContactInquiry>;
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  totalPages: Scalars['Int']['output'];
 };
 
 export type ContactInquiryStats = {
@@ -1638,11 +1814,31 @@ export type Conversation = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for Conversation items. */
+export type ConversationConnection = {
+  __typename?: 'ConversationConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ConversationEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 /** Context type for the conversation */
 export enum ConversationContextType {
   None = 'NONE',
   PickupGame = 'PICKUP_GAME'
 }
+
+/** An edge in the ConversationConnection. */
+export type ConversationEdge = {
+  __typename?: 'ConversationEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Conversation;
+};
 
 export type ConversationFilterInput = {
   /** Filter by context type (e.g., pickup_game, none) */
@@ -1657,16 +1853,6 @@ export type ConversationFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by conversation type */
   type?: InputMaybe<ConversationType>;
-};
-
-export type ConversationList = {
-  __typename?: 'ConversationList';
-  /** List of conversations */
-  conversations: Array<Conversation>;
-  /** Whether there are more conversations to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Total number of conversations */
-  total: Scalars['Int']['output'];
 };
 
 /** Type of conversation */
@@ -1825,18 +2011,24 @@ export type CourtAvailability = {
   sportType: SportType;
 };
 
-export type CourtList = {
-  __typename?: 'CourtList';
-  /** List of courts */
-  courts: Array<Court>;
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for Court items. */
+export type CourtConnection = {
+  __typename?: 'CourtConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<CourtEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the CourtConnection. */
+export type CourtEdge = {
+  __typename?: 'CourtEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Court;
 };
 
 export type CourtPricing = {
@@ -1865,6 +2057,13 @@ export type CourtPricingInput = {
   /** Start time (HH:mm) */
   startTime: Scalars['String']['input'];
 };
+
+export enum CourtQuadrant {
+  FarLeft = 'FAR_LEFT',
+  FarRight = 'FAR_RIGHT',
+  NearLeft = 'NEAR_LEFT',
+  NearRight = 'NEAR_RIGHT'
+}
 
 /** Status of the court */
 export enum CourtStatus {
@@ -1896,14 +2095,20 @@ export type CreateBookingInput = {
 };
 
 export type CreateBookingPassInput = {
-  /** Asking price */
+  /** Giá pass (VND) */
   askingPrice: Scalars['Int']['input'];
-  /** Booking ID to pass */
-  bookingId: Scalars['ID']['input'];
-  /** Description/reason for passing */
+  /** Booking ID — bắt buộc khi source=INTERNAL */
+  bookingId?: InputMaybe<Scalars['ID']['input']>;
+  /** Mô tả/lý do pass */
   description?: InputMaybe<Scalars['String']['input']>;
-  /** Target user ID for private pass */
+  /** Snapshot lịch đặt — bắt buộc khi source=EXTERNAL */
+  externalBooking?: InputMaybe<ExternalBookingInput>;
+  /** Loại pass — mặc định INTERNAL nếu bỏ trống (backwards-compat) */
+  source?: InputMaybe<BookingPassSource>;
+  /** Target user ID cho private pass */
   transfereeId?: InputMaybe<Scalars['ID']['input']>;
+  /** Venue ID khi user pick venue có sẵn (claimed hoặc UNCLAIMED) — chỉ EXTERNAL */
+  venueId?: InputMaybe<Scalars['ID']['input']>;
   /** Pass visibility */
   visibility: BookingPassVisibility;
 };
@@ -2098,6 +2303,29 @@ export type CreateOrderInput = {
   venueId: Scalars['ID']['input'];
 };
 
+export type CreateOtpTestPhoneInput = {
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Human-readable label for QA / ops */
+  label: Scalars['String']['input'];
+  /** Vietnamese phone number (E.164 after normalisation) */
+  phone: Scalars['String']['input'];
+  /** Fixed 6-digit OTP code */
+  testCode: Scalars['String']['input'];
+};
+
+export type CreateOtpTestUserGrantInput = {
+  /** Default SIGN_IN_PHONE only */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  /** Grant expiry (default +24h, max +7d) */
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Reason / ticket reference (min 10 chars) */
+  reason: Scalars['String']['input'];
+  /** User ID to grant test OTP login */
+  userId: Scalars['String']['input'];
+};
+
 export type CreatePickupGameCampaignInput = {
   /** Mô tả campaign */
   description?: InputMaybe<Scalars['String']['input']>;
@@ -2110,7 +2338,7 @@ export type CreatePickupGameCampaignInput = {
   /** Tên campaign */
   name: Scalars['String']['input'];
   /** Môn thể thao của campaign */
-  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  sportTypes?: InputMaybe<Array<SportType>>;
   /** Ngày bắt đầu (ISO string) */
   startDate?: InputMaybe<Scalars['String']['input']>;
   /** Trình độ mục tiêu */
@@ -2193,6 +2421,31 @@ export type CreatePostInput = {
   title?: InputMaybe<Scalars['String']['input']>;
   /** Visibility of the post */
   visibility?: InputMaybe<PostVisibility>;
+};
+
+export type CreateProductCategoryInput = {
+  /** Category color (hex code) */
+  color?: InputMaybe<Scalars['String']['input']>;
+  /** Category description */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Display order */
+  displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** Category icon */
+  icon?: InputMaybe<Scalars['String']['input']>;
+  /** Category image URL */
+  imageUrl?: InputMaybe<Scalars['String']['input']>;
+  /** Category name */
+  name: Scalars['String']['input'];
+  /** Parent category ID */
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  /** Shop ID (for shop categories) */
+  shopId?: InputMaybe<Scalars['ID']['input']>;
+  /** URL-friendly slug (auto-generated if not provided) */
+  slug?: InputMaybe<Scalars['String']['input']>;
+  /** Category type */
+  type?: InputMaybe<CategoryType>;
+  /** Venue ID (for venue categories) */
+  venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateProductInput = {
@@ -2362,6 +2615,19 @@ export type CreateReferralCodeInput = {
   ownerRole?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateScoreboardSessionInput = {
+  leftSidePlayer?: InputMaybe<Scalars['Int']['input']>;
+  matchFormat: ScoreboardMatchFormat;
+  scheduledAt?: InputMaybe<Scalars['DateTime']['input']>;
+  scoringConfig: ScoringConfigInput;
+  servingPlayer?: InputMaybe<Scalars['Int']['input']>;
+  side1: ScoreboardSideInput;
+  side2: ScoreboardSideInput;
+  sportType: SportType;
+  /** If true, start immediately as LIVE */
+  startImmediately?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type CreateStaffBookingInput = {
   /** Customer user ID (if booking for existing user) */
   customerId?: InputMaybe<Scalars['ID']['input']>;
@@ -2481,6 +2747,25 @@ export type CreateTournamentInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateUserSubmittedVenueInput = {
+  /** Địa chỉ đầy đủ */
+  address: Scalars['String']['input'];
+  /** Tỉnh/Thành phố */
+  city?: InputMaybe<Scalars['String']['input']>;
+  /** Quận/Huyện */
+  district?: InputMaybe<Scalars['String']['input']>;
+  /** Vĩ độ */
+  latitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Kinh độ */
+  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Tên sân */
+  name: Scalars['String']['input'];
+  /** Danh sách môn thể thao tại sân */
+  sportTypes: Array<SportType>;
+  /** Phường/Xã */
+  ward?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -2565,6 +2850,17 @@ export type CurrentLegalDocuments = {
   privacyPolicy?: Maybe<LegalDocumentSummary>;
   /** Current Terms of Service */
   termsOfService?: Maybe<LegalDocumentSummary>;
+};
+
+export type CursorPageInput = {
+  /** Opaque cursor pointing at the last item of the previous page. */
+  after?: InputMaybe<Scalars['String']['input']>;
+  /** Reserved for backwards pagination. */
+  before?: InputMaybe<Scalars['String']['input']>;
+  /** Number of items to return after the cursor (1..50). */
+  first?: InputMaybe<Scalars['Int']['input']>;
+  /** Reserved for backwards pagination (1..50). */
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CustomLocation = {
@@ -2821,6 +3117,53 @@ export type ExecuteDrawInput = {
   seeds?: Array<SeedPlayerInput>;
 };
 
+export type ExternalBookingInput = {
+  /** Ngày đặt (ISO 8601 date) */
+  bookingDate: Scalars['String']['input'];
+  /** Tên sân con (nếu có) */
+  courtName?: InputMaybe<Scalars['String']['input']>;
+  /** Thời gian kết thúc (ISO 8601) */
+  endTime: Scalars['String']['input'];
+  /** Ghi chú thêm về booking gốc */
+  notes?: InputMaybe<Scalars['String']['input']>;
+  /** Giá gốc (VND) */
+  originalPrice: Scalars['Int']['input'];
+  /** URL ảnh chứng từ (1-5 ảnh) */
+  proofImages: Array<Scalars['String']['input']>;
+  /** Loại thể thao */
+  sportType: SportType;
+  /** Thời gian bắt đầu (ISO 8601) */
+  startTime: Scalars['String']['input'];
+  /** Địa chỉ sân (tuỳ chọn) */
+  venueAddress?: InputMaybe<Scalars['String']['input']>;
+  /** Tên sân do user khai báo */
+  venueName: Scalars['String']['input'];
+};
+
+export type ExternalBookingSnapshot = {
+  __typename?: 'ExternalBookingSnapshot';
+  /** Ngày đặt (YYYY-MM-DD) */
+  bookingDate: Scalars['String']['output'];
+  /** Mã đặt sân (nếu có) */
+  bookingReference?: Maybe<Scalars['String']['output']>;
+  /** Tên sân con (nếu có) */
+  courtName?: Maybe<Scalars['String']['output']>;
+  /** Thời lượng (phút) */
+  durationMinutes: Scalars['Int']['output'];
+  /** Giờ kết thúc (HH:mm) */
+  endTime: Scalars['String']['output'];
+  /** Ảnh chứng từ booking gốc (1-5 ảnh) */
+  proofImages: Array<Scalars['String']['output']>;
+  /** Môn thể thao */
+  sportType?: Maybe<SportType>;
+  /** Giờ bắt đầu (HH:mm) */
+  startTime: Scalars['String']['output'];
+  /** Địa chỉ sân */
+  venueAddress?: Maybe<Scalars['String']['output']>;
+  /** Tên sân do user khai báo */
+  venueName: Scalars['String']['output'];
+};
+
 export type FavoriteResult = {
   __typename?: 'FavoriteResult';
   /** Whether venue is now favorited */
@@ -2832,14 +3175,18 @@ export type FinishMatchEarlyInput = {
 };
 
 export type FirebaseSignInInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type FirebaseSignUpInput = {
   email?: InputMaybe<Scalars['String']['input']>;
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
   fullName: Scalars['String']['input'];
-  idToken: Scalars['String']['input'];
+  idToken?: InputMaybe<Scalars['String']['input']>;
   password: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
   /** Mã giới thiệu (không bắt buộc) */
   referralCode?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2857,22 +3204,24 @@ export type FollowedHost = {
   userId: Scalars['ID']['output'];
 };
 
-export type FollowedHostList = {
-  __typename?: 'FollowedHostList';
-  /** Danh sách host đang follow */
-  followedHosts: Array<FollowedHost>;
-  /** Còn trang tiếp theo */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
+/** A Relay-style connection for FollowedHost items. */
+export type FollowedHostConnection = {
+  __typename?: 'FollowedHostConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<FollowedHostEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the FollowedHostConnection. */
+export type FollowedHostEdge = {
+  __typename?: 'FollowedHostEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: FollowedHost;
 };
 
 export type ForwardMessageInput = {
@@ -2933,28 +3282,32 @@ export type GameTemplate = {
   visibility: GameVisibility;
 };
 
-export type GameTemplateList = {
-  __typename?: 'GameTemplateList';
-  /** Còn trang tiếp theo */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Danh sách template */
-  templates: Array<GameTemplate>;
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
+/** A Relay-style connection for GameTemplate items. */
+export type GameTemplateConnection = {
+  __typename?: 'GameTemplateConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<GameTemplateEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the GameTemplateConnection. */
+export type GameTemplateEdge = {
+  __typename?: 'GameTemplateEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: GameTemplate;
 };
 
 export type GameTimeSlot = {
   __typename?: 'GameTimeSlot';
-  /** Ngày chơi (YYYY-MM-DD) */
+  /** Ngày bắt đầu chơi (YYYY-MM-DD) */
   date: Scalars['String']['output'];
+  /** Ngày kết thúc (YYYY-MM-DD). Mặc định cùng ngày bắt đầu. */
+  endDate: Scalars['String']['output'];
   /** Giờ kết thúc (HH:mm) */
   endTime: Scalars['String']['output'];
   /** Giờ bắt đầu (HH:mm) */
@@ -2964,6 +3317,8 @@ export type GameTimeSlot = {
 export type GameTimeSlotInput = {
   /** Ngày chơi (YYYY-MM-DD) */
   date: Scalars['String']['input'];
+  /** Ngày kết thúc (YYYY-MM-DD). Bỏ trống = cùng ngày bắt đầu hoặc tự suy ra khi kết thúc qua đêm. */
+  endDate?: InputMaybe<Scalars['String']['input']>;
   /** Giờ kết thúc (HH:mm) */
   endTime: Scalars['String']['input'];
   /** Giờ bắt đầu (HH:mm) */
@@ -3040,12 +3395,25 @@ export type GenerateBracketInput = {
   categoryId: Scalars['ID']['input'];
 };
 
+export type GrantPortalCapabilityInput = {
+  capability: PortalCapability;
+  /** Reason / ticket reference (min 10 chars) */
+  reason: Scalars['String']['input'];
+  /** Target user ID */
+  userId: Scalars['String']['input'];
+};
+
 export type Group = {
   __typename?: 'Group';
   _id: Scalars['ID']['output'];
   /** Group address/location */
   address?: Maybe<Scalars['String']['output']>;
-  /** Cover image URL */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Cover image URL
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Group creator */
@@ -3081,29 +3449,37 @@ export type Group = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for Group items. */
+export type GroupConnection = {
+  __typename?: 'GroupConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<GroupEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the GroupConnection. */
+export type GroupEdge = {
+  __typename?: 'GroupEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Group;
+};
+
 export type GroupFilterInput = {
   /** Filter only groups user is member of */
   myGroups?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter groups where current user has a pending join request */
+  pendingOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by privacy */
   privacy?: InputMaybe<GroupPrivacy>;
   /** Search query for name/description */
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by sport type */
   sportType?: InputMaybe<SportType>;
-};
-
-export type GroupList = {
-  __typename?: 'GroupList';
-  /** List of groups */
-  groups: Array<Group>;
-  /** Whether there are more groups to fetch */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** Total number of groups */
-  total: Scalars['Int']['output'];
 };
 
 export type GroupMember = {
@@ -3137,18 +3513,24 @@ export type GroupMember = {
   userId: Scalars['ID']['output'];
 };
 
-export type GroupMemberList = {
-  __typename?: 'GroupMemberList';
-  /** Whether there are more members to fetch */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** List of members */
-  members: Array<GroupMember>;
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** Total number of members */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for GroupMember items. */
+export type GroupMemberConnection = {
+  __typename?: 'GroupMemberConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<GroupMemberEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the GroupMemberConnection. */
+export type GroupMemberEdge = {
+  __typename?: 'GroupMemberEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: GroupMember;
 };
 
 /** Role of a member in the group */
@@ -3200,18 +3582,24 @@ export type GroupMessage = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type GroupMessageList = {
-  __typename?: 'GroupMessageList';
-  /** Whether there are more messages to fetch */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** List of messages */
-  messages: Array<GroupMessage>;
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** Total number of messages */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for GroupMessage items. */
+export type GroupMessageConnection = {
+  __typename?: 'GroupMessageConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<GroupMessageEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the GroupMessageConnection. */
+export type GroupMessageEdge = {
+  __typename?: 'GroupMessageEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: GroupMessage;
 };
 
 export type GroupMessageMedia = {
@@ -3350,22 +3738,24 @@ export type HostBlacklist = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type HostBlacklistList = {
-  __typename?: 'HostBlacklistList';
-  /** Danh sách user bị chặn */
-  entries: Array<HostBlacklist>;
-  /** Còn trang tiếp theo */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
+/** A Relay-style connection for HostBlacklist items. */
+export type HostBlacklistConnection = {
+  __typename?: 'HostBlacklistConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<HostBlacklistEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the HostBlacklistConnection. */
+export type HostBlacklistEdge = {
+  __typename?: 'HostBlacklistEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: HostBlacklist;
 };
 
 export type HostStatistics = {
@@ -3392,6 +3782,25 @@ export type HostStatistics = {
   totalParticipants: Scalars['Int']['output'];
   /** Tổng doanh thu */
   totalRevenue: Scalars['Int']['output'];
+};
+
+/** A user-uploaded image asset with placeholder & responsive variants. */
+export type ImageMedia = {
+  __typename?: 'ImageMedia';
+  /** Compact base83 BlurHash placeholder; clients decode locally to render an instant preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
+  /** Pixel height of the original image. */
+  height?: Maybe<Scalars['Int']['output']>;
+  /** ~800px medium variant (feed cards, detail header). */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
+  /** Storage key — useful for backend cleanup jobs. */
+  storageKey?: Maybe<Scalars['String']['output']>;
+  /** ~200px thumbnail variant (chat list, search row). */
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
+  /** Full-resolution image URL. */
+  url: Scalars['String']['output'];
+  /** Pixel width of the original image. */
+  width?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ImportStockInput = {
@@ -3648,6 +4057,30 @@ export type MatchCourt = {
   name: Scalars['String']['output'];
 };
 
+export type MatchEventGql = {
+  __typename?: 'MatchEventGql';
+  id: Scalars['ID']['output'];
+  payload?: Maybe<Scalars['String']['output']>;
+  scoringPlayer?: Maybe<Scalars['Int']['output']>;
+  setNumber?: Maybe<Scalars['Int']['output']>;
+  timestamp: Scalars['String']['output'];
+  type: MatchEventType;
+};
+
+export enum MatchEventType {
+  Fault = 'FAULT',
+  Let = 'LET',
+  ManualCorrection = 'MANUAL_CORRECTION',
+  PhaseChange = 'PHASE_CHANGE',
+  Point = 'POINT',
+  Retirement = 'RETIREMENT',
+  ServeChange = 'SERVE_CHANGE',
+  ServiceOver = 'SERVICE_OVER',
+  SetComplete = 'SET_COMPLETE',
+  SwapEnds = 'SWAP_ENDS',
+  Undo = 'UNDO'
+}
+
 export type MatchFilterInput = {
   categoryId?: InputMaybe<Scalars['String']['input']>;
   /** Filter by group ID */
@@ -3659,17 +4092,6 @@ export type MatchFilterInput = {
   statuses?: InputMaybe<Array<MatchStatus>>;
 };
 
-export type MatchList = {
-  __typename?: 'MatchList';
-  hasNextPage: Scalars['Boolean']['output'];
-  hasPrevPage: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  matches: Array<TournamentMatch>;
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  totalPages: Scalars['Int']['output'];
-};
-
 export type MatchMember = {
   __typename?: 'MatchMember';
   avatarUrl?: Maybe<Scalars['String']['output']>;
@@ -3678,6 +4100,16 @@ export type MatchMember = {
   name?: Maybe<Scalars['String']['output']>;
   userId?: Maybe<Scalars['ID']['output']>;
 };
+
+/** Current match orchestration phase */
+export enum MatchPhase {
+  BetweenGames = 'BETWEEN_GAMES',
+  Finished = 'FINISHED',
+  MidGameInterval = 'MID_GAME_INTERVAL',
+  Play = 'PLAY',
+  Setup = 'SETUP',
+  Warmup = 'WARMUP'
+}
 
 export type MatchPlayer = {
   __typename?: 'MatchPlayer';
@@ -3722,6 +4154,14 @@ export type MatchScorecard = {
   status: ScorecardStatus;
   tournamentId: Scalars['ID']['output'];
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type MatchSetupInput = {
+  leftSidePlayer: Scalars['Int']['input'];
+  servingPlayer: Scalars['Int']['input'];
+  setupMethod?: InputMaybe<Scalars['String']['input']>;
+  side1MemberLabels?: InputMaybe<Array<Scalars['String']['input']>>;
+  side2MemberLabels?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 /** How pre-match serve/side setup was decided */
@@ -3798,6 +4238,17 @@ export type Message = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for Message items. */
+export type MessageConnection = {
+  __typename?: 'MessageConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<MessageEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type MessageDeletedPayload = {
   __typename?: 'MessageDeletedPayload';
   conversationId: Scalars['ID']['output'];
@@ -3805,14 +4256,13 @@ export type MessageDeletedPayload = {
   messageId: Scalars['ID']['output'];
 };
 
-export type MessageList = {
-  __typename?: 'MessageList';
-  /** Whether there are more messages to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** List of messages */
-  messages: Array<Message>;
-  /** Total number of messages */
-  total: Scalars['Int']['output'];
+/** An edge in the MessageConnection. */
+export type MessageEdge = {
+  __typename?: 'MessageEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Message;
 };
 
 export type MessageLocation = {
@@ -3836,10 +4286,14 @@ export type MessageLocationInput = {
 
 export type MessageMedia = {
   __typename?: 'MessageMedia';
+  /** BlurHash placeholder used to render an instant preview on the chat bubble. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Duration in seconds (for videos/audio) */
   duration?: Maybe<Scalars['Float']['output']>;
   /** Height in pixels (for images/videos) */
   height?: Maybe<Scalars['Float']['output']>;
+  /** ~800px medium variant for bubble preview. */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
   /** MIME type of the file */
   mimeType?: Maybe<Scalars['String']['output']>;
   /** File size in bytes */
@@ -3879,6 +4333,18 @@ export type MessageReaction = {
   userId: Scalars['ID']['output'];
 };
 
+export type MessageReactionsBatchEntry = {
+  __typename?: 'MessageReactionsBatchEntry';
+  messageId: Scalars['ID']['output'];
+  reactions: Array<ReactionDelta>;
+};
+
+export type MessageReactionsBatchPayload = {
+  __typename?: 'MessageReactionsBatchPayload';
+  conversationId: Scalars['ID']['output'];
+  items: Array<MessageReactionsBatchEntry>;
+};
+
 export type MessageReadPayload = {
   __typename?: 'MessageReadPayload';
   conversationId: Scalars['ID']['output'];
@@ -3916,23 +4382,29 @@ export type MessageReport = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for MessageReport items. */
+export type MessageReportConnection = {
+  __typename?: 'MessageReportConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<MessageReportEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the MessageReportConnection. */
+export type MessageReportEdge = {
+  __typename?: 'MessageReportEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: MessageReport;
+};
+
 export type MessageReportFilterInput = {
   /** Filter by report status */
   status?: InputMaybe<ReportStatus>;
-};
-
-export type MessageReportList = {
-  __typename?: 'MessageReportList';
-  /** Has more reports to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** List of message reports */
-  reports: Array<MessageReport>;
-  /** Total number of reports */
-  total: Scalars['Int']['output'];
 };
 
 export type MessageReportStats = {
@@ -3976,6 +4448,34 @@ export type MonthGameCount = {
   month: Scalars['String']['output'];
 };
 
+export type MoveMatchInput = {
+  /** After move, repack subsequent matches on the same court/day */
+  autoRepack?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Target court name */
+  courtName: Scalars['String']['input'];
+  matchId: Scalars['ID']['input'];
+  /** New scheduledAt ISO local string */
+  scheduledAt: Scalars['String']['input'];
+};
+
+/** Preview moving a match without persisting */
+export type MoveMatchPreviewResult = {
+  __typename?: 'MoveMatchPreviewResult';
+  affectedPreview?: Maybe<Array<ScheduleShiftPreview>>;
+  match: TournamentMatch;
+  suggestRepack: Scalars['Boolean']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
+
+/** Result of atomic move (+ optional repack) */
+export type MoveMatchResult = {
+  __typename?: 'MoveMatchResult';
+  match: TournamentMatch;
+  repackPreview?: Maybe<Array<ScheduleShiftPreview>>;
+  repackedCount: Scalars['Int']['output'];
+  warnings: Array<Scalars['String']['output']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** Accept a group invitation */
@@ -4010,7 +4510,7 @@ export type Mutation = {
   adminApproveVenue: Venue;
   /** Change user role (Super Admin only) */
   adminChangeUserRole: User;
-  /** Create a new user account (SUPER_ADMIN can create ADMIN/FACILITY_OWNER, ADMIN can create FACILITY_OWNER) */
+  /** Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER) */
   adminCreateUser: User;
   /** Provision a PLAYER account on behalf of a user (Super Admin only) */
   adminProvisionPlayer: AdminProvisionPlayerResponse;
@@ -4018,11 +4518,11 @@ export type Mutation = {
   adminRejectVenue: Venue;
   /** Reset password for a PLAYER account (Super Admin only) */
   adminResetUserPassword: AdminResetUserPasswordResponse;
-  /** Suspend a user (Admin only) */
+  /** Suspend a user (Super Admin only) */
   adminSuspendUser: User;
   /** Suspend venue (Admin only) */
   adminSuspendVenue: Venue;
-  /** Unsuspend a user (Admin only) */
+  /** Unsuspend a user (Super Admin only) */
   adminUnsuspendUser: User;
   /** Approve a group join request (admin only) */
   approveGroupJoinRequest: GroupMember;
@@ -4094,6 +4594,7 @@ export type Mutation = {
   cancelRecurringBooking: Booking;
   /** Cancel a single session of recurring booking */
   cancelRecurringSession: Booking;
+  cancelScoreboardSession: ScoreboardSession;
   /** Cancel tournament */
   cancelTournament: Tournament;
   /** Cancel a pending request */
@@ -4133,21 +4634,21 @@ export type Mutation = {
   /** Complete tournament */
   completeTournament: Tournament;
   /** Confirm booking */
-  confirmBooking: Booking;
+  confirmBooking: BookingWithOrderPayload;
   /** Confirm draw and transition category to IN_PROGRESS */
   confirmDraw: SuccessResponse;
   /** Confirm email update after OTP verification */
   confirmEmailUpdate: SuccessResponse;
   /** Confirm a hold booking (staff) */
-  confirmHoldBooking: Booking;
+  confirmHoldBooking: BookingWithOrderPayload;
   /** Confirm order */
   confirmOrder: Order;
   /** Confirm pass transfer (owner confirms after receiving payment) */
   confirmPassTransfer: BookingPass;
-  /** Confirm phone number update after OTP verification via Firebase */
+  /** Confirm phone number update (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   confirmPhoneUpdate: SuccessResponse;
   /** Confirm recurring booking (all sessions) */
-  confirmRecurringBooking: Booking;
+  confirmRecurringBooking: BookingWithOrderPayload;
   /** BTC sửa kết quả trận đã kết thúc (khi vòng sau chưa đấu) */
   correctFinishedMatchResult: TournamentMatch;
   /** Create booking (customer) */
@@ -4178,6 +4679,10 @@ export type Mutation = {
   createNotification: Notification;
   /** Create order (customer) */
   createOrder: Order;
+  /** Create OTP test phone (SUPER_ADMIN only) */
+  createOtpTestPhone: OtpTestPhone;
+  /** Create OTP test user login grant (SUPER_ADMIN only) */
+  createOtpTestUserGrant: OtpTestUserGrant;
   /** Tạo kèo mới */
   createPickupGame: PickupGame;
   /** Tạo campaign mới */
@@ -4186,6 +4691,8 @@ export type Mutation = {
   createPost: Post;
   /** Create product */
   createProduct: Product;
+  /** Create product category */
+  createProductCategory: ProductCategory;
   /** Create a new promotion */
   createPromotion: Promotion;
   /** Create a new QR campaign (Admin only) */
@@ -4194,14 +4701,18 @@ export type Mutation = {
   createRecurringBooking: Booking;
   /** Create a new referral code (Admin only) */
   createReferralCode: ReferralCode;
+  /** Create scoreboard session */
+  createScoreboardSession: ScoreboardSession;
   /** Create staff booking */
-  createStaffBooking: Booking;
+  createStaffBooking: BookingWithOrderPayload;
   /** Create staff order */
   createStaffOrder: Order;
   /** Create recurring booking by staff. Supports single-day and multi-day bookings. */
-  createStaffRecurringBooking: Booking;
+  createStaffRecurringBooking: BookingWithOrderPayload;
   /** Create a new tournament */
   createTournament: Tournament;
+  /** Tạo venue do user submit từ flow Pass sân (UNCLAIMED, PENDING). Throttled 3/day/user. Auto-dedupe theo (name + city). */
+  createUserSubmittedVenue: Venue;
   /** Create a new venue (request) */
   createVenue: Venue;
   /** Create a new venue request */
@@ -4240,10 +4751,13 @@ export type Mutation = {
   deletePostByAdmin: Scalars['Boolean']['output'];
   /** Delete product */
   deleteProduct: Scalars['Boolean']['output'];
+  /** Delete product category */
+  deleteProductCategory: Scalars['Boolean']['output'];
   /** Delete a promotion */
   deletePromotion: Scalars['Boolean']['output'];
   /** Delete registration (organizer only) */
   deleteRegistration: SuccessResponse;
+  deleteScoreboardSession: Scalars['Boolean']['output'];
   /** Permanently delete a DRAFT tournament */
   deleteTournament: SuccessResponse;
   /** Delete venue */
@@ -4270,8 +4784,12 @@ export type Mutation = {
   forwardMessage: Array<Message>;
   /** Generate bracket for category */
   generateBracket: Array<TournamentMatch>;
+  /** Grant portal capability to user (SUPER_ADMIN only) */
+  grantPortalCapability: PortalCapabilityGrant;
   /** Import stock for a product */
   importStock: StockMovement;
+  /** Atomically bump a post view count. Fire-and-forget from the client; returns the new view count or null if the post does not exist. */
+  incrementPostView?: Maybe<Scalars['Int']['output']>;
   /** Invite a user to join a group (admin/mod only) */
   inviteMember: GroupMember;
   /** Invite a referee to the tournament (pool-level invite) */
@@ -4316,6 +4834,8 @@ export type Mutation = {
   markOrderPreparing: Order;
   /** Mark order as ready */
   markOrderReady: Order;
+  /** Move match to new court/time with optional court repack */
+  moveMatchWithCascade: MoveMatchResult;
   /** Move products to another venue */
   moveProductsToVenue: BulkOperationResult;
   /** Mute a conversation */
@@ -4342,6 +4862,8 @@ export type Mutation = {
   publishTournament: Tournament;
   /** Đánh giá người tham gia */
   rateParticipants: Scalars['Boolean']['output'];
+  /** Đánh giá người chuyển pass sau khi giao dịch COMPLETED. Chỉ receiver mới được rate. */
+  ratePassTransfer: TransferrerRating;
   /** Record a QR code scan event (Public - called by landing page) */
   recordQrScan: SuccessResponse;
   /** Record one venue detail view */
@@ -4384,6 +4906,8 @@ export type Mutation = {
   repackCourtSchedule: RepackCourtScheduleResult;
   /** Reply to review */
   replyToReview: VenueReview;
+  /** Báo cáo một pass sân (anti-spam: không dup 24h, không self). */
+  reportBookingPass: BookingPassReport;
   /** Report a message */
   reportMessage: MessageReport;
   /** Report a post */
@@ -4400,11 +4924,13 @@ export type Mutation = {
   requestJoinGroup: GroupMember;
   /** Request password reset (validates user exists, frontend sends OTP via Firebase) */
   requestPasswordReset: SuccessResponse;
+  /** Request a phone OTP. Backend decides ZNS vs Firebase fallback. */
+  requestPhoneOtp: RequestPhoneOtpResponse;
   /** Request phone number update (validates availability, frontend sends OTP) */
   requestPhoneUpdate: SuccessResponse;
   /** Reset bracket (delete all matches) */
   resetBracket: SuccessResponse;
-  /** Reset password after OTP verification via Firebase Phone Auth */
+  /** Reset password after OTP verification (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   resetPassword: SuccessResponse;
   /** Referee responds to invite (accept or decline) */
   respondRefereeInvite: TournamentMatch;
@@ -4412,10 +4938,16 @@ export type Mutation = {
   respondTournamentRefereeInvite: TournamentReferee;
   /** Process customer return */
   returnStock: StockMovement;
+  /** [Admin] Xét báo cáo pass sân */
+  reviewBookingPassReport: BookingPassReport;
   /** Review (approve/reject) a claim request - Admin only */
   reviewClaimRequest: VenueClaimRequest;
   /** Review promotion (owner approves/rejects) */
   reviewPromotion: Promotion;
+  /** Revoke OTP test user login grant (SUPER_ADMIN only) */
+  revokeOtpTestUserGrant: OtpTestUserGrant;
+  /** Revoke portal capability grant (SUPER_ADMIN only) */
+  revokePortalCapability: PortalCapabilityGrant;
   /** Save FCM token */
   saveFcmToken: Scalars['Boolean']['output'];
   /** Lưu kèo */
@@ -4424,6 +4956,20 @@ export type Mutation = {
   scheduleMatch: ScheduleMatchResult;
   /** Score a point */
   scorePoint: MatchScorecard;
+  /** Resume after interval / warmup */
+  scoreboardAdvancePhase: ScoreboardSession;
+  scoreboardCompleteSet: ScoreboardSession;
+  scoreboardFinishMatchEarly: ScoreboardSession;
+  scoreboardRecordFault: ScoreboardSession;
+  scoreboardRecordLet: ScoreboardSession;
+  scoreboardRetireSession: ScoreboardSession;
+  scoreboardScorePoint: ScoreboardSession;
+  /** Manually correct badminton doubles server/receiver */
+  scoreboardSetBadmintonDoublesServer: ScoreboardSession;
+  scoreboardSetServingPlayer: ScoreboardSession;
+  scoreboardSwapCourtSides: ScoreboardSession;
+  scoreboardUndoLastPoint: ScoreboardSession;
+  scoreboardUpdateElapsed: ScoreboardSession;
   /** Seed knockout bracket from group stage results (GROUP_KNOCKOUT format only) */
   seedKnockoutBracket: Array<TournamentMatch>;
   /** Seed players in category */
@@ -4446,6 +4992,8 @@ export type Mutation = {
   setGroupTypingStatus: Scalars['Boolean']['output'];
   /** BTC ghi nhận walkover */
   setMatchWalkover: TournamentMatch;
+  /** Enable or disable OTP test phone (SUPER_ADMIN only) */
+  setOtpTestPhoneEnabled: OtpTestPhone;
   /** VĐV bỏ cuộc giữa trận (chỉ khi trận đang LIVE) */
   setRetirement: TournamentMatch;
   /** Đặt lại người giao cầu (trọng tài) */
@@ -4454,18 +5002,20 @@ export type Mutation = {
   shareGameToGroups: Scalars['Boolean']['output'];
   /** Login with email/phone and password */
   signIn: AuthResponse;
-  /** Sign in with Firebase Phone Authentication */
+  /** Sign in with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   signInWithFirebase: AuthResponse;
   /** Logout current user */
   signOut: Scalars['Boolean']['output'];
   /** Logout from all devices */
   signOutAllDevices: Scalars['Boolean']['output'];
-  /** Sign up with Firebase Phone Authentication */
+  /** Sign up with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback) */
   signUpWithFirebase: AuthResponse;
   /** Start a match and create scorecard */
   startMatch: MatchScorecard;
   /** Bắt đầu kèo thủ công */
   startPickupGame: PickupGame;
+  /** Start a scheduled scoreboard session */
+  startScoreboardSession: ScoreboardSession;
   /** Start tournament */
   startTournament: Tournament;
   /** Signal that user is typing */
@@ -4542,8 +5092,12 @@ export type Mutation = {
   updateMessageReportStatus: MessageReport;
   /** Update internal note */
   updateOrderInternalNote: Order;
+  /** Update order payment status */
+  updateOrderPaymentStatus: Order;
   /** Update order status */
   updateOrderStatus: Order;
+  /** Update OTP test phone (SUPER_ADMIN only) */
+  updateOtpTestPhone: OtpTestPhone;
   /** Cập nhật trạng thái đặt cọc */
   updateParticipantDeposit: PickupGameParticipant;
   /** Cập nhật trạng thái thanh toán */
@@ -4558,6 +5112,8 @@ export type Mutation = {
   updatePost: Post;
   /** Update product */
   updateProduct: Product;
+  /** Update product category */
+  updateProductCategory: ProductCategory;
   /** Update user profile */
   updateProfile: User;
   /** Update a promotion */
@@ -4586,7 +5142,7 @@ export type Mutation = {
   updateVenueStaffPermissions: VenueStaff;
   /** Update staff custom title */
   updateVenueStaffTitle: VenueStaff;
-  /** Upload avatar image and update user photoURL */
+  /** Upload avatar image; persists both legacy photoURL and the new structured `avatar` (with blurhash + variants). */
   uploadAvatar: UploadResponse;
   /** Upload media for chat messages */
   uploadChatMedia: ChatMediaUploadResult;
@@ -4600,6 +5156,8 @@ export type Mutation = {
   uploadPaymentProof: Order;
   /** Upload post media image and return URL */
   uploadPostMedia: UploadPostMediaResponse;
+  /** Upload + process an image (blurhash + thumbnail + medium variants). */
+  uploadProcessedImage: ImageMedia;
   /** Upload product image and return URL */
   uploadProductImage: UploadPostMediaResponse;
   /** Upload tournament image (QR code, banner, etc.) and return URL */
@@ -4610,6 +5168,8 @@ export type Mutation = {
   uploadVenueRequestImage: UploadPostMediaResponse;
   /** Verify OTP code for email verification, password reset, etc. */
   verifyOtp: OtpResponse;
+  /** Verify a phone OTP (ZNS path). Returns a short-lived phoneVerificationToken. */
+  verifyPhoneOtp: VerifyPhoneOtpResponse;
 };
 
 
@@ -4927,6 +5487,11 @@ export type MutationCancelRecurringSessionArgs = {
 };
 
 
+export type MutationCancelScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
 export type MutationCancelTournamentArgs = {
   id: Scalars['ID']['input'];
 };
@@ -5134,6 +5699,16 @@ export type MutationCreateOrderArgs = {
 };
 
 
+export type MutationCreateOtpTestPhoneArgs = {
+  input: CreateOtpTestPhoneInput;
+};
+
+
+export type MutationCreateOtpTestUserGrantArgs = {
+  input: CreateOtpTestUserGrantInput;
+};
+
+
 export type MutationCreatePickupGameArgs = {
   input: CreatePickupGameInput;
 };
@@ -5151,6 +5726,11 @@ export type MutationCreatePostArgs = {
 
 export type MutationCreateProductArgs = {
   input: CreateProductInput;
+};
+
+
+export type MutationCreateProductCategoryArgs = {
+  input: CreateProductCategoryInput;
 };
 
 
@@ -5174,6 +5754,11 @@ export type MutationCreateReferralCodeArgs = {
 };
 
 
+export type MutationCreateScoreboardSessionArgs = {
+  input: CreateScoreboardSessionInput;
+};
+
+
 export type MutationCreateStaffBookingArgs = {
   input: CreateStaffBookingInput;
 };
@@ -5191,6 +5776,11 @@ export type MutationCreateStaffRecurringBookingArgs = {
 
 export type MutationCreateTournamentArgs = {
   input: CreateTournamentInput;
+};
+
+
+export type MutationCreateUserSubmittedVenueArgs = {
+  input: CreateUserSubmittedVenueInput;
 };
 
 
@@ -5294,6 +5884,11 @@ export type MutationDeleteProductArgs = {
 };
 
 
+export type MutationDeleteProductCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeletePromotionArgs = {
   promotionId: Scalars['ID']['input'];
 };
@@ -5301,6 +5896,11 @@ export type MutationDeletePromotionArgs = {
 
 export type MutationDeleteRegistrationArgs = {
   input: DeleteRegistrationInput;
+};
+
+
+export type MutationDeleteScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
 };
 
 
@@ -5371,9 +5971,19 @@ export type MutationGenerateBracketArgs = {
 };
 
 
+export type MutationGrantPortalCapabilityArgs = {
+  input: GrantPortalCapabilityInput;
+};
+
+
 export type MutationImportStockArgs = {
   input: ImportStockInput;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type MutationIncrementPostViewArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -5492,6 +6102,11 @@ export type MutationMarkOrderReadyArgs = {
 };
 
 
+export type MutationMoveMatchWithCascadeArgs = {
+  input: MoveMatchInput;
+};
+
+
 export type MutationMoveProductsToVenueArgs = {
   input: TransferProductsInput;
 };
@@ -5557,6 +6172,11 @@ export type MutationPublishTournamentArgs = {
 
 export type MutationRateParticipantsArgs = {
   input: RateParticipantsInput;
+};
+
+
+export type MutationRatePassTransferArgs = {
+  input: RatePassTransferInput;
 };
 
 
@@ -5668,6 +6288,11 @@ export type MutationReplyToReviewArgs = {
 };
 
 
+export type MutationReportBookingPassArgs = {
+  input: ReportBookingPassInput;
+};
+
+
 export type MutationReportMessageArgs = {
   input: ReportMessageInput;
 };
@@ -5709,6 +6334,11 @@ export type MutationRequestPasswordResetArgs = {
 };
 
 
+export type MutationRequestPhoneOtpArgs = {
+  input: RequestPhoneOtpInput;
+};
+
+
 export type MutationRequestPhoneUpdateArgs = {
   input: RequestPhoneUpdateInput;
 };
@@ -5740,6 +6370,11 @@ export type MutationReturnStockArgs = {
 };
 
 
+export type MutationReviewBookingPassReportArgs = {
+  input: ReviewBookingPassReportInput;
+};
+
+
 export type MutationReviewClaimRequestArgs = {
   input: ReviewClaimRequestInput;
 };
@@ -5747,6 +6382,16 @@ export type MutationReviewClaimRequestArgs = {
 
 export type MutationReviewPromotionArgs = {
   input: ReviewPromotionInput;
+};
+
+
+export type MutationRevokeOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationRevokePortalCapabilityArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -5767,6 +6412,66 @@ export type MutationScheduleMatchArgs = {
 
 export type MutationScorePointArgs = {
   input: ScorePointInput;
+};
+
+
+export type MutationScoreboardAdvancePhaseArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardCompleteSetArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardFinishMatchEarlyArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardRecordFaultArgs = {
+  input: ScoreboardRecordFaultInput;
+};
+
+
+export type MutationScoreboardRecordLetArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardRetireSessionArgs = {
+  input: ScoreboardRetireInput;
+};
+
+
+export type MutationScoreboardScorePointArgs = {
+  input: ScoreboardScorePointInput;
+};
+
+
+export type MutationScoreboardSetBadmintonDoublesServerArgs = {
+  input: ScoreboardSetBadmintonDoublesServerInput;
+};
+
+
+export type MutationScoreboardSetServingPlayerArgs = {
+  input: ScoreboardSetServingPlayerInput;
+};
+
+
+export type MutationScoreboardSwapCourtSidesArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardUndoLastPointArgs = {
+  input: ScoreboardSessionIdInput;
+};
+
+
+export type MutationScoreboardUpdateElapsedArgs = {
+  input: ScoreboardUpdateElapsedInput;
 };
 
 
@@ -5822,6 +6527,12 @@ export type MutationSetMatchWalkoverArgs = {
 };
 
 
+export type MutationSetOtpTestPhoneEnabledArgs = {
+  enabled: Scalars['Boolean']['input'];
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationSetRetirementArgs = {
   input: SetRetirementInput;
 };
@@ -5859,6 +6570,11 @@ export type MutationStartMatchArgs = {
 
 export type MutationStartPickupGameArgs = {
   gameId: Scalars['ID']['input'];
+};
+
+
+export type MutationStartScoreboardSessionArgs = {
+  input: StartScoreboardSessionInput;
 };
 
 
@@ -6059,10 +6775,22 @@ export type MutationUpdateOrderInternalNoteArgs = {
 };
 
 
+export type MutationUpdateOrderPaymentStatusArgs = {
+  orderId: Scalars['ID']['input'];
+  paymentStatus: OrderPaymentStatus;
+};
+
+
 export type MutationUpdateOrderStatusArgs = {
   orderId: Scalars['ID']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;
   status: OrderStatus;
+};
+
+
+export type MutationUpdateOtpTestPhoneArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateOtpTestPhoneInput;
 };
 
 
@@ -6100,6 +6828,11 @@ export type MutationUpdatePostArgs = {
 
 export type MutationUpdateProductArgs = {
   input: UpdateProductInput;
+};
+
+
+export type MutationUpdateProductCategoryArgs = {
+  input: UpdateProductCategoryInput;
 };
 
 
@@ -6217,6 +6950,11 @@ export type MutationUploadPostMediaArgs = {
 };
 
 
+export type MutationUploadProcessedImageArgs = {
+  input: UploadProcessedImageInput;
+};
+
+
 export type MutationUploadProductImageArgs = {
   input: UploadProductImageInput;
 };
@@ -6241,6 +6979,11 @@ export type MutationVerifyOtpArgs = {
   input: VerifyOtpInput;
 };
 
+
+export type MutationVerifyPhoneOtpArgs = {
+  input: VerifyPhoneOtpInput;
+};
+
 export type MyGamesFilterInput = {
   /** Từ ngày (YYYY-MM-DD) */
   dateFrom?: InputMaybe<Scalars['String']['input']>;
@@ -6261,6 +7004,7 @@ export type MyGamesFilterInput = {
 /** Filter for my passes */
 export enum MyPassesFilter {
   All = 'ALL',
+  Completed = 'COMPLETED',
   Created = 'CREATED',
   Interested = 'INTERESTED',
   Received = 'RECEIVED'
@@ -6283,25 +7027,48 @@ export type MyVenuesStats = {
   totalVenues: Scalars['Int']['output'];
 };
 
-/** List of nearby venues with distance information */
-export type NearbyVenueList = {
-  __typename?: 'NearbyVenueList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Search radius in km */
+/** Relay-style connection for geo-sorted pickup games. Sort: distance ASC, _id ASC. */
+export type NearbyPickupGameConnection = {
+  __typename?: 'NearbyPickupGameConnection';
+  edges: Array<NearbyPickupGameEdge>;
+  pageInfo: PageInfo;
+  /** Search radius in km. */
   radiusKm: Scalars['Float']['output'];
-  /** Total count within radius */
-  total: Scalars['Int']['output'];
-  /** User latitude used for search */
+  /** Total games matching geo filter. */
+  totalCount: Scalars['Float']['output'];
   userLatitude: Scalars['Float']['output'];
-  /** User longitude used for search */
   userLongitude: Scalars['Float']['output'];
-  /** List of venues with distanceKm field */
-  venues: Array<Venue>;
+};
+
+/** An edge in NearbyPickupGameConnection (game sorted by distance). */
+export type NearbyPickupGameEdge = {
+  __typename?: 'NearbyPickupGameEdge';
+  /** Opaque cursor (distance + _id). */
+  cursor: Scalars['String']['output'];
+  /** Pickup game node. */
+  node: PickupGame;
+};
+
+/** Relay-style connection for geo-sorted venues. Sort: distance ASC, _id ASC. */
+export type NearbyVenueConnection = {
+  __typename?: 'NearbyVenueConnection';
+  edges: Array<NearbyVenueEdge>;
+  pageInfo: PageInfo;
+  /** Search radius in km (0 = unlimited). */
+  radiusKm: Scalars['Float']['output'];
+  /** Total venues matching geo filter. */
+  totalCount: Scalars['Float']['output'];
+  userLatitude: Scalars['Float']['output'];
+  userLongitude: Scalars['Float']['output'];
+};
+
+/** An edge in NearbyVenueConnection (venue sorted by distance). */
+export type NearbyVenueEdge = {
+  __typename?: 'NearbyVenueEdge';
+  /** Opaque cursor (distance + _id). */
+  cursor: Scalars['String']['output'];
+  /** Venue node (includes distanceKm). */
+  node: Venue;
 };
 
 export type Notification = {
@@ -6326,6 +7093,17 @@ export type Notification = {
   updatedAt: Scalars['DateTime']['output'];
   /** User ID who receives this notification */
   userId: Scalars['ID']['output'];
+};
+
+/** A Relay-style connection for Notification items. */
+export type NotificationConnection = {
+  __typename?: 'NotificationConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<NotificationEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type NotificationData = {
@@ -6360,6 +7138,15 @@ export type NotificationDataInput = {
   venueName?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** An edge in the NotificationConnection. */
+export type NotificationEdge = {
+  __typename?: 'NotificationEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Notification;
+};
+
 export type NotificationFilterInput = {
   /** Filter by read status (null = all) */
   isRead?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6367,18 +7154,6 @@ export type NotificationFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by notification type (null = all) */
   type?: InputMaybe<NotificationType>;
-};
-
-export type NotificationList = {
-  __typename?: 'NotificationList';
-  /** Whether there are more notifications to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** List of notifications */
-  notifications: Array<Notification>;
-  /** Total number of notifications matching the filter */
-  total: Scalars['Int']['output'];
-  /** Number of unread notifications */
-  unreadCount: Scalars['Int']['output'];
 };
 
 /** Types of notifications */
@@ -6585,6 +7360,17 @@ export type OrderAnalyticsSummary = {
   totalRevenue: Scalars['Int']['output'];
 };
 
+/** A Relay-style connection for Order items. */
+export type OrderConnection = {
+  __typename?: 'OrderConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<OrderEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type OrderCustomerInfo = {
   __typename?: 'OrderCustomerInfo';
   /** Customer email */
@@ -6593,6 +7379,15 @@ export type OrderCustomerInfo = {
   name: Scalars['String']['output'];
   /** Customer phone */
   phone?: Maybe<Scalars['String']['output']>;
+};
+
+/** An edge in the OrderConnection. */
+export type OrderEdge = {
+  __typename?: 'OrderEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Order;
 };
 
 export type OrderFilterInput = {
@@ -6678,20 +7473,6 @@ export enum OrderItemType {
   Service = 'SERVICE',
   Training = 'TRAINING'
 }
-
-export type OrderList = {
-  __typename?: 'OrderList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** List of orders */
-  orders: Array<Order>;
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
-};
 
 /** Payment status of order */
 export enum OrderPaymentStatus {
@@ -6819,6 +7600,25 @@ export enum OrganizerCorrectLiveScoreMode {
   UndoPoints = 'UNDO_POINTS'
 }
 
+/** Transport channel used to deliver an OTP */
+export enum OtpChannelType {
+  Email = 'EMAIL',
+  FirebaseFallback = 'FIREBASE_FALLBACK',
+  Pending = 'PENDING',
+  Zns = 'ZNS'
+}
+
+/** Specific purpose an OTP was issued for; bound at creation */
+export enum OtpPurpose {
+  EmailChange = 'EMAIL_CHANGE',
+  EmailVerification = 'EMAIL_VERIFICATION',
+  PasswordResetEmail = 'PASSWORD_RESET_EMAIL',
+  PasswordResetPhone = 'PASSWORD_RESET_PHONE',
+  PhoneChange = 'PHONE_CHANGE',
+  SignInPhone = 'SIGN_IN_PHONE',
+  SignUpPhone = 'SIGN_UP_PHONE'
+}
+
 export type OtpResponse = {
   __typename?: 'OtpResponse';
   message: Scalars['String']['output'];
@@ -6826,29 +7626,115 @@ export type OtpResponse = {
   verificationId?: Maybe<Scalars['String']['output']>;
 };
 
-export type PaginationInput = {
-  /** Items per page */
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  /** Page number (1-indexed) */
-  page?: InputMaybe<Scalars['Int']['input']>;
+export type OtpTestPhone = {
+  __typename?: 'OtpTestPhone';
+  _id: Scalars['ID']['output'];
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: Maybe<Array<OtpPurpose>>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['ID']['output']>;
+  enabled: Scalars['Boolean']['output'];
+  expiresAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Human-readable label for QA / ops */
+  label: Scalars['String']['output'];
+  /** E.164 phone number */
+  phone: Scalars['String']['output'];
+  /** Fixed 6-digit OTP code (SUPER_ADMIN only) */
+  testCode: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  updatedBy?: Maybe<Scalars['ID']['output']>;
 };
 
-export type ParticipantList = {
-  __typename?: 'ParticipantList';
-  /** Còn trang tiếp theo */
+/** A Relay-style connection for OtpTestPhone items. */
+export type OtpTestPhoneConnection = {
+  __typename?: 'OtpTestPhoneConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<OtpTestPhoneEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the OtpTestPhoneConnection. */
+export type OtpTestPhoneEdge = {
+  __typename?: 'OtpTestPhoneEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: OtpTestPhone;
+};
+
+export type OtpTestPhoneFilterInput = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search phone or label (partial match) */
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OtpTestUserGrant = {
+  __typename?: 'OtpTestUserGrant';
+  _id: Scalars['ID']['output'];
+  /** Allowed OTP purposes (default SIGN_IN_PHONE only) */
+  allowedPurposes: Array<OtpPurpose>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['ID']['output']>;
+  enabled: Scalars['Boolean']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+  /** E.164 phone from user account */
+  phone: Scalars['String']['output'];
+  /** Reason / ticket reference for audit trail */
+  reason: Scalars['String']['output'];
+  revokedAt?: Maybe<Scalars['DateTime']['output']>;
+  revokedBy?: Maybe<Scalars['ID']['output']>;
+  /** Fixed 6-digit OTP code (SUPER_ADMIN only) */
+  testCode: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  /** Denormalized user display name at grant time */
+  userDisplayName: Scalars['String']['output'];
+  /** Linked user account */
+  userId: Scalars['ID']['output'];
+  /** Denormalized user role at grant time */
+  userRole: UserRole;
+};
+
+/** A Relay-style connection for OtpTestUserGrant items. */
+export type OtpTestUserGrantConnection = {
+  __typename?: 'OtpTestUserGrantConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<OtpTestUserGrantEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the OtpTestUserGrantConnection. */
+export type OtpTestUserGrantEdge = {
+  __typename?: 'OtpTestUserGrantEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: OtpTestUserGrant;
+};
+
+export type OtpTestUserGrantFilterInput = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search phone, reason, or userId */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by user ID */
+  userId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  /** Cursor of the last item in the current page. */
+  endCursor?: Maybe<Scalars['String']['output']>;
+  /** Whether more items exist after the current page. */
   hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Danh sách người tham gia */
-  participants: Array<PickupGameParticipant>;
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
+  /** Whether items exist before the current page (reserved). */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** Cursor of the first item in the current page. */
+  startCursor?: Maybe<Scalars['String']['output']>;
 };
 
 export type ParticipantRatingInput = {
@@ -6919,15 +7805,6 @@ export enum PaymentStatus {
   Refunded = 'REFUNDED'
 }
 
-export type PendingVenueList = {
-  __typename?: 'PendingVenueList';
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  venues: Array<Venue>;
-};
-
 export type PickupGame = {
   __typename?: 'PickupGame';
   _id: Scalars['ID']['output'];
@@ -6949,7 +7826,12 @@ export type PickupGame = {
   conversationId?: Maybe<Scalars['ID']['output']>;
   /** Cấu hình chi phí */
   costConfig: CostConfig;
-  /** Ảnh bìa */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Ảnh bìa
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Địa điểm tùy chỉnh */
@@ -6958,6 +7840,8 @@ export type PickupGame = {
   depositConfig?: Maybe<DepositConfig>;
   /** Khoảng cách (km) */
   distanceKm?: Maybe<Scalars['Float']['output']>;
+  /** Thời điểm kết thúc kèo (Asia/Ho_Chi_Minh) */
+  endsAt: Scalars['DateTime']['output'];
   /** Dụng cụ cần mang */
   equipment?: Maybe<Array<EquipmentItem>>;
   /** Thể thức thi đấu (VD: SINGLES, DOUBLES, 5V5) — multi-select */
@@ -6970,7 +7854,12 @@ export type PickupGame = {
   host?: Maybe<User>;
   /** ID người tạo kèo */
   hostId: Scalars['ID']['output'];
-  /** Ảnh khác */
+  /** Gallery with placeholder + responsive variants. */
+  imageMedia?: Maybe<Array<ImageMedia>>;
+  /**
+   * Ảnh khác
+   * @deprecated Use `imageMedia[].url`. Kept for mobile builds < 1.7.
+   */
   images?: Maybe<Array<Scalars['String']['output']>>;
   /** Là host */
   isHost?: Maybe<Scalars['Boolean']['output']>;
@@ -7000,6 +7889,8 @@ export type PickupGame = {
   slotConfig: SlotConfig;
   /** Môn thể thao */
   sportType: SportType;
+  /** Thời điểm bắt đầu kèo (Asia/Ho_Chi_Minh) */
+  startsAt: Scalars['DateTime']['output'];
   /** Trạng thái kèo */
   status: PickupGameStatus;
   /** Tags */
@@ -7052,6 +7943,26 @@ export type PickupGameCampaign = {
   venueIds?: Maybe<Array<Scalars['ID']['output']>>;
 };
 
+/** A Relay-style connection for PickupGame items. */
+export type PickupGameConnection = {
+  __typename?: 'PickupGameConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PickupGameEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PickupGameConnection. */
+export type PickupGameEdge = {
+  __typename?: 'PickupGameEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: PickupGame;
+};
+
 export type PickupGameFilterInput = {
   /** Loại chi phí */
   costType?: InputMaybe<CostSharingType>;
@@ -7101,9 +8012,9 @@ export type PickupGameFilterInput = {
   statuses?: InputMaybe<Array<PickupGameStatus>>;
   /** Lọc theo tags */
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** Từ giờ (HH:mm) */
+  /** Lọc theo giờ bắt đầu (HH:mm) trên startsAt; kết hợp dateFrom/dateTo */
   timeFrom?: InputMaybe<Scalars['String']['input']>;
-  /** Đến giờ (HH:mm) */
+  /** Giới hạn trên startsAt (HH:mm) trong ngày dateTo hoặc dateFrom */
   timeTo?: InputMaybe<Scalars['String']['input']>;
   /** Giới tính của user (để lọc kèo phù hợp) */
   userGender?: InputMaybe<Gender>;
@@ -7111,24 +8022,6 @@ export type PickupGameFilterInput = {
   venueId?: InputMaybe<Scalars['ID']['input']>;
   /** Lọc theo độ hiển thị */
   visibility?: InputMaybe<GameVisibility>;
-};
-
-export type PickupGameList = {
-  __typename?: 'PickupGameList';
-  /** Danh sách kèo */
-  games: Array<PickupGame>;
-  /** Còn trang tiếp theo */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
 };
 
 export type PickupGameParticipant = {
@@ -7198,6 +8091,26 @@ export type PickupGameParticipant = {
   waitlistPosition?: Maybe<Scalars['Int']['output']>;
 };
 
+/** A Relay-style connection for PickupGameParticipant items. */
+export type PickupGameParticipantConnection = {
+  __typename?: 'PickupGameParticipantConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PickupGameParticipantEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PickupGameParticipantConnection. */
+export type PickupGameParticipantEdge = {
+  __typename?: 'PickupGameParticipantEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: PickupGameParticipant;
+};
+
 /** Tiêu chí sắp xếp kèo */
 export enum PickupGameSortBy {
   AvailableSlots = 'AVAILABLE_SLOTS',
@@ -7257,6 +8170,61 @@ export type PointEvent = {
   setNumber: Scalars['Int']['output'];
   /** ISO timestamp */
   timestamp: Scalars['String']['output'];
+};
+
+/** Portal capability grants (independent of UserRole) */
+export enum PortalCapability {
+  TournamentOrganizer = 'TOURNAMENT_ORGANIZER'
+}
+
+export type PortalCapabilityGrant = {
+  __typename?: 'PortalCapabilityGrant';
+  _id: Scalars['ID']['output'];
+  capability: PortalCapability;
+  createdAt: Scalars['DateTime']['output'];
+  enabled: Scalars['Boolean']['output'];
+  grantedAt?: Maybe<Scalars['DateTime']['output']>;
+  grantedBy?: Maybe<Scalars['ID']['output']>;
+  /** Reason / ticket reference for audit trail */
+  reason: Scalars['String']['output'];
+  revokedAt?: Maybe<Scalars['DateTime']['output']>;
+  revokedBy?: Maybe<Scalars['ID']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  /** Denormalized display name at grant time */
+  userDisplayName: Scalars['String']['output'];
+  /** User receiving the capability */
+  userId: Scalars['ID']['output'];
+  /** Denormalized user role at grant time */
+  userRole: UserRole;
+};
+
+/** A Relay-style connection for PortalCapabilityGrant items. */
+export type PortalCapabilityGrantConnection = {
+  __typename?: 'PortalCapabilityGrantConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PortalCapabilityGrantEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PortalCapabilityGrantConnection. */
+export type PortalCapabilityGrantEdge = {
+  __typename?: 'PortalCapabilityGrantEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: PortalCapabilityGrant;
+};
+
+export type PortalCapabilityGrantFilterInput = {
+  capability?: InputMaybe<PortalCapability>;
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search reason or display name */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by user ID */
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Post = {
@@ -7321,6 +8289,18 @@ export type PostBookmark = {
   userId: Scalars['ID']['output'];
 };
 
+export type PostBookmarkConnection = {
+  __typename?: 'PostBookmarkConnection';
+  edges: Array<PostBookmarkEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostBookmarkEdge = {
+  __typename?: 'PostBookmarkEdge';
+  cursor: Scalars['String']['output'];
+  node: PostBookmark;
+};
+
 export type PostComment = {
   __typename?: 'PostComment';
   _id: Scalars['ID']['output'];
@@ -7346,6 +8326,37 @@ export type PostComment = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type PostCommentConnection = {
+  __typename?: 'PostCommentConnection';
+  edges: Array<PostCommentEdge>;
+  pageInfo: PageInfo;
+};
+
+export type PostCommentEdge = {
+  __typename?: 'PostCommentEdge';
+  cursor: Scalars['String']['output'];
+  node: PostComment;
+};
+
+export type PostConnection = {
+  __typename?: 'PostConnection';
+  edges: Array<PostEdge>;
+  pageInfo: PageInfo;
+};
+
+/** Payload for the postDeleted subscription. */
+export type PostDeletedPayload = {
+  __typename?: 'PostDeletedPayload';
+  _id: Scalars['ID']['output'];
+  postId: Scalars['ID']['output'];
+};
+
+export type PostEdge = {
+  __typename?: 'PostEdge';
+  cursor: Scalars['String']['output'];
+  node: Post;
+};
+
 export type PostFilterInput = {
   /** Filter by author ID */
   authorId?: InputMaybe<Scalars['ID']['input']>;
@@ -7359,6 +8370,12 @@ export type PostFilterInput = {
   visibility?: InputMaybe<PostVisibility>;
 };
 
+export type PostLikerEdge = {
+  __typename?: 'PostLikerEdge';
+  cursor: Scalars['String']['output'];
+  node: PostLikerUser;
+};
+
 export type PostLikerUser = {
   __typename?: 'PostLikerUser';
   _id: Scalars['ID']['output'];
@@ -7370,27 +8387,10 @@ export type PostLikerUser = {
   userName?: Maybe<Scalars['String']['output']>;
 };
 
-export type PostLikersList = {
-  __typename?: 'PostLikersList';
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  users: Array<PostLikerUser>;
-};
-
-export type PostList = {
-  __typename?: 'PostList';
-  /** Whether there are more posts to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** List of posts */
-  posts: Array<Post>;
-  /** Total number of posts matching the filter */
-  total: Scalars['Int']['output'];
+export type PostLikersConnection = {
+  __typename?: 'PostLikersConnection';
+  edges: Array<PostLikerEdge>;
+  pageInfo: PageInfo;
 };
 
 export type PostLocation = {
@@ -7417,6 +8417,8 @@ export type PostLocationInput = {
 
 export type PostMedia = {
   __typename?: 'PostMedia';
+  /** BlurHash placeholder for instant image preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   duration?: Maybe<Scalars['Float']['output']>;
   height?: Maybe<Scalars['Float']['output']>;
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -7428,6 +8430,8 @@ export type PostMedia = {
 };
 
 export type PostMediaInput = {
+  /** BlurHash placeholder used by the mobile client to render an instant preview while the full image loads. */
+  blurhash?: InputMaybe<Scalars['String']['input']>;
   /** Duration in seconds (for videos) */
   duration?: InputMaybe<Scalars['Float']['input']>;
   /** Height in pixels */
@@ -7475,25 +8479,31 @@ export type PostReport = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for PostReport items. */
+export type PostReportConnection = {
+  __typename?: 'PostReportConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PostReportEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PostReportConnection. */
+export type PostReportEdge = {
+  __typename?: 'PostReportEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: PostReport;
+};
+
 export type PostReportFilterInput = {
   /** Filter by report reason */
   reason?: InputMaybe<PostReportReason>;
   /** Filter by report status */
   status?: InputMaybe<PostReportStatus>;
-};
-
-export type PostReportList = {
-  __typename?: 'PostReportList';
-  /** Has more reports to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** List of post reports */
-  reports: Array<PostReport>;
-  /** Total number of reports */
-  total: Scalars['Int']['output'];
 };
 
 /** Reason for reporting a post */
@@ -7737,6 +8747,46 @@ export type ProductCategory = {
   venueId?: Maybe<Scalars['ID']['output']>;
 };
 
+/** A Relay-style connection for ProductCategory items. */
+export type ProductCategoryConnection = {
+  __typename?: 'ProductCategoryConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ProductCategoryEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ProductCategoryConnection. */
+export type ProductCategoryEdge = {
+  __typename?: 'ProductCategoryEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: ProductCategory;
+};
+
+/** A Relay-style connection for Product items. */
+export type ProductConnection = {
+  __typename?: 'ProductConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ProductEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ProductConnection. */
+export type ProductEdge = {
+  __typename?: 'ProductEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Product;
+};
+
 export type ProductFilterInput = {
   /** Filter by category ID */
   categoryId?: InputMaybe<Scalars['ID']['input']>;
@@ -7780,12 +8830,22 @@ export type ProductImage = {
   __typename?: 'ProductImage';
   /** Alt text for accessibility */
   alt?: Maybe<Scalars['String']['output']>;
+  /** BlurHash placeholder for instant preview. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Display order */
   displayOrder: Scalars['Int']['output'];
+  /** Image height in pixels. */
+  height?: Maybe<Scalars['Int']['output']>;
   /** Is primary image */
   isPrimary: Scalars['Boolean']['output'];
+  /** ~800px medium variant. */
+  mediumUrl?: Maybe<Scalars['String']['output']>;
+  /** ~200px thumbnail variant. */
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
   /** Image URL */
   url: Scalars['String']['output'];
+  /** Image width in pixels. */
+  width?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ProductImageInput = {
@@ -7797,20 +8857,6 @@ export type ProductImageInput = {
   isPrimary?: InputMaybe<Scalars['Boolean']['input']>;
   /** Image URL */
   url: Scalars['String']['input'];
-};
-
-export type ProductList = {
-  __typename?: 'ProductList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** List of products */
-  products: Array<Product>;
-  /** Total count */
-  total: Scalars['Int']['output'];
 };
 
 export type ProductPerformance = {
@@ -8116,6 +9162,26 @@ export enum PromotionCategory {
   Voucher = 'VOUCHER'
 }
 
+/** A Relay-style connection for Promotion items. */
+export type PromotionConnection = {
+  __typename?: 'PromotionConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<PromotionEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the PromotionConnection. */
+export type PromotionEdge = {
+  __typename?: 'PromotionEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Promotion;
+};
+
 export type PromotionFilterInput = {
   /** Filter by date - promotions active on this date */
   activeOnDate?: InputMaybe<Scalars['String']['input']>;
@@ -8155,20 +9221,6 @@ export type PromotionFilterInput = {
   types?: InputMaybe<Array<PromotionType>>;
   /** Filter by venue ID */
   venueId?: InputMaybe<Scalars['ID']['input']>;
-};
-
-export type PromotionList = {
-  __typename?: 'PromotionList';
-  /** Has more pages */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** List of promotions */
-  promotions: Array<Promotion>;
-  /** Total count */
-  total: Scalars['Int']['output'];
 };
 
 /** Scope of promotion application */
@@ -8290,6 +9342,26 @@ export type QrCampaign = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for QrCampaign items. */
+export type QrCampaignConnection = {
+  __typename?: 'QrCampaignConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<QrCampaignEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the QrCampaignConnection. */
+export type QrCampaignEdge = {
+  __typename?: 'QrCampaignEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: QrCampaign;
+};
+
 export type QrCampaignFilterInput = {
   /** Filter scans from date */
   from?: InputMaybe<Scalars['DateTime']['input']>;
@@ -8356,34 +9428,40 @@ export type Query = {
   __typename?: 'Query';
   /** Get active promotions for a venue (public). Pass userId to hide promotions where user has reached perUserLimit. When the caller is authenticated as venue staff/owner (or admin), all active promotions are returned including those hidden from customers. */
   activeVenuePromotions: Array<Promotion>;
-  /** Get all bookings (Admin only) */
-  adminGetAllBookings: AdminAllBookingList;
-  /** Get pending venue requests (Admin only) */
-  adminGetPendingVenues: PendingVenueList;
+  /** Get all bookings (Admin only, cursor) */
+  adminAllBookingsConnection: AdminAllBookingConnection;
   /** Get system statistics (Admin only) */
   adminGetSystemStats: SystemStats;
-  /** Get bookings for a specific user (Admin only) */
-  adminGetUserBookings: AdminBookingList;
-  /** Get all users (Admin only) */
-  adminGetUsers: UserList;
-  /** Get all venue requests with filters (Admin only) */
-  allVenueRequests: VenueRequestList;
+  /** Get pending venue requests (Admin only, cursor) */
+  adminPendingVenuesConnection: VenueConnection;
+  /** Get bookings for a specific user (Super Admin only, cursor) */
+  adminUserBookingsConnection: AdminBookingItemConnection;
+  /** Get all users (Super Admin only, cursor) */
+  adminUsersConnection: UserConnection;
+  /** Get all venue requests with filters (Admin only, cursor) */
+  allVenueRequestsConnection: VenueRequestConnection;
   /** Get a single audit log by ID (Admin only) */
   auditLogDetail: AuditLog;
-  /** Get paginated audit logs (Admin only) */
-  auditLogs: AuditLogList;
+  /** Get paginated audit logs (Admin only, cursor) */
+  auditLogsConnection: AuditLogConnection;
   /** Get audit statistics (Admin only) */
   auditStats: AuditStats;
-  /** Get available public passes */
-  availablePasses: BookingPassList;
+  /** Cursor-paginated available public passes */
+  availablePassesConnection: BookingPassConnection;
   /** Get available promotions for a booking */
   availablePromotionsForBooking: AvailablePromotionsForBooking;
+  /** Top N pass có giảm giá >= 20% so với giá gốc (cho section "Giảm sâu"). */
+  bestDealPasses: Array<BookingPass>;
   /** Get booking by ID */
   booking: Booking;
   /** Get combined invoice for a booking */
   bookingInvoice: BookingInvoice;
   /** Get booking pass by ID */
   bookingPass: BookingPass;
+  /** [Admin] Chi tiết báo cáo pass sân */
+  bookingPassReport: BookingPassReport;
+  /** [Admin] Cursor-paginated booking pass reports */
+  bookingPassReportsConnection: BookingPassReportConnection;
   /** Get booking statistics */
   bookingStats: BookingStats;
   /** Preview trước khi bốc thăm: kiểm tra nếu cần tự động giảm kích thước nhánh đấu (organizer only) */
@@ -8396,8 +9474,8 @@ export type Query = {
   campaignStats: CampaignStats;
   /** Check if a booking can be passed */
   canPassBooking: CanPassBookingResult;
-  /** Get categories with filters */
-  categories: CategoryList;
+  /** Get categories with filters (cursor) */
+  categoriesConnection: ProductCategoryConnection;
   /** Get category by ID */
   category: ProductCategory;
   /** Get category tree */
@@ -8416,52 +9494,46 @@ export type Query = {
   claimRequest?: Maybe<VenueClaimRequest>;
   /** Get claim request statistics - Admin only */
   claimRequestStats: ClaimRequestStats;
-  /** Get claim requests with filters - Admin only */
-  claimRequests: ClaimRequestList;
+  /** Cursor-paginated claim requests — Admin only. */
+  claimRequestsConnection: VenueClaimRequestConnection;
+  /** Cursor-paginated replies to a parent comment. */
+  commentRepliesConnection: PostCommentConnection;
   /** Public list of referees who confirmed participation (name + role only) */
   confirmedTournamentReferees: Array<TournamentRefereePublic>;
+  /** Get contact inquiries via cursor connection (Admin only) */
+  contactInquiriesConnection: ContactInquiryConnection;
+  /** Get conversations for current user (cursor) */
+  conversationsConnection: ConversationConnection;
   /** Get court by ID */
   court: Court;
   /** Get current active legal documents (ToS and Privacy Policy) */
   currentLegalDocuments: CurrentLegalDocuments;
   /** Export all registrations without pagination (organizer only, max 2000) */
   exportTournamentRegistrations: Array<TournamentRegistration>;
-  /** Get my favorite venues */
-  favoriteVenues: VenueList;
-  /** Host đang theo dõi */
-  followedHosts: FollowedHostList;
-  /** Danh sách người tham gia kèo */
-  gameParticipants: ParticipantList;
+  /** Cursor-paginated current user's favorite venues. */
+  favoriteVenuesConnection: VenueConnection;
+  /** Host đang theo dõi (cursor) */
+  followedHostsConnection: FollowedHostConnection;
+  /** Danh sách người tham gia kèo (cursor) */
+  gameParticipantsConnection: PickupGameParticipantConnection;
   /** Generate branded SVG QR code for a campaign (Admin only) */
   generateQrCode: Scalars['String']['output'];
   /** Get available promotions for product orders */
   getAvailableOrderPromotions: Array<Promotion>;
   /** Get list of blocked users */
   getBlockedUsers: Array<UserBlock>;
-  /** Get replies to a comment */
-  getCommentReplies: CommentList;
-  /** Get contact inquiries with filters (Admin only) */
-  getContactInquiries: ContactInquiryList;
   /** Get a single contact inquiry by ID (Admin only) */
   getContactInquiry: ContactInquiry;
   /** Get contact inquiry stats by status (Admin only) */
   getContactInquiryStats: ContactInquiryStats;
-  /** Get conversations for current user */
-  getConversations: ConversationList;
+  /** Get a conversation by ID */
+  getConversation: Conversation;
   /** Get followers of a user */
   getFollowers: Array<User>;
   /** Get users that a user is following */
   getFollowing: Array<User>;
   /** Get a single group by ID */
   getGroup: Group;
-  /** Get members of a group */
-  getGroupMembers: GroupMemberList;
-  /** Get messages from a group chat */
-  getGroupMessages: GroupMessageList;
-  /** Get pending join requests for a group (admin only) */
-  getGroupPendingRequests: GroupMemberList;
-  /** Get groups with filters and pagination */
-  getGroups: GroupList;
   /** Get growth statistics for the dashboard (Admin only) */
   getGrowthStats: GrowthStats;
   /** Get inventory report for venue */
@@ -8470,40 +9542,20 @@ export type Query = {
   getMessageReportById: MessageReport;
   /** Get message report statistics (Admin only) */
   getMessageReportStats: MessageReportStats;
-  /** Get all message reports (Admin only) */
-  getMessageReportsForAdmin: MessageReportList;
-  /** Get messages in a conversation */
-  getMessages: MessageList;
-  /** Get current user bookmarked posts */
-  getMyBookmarks: BookmarkList;
-  /** Get groups the current user is a member of */
-  getMyGroups: GroupList;
-  /** Get pending invitations for the current user */
-  getMyInvitations: GroupMemberList;
-  /** Get current user's posts */
-  getMyPosts: PostList;
   /** Get a single notification by ID */
   getNotification: Notification;
-  /** Get notifications for current user with filters and pagination */
-  getNotifications: NotificationList;
   /** Get partner leaderboard for the dashboard (Admin only) */
   getPartnerLeaderboard: PartnerLeaderboard;
   /** Get pinned messages in a conversation */
   getPinnedMessages: Array<Message>;
   /** Get a single post by ID */
   getPost: Post;
-  /** Get comments for a post */
-  getPostComments: CommentList;
-  /** Get paginated list of users who liked a post */
-  getPostLikers: PostLikersList;
   /** Get a single post report by ID (Admin only) */
   getPostReportById: PostReport;
   /** Get post report statistics (Admin only) */
   getPostReportStats: PostReportStats;
-  /** Get all post reports with filters (Admin only) */
-  getPostReportsForAdmin: PostReportList;
-  /** Get posts with filters and pagination */
-  getPosts: PostList;
+  /** Get all post reports with filters (Admin only, cursor) */
+  getPostReportsForAdminConnection: PostReportConnection;
   /** Get import history for a product */
   getProductImportHistory: Array<StockMovement>;
   /** Get profit report by product */
@@ -8514,30 +9566,32 @@ export type Query = {
   getQrCampaign: QrCampaign;
   /** Get detailed analytics for a specific QR campaign (Admin only) */
   getQrCampaignStats: QrCampaignStats;
-  /** List all QR campaigns with optional filtering (Admin only) */
-  getQrCampaigns: Array<QrCampaign>;
   /** Get referral code detail by ID (Admin only) */
   getReferralCodeDetail: ReferralCode;
   /** Get all referral codes (Admin only) */
   getReferralCodes: Array<ReferralCode>;
-  /** Get stock movements */
-  getStockMovements: StockMovementList;
   /** Get total unread message count for user */
   getUnreadCount: Scalars['Int']['output'];
   /** Get unread notification count for current user */
   getUnreadNotificationCount: Scalars['Int']['output'];
   /** Get user by username */
   getUserByUserName: User;
-  /** Get posts by a specific user */
-  getUserPosts: PostList;
-  /** Get user profile by ID */
+  /** Get user profile by ID (authenticated) */
   getUserProfile: User;
   /** Get a single user report by ID (Admin only) */
   getUserReportById: UserReport;
   /** Get user report statistics (Admin only) */
   getUserReportStats: UserReportStats;
-  /** Get all user reports with filters (Admin only) */
-  getUserReportsForAdmin: UserReportList;
+  /** Get all user reports with filters (Admin only, cursor) */
+  getUserReportsForAdminConnection: UserReportConnection;
+  /** Get members of a group (cursor) */
+  groupMembersConnection: GroupMemberConnection;
+  /** Get messages from a group chat (cursor) */
+  groupMessagesConnection: GroupMessageConnection;
+  /** Get pending join requests for a group (cursor, admin only) */
+  groupPendingRequestsConnection: GroupMemberConnection;
+  /** Get groups with filters (cursor) */
+  groupsConnection: GroupConnection;
   /** Check if current user has bookmarked a post */
   hasBookmarkedPost: Scalars['Boolean']['output'];
   /** Check if current user has liked a comment */
@@ -8552,8 +9606,8 @@ export type Query = {
   health: Scalars['String']['output'];
   /** Detailed health check with database status */
   healthCheck: HealthStatus;
-  /** Kèo của một host */
-  hostGames: PickupGameList;
+  /** Kèo của một host (cursor) */
+  hostGamesConnection: PickupGameConnection;
   /** Check if current user is following a user */
   isFollowing: Scalars['Boolean']['output'];
   /** Check if current user is interested in a hold booking */
@@ -8580,56 +9634,72 @@ export type Query = {
   matchScorecard?: Maybe<MatchScorecard>;
   /** Get current user profile */
   me: User;
-  /** Blacklist của tôi */
-  myBlacklist: HostBlacklistList;
-  /** Get my bookings (as customer) */
-  myBookings: BookingList;
+  /** Get all message reports (cursor, Admin only) */
+  messageReportsConnection: MessageReportConnection;
+  /** Get messages in a conversation (cursor) */
+  messagesConnection: MessageConnection;
+  /** Blacklist của tôi (cursor) */
+  myBlacklistConnection: HostBlacklistConnection;
+  /** Cursor-paginated bookings of the current customer (Relay-style). */
+  myBookingsConnection: BookingConnection;
+  /** Cursor-paginated current user's bookmarks. */
+  myBookmarksConnection: PostBookmarkConnection;
   /** Lấy danh sách campaign của host hiện tại */
   myCampaigns: Array<PickupGameCampaign>;
-  /** Get current user claim requests */
-  myClaimRequests: ClaimRequestList;
-  /** Template của tôi */
-  myGameTemplates: GameTemplateList;
-  /** Get my hold bookings (customer) */
-  myHoldBookings: BookingList;
+  /** Cursor-paginated current user's claim requests. */
+  myClaimRequestsConnection: VenueClaimRequestConnection;
+  /** Template của tôi (cursor) */
+  myGameTemplatesConnection: GameTemplateConnection;
+  /** Get pending invitations for the current user (cursor) */
+  myGroupInvitationsConnection: GroupMemberConnection;
+  /** Get groups the current user is a member of (cursor) */
+  myGroupsConnection: GroupConnection;
+  /** Cursor-paginated hold bookings of the current customer */
+  myHoldBookingsConnection: BookingConnection;
   /** Thống kê host */
   myHostStatistics: HostStatistics;
-  /** Kèo tôi đã tạo */
-  myHostedGames: PickupGameList;
-  /** Kèo tôi đã tham gia */
-  myJoinedGames: PickupGameList;
+  /** Kèo tôi đã tạo (cursor) */
+  myHostedGamesConnection: PickupGameConnection;
+  /** Kèo tôi đã tham gia (cursor) */
+  myJoinedGamesConnection: PickupGameConnection;
   /** Check if current user has accepted all required legal documents */
   myLegalAcceptanceStatus: LegalAcceptanceStatus;
-  /** Get my orders (as customer) */
-  myOrders: OrderList;
-  /** Get my passes (created, received, interested) */
-  myPasses: BookingPassList;
+  /** Cursor-paginated orders of the current customer */
+  myOrdersConnection: OrderConnection;
+  /** Cursor-paginated passes for the current user */
+  myPassesConnection: BookingPassConnection;
   /** Get current user pending staff invitations */
   myPendingInvitations: Array<VenueStaff>;
-  /** Get my recurring bookings (customer) */
-  myRecurringBookings: RecurringBookingList;
-  /** Current user's registrations */
-  myRegistrations: RegistrationList;
-  /** Kèo đã lưu */
-  mySavedGames: SavedGameList;
-  /** My organized tournaments */
-  myTournaments: TournamentList;
+  /** Cursor-paginated posts authored by the current user. */
+  myPostsConnection: PostConnection;
+  /** Đánh giá hiện tại của user cho 1 pass (nếu có). */
+  myRatingForPass?: Maybe<TransferrerRating>;
+  /** Cursor-paginated recurring master bookings of the current customer */
+  myRecurringBookingsConnection: BookingConnection;
+  /** Cursor-paginated current user's registrations */
+  myRegistrationsConnection: TournamentRegistrationConnection;
+  /** Kèo đã lưu (cursor) */
+  mySavedGamesConnection: SavedGameConnection;
+  /** Cursor-paginated tournaments organized by current user */
+  myTournamentsConnection: TournamentConnection;
   /** Get venue availability with user pending slots info */
   myVenueAvailability: VenueAvailability;
-  /** Get my venue requests */
-  myVenueRequests: VenueRequestList;
-  /** Get my venues (as owner) */
-  myVenues: VenueList;
+  /** Get my venue requests (cursor) */
+  myVenueRequestsConnection: VenueRequestConnection;
+  /** Cursor-paginated venues owned by the current user. */
+  myVenuesConnection: VenueConnection;
   /** Get venues where user can transfer products to */
   myVenuesForProductTransfer: Array<Venue>;
   /** Get aggregated statistics across all venues owned or managed by user */
   myVenuesStats: MyVenuesStats;
-  /** Tìm kèo gần đây */
-  nearbyPickupGames: PickupGameList;
-  /** Get venues within a radius of user location */
-  nearbyVenues: NearbyVenueList;
+  /** Tìm kèo gần đây (cursor) */
+  nearbyPickupGamesConnection: NearbyPickupGameConnection;
+  /** Cursor-paginated venues within radius. Sort: distance ASC (geo). */
+  nearbyVenuesConnection: NearbyVenueConnection;
   /** Quick check if user needs to accept legal documents */
   needsToAcceptLegal: Scalars['Boolean']['output'];
+  /** Cursor-paginated notifications feed (Relay-style). */
+  notificationsConnection: NotificationConnection;
   /** Get order by ID */
   order: Order;
   /** Get comprehensive order analytics */
@@ -8640,24 +9710,42 @@ export type Query = {
   orderStats: OrderStats;
   /** Get all orders related to a booking */
   ordersByBookingId: Array<Order>;
-  /** Get orders pending refund for a venue (Owner only) */
-  ordersPendingRefund: OrderList;
-  /** Get pending claim requests - Admin only */
-  pendingClaimRequests: ClaimRequestList;
-  /** Get pending venue requests (Admin only) */
-  pendingVenueRequests: VenueRequestList;
+  /** Cursor-paginated orders pending refund for a venue (Owner only) */
+  ordersPendingRefundConnection: OrderConnection;
+  /** Get OTP test phone by id (SUPER_ADMIN only) */
+  otpTestPhone: OtpTestPhone;
+  /** List OTP test phones (SUPER_ADMIN only, cursor) */
+  otpTestPhonesConnection: OtpTestPhoneConnection;
+  /** Get OTP test user grant by id (SUPER_ADMIN only) */
+  otpTestUserGrant: OtpTestUserGrant;
+  /** List OTP test user grants (SUPER_ADMIN only, cursor) */
+  otpTestUserGrantsConnection: OtpTestUserGrantConnection;
+  /** Cursor-paginated pending claim requests — Admin only. */
+  pendingClaimRequestsConnection: VenueClaimRequestConnection;
+  /** Get pending venue requests (Admin only, cursor) */
+  pendingVenueRequestsConnection: VenueRequestConnection;
   /** Lấy chi tiết kèo */
   pickupGame?: Maybe<PickupGame>;
   /** Lấy chi tiết một campaign */
   pickupGameCampaign?: Maybe<PickupGameCampaign>;
-  /** Lấy danh sách kèo giao lưu */
-  pickupGames: PickupGameList;
+  /** Lấy danh sách kèo giao lưu (cursor) */
+  pickupGamesConnection: PickupGameConnection;
   /** Get popular/featured sports */
   popularSports: Array<Sport>;
+  /** List portal capability grants (SUPER_ADMIN only, cursor) */
+  portalCapabilityGrantsConnection: PortalCapabilityGrantConnection;
+  /** Cursor-paginated top-level comments of a post. */
+  postCommentsConnection: PostCommentConnection;
+  /** Cursor-paginated likers of a post. */
+  postLikersConnection: PostLikersConnection;
+  /** Cursor-paginated posts feed (Relay-style). */
+  postsConnection: PostConnection;
   /** Preview bulk import: kiểm tra các nội dung cần điều chỉnh kích thước nhánh đấu (organizer only) */
   previewBulkImport: PreviewBulkImportResult;
   /** Super Admin: preview eligible R1 BYE slots for late entry placement */
   previewLateEntryPlacement: LateEntryPlacementPreview;
+  /** Preview drag-move without persisting */
+  previewMoveMatch: MoveMatchPreviewResult;
   /** Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB) */
   previewRepackCourtSchedule: RepackCourtSchedulePreviewResult;
   /** Get product by ID */
@@ -8668,25 +9756,37 @@ export type Query = {
   productSalesAnalytics: ProductSalesAnalytics;
   /** Get product statistics */
   productStats: ProductStats;
-  /** Get products with filters */
-  products: ProductList;
+  /** Get products with filters (cursor) */
+  productsConnection: ProductConnection;
   /** Get promotion by ID */
   promotion: Promotion;
   /** Get promotion statistics for a venue */
   promotionStats: PromotionStats;
-  /** Get promotions with filters */
-  promotions: PromotionList;
+  /** Get promotions with filters (cursor) */
+  promotionsConnection: PromotionConnection;
+  /** List all QR campaigns with optional filtering (Admin only, cursor) */
+  qrCampaignsConnection: QrCampaignConnection;
   /** Get recurring booking details with all sessions */
   recurringBookingDetails: RecurringBookingDetails;
   /** Matches assigned to current user as referee */
   refereeMatches: Array<TournamentMatch>;
   /** Get referee workload statistics for a tournament */
   refereeWorkload: RefereeWorkloadResult;
-  /** Search messages in a conversation */
-  searchMessages: MessageList;
-  /** Search user by phone number (for staff booking) */
-  searchUserByPhone?: Maybe<User>;
-  /** Search users by username */
+  /** Hub header stats */
+  scoreboardHubStats: ScoreboardHubStats;
+  /** Default scoring preset for sport */
+  scoreboardPreset: ScoringConfig;
+  /** Get scoreboard session by ID */
+  scoreboardSession: ScoreboardSession;
+  /** Public viewer access by share token */
+  scoreboardSessionByViewerToken: ScoreboardSession;
+  /** List scoreboard sessions for hub tabs (cursor) */
+  scoreboardSessionsConnection: ScoreboardSessionConnection;
+  /** Search messages in a conversation (cursor) */
+  searchMessagesConnection: MessageConnection;
+  /** Search user by phone number (venue staff or admin only, for booking) */
+  searchUserByPhone?: Maybe<UserContactLookup>;
+  /** Search users by username (authenticated) */
   searchUsersByUserName: Array<User>;
   /** Server information */
   serverInfo: ServerInfo;
@@ -8694,8 +9794,12 @@ export type Query = {
   sport?: Maybe<Sport>;
   /** Get all active sports with their configurations */
   sports: Array<Sport>;
-  /** Get venues I work at */
-  staffedVenues: VenueList;
+  /** Cursor-paginated venues where the current user is staff. */
+  staffedVenuesConnection: VenueConnection;
+  /** Get stock movements (cursor) */
+  stockMovementsConnection: StockMovementConnection;
+  /** Giá pass đề xuất (median) dựa trên các pass COMPLETED 90 ngày qua. */
+  suggestedPrice: SuggestedPrice;
   /** Get system categories */
   systemCategories: Array<ProductCategory>;
   /** Test query for notification service */
@@ -8708,22 +9812,30 @@ export type Query = {
   tournamentCategories: Array<TournamentCategory>;
   /** Rankings for a specific group in a GROUP_KNOCKOUT category */
   tournamentGroupRankings: Array<PlayerRanking>;
-  /** Tournament matches with filters */
-  tournamentMatches: MatchList;
+  /** Cursor-paginated tournament matches with filters */
+  tournamentMatchesConnection: TournamentMatchConnection;
   /** Rankings for a category */
   tournamentRankings: Array<PlayerRanking>;
   /** Get a single tournament referee by ID */
   tournamentReferee: TournamentReferee;
   /** List all referees in the tournament pool */
   tournamentReferees: Array<TournamentReferee>;
-  /** List registrations for a tournament (organizer) */
-  tournamentRegistrations: RegistrationList;
+  /** Cursor-paginated registrations for a tournament (organizer) */
+  tournamentRegistrationsConnection: TournamentRegistrationConnection;
   /** Tournament results/champions */
   tournamentResults: Array<TournamentChampion>;
   /** Tournament statistics */
   tournamentStats: TournamentStats;
-  /** List tournaments with filters */
-  tournaments: TournamentList;
+  /** Cursor-paginated tournaments with filters */
+  tournamentsConnection: TournamentConnection;
+  /** Đánh giá đã nhận của 1 transferrer. */
+  transferrerRatings: Array<TransferrerRating>;
+  /** Trust stats cho 1 user (totalCreated, completionRate, pendingReports...) — dùng trên PassDetail. */
+  transferrerStats: TransferrerStats;
+  /** Top N pass sắp hết hạn trong 24h (cho marketplace section "Sắp hết hạn"). */
+  urgentPasses: Array<BookingPass>;
+  /** Cursor-paginated posts authored by a specific user. */
+  userPostsConnection: PostConnection;
   /** Get user profile by ID */
   userProfile?: Maybe<User>;
   /** Validate QR code check-in */
@@ -8736,46 +9848,46 @@ export type Query = {
   validateReferralCode: Scalars['Boolean']['output'];
   /** Get venue by ID */
   venue: Venue;
-  /** Get venue activities */
-  venueActivities: ActivityList;
+  /** Get venue activities (cursor) */
+  venueActivitiesConnection: ActivityConnection;
   /** Get comprehensive venue analytics */
   venueAnalytics: VenueAnalytics;
   /** Get venue availability */
   venueAvailability: VenueAvailability;
-  /** Get venue bookings (for staff) */
-  venueBookings: BookingList;
-  /** Get venue categories */
-  venueCategories: CategoryList;
-  /** Get courts by venue */
-  venueCourts: CourtList;
-  /** Get hold bookings for a venue (staff) */
-  venueHoldBookings: BookingList;
-  /** Get venue orders (for staff) */
-  venueOrders: OrderList;
+  /** Cursor-paginated venue bookings (for staff) */
+  venueBookingsConnection: BookingConnection;
+  /** Get venue categories (cursor) */
+  venueCategoriesConnection: ProductCategoryConnection;
+  /** Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC. */
+  venueCourtsConnection: CourtConnection;
+  /** Cursor-paginated hold bookings for a venue (staff) */
+  venueHoldBookingsConnection: BookingConnection;
+  /** Cursor-paginated venue orders (for staff) */
+  venueOrdersConnection: OrderConnection;
   /** Get pending invitations for a venue (owner only) */
   venuePendingInvitations: Array<VenueStaff>;
-  /** Get venue products (menu) */
-  venueProducts: ProductList;
+  /** Get venue products (menu, cursor) */
+  venueProductsConnection: ProductConnection;
   /** Get venue promotion summary for display */
   venuePromotionSummary: VenuePromotionSummary;
-  /** Get venue promotions (for venue owner/staff) */
-  venuePromotions: PromotionList;
-  /** Get venue recurring bookings (staff) */
-  venueRecurringBookings: RecurringBookingList;
+  /** Get venue promotions (for venue owner/staff, cursor) */
+  venuePromotionsConnection: PromotionConnection;
+  /** Cursor-paginated recurring master bookings for a venue (staff) */
+  venueRecurringBookingsConnection: BookingConnection;
   /** Get venue request by ID */
   venueRequest: VenueRequest;
   /** Get venue request statistics (Admin only) */
   venueRequestStats: VenueRequestStats;
   /** Get comprehensive venue revenue statistics with time period filtering */
   venueRevenueStats: VenueRevenueStats;
-  /** Get venue reviews */
-  venueReviews: VenueReviewList;
-  /** Get venue staff */
-  venueStaff: VenueStaffList;
-  /** Get venues with filters */
-  venues: VenueList;
-  /** Get all venues sorted by distance from user (no max limit) */
-  venuesSortedByDistance: NearbyVenueList;
+  /** Cursor-paginated venue reviews (createdAt DESC). */
+  venueReviewsConnection: VenueReviewConnection;
+  /** Cursor-paginated venue staff. Sort: isOwner DESC, joinedAt ASC. */
+  venueStaffConnection: VenueStaffConnection;
+  /** Cursor-paginated venues. Default sort: createdAt DESC; distance sort delegates to geo path. */
+  venuesConnection: VenueConnection;
+  /** Cursor-paginated all venues sorted by distance (no max radius). */
+  venuesSortedByDistanceConnection: NearbyVenueConnection;
   /** API version */
   version: Scalars['String']['output'];
 };
@@ -8787,37 +9899,37 @@ export type QueryActiveVenuePromotionsArgs = {
 };
 
 
-export type QueryAdminGetAllBookingsArgs = {
+export type QueryAdminAllBookingsConnectionArgs = {
   fromDate?: InputMaybe<Scalars['String']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   statuses?: InputMaybe<Array<Scalars['String']['input']>>;
   toDate?: InputMaybe<Scalars['String']['input']>;
 };
 
 
-export type QueryAdminGetPendingVenuesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryAdminPendingVenuesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryAdminGetUserBookingsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryAdminUserBookingsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   statuses?: InputMaybe<Array<Scalars['String']['input']>>;
   userId: Scalars['ID']['input'];
 };
 
 
-export type QueryAdminGetUsersArgs = {
+export type QueryAdminUsersConnectionArgs = {
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isSuspended?: InputMaybe<Scalars['Boolean']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   role?: InputMaybe<UserRole>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
 };
 
 
-export type QueryAllVenueRequestsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryAllVenueRequestsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   status?: InputMaybe<VenueRequestStatus>;
 };
 
@@ -8827,20 +9939,26 @@ export type QueryAuditLogDetailArgs = {
 };
 
 
-export type QueryAuditLogsArgs = {
+export type QueryAuditLogsConnectionArgs = {
   filter?: InputMaybe<AuditFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryAvailablePassesArgs = {
+export type QueryAvailablePassesConnectionArgs = {
   filter?: InputMaybe<AvailablePassesFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
 export type QueryAvailablePromotionsForBookingArgs = {
   input: ApplyPromotionInput;
+};
+
+
+export type QueryBestDealPassesArgs = {
+  filter?: InputMaybe<AvailablePassesFilterInput>;
+  take?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -8856,6 +9974,17 @@ export type QueryBookingInvoiceArgs = {
 
 export type QueryBookingPassArgs = {
   passId: Scalars['ID']['input'];
+};
+
+
+export type QueryBookingPassReportArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBookingPassReportsConnectionArgs = {
+  filter?: InputMaybe<BookingPassReportFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -8891,9 +10020,9 @@ export type QueryCanPassBookingArgs = {
 };
 
 
-export type QueryCategoriesArgs = {
+export type QueryCategoriesConnectionArgs = {
   filter?: InputMaybe<CategoryFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -8947,14 +10076,33 @@ export type QueryClaimRequestArgs = {
 };
 
 
-export type QueryClaimRequestsArgs = {
+export type QueryClaimRequestsConnectionArgs = {
   filter?: InputMaybe<ClaimRequestFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryCommentRepliesConnectionArgs = {
+  commentId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+  postId: Scalars['ID']['input'];
 };
 
 
 export type QueryConfirmedTournamentRefereesArgs = {
   tournamentId: Scalars['ID']['input'];
+};
+
+
+export type QueryContactInquiriesConnectionArgs = {
+  filter?: InputMaybe<ContactInquiryFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryConversationsConnectionArgs = {
+  filter?: InputMaybe<ConversationFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -8969,19 +10117,19 @@ export type QueryExportTournamentRegistrationsArgs = {
 };
 
 
-export type QueryFavoriteVenuesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryFavoriteVenuesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryFollowedHostsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryFollowedHostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryGameParticipantsArgs = {
+export type QueryGameParticipantsConnectionArgs = {
   gameId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   status?: InputMaybe<ParticipantStatus>;
 };
 
@@ -8997,26 +10145,13 @@ export type QueryGetAvailableOrderPromotionsArgs = {
 };
 
 
-export type QueryGetCommentRepliesArgs = {
-  commentId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
-  postId: Scalars['ID']['input'];
-};
-
-
-export type QueryGetContactInquiriesArgs = {
-  filter?: InputMaybe<ContactInquiryFilterInput>;
-};
-
-
 export type QueryGetContactInquiryArgs = {
   id: Scalars['ID']['input'];
 };
 
 
-export type QueryGetConversationsArgs = {
-  filter?: InputMaybe<ConversationFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryGetConversationArgs = {
+  conversationId: Scalars['ID']['input'];
 };
 
 
@@ -9037,30 +10172,6 @@ export type QueryGetGroupArgs = {
 };
 
 
-export type QueryGetGroupMembersArgs = {
-  groupId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetGroupMessagesArgs = {
-  groupId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetGroupPendingRequestsArgs = {
-  groupId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetGroupsArgs = {
-  filter?: InputMaybe<GroupFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
 export type QueryGetGrowthStatsArgs = {
   filter?: InputMaybe<ReferralFilterInput>;
 };
@@ -9076,46 +10187,8 @@ export type QueryGetMessageReportByIdArgs = {
 };
 
 
-export type QueryGetMessageReportsForAdminArgs = {
-  filter?: InputMaybe<MessageReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetMessagesArgs = {
-  conversationId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetMyBookmarksArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetMyGroupsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetMyInvitationsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetMyPostsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
 export type QueryGetNotificationArgs = {
   notificationId: Scalars['ID']['input'];
-};
-
-
-export type QueryGetNotificationsArgs = {
-  filter?: InputMaybe<NotificationFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
 };
 
 
@@ -9135,32 +10208,14 @@ export type QueryGetPostArgs = {
 };
 
 
-export type QueryGetPostCommentsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-  postId: Scalars['ID']['input'];
-};
-
-
-export type QueryGetPostLikersArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-  postId: Scalars['ID']['input'];
-};
-
-
 export type QueryGetPostReportByIdArgs = {
   reportId: Scalars['ID']['input'];
 };
 
 
-export type QueryGetPostReportsForAdminArgs = {
+export type QueryGetPostReportsForAdminConnectionArgs = {
   filter?: InputMaybe<PostReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type QueryGetPostsArgs = {
-  filter?: InputMaybe<PostFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9193,12 +10248,6 @@ export type QueryGetQrCampaignStatsArgs = {
 };
 
 
-export type QueryGetQrCampaignsArgs = {
-  filter?: InputMaybe<QrCampaignFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
 export type QueryGetReferralCodeDetailArgs = {
   id: Scalars['ID']['input'];
 };
@@ -9209,21 +10258,8 @@ export type QueryGetReferralCodesArgs = {
 };
 
 
-export type QueryGetStockMovementsArgs = {
-  filter?: InputMaybe<StockMovementFilterInput>;
-  pagination?: InputMaybe<StockMovementPaginationInput>;
-  venueId: Scalars['ID']['input'];
-};
-
-
 export type QueryGetUserByUserNameArgs = {
   userName: Scalars['String']['input'];
-};
-
-
-export type QueryGetUserPostsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-  userId: Scalars['ID']['input'];
 };
 
 
@@ -9237,9 +10273,33 @@ export type QueryGetUserReportByIdArgs = {
 };
 
 
-export type QueryGetUserReportsForAdminArgs = {
+export type QueryGetUserReportsForAdminConnectionArgs = {
   filter?: InputMaybe<UserReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryGroupMembersConnectionArgs = {
+  groupId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryGroupMessagesConnectionArgs = {
+  groupId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryGroupPendingRequestsConnectionArgs = {
+  groupId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryGroupsConnectionArgs = {
+  filter?: InputMaybe<GroupFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9268,9 +10328,9 @@ export type QueryHasReportedUserArgs = {
 };
 
 
-export type QueryHostGamesArgs = {
+export type QueryHostGamesConnectionArgs = {
   hostId: Scalars['ID']['input'];
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9336,14 +10396,31 @@ export type QueryMatchScorecardArgs = {
 };
 
 
-export type QueryMyBlacklistArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMessageReportsConnectionArgs = {
+  filter?: InputMaybe<MessageReportFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyBookingsArgs = {
+export type QueryMessagesConnectionArgs = {
+  conversationId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyBlacklistConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyBookingsConnectionArgs = {
   filter?: InputMaybe<BookingFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyBookmarksConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9352,63 +10429,83 @@ export type QueryMyCampaignsArgs = {
 };
 
 
-export type QueryMyClaimRequestsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyClaimRequestsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyGameTemplatesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyGameTemplatesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyHoldBookingsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyGroupInvitationsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyHostedGamesArgs = {
+export type QueryMyGroupsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyHoldBookingsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyHostedGamesConnectionArgs = {
   filter?: InputMaybe<MyGamesFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyJoinedGamesArgs = {
+export type QueryMyJoinedGamesConnectionArgs = {
   filter?: InputMaybe<MyGamesFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyOrdersArgs = {
+export type QueryMyOrdersConnectionArgs = {
   filter?: InputMaybe<OrderFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyPassesArgs = {
+export type QueryMyPassesConnectionArgs = {
   filter?: InputMaybe<MyPassesFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyRecurringBookingsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyRegistrationsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyRatingForPassArgs = {
+  passId: Scalars['ID']['input'];
 };
 
 
-export type QueryMySavedGamesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyRecurringBookingsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyTournamentsArgs = {
+export type QueryMyRegistrationsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMySavedGamesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryMyTournamentsConnectionArgs = {
   filter?: InputMaybe<TournamentFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9418,31 +10515,37 @@ export type QueryMyVenueAvailabilityArgs = {
 };
 
 
-export type QueryMyVenueRequestsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyVenueRequestsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryMyVenuesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryMyVenuesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type QueryNearbyPickupGamesArgs = {
+export type QueryNearbyPickupGamesConnectionArgs = {
   filter?: InputMaybe<PickupGameFilterInput>;
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   radiusKm?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
-export type QueryNearbyVenuesArgs = {
+export type QueryNearbyVenuesConnectionArgs = {
   filter?: InputMaybe<VenueFilterInput>;
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
   maxDistanceKm?: InputMaybe<Scalars['Float']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryNotificationsConnectionArgs = {
+  filter?: InputMaybe<NotificationFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9474,19 +10577,41 @@ export type QueryOrdersByBookingIdArgs = {
 };
 
 
-export type QueryOrdersPendingRefundArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryOrdersPendingRefundConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryPendingClaimRequestsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryOtpTestPhoneArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
-export type QueryPendingVenueRequestsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryOtpTestPhonesConnectionArgs = {
+  filter?: InputMaybe<OtpTestPhoneFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryOtpTestUserGrantArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryOtpTestUserGrantsConnectionArgs = {
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPendingClaimRequestsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPendingVenueRequestsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9500,9 +10625,33 @@ export type QueryPickupGameCampaignArgs = {
 };
 
 
-export type QueryPickupGamesArgs = {
+export type QueryPickupGamesConnectionArgs = {
   filter?: InputMaybe<PickupGameFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPortalCapabilityGrantsConnectionArgs = {
+  filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPostCommentsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostLikersConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+  postId: Scalars['ID']['input'];
+};
+
+
+export type QueryPostsConnectionArgs = {
+  filter?: InputMaybe<PostFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9513,6 +10662,11 @@ export type QueryPreviewBulkImportArgs = {
 
 export type QueryPreviewLateEntryPlacementArgs = {
   categoryId: Scalars['ID']['input'];
+};
+
+
+export type QueryPreviewMoveMatchArgs = {
+  input: MoveMatchInput;
 };
 
 
@@ -9545,9 +10699,9 @@ export type QueryProductStatsArgs = {
 };
 
 
-export type QueryProductsArgs = {
+export type QueryProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   sort?: InputMaybe<ProductSortInput>;
 };
 
@@ -9562,10 +10716,16 @@ export type QueryPromotionStatsArgs = {
 };
 
 
-export type QueryPromotionsArgs = {
+export type QueryPromotionsConnectionArgs = {
   filter?: InputMaybe<PromotionFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   sort?: InputMaybe<PromotionSortInput>;
+};
+
+
+export type QueryQrCampaignsConnectionArgs = {
+  filter?: InputMaybe<QrCampaignFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9584,9 +10744,30 @@ export type QueryRefereeWorkloadArgs = {
 };
 
 
-export type QuerySearchMessagesArgs = {
+export type QueryScoreboardPresetArgs = {
+  sportType: SportType;
+};
+
+
+export type QueryScoreboardSessionArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
+export type QueryScoreboardSessionByViewerTokenArgs = {
+  viewerToken: Scalars['String']['input'];
+};
+
+
+export type QueryScoreboardSessionsConnectionArgs = {
+  filter: ScoreboardSessionsFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QuerySearchMessagesConnectionArgs = {
   input: SearchMessagesInput;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
@@ -9606,8 +10787,20 @@ export type QuerySportArgs = {
 };
 
 
-export type QueryStaffedVenuesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryStaffedVenuesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryStockMovementsConnectionArgs = {
+  filter?: InputMaybe<StockMovementFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+  venueId: Scalars['ID']['input'];
+};
+
+
+export type QuerySuggestedPriceArgs = {
+  filter?: InputMaybe<SuggestedPriceFilterInput>;
 };
 
 
@@ -9632,9 +10825,9 @@ export type QueryTournamentGroupRankingsArgs = {
 };
 
 
-export type QueryTournamentMatchesArgs = {
+export type QueryTournamentMatchesConnectionArgs = {
   filter?: InputMaybe<MatchFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   tournamentId: Scalars['ID']['input'];
 };
 
@@ -9655,9 +10848,9 @@ export type QueryTournamentRefereesArgs = {
 };
 
 
-export type QueryTournamentRegistrationsArgs = {
+export type QueryTournamentRegistrationsConnectionArgs = {
   filter?: InputMaybe<RegistrationFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   tournamentId: Scalars['ID']['input'];
 };
 
@@ -9672,9 +10865,32 @@ export type QueryTournamentStatsArgs = {
 };
 
 
-export type QueryTournamentsArgs = {
+export type QueryTournamentsConnectionArgs = {
   filter?: InputMaybe<TournamentFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryTransferrerRatingsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryTransferrerStatsArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryUrgentPassesArgs = {
+  filter?: InputMaybe<AvailablePassesFilterInput>;
+  take?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryUserPostsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -9709,9 +10925,9 @@ export type QueryVenueArgs = {
 };
 
 
-export type QueryVenueActivitiesArgs = {
+export type QueryVenueActivitiesConnectionArgs = {
   filter?: InputMaybe<ActivityFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -9728,35 +10944,35 @@ export type QueryVenueAvailabilityArgs = {
 };
 
 
-export type QueryVenueBookingsArgs = {
+export type QueryVenueBookingsConnectionArgs = {
   filter?: InputMaybe<BookingFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   sort?: InputMaybe<BookingSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueCategoriesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueCategoriesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueCourtsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueCourtsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueHoldBookingsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueHoldBookingsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueOrdersArgs = {
+export type QueryVenueOrdersConnectionArgs = {
   filter?: InputMaybe<OrderFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   sort?: InputMaybe<OrderSortInput>;
   venueId: Scalars['ID']['input'];
 };
@@ -9767,9 +10983,9 @@ export type QueryVenuePendingInvitationsArgs = {
 };
 
 
-export type QueryVenueProductsArgs = {
+export type QueryVenueProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -9779,15 +10995,15 @@ export type QueryVenuePromotionSummaryArgs = {
 };
 
 
-export type QueryVenuePromotionsArgs = {
+export type QueryVenuePromotionsConnectionArgs = {
   filter?: InputMaybe<PromotionFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueRecurringBookingsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueRecurringBookingsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -9803,30 +11019,30 @@ export type QueryVenueRevenueStatsArgs = {
 };
 
 
-export type QueryVenueReviewsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueReviewsConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenueStaffArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type QueryVenueStaffConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
-export type QueryVenuesArgs = {
+export type QueryVenuesConnectionArgs = {
   filter?: InputMaybe<VenueFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
   sort?: InputMaybe<VenueSortInput>;
 };
 
 
-export type QueryVenuesSortedByDistanceArgs = {
+export type QueryVenuesSortedByDistanceConnectionArgs = {
   filter?: InputMaybe<VenueFilterInput>;
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 export type RateParticipantsInput = {
@@ -9836,6 +11052,20 @@ export type RateParticipantsInput = {
   mvpUserId?: InputMaybe<Scalars['ID']['input']>;
   /** Danh sách đánh giá */
   ratings: Array<ParticipantRatingInput>;
+};
+
+export type RatePassTransferInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  passId: Scalars['ID']['input'];
+  /** Điểm 1-5 */
+  score: Scalars['Int']['input'];
+};
+
+export type ReactionDelta = {
+  __typename?: 'ReactionDelta';
+  createdAt: Scalars['DateTime']['output'];
+  emoji: Scalars['String']['output'];
+  userId: Scalars['ID']['output'];
 };
 
 export type RecordQrScanInput = {
@@ -9891,20 +11121,6 @@ export type RecurringBookingDetails = {
   sessions: Array<Booking>;
   /** Sessions summary */
   summary: RecurringBookingSummary;
-};
-
-export type RecurringBookingList = {
-  __typename?: 'RecurringBookingList';
-  /** List of master recurring bookings */
-  bookings: Array<Booking>;
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
 };
 
 export type RecurringBookingSummary = {
@@ -10089,17 +11305,6 @@ export type RegistrationFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type RegistrationList = {
-  __typename?: 'RegistrationList';
-  hasNextPage: Scalars['Boolean']['output'];
-  hasPrevPage: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  registrations: Array<TournamentRegistration>;
-  total: Scalars['Int']['output'];
-  totalPages: Scalars['Int']['output'];
-};
-
 /** Status of a tournament registration */
 export enum RegistrationStatus {
   Approved = 'APPROVED',
@@ -10157,9 +11362,11 @@ export type RepackCourtScheduleInput = {
 export type RepackCourtSchedulePreviewResult = {
   __typename?: 'RepackCourtSchedulePreviewResult';
   anchorMatchId: Scalars['ID']['output'];
+  /** Total NOT_STARTED matches that would be repacked */
   backlogCount: Scalars['Int']['output'];
   calendarDate: Scalars['String']['output'];
   courtName: Scalars['String']['output'];
+  /** Shifts where old time was before anchor actual start (overdue backlog) */
   overdueCount: Scalars['Int']['output'];
   preview: Array<ScheduleShiftPreview>;
   totalAffected: Scalars['Int']['output'];
@@ -10173,6 +11380,12 @@ export type RepackCourtScheduleResult = {
   preview: Array<ScheduleShiftPreview>;
   totalAffected: Scalars['Int']['output'];
   warnings: Array<Scalars['String']['output']>;
+};
+
+export type ReportBookingPassInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  passId: Scalars['ID']['input'];
+  reason: BookingPassReportReason;
 };
 
 export type ReportMessageInput = {
@@ -10289,10 +11502,10 @@ export type RequestLocationInput = {
   city?: InputMaybe<Scalars['String']['input']>;
   /** District */
   district?: InputMaybe<Scalars['String']['input']>;
-  /** Latitude */
-  latitude?: InputMaybe<Scalars['Float']['input']>;
-  /** Longitude */
-  longitude?: InputMaybe<Scalars['Float']['input']>;
+  /** Latitude (required for map / search) */
+  latitude: Scalars['Float']['input'];
+  /** Longitude (required for map / search) */
+  longitude: Scalars['Float']['input'];
   /** Ward */
   ward?: InputMaybe<Scalars['String']['input']>;
 };
@@ -10324,6 +11537,23 @@ export type RequestOperatingHoursInput = {
   openTime: Scalars['String']['input'];
 };
 
+export type RequestPhoneOtpInput = {
+  deviceId?: InputMaybe<Scalars['String']['input']>;
+  forceChannel?: InputMaybe<OtpChannelType>;
+  phone: Scalars['String']['input'];
+  purpose: OtpPurpose;
+};
+
+export type RequestPhoneOtpResponse = {
+  __typename?: 'RequestPhoneOtpResponse';
+  channel: OtpChannelType;
+  channelLabel?: Maybe<Scalars['String']['output']>;
+  expiresAt?: Maybe<Scalars['DateTime']['output']>;
+  maskedPhone: Scalars['String']['output'];
+  resendAvailableAt: Scalars['DateTime']['output'];
+  verificationId?: Maybe<Scalars['String']['output']>;
+};
+
 export type RequestPhoneUpdateInput = {
   newPhone: Scalars['String']['input'];
 };
@@ -10352,8 +11582,10 @@ export type RequestTimeSlotPricingInput = {
 };
 
 export type ResetPasswordInput = {
-  idToken: Scalars['String']['input'];
+  firebaseIdToken?: InputMaybe<Scalars['String']['input']>;
+  idToken?: InputMaybe<Scalars['String']['input']>;
   newPassword: Scalars['String']['input'];
+  phoneVerificationToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Type of resource affected */
@@ -10419,6 +11651,13 @@ export type RevenueDataPoint = {
   value: Scalars['Int']['output'];
 };
 
+export type ReviewBookingPassReportInput = {
+  cancelPass?: InputMaybe<Scalars['Boolean']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  reportId: Scalars['ID']['input'];
+  status: BookingPassReportStatus;
+};
+
 export type ReviewClaimRequestInput = {
   /** Admin notes (internal) */
   adminNotes?: InputMaybe<Scalars['String']['input']>;
@@ -10452,22 +11691,24 @@ export type SavedGame = {
   userId: Scalars['ID']['output'];
 };
 
-export type SavedGameList = {
-  __typename?: 'SavedGameList';
-  /** Còn trang tiếp theo */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** Có trang trước */
-  hasPrevPage: Scalars['Boolean']['output'];
-  /** Số item mỗi trang */
-  limit: Scalars['Int']['output'];
-  /** Trang hiện tại */
-  page: Scalars['Int']['output'];
-  /** Danh sách kèo đã lưu */
-  savedGames: Array<SavedGame>;
-  /** Tổng số kết quả */
-  total: Scalars['Int']['output'];
-  /** Tổng số trang */
-  totalPages: Scalars['Int']['output'];
+/** A Relay-style connection for SavedGame items. */
+export type SavedGameConnection = {
+  __typename?: 'SavedGameConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<SavedGameEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the SavedGameConnection. */
+export type SavedGameEdge = {
+  __typename?: 'SavedGameEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: SavedGame;
 };
 
 /** Scheduling configuration for the tournament */
@@ -10538,6 +11779,200 @@ export type ScoreSummary = {
   sets: Array<SetScoreSummary>;
 };
 
+export enum ScoreboardAbandonReason {
+  Expired = 'EXPIRED',
+  Inactivity = 'INACTIVITY'
+}
+
+export enum ScoreboardDatePreset {
+  All = 'ALL',
+  Today = 'TODAY',
+  Week = 'WEEK'
+}
+
+export type ScoreboardHubStats = {
+  __typename?: 'ScoreboardHubStats';
+  liveCount: Scalars['Int']['output'];
+  todayCount: Scalars['Int']['output'];
+  weekWins: Scalars['Int']['output'];
+};
+
+export enum ScoreboardHubTab {
+  History = 'HISTORY',
+  Live = 'LIVE',
+  Mine = 'MINE'
+}
+
+export enum ScoreboardMatchFormat {
+  Doubles = 'DOUBLES',
+  Singles = 'SINGLES',
+  Team = 'TEAM'
+}
+
+export type ScoreboardPointEvent = {
+  __typename?: 'ScoreboardPointEvent';
+  eventType?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  pointValue?: Maybe<Scalars['Int']['output']>;
+  scoreAfter: Array<Scalars['Int']['output']>;
+  scoringPlayer: Scalars['Int']['output'];
+  servingPlayer: Scalars['Int']['output'];
+  setNumber: Scalars['Int']['output'];
+  timestamp: Scalars['String']['output'];
+  wasServiceOver?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type ScoreboardRecordFaultInput = {
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  player?: InputMaybe<Scalars['Int']['input']>;
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardRetireInput = {
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  retiredPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardScorePointInput = {
+  /** Optimistic concurrency — mismatch returns 409 */
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  pointValue?: InputMaybe<Scalars['Int']['input']>;
+  scoringPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardScorecard = {
+  __typename?: 'ScoreboardScorecard';
+  announcementText?: Maybe<Scalars['String']['output']>;
+  bestOf: Scalars['Int']['output'];
+  currentPeriod?: Maybe<Scalars['Int']['output']>;
+  currentSetIndex: Scalars['Int']['output'];
+  elapsedSeconds: Scalars['Int']['output'];
+  isTiebreak?: Maybe<Scalars['Boolean']['output']>;
+  leftSidePlayer?: Maybe<Scalars['Int']['output']>;
+  matchEvents?: Maybe<Array<MatchEventGql>>;
+  phase?: Maybe<MatchPhase>;
+  phaseEndsAt?: Maybe<Scalars['String']['output']>;
+  pointHistory: Array<ScoreboardPointEvent>;
+  revision?: Maybe<Scalars['Int']['output']>;
+  scoringConfig: ScoringConfig;
+  servingPlayer?: Maybe<Scalars['Int']['output']>;
+  sessionId: Scalars['ID']['output'];
+  sets: Array<ScoreboardScorecardSet>;
+  side1Serving?: Maybe<Scalars['Boolean']['output']>;
+  sportState?: Maybe<BadmintonMatchStateGql>;
+  status: ScorecardStatus;
+};
+
+export type ScoreboardScorecardSet = {
+  __typename?: 'ScoreboardScorecardSet';
+  isComplete: Scalars['Boolean']['output'];
+  player1Score: Scalars['Int']['output'];
+  player2Score: Scalars['Int']['output'];
+  setNumber: Scalars['Int']['output'];
+  winner?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ScoreboardSession = {
+  __typename?: 'ScoreboardSession';
+  _id: Scalars['ID']['output'];
+  abandonReason?: Maybe<ScoreboardAbandonReason>;
+  createdAt: Scalars['DateTime']['output'];
+  finishedAt?: Maybe<Scalars['DateTime']['output']>;
+  lastScoringActivityAt?: Maybe<Scalars['DateTime']['output']>;
+  matchFormat: ScoreboardMatchFormat;
+  ownerId: Scalars['ID']['output'];
+  scheduledAt?: Maybe<Scalars['DateTime']['output']>;
+  scorecard?: Maybe<ScoreboardScorecard>;
+  scoringConfig: ScoringConfig;
+  side1: ScoreboardSide;
+  side2: ScoreboardSide;
+  sportType: SportType;
+  startedAt?: Maybe<Scalars['DateTime']['output']>;
+  status: ScoreboardSessionStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  viewerToken: Scalars['String']['output'];
+  visibility: ScoreboardVisibility;
+  winner?: Maybe<Scalars['Int']['output']>;
+};
+
+/** A Relay-style connection for ScoreboardSession items. */
+export type ScoreboardSessionConnection = {
+  __typename?: 'ScoreboardSessionConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ScoreboardSessionEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ScoreboardSessionConnection. */
+export type ScoreboardSessionEdge = {
+  __typename?: 'ScoreboardSessionEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: ScoreboardSession;
+};
+
+export type ScoreboardSessionIdInput = {
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  sessionId: Scalars['String']['input'];
+};
+
+export enum ScoreboardSessionStatus {
+  Abandoned = 'ABANDONED',
+  Cancelled = 'CANCELLED',
+  Draft = 'DRAFT',
+  Finished = 'FINISHED',
+  Live = 'LIVE',
+  Scheduled = 'SCHEDULED'
+}
+
+export type ScoreboardSessionsFilterInput = {
+  datePreset?: InputMaybe<ScoreboardDatePreset>;
+  searchQuery?: InputMaybe<Scalars['String']['input']>;
+  sportType?: InputMaybe<SportType>;
+  status?: InputMaybe<ScoreboardSessionStatus>;
+  tab: ScoreboardHubTab;
+};
+
+export type ScoreboardSetBadmintonDoublesServerInput = {
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  receiverPlayerIndex?: InputMaybe<Scalars['Int']['input']>;
+  serverPlayerIndex: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardSetServingPlayerInput = {
+  expectedRevision?: InputMaybe<Scalars['Int']['input']>;
+  servingPlayer: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export type ScoreboardSide = {
+  __typename?: 'ScoreboardSide';
+  label: Scalars['String']['output'];
+  memberLabels?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+export type ScoreboardSideInput = {
+  label: Scalars['String']['input'];
+  memberLabels?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type ScoreboardUpdateElapsedInput = {
+  seconds: Scalars['Int']['input'];
+  sessionId: Scalars['String']['input'];
+};
+
+export enum ScoreboardVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC'
+}
+
 export type ScorecardSet = {
   __typename?: 'ScorecardSet';
   isComplete: Scalars['Boolean']['output'];
@@ -10567,6 +12002,8 @@ export type ScoringConfig = {
   deuceAt: Scalars['Int']['output'];
   /** Whether deuce rules apply */
   deuceEnabled: Scalars['Boolean']['output'];
+  /** Frames to win (billiards / FRAMES scoring system) */
+  framesToWin?: Maybe<Scalars['Int']['output']>;
   /** Max points per set (0 = unlimited, win by margin) */
   maxPoints: Scalars['Int']['output'];
   /** Period duration in minutes (timed sports) */
@@ -10594,11 +12031,14 @@ export type ScoringConfigInput = {
   bestOf: Scalars['Int']['input'];
   deuceAt?: Scalars['Int']['input'];
   deuceEnabled?: Scalars['Boolean']['input'];
+  framesToWin?: InputMaybe<Scalars['Int']['input']>;
   maxPoints?: Scalars['Int']['input'];
   periodDurationMinutes?: Scalars['Int']['input'];
   periodsCount?: Scalars['Int']['input'];
   pointsPerSet: Scalars['Int']['input'];
   scoringSystem: ScoringSystem;
+  serveRotationInterval?: InputMaybe<Scalars['Int']['input']>;
+  serveRule?: InputMaybe<ServeRule>;
   setsToWin: Scalars['Int']['input'];
   tiebreakEnabled?: Scalars['Boolean']['input'];
   tiebreakPoints?: Scalars['Int']['input'];
@@ -10608,6 +12048,7 @@ export type ScoringConfigInput = {
 /** Type of scoring system used for a sport */
 export enum ScoringSystem {
   Custom = 'CUSTOM',
+  Frames = 'FRAMES',
   SetsAndPoints = 'SETS_AND_POINTS',
   TimedGoals = 'TIMED_GOALS',
   TimedPoints = 'TIMED_POINTS'
@@ -10725,7 +12166,8 @@ export type SendNotificationToUsersInput = {
 export enum ServeRule {
   NoServe = 'NO_SERVE',
   RallyPoint = 'RALLY_POINT',
-  Rotation = 'ROTATION'
+  Rotation = 'ROTATION',
+  SideOut = 'SIDE_OUT'
 }
 
 export type ServerInfo = {
@@ -10735,6 +12177,11 @@ export type ServerInfo = {
   status: Scalars['String']['output'];
   version: Scalars['String']['output'];
 };
+
+export enum ServiceCourtSide {
+  Left = 'LEFT',
+  Right = 'RIGHT'
+}
 
 export type ServicePerformance = {
   __typename?: 'ServicePerformance';
@@ -10982,6 +12429,11 @@ export type StartMatchInput = {
   setupMethod?: InputMaybe<MatchSetupMethod>;
 };
 
+export type StartScoreboardSessionInput = {
+  sessionId: Scalars['String']['input'];
+  setup: MatchSetupInput;
+};
+
 /** Reason for stock adjustment */
 export enum StockAdjustmentReason {
   Correction = 'CORRECTION',
@@ -11068,6 +12520,26 @@ export type StockMovement = {
   venueId: Scalars['ID']['output'];
 };
 
+/** A Relay-style connection for StockMovement items. */
+export type StockMovementConnection = {
+  __typename?: 'StockMovementConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<StockMovementEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the StockMovementConnection. */
+export type StockMovementEdge = {
+  __typename?: 'StockMovementEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: StockMovement;
+};
+
 export type StockMovementFilterInput = {
   /** Start date */
   dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
@@ -11079,19 +12551,6 @@ export type StockMovementFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by movement types */
   types?: InputMaybe<Array<StockMovementType>>;
-};
-
-export type StockMovementList = {
-  __typename?: 'StockMovementList';
-  movements: Array<StockMovement>;
-  total: Scalars['Int']['output'];
-};
-
-export type StockMovementPaginationInput = {
-  /** Limit */
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  /** Offset */
-  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** Type of stock movement */
@@ -11120,6 +12579,12 @@ export type SubmitContactInquiryInput = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  /** Fires when a comment is created on a specific post. Subscribe with `postId` from PostDetail. */
+  commentCreated: PostComment;
+  /** Fires when a comment is deleted on a specific post. Subscribe with `postId` from PostDetail. */
+  commentDeleted: CommentDeletedPayload;
+  /** Fires when a comment is updated on a specific post. Subscribe with `postId` from PostDetail. */
+  commentUpdated: PostComment;
   /** Subscribe to message read receipts in a group */
   groupMessageRead: GroupMessageReadPayload;
   /** Subscribe to new messages in a group */
@@ -11132,6 +12597,8 @@ export type Subscription = {
   matchScoreUpdated: MatchScorecard;
   /** Subscribe to message deletions */
   messageDeleted: MessageDeletedPayload;
+  /** Batched reaction updates for a conversation (200ms window). */
+  messageReactionsBatch: MessageReactionsBatchPayload;
   /** Subscribe to message read receipts */
   messageRead: MessageReadPayload;
   /** Subscribe to new messages in a conversation */
@@ -11140,6 +12607,14 @@ export type Subscription = {
   messageUpdated: Message;
   /** Real-time notification for a specific user */
   notificationCreated: Notification;
+  /** Fires when a new post is created. Subscribe from the feed to show a "new posts" pill. */
+  postCreated: Post;
+  /** Fires when a specific post is deleted. Subscribe with `postId` from PostDetail. */
+  postDeleted: PostDeletedPayload;
+  /** Fires when a specific post is updated. Subscribe with `postId` from PostDetail. */
+  postUpdated: Post;
+  /** Realtime scoreboard session updates */
+  scoreboardSessionUpdated: ScoreboardSession;
   /** Fires when any tournament status changes (e.g. DRAFT→PUBLISHED). Use to refetch tournament list. */
   tournamentListUpdated: Scalars['String']['output'];
   /** Any match updated in tournament */
@@ -11150,6 +12625,21 @@ export type Subscription = {
   tournamentStatusChanged: Scalars['String']['output'];
   /** Subscribe to typing indicators */
   typingStatus: TypingStatusPayload;
+};
+
+
+export type SubscriptionCommentCreatedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommentUpdatedArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -11174,11 +12664,16 @@ export type SubscriptionGroupTypingStatusArgs = {
 
 
 export type SubscriptionMatchScoreUpdatedArgs = {
-  matchId: Scalars['ID']['input'];
+  _matchId: Scalars['ID']['input'];
 };
 
 
 export type SubscriptionMessageDeletedArgs = {
+  conversationId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionMessageReactionsBatchArgs = {
   conversationId: Scalars['ID']['input'];
 };
 
@@ -11203,18 +12698,33 @@ export type SubscriptionNotificationCreatedArgs = {
 };
 
 
+export type SubscriptionPostDeletedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionPostUpdatedArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionScoreboardSessionUpdatedArgs = {
+  sessionId: Scalars['ID']['input'];
+};
+
+
 export type SubscriptionTournamentMatchesUpdatedArgs = {
-  tournamentId: Scalars['ID']['input'];
+  _tournamentId: Scalars['ID']['input'];
 };
 
 
 export type SubscriptionTournamentRefereesUpdatedArgs = {
-  tournamentId: Scalars['ID']['input'];
+  _tournamentId: Scalars['ID']['input'];
 };
 
 
 export type SubscriptionTournamentStatusChangedArgs = {
-  tournamentId: Scalars['ID']['input'];
+  _tournamentId: Scalars['ID']['input'];
 };
 
 
@@ -11226,6 +12736,25 @@ export type SuccessResponse = {
   __typename?: 'SuccessResponse';
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type SuggestedPrice = {
+  __typename?: 'SuggestedPrice';
+  p25?: Maybe<Scalars['Float']['output']>;
+  p50?: Maybe<Scalars['Float']['output']>;
+  p75?: Maybe<Scalars['Float']['output']>;
+  /** Số pass mẫu dùng để tính */
+  sampleSize: Scalars['Int']['output'];
+  /** Giá đề xuất chính (median của các pass tương tự đã COMPLETED 90 ngày qua) */
+  suggested?: Maybe<Scalars['Float']['output']>;
+};
+
+export type SuggestedPriceFilterInput = {
+  /** Tỉnh / thành phố */
+  city?: InputMaybe<Scalars['String']['input']>;
+  sportType?: InputMaybe<SportType>;
+  /** Lọc theo venue (ưu tiên cùng sân). */
+  venueId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SwapCourtSidesInput = {
@@ -11243,6 +12772,14 @@ export type SystemStats = {
   totalUsers: Scalars['Int']['output'];
   totalVenues: Scalars['Int']['output'];
 };
+
+/** Khung giờ trong ngày để lọc pass */
+export enum TimeOfDay {
+  Afternoon = 'AFTERNOON',
+  Evening = 'EVENING',
+  Morning = 'MORNING',
+  Night = 'NIGHT'
+}
 
 export type TimeRange = {
   __typename?: 'TimeRange';
@@ -11269,6 +12806,8 @@ export type TimeSlotAvailability = {
   customerId?: Maybe<Scalars['ID']['output']>;
   /** Customer name who booked this slot */
   customerName?: Maybe<Scalars['String']['output']>;
+  /** Customer phone who booked this slot */
+  customerPhone?: Maybe<Scalars['String']['output']>;
   /** End time (HH:mm) */
   endTime: Scalars['String']['output'];
   /** Has active booking pass for this slot */
@@ -11291,6 +12830,8 @@ export type TimeSlotAvailability = {
   isPast: Scalars['Boolean']['output'];
   /** Is peak hour */
   isPeakHour: Scalars['Boolean']['output'];
+  /** Whether the booking is a recurring (fixed) schedule */
+  isRecurring?: Maybe<Scalars['Boolean']['output']>;
   /** Booking ID if slot is user hold active booking */
   myHoldActiveBookingId?: Maybe<Scalars['ID']['output']>;
   /** Booking ID if slot is user hold pending booking */
@@ -11453,6 +12994,17 @@ export type TournamentChampion = {
   silverName?: Maybe<Scalars['String']['output']>;
 };
 
+/** A Relay-style connection for Tournament items. */
+export type TournamentConnection = {
+  __typename?: 'TournamentConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<TournamentEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TournamentContact = {
   __typename?: 'TournamentContact';
   /** Icon name */
@@ -11500,6 +13052,15 @@ export type TournamentDatesInput = {
   registrationCloseDate?: InputMaybe<Scalars['String']['input']>;
   registrationOpenDate?: InputMaybe<Scalars['String']['input']>;
   startDate: Scalars['String']['input'];
+};
+
+/** An edge in the TournamentConnection. */
+export type TournamentEdge = {
+  __typename?: 'TournamentEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Tournament;
 };
 
 export type TournamentFacility = {
@@ -11552,17 +13113,6 @@ export enum TournamentGender {
   Mixed = 'MIXED',
   Open = 'OPEN'
 }
-
-export type TournamentList = {
-  __typename?: 'TournamentList';
-  hasNextPage: Scalars['Boolean']['output'];
-  hasPrevPage: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  totalPages: Scalars['Int']['output'];
-  tournaments: Array<Tournament>;
-};
 
 export type TournamentLocation = {
   __typename?: 'TournamentLocation';
@@ -11634,6 +13184,26 @@ export type TournamentMatch = {
   updatedAt: Scalars['DateTime']['output'];
   /** Winner: 1 = player1, 2 = player2 */
   winner?: Maybe<Scalars['Int']['output']>;
+};
+
+/** A Relay-style connection for TournamentMatch items. */
+export type TournamentMatchConnection = {
+  __typename?: 'TournamentMatchConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<TournamentMatchEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the TournamentMatchConnection. */
+export type TournamentMatchEdge = {
+  __typename?: 'TournamentMatchEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: TournamentMatch;
 };
 
 export type TournamentPaymentInfo = {
@@ -11764,6 +13334,26 @@ export type TournamentRegistration = {
   userId?: Maybe<Scalars['ID']['output']>;
 };
 
+/** A Relay-style connection for TournamentRegistration items. */
+export type TournamentRegistrationConnection = {
+  __typename?: 'TournamentRegistrationConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<TournamentRegistrationEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the TournamentRegistrationConnection. */
+export type TournamentRegistrationEdge = {
+  __typename?: 'TournamentRegistrationEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: TournamentRegistration;
+};
+
 export type TournamentRule = {
   __typename?: 'TournamentRule';
   content?: Maybe<Scalars['String']['output']>;
@@ -11847,6 +13437,43 @@ export type TransferProductsInput = {
   products: Array<TransferProductItem>;
   /** Source venue ID */
   sourceVenueId: Scalars['ID']['input'];
+};
+
+export type TransferrerRating = {
+  __typename?: 'TransferrerRating';
+  _id: Scalars['ID']['output'];
+  /** Nhận xét tuỳ chọn */
+  comment?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  /** Pass đã được rate */
+  passId: Scalars['ID']['output'];
+  rater?: Maybe<User>;
+  /** User rate (receiver / transferee) */
+  raterId: Scalars['ID']['output'];
+  /** Điểm 1-5 */
+  score: Scalars['Int']['output'];
+  transferrer?: Maybe<User>;
+  /** User được rate (transferrer) */
+  transferrerId: Scalars['ID']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type TransferrerStats = {
+  __typename?: 'TransferrerStats';
+  /** Tỷ lệ hoàn tất = totalCompleted / (totalCompleted + totalCancelled). 0..1 */
+  completionRate: Scalars['Float']['output'];
+  /** Ngày tham gia hệ thống (ISO) */
+  memberSince?: Maybe<Scalars['DateTime']['output']>;
+  /** Số báo cáo PENDING tích luỹ */
+  pendingReports: Scalars['Int']['output'];
+  /** Số pass bị huỷ */
+  totalCancelled: Scalars['Int']['output'];
+  /** Số pass đã hoàn tất giao dịch */
+  totalCompleted: Scalars['Int']['output'];
+  /** Tổng số pass đã tạo */
+  totalCreated: Scalars['Int']['output'];
+  /** Số pass hết hạn không ai nhận */
+  totalExpired: Scalars['Int']['output'];
 };
 
 export type TypingStatusPayload = {
@@ -11993,6 +13620,14 @@ export type UpdateMessageReportStatusInput = {
   status: ReportStatus;
 };
 
+export type UpdateOtpTestPhoneInput = {
+  /** Empty = all phone OTP purposes allowed */
+  allowedPurposes?: InputMaybe<Array<OtpPurpose>>;
+  expiresAt?: InputMaybe<Scalars['DateTime']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  testCode?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateParticipantDepositInput = {
   /** Trạng thái đặt cọc mới */
   depositStatus: DepositStatus;
@@ -12037,7 +13672,7 @@ export type UpdatePickupGameCampaignInput = {
   /** Tên campaign */
   name?: InputMaybe<Scalars['String']['input']>;
   /** Môn thể thao của campaign */
-  sportTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+  sportTypes?: InputMaybe<Array<SportType>>;
   /** Ngày bắt đầu (ISO string) */
   startDate?: InputMaybe<Scalars['String']['input']>;
   /** Trình độ mục tiêu */
@@ -12118,6 +13753,29 @@ export type UpdatePostInput = {
   title?: InputMaybe<Scalars['String']['input']>;
   /** Visibility of the post */
   visibility?: InputMaybe<PostVisibility>;
+};
+
+export type UpdateProductCategoryInput = {
+  /** Category ID */
+  categoryId: Scalars['ID']['input'];
+  /** Category color (hex code) */
+  color?: InputMaybe<Scalars['String']['input']>;
+  /** Category description */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Display order */
+  displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** Category icon */
+  icon?: InputMaybe<Scalars['String']['input']>;
+  /** Category image URL */
+  imageUrl?: InputMaybe<Scalars['String']['input']>;
+  /** Is category active */
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Category name */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Parent category ID */
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+  /** URL-friendly slug */
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateProductInput = {
@@ -12449,6 +14107,23 @@ export type UploadGroupCoverInput = {
   groupId?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Logical category of an uploaded asset; controls storage path & validation rules. */
+export enum UploadKind {
+  Avatar = 'AVATAR',
+  ChatFile = 'CHAT_FILE',
+  ChatImage = 'CHAT_IMAGE',
+  ChatVideo = 'CHAT_VIDEO',
+  CoverPhoto = 'COVER_PHOTO',
+  GroupChatImage = 'GROUP_CHAT_IMAGE',
+  GroupCover = 'GROUP_COVER',
+  PaymentProof = 'PAYMENT_PROOF',
+  PostMedia = 'POST_MEDIA',
+  ProductImage = 'PRODUCT_IMAGE',
+  TournamentImage = 'TOURNAMENT_IMAGE',
+  VenueImage = 'VENUE_IMAGE',
+  VenueRequestImage = 'VENUE_REQUEST_IMAGE'
+}
+
 export type UploadPaymentProofInput = {
   /** Base64 encoded image data */
   base64Image: Scalars['String']['input'];
@@ -12463,6 +14138,8 @@ export type UploadPostMediaInput = {
 
 export type UploadPostMediaResponse = {
   __typename?: 'UploadPostMediaResponse';
+  /** BlurHash placeholder for instant image preview on the client. */
+  blurhash?: Maybe<Scalars['String']['output']>;
   /** Height in pixels */
   height?: Maybe<Scalars['Float']['output']>;
   /** File key in storage */
@@ -12475,6 +14152,19 @@ export type UploadPostMediaResponse = {
   url: Scalars['String']['output'];
   /** Width in pixels */
   width?: Maybe<Scalars['Float']['output']>;
+};
+
+export type UploadProcessedImageInput = {
+  /** Base64-encoded image (with or without data: URI prefix). */
+  base64Image: Scalars['String']['input'];
+  /** Logical asset kind (avatar, group-cover, venue-image, …). */
+  kind: UploadKind;
+  /** Owner id used to namespace the storage path (userId / venueId / groupId). */
+  ownerId?: InputMaybe<Scalars['String']['input']>;
+  /** Skip 800px medium variant generation. */
+  skipMedium?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Skip 200px thumbnail generation if the consumer does not need it. */
+  skipThumbnail?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UploadProductImageInput = {
@@ -12522,6 +14212,8 @@ export type User = {
   accountOrigin?: Maybe<AccountOrigin>;
   /** How the user discovered the platform (collected via onboarding survey) */
   acquisitionSource?: Maybe<AcquisitionSource>;
+  /** Avatar with placeholder + responsive variants. */
+  avatar?: Maybe<ImageMedia>;
   bio?: Maybe<Scalars['String']['output']>;
   club?: Maybe<Scalars['String']['output']>;
   coverPhotoURL?: Maybe<Scalars['String']['output']>;
@@ -12530,7 +14222,7 @@ export type User = {
   createdBy?: Maybe<Scalars['ID']['output']>;
   dateOfBirth?: Maybe<Scalars['DateTime']['output']>;
   displayName: Scalars['String']['output'];
-  email: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   emailVerificationDate?: Maybe<Scalars['DateTime']['output']>;
   emailVerified: Scalars['Boolean']['output'];
   fcmTokens: Array<Scalars['String']['output']>;
@@ -12543,11 +14235,18 @@ export type User = {
   isSuspended: Scalars['Boolean']['output'];
   lastLoginAt?: Maybe<Scalars['DateTime']['output']>;
   location?: Maybe<Location>;
+  /** Average rating (1-5) from receivers across completed pass transfers */
+  passRatingAvg?: Maybe<Scalars['Float']['output']>;
+  /** Total number of ratings received for completed transfers */
+  passRatingCount?: Maybe<Scalars['Float']['output']>;
   passwordSetAt?: Maybe<Scalars['DateTime']['output']>;
-  phone: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
   phoneVerificationDate?: Maybe<Scalars['DateTime']['output']>;
   phoneVerified: Scalars['Boolean']['output'];
+  /** Plain avatar URL. Kept for backward compat with mobile builds < 1.7. Prefer `avatar.url` (with blurhash placeholder). */
   photoURL?: Maybe<Scalars['String']['output']>;
+  /** Active portal capability grants (resolved at query time) */
+  portalCapabilities: Array<PortalCapability>;
   /** Personal referral code (unique per user) */
   referralCode?: Maybe<Scalars['String']['output']>;
   /** User ID of the person who referred this user */
@@ -12560,7 +14259,7 @@ export type User = {
   /** Suspension reason */
   suspensionReason?: Maybe<Scalars['String']['output']>;
   totalActivities: Scalars['Float']['output'];
-  uid: Scalars['ID']['output'];
+  uid?: Maybe<Scalars['ID']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   userName: Scalars['String']['output'];
 };
@@ -12580,13 +14279,34 @@ export type UserBlock = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type UserList = {
-  __typename?: 'UserList';
-  hasMore: Scalars['Boolean']['output'];
-  limit: Scalars['Int']['output'];
-  page: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
-  users: Array<User>;
+/** A Relay-style connection for User items. */
+export type UserConnection = {
+  __typename?: 'UserConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<UserEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type UserContactLookup = {
+  __typename?: 'UserContactLookup';
+  _id: Scalars['ID']['output'];
+  displayName: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  fullName: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  photoURL?: Maybe<Scalars['String']['output']>;
+};
+
+/** An edge in the UserConnection. */
+export type UserEdge = {
+  __typename?: 'UserEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: User;
 };
 
 export type UserReport = {
@@ -12618,25 +14338,31 @@ export type UserReport = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+/** A Relay-style connection for UserReport items. */
+export type UserReportConnection = {
+  __typename?: 'UserReportConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<UserReportEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the UserReportConnection. */
+export type UserReportEdge = {
+  __typename?: 'UserReportEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: UserReport;
+};
+
 export type UserReportFilterInput = {
   /** Filter by report reason */
   reason?: InputMaybe<UserReportReason>;
   /** Filter by report status */
   status?: InputMaybe<UserReportStatus>;
-};
-
-export type UserReportList = {
-  __typename?: 'UserReportList';
-  /** Has more reports to load */
-  hasMore: Scalars['Boolean']['output'];
-  /** Number of items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page number */
-  page: Scalars['Int']['output'];
-  /** List of user reports */
-  reports: Array<UserReport>;
-  /** Total number of reports */
-  total: Scalars['Int']['output'];
 };
 
 /** Reason for reporting a user */
@@ -12750,8 +14476,8 @@ export type Venue = {
   canBook: Scalars['Boolean']['output'];
   /** Cancellation hours before booking */
   cancellationHours: Scalars['Int']['output'];
-  /** Venue categories (includes system categories) */
-  categories: CategoryList;
+  /** Venue categories (includes system categories, cursor) */
+  categoriesConnection: ProductCategoryConnection;
   /** When venue was claimed */
   claimedAt?: Maybe<Scalars['DateTime']['output']>;
   /** User who claimed this venue */
@@ -12760,9 +14486,12 @@ export type Venue = {
   communityGroupId?: Maybe<Scalars['ID']['output']>;
   /** Number of courts */
   courtCount: Scalars['Int']['output'];
-  /** Venue courts */
-  courts: CourtList;
-  /** Cover image URL */
+  /** Cover image with placeholder + responsive variants. */
+  coverImage?: Maybe<ImageMedia>;
+  /**
+   * Cover image URL
+   * @deprecated Use `coverImage.url`. Kept for backward compat with mobile builds < 1.7.
+   */
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Venue description */
@@ -12779,7 +14508,12 @@ export type Venue = {
   externalSource?: Maybe<VenueExternalSource>;
   /** Has food/beverage service */
   hasOrderService: Scalars['Boolean']['output'];
-  /** Venue images URLs */
+  /** Venue gallery with placeholder + responsive variants. */
+  imageMedia?: Maybe<Array<ImageMedia>>;
+  /**
+   * Venue images URLs
+   * @deprecated Use `imageMedia[].url`. Kept for mobile builds < 1.7.
+   */
   images?: Maybe<Array<Scalars['String']['output']>>;
   /** Is venue favorited by current user */
   isFavorite: Scalars['Boolean']['output'];
@@ -12818,8 +14552,8 @@ export type Venue = {
   phoneNumber?: Maybe<Scalars['String']['output']>;
   /** Price range */
   priceRange?: Maybe<PriceRange>;
-  /** Venue products (active only) */
-  products: ProductList;
+  /** Venue products (active only, cursor) */
+  productsConnection: ProductConnection;
   /** Promotion information for venue display */
   promotionInfo?: Maybe<VenuePromotionInfo>;
   /** Is recurring booking enabled for this venue */
@@ -12832,6 +14566,8 @@ export type Venue = {
   sportTypes: Array<SportType>;
   /** Venue status */
   status: VenueStatus;
+  /** User ID who submitted this venue via Pass sân flow (USER_SUBMITTED). Used to throttle abuse and trace authorship. */
+  submittedById?: Maybe<Scalars['ID']['output']>;
   /** Terms and conditions of the venue */
   termsAndConditions?: Maybe<Scalars['String']['output']>;
   /** Total bookings */
@@ -12848,19 +14584,14 @@ export type Venue = {
 };
 
 
-export type VenueCategoriesArgs = {
-  pagination?: InputMaybe<PaginationInput>;
+export type VenueCategoriesConnectionArgs = {
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 
-export type VenueCourtsArgs = {
-  pagination?: InputMaybe<PaginationInput>;
-};
-
-
-export type VenueProductsArgs = {
+export type VenueProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 };
 
 /** Venue-specific actions */
@@ -12972,6 +14703,46 @@ export type VenueClaimRequest = {
   venueName: Scalars['String']['output'];
 };
 
+/** A Relay-style connection for VenueClaimRequest items. */
+export type VenueClaimRequestConnection = {
+  __typename?: 'VenueClaimRequestConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<VenueClaimRequestEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the VenueClaimRequestConnection. */
+export type VenueClaimRequestEdge = {
+  __typename?: 'VenueClaimRequestEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: VenueClaimRequest;
+};
+
+/** A Relay-style connection for Venue items. */
+export type VenueConnection = {
+  __typename?: 'VenueConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<VenueEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the VenueConnection. */
+export type VenueEdge = {
+  __typename?: 'VenueEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Venue;
+};
+
 /** External source of imported venue data */
 export enum VenueExternalSource {
   Google = 'GOOGLE',
@@ -13021,20 +14792,6 @@ export type VenueFilterInput = {
   venueType?: InputMaybe<VenueType>;
   /** Filter by multiple venue types */
   venueTypes?: InputMaybe<Array<VenueType>>;
-};
-
-export type VenueList = {
-  __typename?: 'VenueList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Total count */
-  total: Scalars['Int']['output'];
-  /** List of venues */
-  venues: Array<Venue>;
 };
 
 export type VenueLocation = {
@@ -13222,18 +14979,24 @@ export type VenueRequest = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type VenueRequestList = {
-  __typename?: 'VenueRequestList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** List of venue requests */
-  requests: Array<VenueRequest>;
-  /** Total count */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for VenueRequest items. */
+export type VenueRequestConnection = {
+  __typename?: 'VenueRequestConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<VenueRequestEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the VenueRequestConnection. */
+export type VenueRequestEdge = {
+  __typename?: 'VenueRequestEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: VenueRequest;
 };
 
 export type VenueRequestStats = {
@@ -13317,22 +15080,28 @@ export type VenueReview = {
   venueId: Scalars['ID']['output'];
 };
 
-export type VenueReviewList = {
-  __typename?: 'VenueReviewList';
-  /** Average rating */
+/** Relay-style connection for venue reviews with rating stats. */
+export type VenueReviewConnection = {
+  __typename?: 'VenueReviewConnection';
+  /** Average rating (1–5). */
   averageRating: Scalars['Int']['output'];
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** Rating distribution [1,2,3,4,5] */
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<VenueReviewEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Rating distribution [1,2,3,4,5]. */
   ratingDistribution: Array<Scalars['Int']['output']>;
-  /** List of reviews */
-  reviews: Array<VenueReview>;
-  /** Total count */
-  total: Scalars['Int']['output'];
+  /** Total reviews matching the filter. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the VenueReviewConnection. */
+export type VenueReviewEdge = {
+  __typename?: 'VenueReviewEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The review at the end of the edge. */
+  node: VenueReview;
 };
 
 export type VenueSortInput = {
@@ -13369,18 +15138,24 @@ export type VenueStaff = {
   venueId: Scalars['ID']['output'];
 };
 
-export type VenueStaffList = {
-  __typename?: 'VenueStaffList';
-  /** Has more items */
-  hasMore: Scalars['Boolean']['output'];
-  /** Items per page */
-  limit: Scalars['Int']['output'];
-  /** Current page */
-  page: Scalars['Int']['output'];
-  /** List of staff members */
-  staff: Array<VenueStaff>;
-  /** Total count */
-  total: Scalars['Int']['output'];
+/** A Relay-style connection for VenueStaff items. */
+export type VenueStaffConnection = {
+  __typename?: 'VenueStaffConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<VenueStaffEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the VenueStaffConnection. */
+export type VenueStaffEdge = {
+  __typename?: 'VenueStaffEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: VenueStaff;
 };
 
 /** Status of staff member */
@@ -13413,28 +15188,25 @@ export type VerifyOtpInput = {
   verificationId: Scalars['String']['input'];
 };
 
-export type NotificationFieldsFragment = { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null };
+export type VerifyPhoneOtpInput = {
+  code: Scalars['String']['input'];
+  purpose: OtpPurpose;
+  verificationId: Scalars['String']['input'];
+};
 
-export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
-
-export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
-
-export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
-
-export type MatchCoreFragment = { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null };
-
-export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null };
-
-export type ScorecardCoreFragment = { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, matchSetup?: { __typename?: 'MatchSetupSnapshot', setupMethod: MatchSetupMethod, coinTossWinner?: number | null, coinTossChoice?: CoinTossChoice | null, decidedAt: string } | null, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, correctionHistory?: Array<{ __typename?: 'CorrectionEvent', id: string, actorId: string, reason: string, action: MatchCorrectionAction, timestamp: string }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
-
-export type UserCoreFragment = { __typename?: 'User', _id: string, userName: string, fullName: string, displayName: string, photoURL?: string | null };
+export type VerifyPhoneOtpResponse = {
+  __typename?: 'VerifyPhoneOtpResponse';
+  expiresAt: Scalars['DateTime']['output'];
+  phone: Scalars['String']['output'];
+  phoneVerificationToken: Scalars['String']['output'];
+};
 
 export type AdminCreateUserMutationVariables = Exact<{
   input: AdminCreateUserInput;
 }>;
 
 
-export type AdminCreateUserMutation = { __typename?: 'Mutation', adminCreateUser: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, accountOrigin?: AccountOrigin | null, createdAt: string } };
+export type AdminCreateUserMutation = { __typename?: 'Mutation', adminCreateUser: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, accountOrigin?: AccountOrigin | null, createdAt: string } };
 
 export type AdminSuspendUserMutationVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -13451,20 +15223,12 @@ export type AdminUnsuspendUserMutationVariables = Exact<{
 
 export type AdminUnsuspendUserMutation = { __typename?: 'Mutation', adminUnsuspendUser: { __typename?: 'User', _id: string, isActive: boolean, isSuspended: boolean } };
 
-export type AdminChangeUserRoleMutationVariables = Exact<{
-  userId: Scalars['ID']['input'];
-  role: UserRole;
-}>;
-
-
-export type AdminChangeUserRoleMutation = { __typename?: 'Mutation', adminChangeUserRole: { __typename?: 'User', _id: string, role: UserRole } };
-
 export type AdminProvisionPlayerMutationVariables = Exact<{
   input: AdminProvisionPlayerInput;
 }>;
 
 
-export type AdminProvisionPlayerMutation = { __typename?: 'Mutation', adminProvisionPlayer: { __typename?: 'AdminProvisionPlayerResponse', generatedPassword?: string | null, loginInstructions: string, user: { __typename?: 'User', _id: string, fullName: string, phone: string, email: string, userName: string, role: UserRole, accountOrigin?: AccountOrigin | null, createdBy?: string | null, phoneVerified: boolean, createdAt: string } } };
+export type AdminProvisionPlayerMutation = { __typename?: 'Mutation', adminProvisionPlayer: { __typename?: 'AdminProvisionPlayerResponse', generatedPassword?: string | null, loginInstructions: string, user: { __typename?: 'User', _id: string, fullName: string, phone?: string | null, email?: string | null, userName: string, role: UserRole, accountOrigin?: AccountOrigin | null, createdBy?: string | null, phoneVerified: boolean, createdAt: string } } };
 
 export type AdminResetUserPasswordMutationVariables = Exact<{
   input: AdminResetUserPasswordInput;
@@ -13473,12 +15237,53 @@ export type AdminResetUserPasswordMutationVariables = Exact<{
 
 export type AdminResetUserPasswordMutation = { __typename?: 'Mutation', adminResetUserPassword: { __typename?: 'AdminResetUserPasswordResponse', success: boolean, generatedPassword?: string | null, message: string } };
 
-export type RequestPasswordResetMutationVariables = Exact<{
-  emailOrPhone: Scalars['String']['input'];
+export type AdminGetUsersQueryVariables = Exact<{
+  role?: InputMaybe<UserRole>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isSuspended?: InputMaybe<Scalars['Boolean']['input']>;
+  searchQuery?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type RequestPasswordResetMutation = { __typename?: 'Mutation', requestPasswordReset: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+export type AdminGetUsersQuery = { __typename?: 'Query', adminUsersConnection: { __typename?: 'UserConnection', totalCount: number, edges: Array<{ __typename?: 'UserEdge', cursor: string, node: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type AdminGetSystemStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AdminGetSystemStatsQuery = { __typename?: 'Query', adminGetSystemStats: { __typename?: 'SystemStats', totalUsers: number, activeUsers: number, suspendedUsers: number, totalVenues: number, activeVenues: number, pendingVenues: number, totalBookings: number, totalRevenue: number } };
+
+export type AdminGetAllBookingsQueryVariables = Exact<{
+  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  fromDate?: InputMaybe<Scalars['String']['input']>;
+  toDate?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type AdminGetAllBookingsQuery = { __typename?: 'Query', adminAllBookingsConnection: { __typename?: 'AdminAllBookingConnection', customerNamesJson: string, totalCount: number, edges: Array<{ __typename?: 'AdminAllBookingEdge', cursor: string, node: { __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type AdminGetUserBookingsQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type AdminGetUserBookingsQuery = { __typename?: 'Query', adminUserBookingsConnection: { __typename?: 'AdminBookingItemConnection', totalCount: number, edges: Array<{ __typename?: 'AdminBookingItemEdge', cursor: string, node: { __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type AuditGetLogsQueryVariables = Exact<{
+  filter?: InputMaybe<AuditFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type AuditGetLogsQuery = { __typename?: 'Query', auditLogsConnection: { __typename?: 'AuditLogConnection', totalCount: number, edges: Array<{ __typename?: 'AuditLogEdge', cursor: string, node: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type AuditGetStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AuditGetStatsQuery = { __typename?: 'Query', auditStats: { __typename?: 'AuditStats', totalEvents: number, failedLast24h: number, securityLast7d: number, authLast24h: number, byCategory: Array<{ __typename?: 'AuditCategoryCount', category: string, count: number }> } };
 
 export type ResetPasswordMutationVariables = Exact<{
   input: ResetPasswordInput;
@@ -13494,6 +15299,19 @@ export type ReviewClaimRequestMutationVariables = Exact<{
 
 export type ReviewClaimRequestMutation = { __typename?: 'Mutation', reviewClaimRequest: { __typename?: 'VenueClaimRequest', _id: string, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, reviewedAt?: string | null, reviewedById?: string | null } };
 
+export type GetClaimRequestsQueryVariables = Exact<{
+  filter?: InputMaybe<ClaimRequestFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetClaimRequestsQuery = { __typename?: 'Query', claimRequestsConnection: { __typename?: 'VenueClaimRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueClaimRequestEdge', cursor: string, node: { __typename?: 'VenueClaimRequest', _id: string, venueId: string, userId: string, venueName: string, venueAddress?: string | null, phoneNumber: string, email?: string | null, notes?: string | null, proofDocuments?: Array<string> | null, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedById?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetClaimRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetClaimRequestStatsQuery = { __typename?: 'Query', claimRequestStats: { __typename?: 'ClaimRequestStats', total: number, pending: number, approved: number, rejected: number, cancelled: number, thisWeek: number, thisMonth: number } };
+
 export type UpdateContactInquiryStatusMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: UpdateInquiryStatusInput;
@@ -13501,6 +15319,19 @@ export type UpdateContactInquiryStatusMutationVariables = Exact<{
 
 
 export type UpdateContactInquiryStatusMutation = { __typename?: 'Mutation', updateContactInquiryStatus: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } };
+
+export type GetContactInquiriesQueryVariables = Exact<{
+  filter?: InputMaybe<ContactInquiryFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetContactInquiriesQuery = { __typename?: 'Query', contactInquiriesConnection: { __typename?: 'ContactInquiryConnection', totalCount: number, edges: Array<{ __typename?: 'ContactInquiryEdge', cursor: string, node: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetContactInquiryStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetContactInquiryStatsQuery = { __typename?: 'Query', getContactInquiryStats: { __typename?: 'ContactInquiryStats', total: number, newCount: number, inProgressCount: number, repliedCount: number, closedCount: number } };
 
 export type UpdateReportStatusMutationVariables = Exact<{
   input: UpdateReportStatusInput;
@@ -13537,6 +15368,47 @@ export type DeleteMessageByAdminMutationVariables = Exact<{
 
 export type DeleteMessageByAdminMutation = { __typename?: 'Mutation', deleteMessageByAdmin: boolean };
 
+export type GetPostReportsForAdminQueryVariables = Exact<{
+  filter?: InputMaybe<PostReportFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetPostReportsForAdminQuery = { __typename?: 'Query', getPostReportsForAdminConnection: { __typename?: 'PostReportConnection', totalCount: number, edges: Array<{ __typename?: 'PostReportEdge', cursor: string, node: { __typename?: 'PostReport', _id: string, postId: string, reason: PostReportReason, status: PostReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reporterId: string, reviewedAt?: string | null, reviewedBy?: string | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, post?: { __typename?: 'Post', _id: string, content: string, author: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetPostReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetPostReportStatsQuery = { __typename?: 'Query', getPostReportStats: { __typename?: 'PostReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
+
+export type GetUserReportsForAdminQueryVariables = Exact<{
+  filter?: InputMaybe<UserReportFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetUserReportsForAdminQuery = { __typename?: 'Query', getUserReportsForAdminConnection: { __typename?: 'UserReportConnection', totalCount: number, edges: Array<{ __typename?: 'UserReportEdge', cursor: string, node: { __typename?: 'UserReport', _id: string, reportedUserId: string, reporterId: string, reason: UserReportReason, status: UserReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reportedUser?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetUserReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUserReportStatsQuery = { __typename?: 'Query', getUserReportStats: { __typename?: 'UserReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
+
+export type GetMessageReportsForAdminQueryVariables = Exact<{
+  filter?: InputMaybe<MessageReportFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetMessageReportsForAdminQuery = { __typename?: 'Query', messageReportsConnection: { __typename?: 'MessageReportConnection', totalCount: number, edges: Array<{ __typename?: 'MessageReportEdge', cursor: string, node: { __typename?: 'MessageReport', _id: string, messageId: string, reporterId: string, reason: string, status: ReportStatus, notes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetMessageReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMessageReportStatsQuery = { __typename?: 'Query', getMessageReportStats: { __typename?: 'MessageReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
+
+export type NotificationFieldsFragment = { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null };
+
 export type MarkNotificationAsReadMutationVariables = Exact<{
   notificationId: Scalars['ID']['input'];
 }>;
@@ -13558,18 +15430,6 @@ export type MarkNotificationActionTakenMutationVariables = Exact<{
 
 export type MarkNotificationActionTakenMutation = { __typename?: 'Mutation', markNotificationActionTaken: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
 
-export type DeleteNotificationMutationVariables = Exact<{
-  notificationId: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteNotificationMutation = { __typename?: 'Mutation', deleteNotification: boolean };
-
-export type ClearReadNotificationsMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ClearReadNotificationsMutation = { __typename?: 'Mutation', clearReadNotifications: number };
-
 export type SaveFcmTokenMutationVariables = Exact<{
   token: Scalars['String']['input'];
 }>;
@@ -13583,6 +15443,127 @@ export type RemoveFcmTokenMutationVariables = Exact<{
 
 
 export type RemoveFcmTokenMutation = { __typename?: 'Mutation', removeFcmToken: boolean };
+
+export type GetNotificationsQueryVariables = Exact<{
+  filter?: InputMaybe<NotificationFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetNotificationsQuery = { __typename?: 'Query', notificationsConnection: { __typename?: 'NotificationConnection', totalCount: number, edges: Array<{ __typename?: 'NotificationEdge', cursor: string, node: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetUnreadNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUnreadNotificationCountQuery = { __typename?: 'Query', getUnreadNotificationCount: number };
+
+export type NotificationCreatedSubscriptionVariables = Exact<{
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type NotificationCreatedSubscription = { __typename?: 'Subscription', notificationCreated: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
+
+export type CreateOtpTestPhoneMutationVariables = Exact<{
+  input: CreateOtpTestPhoneInput;
+}>;
+
+
+export type CreateOtpTestPhoneMutation = { __typename?: 'Mutation', createOtpTestPhone: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string } };
+
+export type UpdateOtpTestPhoneMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateOtpTestPhoneInput;
+}>;
+
+
+export type UpdateOtpTestPhoneMutation = { __typename?: 'Mutation', updateOtpTestPhone: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, updatedAt: string } };
+
+export type SetOtpTestPhoneEnabledMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  enabled: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTestPhoneEnabled: { __typename?: 'OtpTestPhone', _id: string, enabled: boolean, updatedAt: string } };
+
+export type GetOtpTestPhonesQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+  filter?: InputMaybe<OtpTestPhoneFilterInput>;
+}>;
+
+
+export type GetOtpTestPhonesQuery = { __typename?: 'Query', otpTestPhonesConnection: { __typename?: 'OtpTestPhoneConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestPhoneEdge', cursor: string, node: { __typename?: 'OtpTestPhone', _id: string, phone: string, testCode: string, label: string, enabled: boolean, allowedPurposes?: Array<OtpPurpose> | null, expiresAt?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type CreateOtpTestUserGrantMutationVariables = Exact<{
+  input: CreateOtpTestUserGrantInput;
+}>;
+
+
+export type CreateOtpTestUserGrantMutation = { __typename?: 'Mutation', createOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string } };
+
+export type RevokeOtpTestUserGrantMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOtpTestUserGrant: { __typename?: 'OtpTestUserGrant', _id: string, enabled: boolean, revokedAt?: string | null, updatedAt: string } };
+
+export type GetOtpTestUserGrantsQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+  filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+}>;
+
+
+export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetMyVenuesStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMyVenuesStatsQuery = { __typename?: 'Query', myVenuesStats: { __typename?: 'MyVenuesStats', totalVenues: number, todayBookings: number, totalRevenue: number } };
+
+export type MyVenuesConnectionQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<BookingFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, totalPrice: number, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueRevenueStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
+
+export type BookingStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  fromDate?: InputMaybe<Scalars['String']['input']>;
+  toDate?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, confirmedBookings: number, cancelledBookings: number, todayBookings: number } };
+
+export type VenueAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }> } };
+
+export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
 export type CreatePickupGameCampaignMutationVariables = Exact<{
   input: CreatePickupGameCampaignInput;
@@ -13613,6 +15594,49 @@ export type RemoveGamesFromCampaignMutationVariables = Exact<{
 
 export type RemoveGamesFromCampaignMutation = { __typename?: 'Mutation', removeGamesFromCampaign: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } };
 
+export type MyCampaignsQueryVariables = Exact<{
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type MyCampaignsQuery = { __typename?: 'Query', myCampaigns: Array<{ __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null }> };
+
+export type PickupGameCampaignQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type PickupGameCampaignQuery = { __typename?: 'Query', pickupGameCampaign?: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } | null };
+
+export type CampaignStatsQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type CampaignStatsQuery = { __typename?: 'Query', campaignStats: { __typename?: 'CampaignStats', totalGames: number, totalSlots: number, totalCheckIns: number, uniqueParticipants: number, avgFillRate: number, returnRate: number, avgCheckInDeltaMinutes?: number | null, qrScanCount: number, manualCount: number, bulkCount: number, checkInsByGame: Array<{ __typename?: 'CheckInByGame', gameId: string, gameName: string, sportType?: string | null, date?: string | null, venueName?: string | null, maxSlots: number, checkIns: number, fillRate: number, qrScanCount: number, manualCount: number, bulkCount: number }>, checkInsByDate: Array<{ __typename?: 'CheckInByDate', date: string, count: number }>, topParticipants: Array<{ __typename?: 'TopCampaignParticipant', userId: string, displayName: string, avatarUrl?: string | null, gamesJoined: number, gamesCheckedIn: number, attendanceRate: number }> } };
+
+export type GrantPortalCapabilityMutationVariables = Exact<{
+  input: GrantPortalCapabilityInput;
+}>;
+
+
+export type GrantPortalCapabilityMutation = { __typename?: 'Mutation', grantPortalCapability: { __typename?: 'PortalCapabilityGrant', _id: string, userId: string, capability: PortalCapability, reason: string, enabled: boolean, grantedAt?: string | null } };
+
+export type RevokePortalCapabilityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokePortalCapabilityMutation = { __typename?: 'Mutation', revokePortalCapability: { __typename?: 'PortalCapabilityGrant', _id: string, enabled: boolean, revokedAt?: string | null } };
+
+export type PortalCapabilityGrantsConnectionQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPageInput>;
+  filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
+}>;
+
+
+export type PortalCapabilityGrantsConnectionQuery = { __typename?: 'Query', portalCapabilityGrantsConnection: { __typename?: 'PortalCapabilityGrantConnection', totalCount: number, edges: Array<{ __typename?: 'PortalCapabilityGrantEdge', node: { __typename?: 'PortalCapabilityGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, capability: PortalCapability, reason: string, enabled: boolean, grantedAt?: string | null, revokedAt?: string | null, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
 export type CreateQrCampaignMutationVariables = Exact<{
   input: CreateQrCampaignInput;
 }>;
@@ -13635,6 +15659,145 @@ export type ToggleQrCampaignMutationVariables = Exact<{
 
 
 export type ToggleQrCampaignMutation = { __typename?: 'Mutation', toggleQrCampaign: { __typename?: 'QrCampaign', _id: string, isActive: boolean, updatedAt: string } };
+
+export type GetQrCampaignsQueryVariables = Exact<{
+  filter?: InputMaybe<QrCampaignFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetQrCampaignsQuery = { __typename?: 'Query', qrCampaignsConnection: { __typename?: 'QrCampaignConnection', totalCount: number, edges: Array<{ __typename?: 'QrCampaignEdge', cursor: string, node: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetQrCampaignQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetQrCampaignQuery = { __typename?: 'Query', getQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string } };
+
+export type GetQrCampaignStatsQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+  filter?: InputMaybe<QrCampaignFilterInput>;
+}>;
+
+
+export type GetQrCampaignStatsQuery = { __typename?: 'Query', getQrCampaignStats: { __typename?: 'QrCampaignStats', totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }>, topCities: Array<{ __typename?: 'QrTopCity', city: string, country?: string | null, scans: number }> } };
+
+export type GetQrAnalyticsSummaryQueryVariables = Exact<{
+  filter?: InputMaybe<QrCampaignFilterInput>;
+}>;
+
+
+export type GetQrAnalyticsSummaryQuery = { __typename?: 'Query', getQrAnalyticsSummary: { __typename?: 'QrAnalyticsSummary', totalScans: number, activeCampaigns: number, uniqueDevices: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }> } };
+
+export type GenerateQrCodeQueryVariables = Exact<{
+  campaignId: Scalars['ID']['input'];
+}>;
+
+
+export type GenerateQrCodeQuery = { __typename?: 'Query', generateQrCode: string };
+
+export type CreateReferralCodeMutationVariables = Exact<{
+  input: CreateReferralCodeInput;
+}>;
+
+
+export type CreateReferralCodeMutation = { __typename?: 'Mutation', createReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string } };
+
+export type ToggleReferralCodeMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  isActive: Scalars['Boolean']['input'];
+}>;
+
+
+export type ToggleReferralCodeMutation = { __typename?: 'Mutation', toggleReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, isActive: boolean, updatedAt: string } };
+
+export type GetGrowthStatsQueryVariables = Exact<{
+  filter?: InputMaybe<ReferralFilterInput>;
+}>;
+
+
+export type GetGrowthStatsQuery = { __typename?: 'Query', getGrowthStats: { __typename?: 'GrowthStats', totalNewUsers: number, partnerReferred: number, partnerPercentage: number, activationRate: number, totalRevenue: number, trend: Array<{ __typename?: 'GrowthTrendPoint', label: string, organic: number, partner: number }> } };
+
+export type GetPartnerLeaderboardQueryVariables = Exact<{
+  filter?: InputMaybe<ReferralFilterInput>;
+}>;
+
+
+export type GetPartnerLeaderboardQuery = { __typename?: 'Query', getPartnerLeaderboard: { __typename?: 'PartnerLeaderboard', totalCodes: number, items: Array<{ __typename?: 'PartnerLeaderboardItem', partnerId: string, partnerName: string, avatarUrl?: string | null, role?: string | null, referralCode: string, totalSignups: number, activationRate: number, totalRevenue: number, trend: string }> } };
+
+export type GetReferralCodesQueryVariables = Exact<{
+  filter?: InputMaybe<ReferralFilterInput>;
+}>;
+
+
+export type GetReferralCodesQuery = { __typename?: 'Query', getReferralCodes: Array<{ __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
+
+export type GetSportsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSportsQuery = { __typename?: 'Query', sports: Array<{ __typename?: 'Sport', _id: string, type: SportType, name: string, nameEn?: string | null, icon: string, emoji?: string | null, colorKey: string, isPopular: boolean, isActive: boolean, displayOrder: number }> };
+
+export type TournamentCoreFragment = { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
+
+export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null };
+
+export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
+
+export type MatchCoreFragment = { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null };
+
+export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null };
+
+export type ScorecardCoreFragment = { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, matchSetup?: { __typename?: 'MatchSetupSnapshot', setupMethod: MatchSetupMethod, coinTossWinner?: number | null, coinTossChoice?: CoinTossChoice | null, decidedAt: string } | null, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, correctionHistory?: Array<{ __typename?: 'CorrectionEvent', id: string, actorId: string, reason: string, action: MatchCorrectionAction, timestamp: string }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
+
+export type GenerateBracketMutationVariables = Exact<{
+  input: GenerateBracketInput;
+}>;
+
+
+export type GenerateBracketMutation = { __typename?: 'Mutation', generateBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+
+export type ResetBracketMutationVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+}>;
+
+
+export type ResetBracketMutation = { __typename?: 'Mutation', resetBracket: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
+export type SeedPlayersMutationVariables = Exact<{
+  input: SeedPlayersInput;
+}>;
+
+
+export type SeedPlayersMutation = { __typename?: 'Mutation', seedPlayers: { __typename?: 'SuccessResponse', success: boolean, message: string } };
+
+export type SeedKnockoutBracketMutationVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+}>;
+
+
+export type SeedKnockoutBracketMutation = { __typename?: 'Mutation', seedKnockoutBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+
+export type CreateCategoryMutationVariables = Exact<{
+  input: CreateCategoryInput;
+}>;
+
+
+export type CreateCategoryMutation = { __typename?: 'Mutation', createCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
+
+export type UpdateCategoryMutationVariables = Exact<{
+  input: UpdateCategoryInput;
+}>;
+
+
+export type UpdateCategoryMutation = { __typename?: 'Mutation', updateCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
+
+export type DeleteCategoryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCategoryMutation = { __typename?: 'Mutation', deleteCategory: { __typename?: 'SuccessResponse', success: boolean, message: string } };
 
 export type CreateTournamentMutationVariables = Exact<{
   input: CreateTournamentInput;
@@ -13706,27 +15869,6 @@ export type DuplicateTournamentMutationVariables = Exact<{
 
 export type DuplicateTournamentMutation = { __typename?: 'Mutation', duplicateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
-export type CreateCategoryMutationVariables = Exact<{
-  input: CreateCategoryInput;
-}>;
-
-
-export type CreateCategoryMutation = { __typename?: 'Mutation', createCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
-
-export type UpdateCategoryMutationVariables = Exact<{
-  input: UpdateCategoryInput;
-}>;
-
-
-export type UpdateCategoryMutation = { __typename?: 'Mutation', updateCategory: { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
-
-export type DeleteCategoryMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type DeleteCategoryMutation = { __typename?: 'Mutation', deleteCategory: { __typename?: 'SuccessResponse', success: boolean, message: string } };
-
 export type ApproveRegistrationMutationVariables = Exact<{
   input: ApproveRegistrationInput;
 }>;
@@ -13781,7 +15923,7 @@ export type AddLateEntryToByeSlotMutationVariables = Exact<{
 }>;
 
 
-export type AddLateEntryToByeSlotMutation = { __typename?: 'Mutation', addLateEntryToByeSlot: { __typename?: 'AddLateEntryResult', action: LateEntryAction, message: string, opponentName?: string | null, selectedFromCount: number, scheduleNeedsUpdate?: boolean | null, registration?: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } | null, match?: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } | null } };
+export type AddLateEntryToByeSlotMutation = { __typename?: 'Mutation', addLateEntryToByeSlot: { __typename?: 'AddLateEntryResult', action: LateEntryAction, message: string, opponentName?: string | null, selectedFromCount: number, scheduleNeedsUpdate?: boolean | null, registration?: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } | null, match?: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } | null } };
 
 export type UpdateRegistrationBibNumberMutationVariables = Exact<{
   input: UpdateBibNumberInput;
@@ -13790,82 +15932,47 @@ export type UpdateRegistrationBibNumberMutationVariables = Exact<{
 
 export type UpdateRegistrationBibNumberMutation = { __typename?: 'Mutation', updateRegistrationBibNumber: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } };
 
-export type GenerateBracketMutationVariables = Exact<{
-  input: GenerateBracketInput;
-}>;
-
-
-export type GenerateBracketMutation = { __typename?: 'Mutation', generateBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
-
-export type ResetBracketMutationVariables = Exact<{
-  categoryId: Scalars['ID']['input'];
-}>;
-
-
-export type ResetBracketMutation = { __typename?: 'Mutation', resetBracket: { __typename?: 'SuccessResponse', success: boolean, message: string } };
-
-export type SeedPlayersMutationVariables = Exact<{
-  input: SeedPlayersInput;
-}>;
-
-
-export type SeedPlayersMutation = { __typename?: 'Mutation', seedPlayers: { __typename?: 'SuccessResponse', success: boolean, message: string } };
-
-export type SeedKnockoutBracketMutationVariables = Exact<{
-  categoryId: Scalars['ID']['input'];
-}>;
-
-
-export type SeedKnockoutBracketMutation = { __typename?: 'Mutation', seedKnockoutBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
-
 export type ScheduleMatchMutationVariables = Exact<{
   input: ScheduleMatchInput;
 }>;
 
 
-export type ScheduleMatchMutation = { __typename?: 'Mutation', scheduleMatch: { __typename?: 'ScheduleMatchResult', warnings: Array<string>, match: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } } };
+export type ScheduleMatchMutation = { __typename?: 'Mutation', scheduleMatch: { __typename?: 'ScheduleMatchResult', warnings: Array<string>, match: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } } };
 
 export type BulkScheduleMatchesMutationVariables = Exact<{
   input: BulkScheduleMatchInput;
 }>;
 
 
-export type BulkScheduleMatchesMutation = { __typename?: 'Mutation', bulkScheduleMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type BulkScheduleMatchesMutation = { __typename?: 'Mutation', bulkScheduleMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type UnscheduleMatchMutationVariables = Exact<{
   matchId: Scalars['ID']['input'];
 }>;
 
 
-export type UnscheduleMatchMutation = { __typename?: 'Mutation', unscheduleMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type UnscheduleMatchMutation = { __typename?: 'Mutation', unscheduleMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type CascadeRescheduleMutationVariables = Exact<{
   input: CascadeRescheduleInput;
 }>;
 
 
-export type CascadeRescheduleMutation = { __typename?: 'Mutation', cascadeReschedule: { __typename?: 'CascadeRescheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
+export type CascadeRescheduleMutation = { __typename?: 'Mutation', cascadeReschedule: { __typename?: 'CascadeRescheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
 
 export type RepackCourtScheduleMutationVariables = Exact<{
   input: RepackCourtScheduleInput;
 }>;
 
 
-export type RepackCourtScheduleMutation = { __typename?: 'Mutation', repackCourtSchedule: { __typename?: 'RepackCourtScheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
-
-export type AutoScheduleMatchesMutationVariables = Exact<{
-  input: AutoScheduleInput;
-}>;
-
-
-export type AutoScheduleMatchesMutation = { __typename?: 'Mutation', autoScheduleMatches: { __typename?: 'AutoScheduleResult', totalScheduled: number, warnings: Array<string>, scheduledMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
+export type RepackCourtScheduleMutation = { __typename?: 'Mutation', repackCourtSchedule: { __typename?: 'RepackCourtScheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
 
 export type AssignRefereeMutationVariables = Exact<{
   input: AssignRefereeInput;
 }>;
 
 
-export type AssignRefereeMutation = { __typename?: 'Mutation', assignReferee: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type AssignRefereeMutation = { __typename?: 'Mutation', assignReferee: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type StartMatchMutationVariables = Exact<{
   input: StartMatchInput;
@@ -13907,359 +16014,29 @@ export type OrganizerAbortLiveMatchMutationVariables = Exact<{
 }>;
 
 
-export type OrganizerAbortLiveMatchMutation = { __typename?: 'Mutation', organizerAbortLiveMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type OrganizerAbortLiveMatchMutation = { __typename?: 'Mutation', organizerAbortLiveMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type SetMatchWalkoverMutationVariables = Exact<{
   input: SetMatchWalkoverInput;
 }>;
 
 
-export type SetMatchWalkoverMutation = { __typename?: 'Mutation', setMatchWalkover: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type SetMatchWalkoverMutation = { __typename?: 'Mutation', setMatchWalkover: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type CorrectFinishedMatchResultMutationVariables = Exact<{
   input: CorrectFinishedMatchResultInput;
 }>;
 
 
-export type CorrectFinishedMatchResultMutation = { __typename?: 'Mutation', correctFinishedMatchResult: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
-
-export type MatchScoreUpdatedSubscriptionVariables = Exact<{
-  matchId: Scalars['ID']['input'];
-}>;
-
-
-export type MatchScoreUpdatedSubscription = { __typename?: 'Subscription', matchScoreUpdated: { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, matchSetup?: { __typename?: 'MatchSetupSnapshot', setupMethod: MatchSetupMethod, coinTossWinner?: number | null, coinTossChoice?: CoinTossChoice | null, decidedAt: string } | null, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, correctionHistory?: Array<{ __typename?: 'CorrectionEvent', id: string, actorId: string, reason: string, action: MatchCorrectionAction, timestamp: string }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
-
-export type TournamentMatchesUpdatedSubscriptionVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type TournamentMatchesUpdatedSubscription = { __typename?: 'Subscription', tournamentMatchesUpdated: string };
-
-export type TournamentStatusChangedSubscriptionVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type TournamentStatusChangedSubscription = { __typename?: 'Subscription', tournamentStatusChanged: string };
-
-export type UploadTournamentImageMutationVariables = Exact<{
-  input: UploadTournamentImageInput;
-}>;
-
-
-export type UploadTournamentImageMutation = { __typename?: 'Mutation', uploadTournamentImage: { __typename?: 'UploadPostMediaResponse', url: string, key: string } };
-
-export type UploadAvatarMutationVariables = Exact<{
-  input: UploadAvatarInput;
-}>;
-
-
-export type UploadAvatarMutation = { __typename?: 'Mutation', uploadAvatar: { __typename?: 'UploadResponse', key: string, url: string, user: { __typename?: 'User', _id: string, photoURL?: string | null } } };
-
-export type UpdateProfileMutationVariables = Exact<{
-  input: UpdateProfileInput;
-}>;
-
-
-export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
-
-export type ApproveVenueRequestMutationVariables = Exact<{
-  requestId: Scalars['ID']['input'];
-  adminNote?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type ApproveVenueRequestMutation = { __typename?: 'Mutation', approveVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, reviewedAt?: string | null, reviewedBy?: string | null, adminNote?: string | null } };
-
-export type RejectVenueRequestMutationVariables = Exact<{
-  requestId: Scalars['ID']['input'];
-  rejectionReason: Scalars['String']['input'];
-}>;
-
-
-export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, rejectionReason?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
-
-export type AdminGetUsersQueryVariables = Exact<{
-  role?: InputMaybe<UserRole>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  isSuspended?: InputMaybe<Scalars['Boolean']['input']>;
-  searchQuery?: InputMaybe<Scalars['String']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type AdminGetUsersQuery = { __typename?: 'Query', adminGetUsers: { __typename?: 'UserList', total: number, page: number, limit: number, hasMore: boolean, users: Array<{ __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string }> } };
-
-export type AdminGetSystemStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AdminGetSystemStatsQuery = { __typename?: 'Query', adminGetSystemStats: { __typename?: 'SystemStats', totalUsers: number, activeUsers: number, suspendedUsers: number, totalVenues: number, activeVenues: number, pendingVenues: number, totalBookings: number, totalRevenue: number } };
-
-export type AdminGetAllBookingsQueryVariables = Exact<{
-  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  fromDate?: InputMaybe<Scalars['String']['input']>;
-  toDate?: InputMaybe<Scalars['String']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type AdminGetAllBookingsQuery = { __typename?: 'Query', adminGetAllBookings: { __typename?: 'AdminAllBookingList', customerNamesJson: string, total: number, page: number, limit: number, hasMore: boolean, bookings: Array<{ __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string }> } };
-
-export type AdminGetUserBookingsQueryVariables = Exact<{
-  userId: Scalars['ID']['input'];
-  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type AdminGetUserBookingsQuery = { __typename?: 'Query', adminGetUserBookings: { __typename?: 'AdminBookingList', total: number, page: number, limit: number, hasMore: boolean, bookings: Array<{ __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string }> } };
-
-export type AuditGetLogsQueryVariables = Exact<{
-  filter?: InputMaybe<AuditFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type AuditGetLogsQuery = { __typename?: 'Query', auditLogs: { __typename?: 'AuditLogList', total: number, page: number, limit: number, hasMore: boolean, logs: Array<{ __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string }> } };
-
-export type AuditGetLogDetailQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type AuditGetLogDetailQuery = { __typename?: 'Query', auditLogDetail: { __typename?: 'AuditLog', _id: string, actor?: string | null, actorName?: string | null, actorRole?: string | null, action: AuditAction, category: AuditCategory, status: AuditStatus, target?: string | null, targetId?: string | null, ip?: string | null, userAgent?: string | null, correlationId?: string | null, metadata?: Record<string, unknown> | null, errorMessage?: string | null, createdAt: string, updatedAt: string } };
-
-export type AuditGetStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AuditGetStatsQuery = { __typename?: 'Query', auditStats: { __typename?: 'AuditStats', totalEvents: number, failedLast24h: number, securityLast7d: number, authLast24h: number, byCategory: Array<{ __typename?: 'AuditCategoryCount', category: string, count: number }> } };
-
-export type GetClaimRequestsQueryVariables = Exact<{
-  filter?: InputMaybe<ClaimRequestFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetClaimRequestsQuery = { __typename?: 'Query', claimRequests: { __typename?: 'ClaimRequestList', total: number, page: number, limit: number, hasMore: boolean, requests: Array<{ __typename?: 'VenueClaimRequest', _id: string, venueId: string, userId: string, venueName: string, venueAddress?: string | null, phoneNumber: string, email?: string | null, notes?: string | null, proofDocuments?: Array<string> | null, status: ClaimRequestStatus, rejectionReason?: string | null, adminNotes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedById?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null }> } };
-
-export type GetClaimRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetClaimRequestStatsQuery = { __typename?: 'Query', claimRequestStats: { __typename?: 'ClaimRequestStats', total: number, pending: number, approved: number, rejected: number, cancelled: number, thisWeek: number, thisMonth: number } };
-
-export type GetContactInquiriesQueryVariables = Exact<{
-  filter?: InputMaybe<ContactInquiryFilterInput>;
-}>;
-
-
-export type GetContactInquiriesQuery = { __typename?: 'Query', getContactInquiries: { __typename?: 'ContactInquiryList', total: number, page: number, totalPages: number, items: Array<{ __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null }> } };
-
-export type GetContactInquiryQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetContactInquiryQuery = { __typename?: 'Query', getContactInquiry: { __typename?: 'ContactInquiry', _id: string, name: string, phone: string, email: string, subject: ContactSubject, message: string, status: InquiryStatus, adminNote?: string | null, repliedBy?: string | null, repliedAt?: string | null, createdAt: string, updatedAt: string, repliedByUser?: { __typename?: 'User', _id: string, fullName: string } | null } };
-
-export type GetContactInquiryStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetContactInquiryStatsQuery = { __typename?: 'Query', getContactInquiryStats: { __typename?: 'ContactInquiryStats', total: number, newCount: number, inProgressCount: number, repliedCount: number, closedCount: number } };
-
-export type HealthCheckQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HealthCheckQuery = { __typename?: 'Query', healthCheck: { __typename?: 'HealthStatus', status: string, database: string, timestamp: string, uptime?: number | null } };
-
-export type HealthQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HealthQuery = { __typename?: 'Query', health: string };
-
-export type GetPostReportsForAdminQueryVariables = Exact<{
-  filter?: InputMaybe<PostReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetPostReportsForAdminQuery = { __typename?: 'Query', getPostReportsForAdmin: { __typename?: 'PostReportList', total: number, page: number, limit: number, hasMore: boolean, reports: Array<{ __typename?: 'PostReport', _id: string, postId: string, reason: PostReportReason, status: PostReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reporterId: string, reviewedAt?: string | null, reviewedBy?: string | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, post?: { __typename?: 'Post', _id: string, content: string, author: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } } | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null }> } };
-
-export type GetPostReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPostReportStatsQuery = { __typename?: 'Query', getPostReportStats: { __typename?: 'PostReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
-
-export type GetUserReportsForAdminQueryVariables = Exact<{
-  filter?: InputMaybe<UserReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetUserReportsForAdminQuery = { __typename?: 'Query', getUserReportsForAdmin: { __typename?: 'UserReportList', total: number, page: number, limit: number, hasMore: boolean, reports: Array<{ __typename?: 'UserReport', _id: string, reportedUserId: string, reporterId: string, reason: UserReportReason, status: UserReportStatus, description?: string | null, notes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, reviewer?: { __typename?: 'User', _id: string, displayName: string } | null, reporter?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reportedUser?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null }> } };
-
-export type GetUserReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetUserReportStatsQuery = { __typename?: 'Query', getUserReportStats: { __typename?: 'UserReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
-
-export type GetMessageReportsForAdminQueryVariables = Exact<{
-  filter?: InputMaybe<MessageReportFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetMessageReportsForAdminQuery = { __typename?: 'Query', getMessageReportsForAdmin: { __typename?: 'MessageReportList', total: number, page: number, limit: number, hasMore: boolean, reports: Array<{ __typename?: 'MessageReport', _id: string, messageId: string, reporterId: string, reason: string, status: ReportStatus, notes?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null }> } };
-
-export type GetMessageReportStatsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetMessageReportStatsQuery = { __typename?: 'Query', getMessageReportStats: { __typename?: 'MessageReportStats', totalReports: number, pendingReports: number, reviewedReports: number, resolvedReports: number, dismissedReports: number } };
-
-export type GetNotificationsQueryVariables = Exact<{
-  filter?: InputMaybe<NotificationFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationList', total: number, unreadCount: number, hasMore: boolean, notifications: Array<{ __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null }> } };
-
-export type GetUnreadNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetUnreadNotificationCountQuery = { __typename?: 'Query', getUnreadNotificationCount: number };
-
-export type GetNotificationQueryVariables = Exact<{
-  notificationId: Scalars['ID']['input'];
-}>;
-
-
-export type GetNotificationQuery = { __typename?: 'Query', getNotification: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };
-
-export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
-
-export type MyCampaignsQueryVariables = Exact<{
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type MyCampaignsQuery = { __typename?: 'Query', myCampaigns: Array<{ __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null }> };
-
-export type PickupGameCampaignQueryVariables = Exact<{
-  campaignId: Scalars['ID']['input'];
-}>;
-
-
-export type PickupGameCampaignQuery = { __typename?: 'Query', pickupGameCampaign?: { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null } | null };
-
-export type CampaignStatsQueryVariables = Exact<{
-  campaignId: Scalars['ID']['input'];
-}>;
-
-
-export type CampaignStatsQuery = { __typename?: 'Query', campaignStats: { __typename?: 'CampaignStats', totalGames: number, totalSlots: number, totalCheckIns: number, uniqueParticipants: number, avgFillRate: number, returnRate: number, avgCheckInDeltaMinutes?: number | null, qrScanCount: number, manualCount: number, bulkCount: number, checkInsByGame: Array<{ __typename?: 'CheckInByGame', gameId: string, gameName: string, sportType?: string | null, date?: string | null, venueName?: string | null, maxSlots: number, checkIns: number, fillRate: number, qrScanCount: number, manualCount: number, bulkCount: number }>, checkInsByDate: Array<{ __typename?: 'CheckInByDate', date: string, count: number }>, topParticipants: Array<{ __typename?: 'TopCampaignParticipant', userId: string, displayName: string, avatarUrl?: string | null, gamesJoined: number, gamesCheckedIn: number, attendanceRate: number }> } };
-
-export type GetQrCampaignsQueryVariables = Exact<{
-  filter?: InputMaybe<QrCampaignFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
-}>;
-
-
-export type GetQrCampaignsQuery = { __typename?: 'Query', getQrCampaigns: Array<{ __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
-
-export type GetQrCampaignQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetQrCampaignQuery = { __typename?: 'Query', getQrCampaign: { __typename?: 'QrCampaign', _id: string, slug: string, name: string, description?: string | null, location?: string | null, isActive: boolean, totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, expiresAt?: string | null, createdAt: string, updatedAt: string } };
-
-export type GetQrCampaignStatsQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-  filter?: InputMaybe<QrCampaignFilterInput>;
-}>;
-
-
-export type GetQrCampaignStatsQuery = { __typename?: 'Query', getQrCampaignStats: { __typename?: 'QrCampaignStats', totalScans: number, uniqueDevices: number, iosScans: number, androidScans: number, unknownScans: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }>, topCities: Array<{ __typename?: 'QrTopCity', city: string, country?: string | null, scans: number }> } };
-
-export type GetQrAnalyticsSummaryQueryVariables = Exact<{
-  filter?: InputMaybe<QrCampaignFilterInput>;
-}>;
-
-
-export type GetQrAnalyticsSummaryQuery = { __typename?: 'Query', getQrAnalyticsSummary: { __typename?: 'QrAnalyticsSummary', totalScans: number, activeCampaigns: number, uniqueDevices: number, iosPercentage: number, androidPercentage: number, trend: Array<{ __typename?: 'QrScanTrendPoint', label: string, total: number, ios: number, android: number }> } };
-
-export type GenerateQrCodeQueryVariables = Exact<{
-  campaignId: Scalars['ID']['input'];
-}>;
-
-
-export type GenerateQrCodeQuery = { __typename?: 'Query', generateQrCode: string };
-
-export type GetGrowthStatsQueryVariables = Exact<{
-  filter?: InputMaybe<ReferralFilterInput>;
-}>;
-
-
-export type GetGrowthStatsQuery = { __typename?: 'Query', getGrowthStats: { __typename?: 'GrowthStats', totalNewUsers: number, partnerReferred: number, partnerPercentage: number, activationRate: number, totalRevenue: number, trend: Array<{ __typename?: 'GrowthTrendPoint', label: string, organic: number, partner: number }> } };
-
-export type GetPartnerLeaderboardQueryVariables = Exact<{
-  filter?: InputMaybe<ReferralFilterInput>;
-}>;
-
-
-export type GetPartnerLeaderboardQuery = { __typename?: 'Query', getPartnerLeaderboard: { __typename?: 'PartnerLeaderboard', totalCodes: number, items: Array<{ __typename?: 'PartnerLeaderboardItem', partnerId: string, partnerName: string, avatarUrl?: string | null, role?: string | null, referralCode: string, totalSignups: number, activationRate: number, totalRevenue: number, trend: string }> } };
-
-export type GetReferralCodesQueryVariables = Exact<{
-  filter?: InputMaybe<ReferralFilterInput>;
-}>;
-
-
-export type GetReferralCodesQuery = { __typename?: 'Query', getReferralCodes: Array<{ __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string, updatedAt: string }> };
-
-export type GetReferralCodeDetailQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type GetReferralCodeDetailQuery = { __typename?: 'Query', getReferralCodeDetail: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, metadata?: string | null, createdAt: string, updatedAt: string } };
-
-export type CreateReferralCodeMutationVariables = Exact<{
-  input: CreateReferralCodeInput;
-}>;
-
-
-export type CreateReferralCodeMutation = { __typename?: 'Mutation', createReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerId: string, ownerName: string, ownerRole?: string | null, isActive: boolean, maxUses?: number | null, currentUses: number, totalSignups: number, totalActiveUsers: number, totalRevenue: number, expiresAt?: string | null, createdAt: string } };
-
-export type UpdateReferralCodeMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  input: UpdateReferralCodeInput;
-}>;
-
-
-export type UpdateReferralCodeMutation = { __typename?: 'Mutation', updateReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, ownerName: string, ownerRole?: string | null, maxUses?: number | null, expiresAt?: string | null, updatedAt: string } };
-
-export type ToggleReferralCodeMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  isActive: Scalars['Boolean']['input'];
-}>;
-
-
-export type ToggleReferralCodeMutation = { __typename?: 'Mutation', toggleReferralCode: { __typename?: 'ReferralCode', _id: string, code: string, isActive: boolean, updatedAt: string } };
-
-export type GetSportsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetSportsQuery = { __typename?: 'Query', sports: Array<{ __typename?: 'Sport', _id: string, type: SportType, name: string, nameEn?: string | null, icon: string, emoji?: string | null, colorKey: string, isPopular: boolean, isActive: boolean, displayOrder: number }> };
+export type CorrectFinishedMatchResultMutation = { __typename?: 'Mutation', correctFinishedMatchResult: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type GetMyTournamentsQueryVariables = Exact<{
   filter?: InputMaybe<TournamentFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type GetMyTournamentsQuery = { __typename?: 'Query', myTournaments: { __typename?: 'TournamentList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, tournaments: Array<{ __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null }> } };
+export type GetMyTournamentsQuery = { __typename?: 'Query', myTournamentsConnection: { __typename?: 'TournamentConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentEdge', cursor: string, node: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetTournamentQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -14292,41 +16069,27 @@ export type PreviewLateEntryPlacementQuery = { __typename?: 'Query', previewLate
 export type GetTournamentRegistrationsQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
   filter?: InputMaybe<RegistrationFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type GetTournamentRegistrationsQuery = { __typename?: 'Query', tournamentRegistrations: { __typename?: 'RegistrationList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, registrations: Array<{ __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null }> } };
+export type GetTournamentRegistrationsQuery = { __typename?: 'Query', tournamentRegistrationsConnection: { __typename?: 'TournamentRegistrationConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentRegistrationEdge', cursor: string, node: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetTournamentBracketQueryVariables = Exact<{
   categoryId: Scalars['ID']['input'];
 }>;
 
 
-export type GetTournamentBracketQuery = { __typename?: 'Query', tournamentBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type GetTournamentBracketQuery = { __typename?: 'Query', tournamentBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type GetTournamentMatchesQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
   filter?: InputMaybe<MatchFilterInput>;
-  pagination?: InputMaybe<PaginationInput>;
+  pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type GetTournamentMatchesQuery = { __typename?: 'Query', tournamentMatches: { __typename?: 'MatchList', total: number, page: number, totalPages: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean, matches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
-
-export type GetLiveMatchesQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetLiveMatchesQuery = { __typename?: 'Query', liveMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
-
-export type GetMatchDetailQueryVariables = Exact<{
-  matchId: Scalars['ID']['input'];
-}>;
-
-
-export type GetMatchDetailQuery = { __typename?: 'Query', matchDetail: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type GetTournamentMatchesQuery = { __typename?: 'Query', tournamentMatchesConnection: { __typename?: 'TournamentMatchConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentMatchEdge', cursor: string, node: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetMatchScorecardQueryVariables = Exact<{
   matchId: Scalars['ID']['input'];
@@ -14340,7 +16103,7 @@ export type GetRefereeMatchesQueryVariables = Exact<{
 }>;
 
 
-export type GetRefereeMatchesQuery = { __typename?: 'Query', refereeMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type GetRefereeMatchesQuery = { __typename?: 'Query', refereeMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type GetTournamentRankingsQueryVariables = Exact<{
   categoryId: Scalars['ID']['input'];
@@ -14357,20 +16120,6 @@ export type GetTournamentGroupRankingsQueryVariables = Exact<{
 
 export type GetTournamentGroupRankingsQuery = { __typename?: 'Query', tournamentGroupRankings: Array<{ __typename?: 'PlayerRanking', registrationId: string, playerName?: string | null, avatarUrl?: string | null, club?: string | null, seed?: number | null, rank: number, matchesPlayed: number, matchesWon: number, matchesLost: number, setsWon: number, setsLost: number, pointsWon: number, pointsLost: number, winRate: number, groupPoints?: number | null }> };
 
-export type GetTournamentResultsQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetTournamentResultsQuery = { __typename?: 'Query', tournamentResults: Array<{ __typename?: 'TournamentChampion', categoryId: string, categoryTitle: string, goldName?: string | null, silverName?: string | null, bronzeNames?: Array<string> | null }> };
-
-export type GetTournamentStatsQueryVariables = Exact<{
-  tournamentId: Scalars['ID']['input'];
-}>;
-
-
-export type GetTournamentStatsQuery = { __typename?: 'Query', tournamentStats: { __typename?: 'TournamentStats', totalCategories: number, totalRegistrations: number, totalMatches: number, completedMatches: number } };
-
 export type ExportTournamentRegistrationsQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
   filter?: InputMaybe<RegistrationFilterInput>;
@@ -14386,34 +16135,85 @@ export type PreviewRepackCourtScheduleQueryVariables = Exact<{
 
 export type PreviewRepackCourtScheduleQuery = { __typename?: 'Query', previewRepackCourtSchedule: { __typename?: 'RepackCourtSchedulePreviewResult', anchorMatchId: string, courtName: string, calendarDate: string, totalAffected: number, overdueCount: number, backlogCount: number, warnings: Array<string>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
 
+export type MatchScoreUpdatedSubscriptionVariables = Exact<{
+  _matchId: Scalars['ID']['input'];
+}>;
+
+
+export type MatchScoreUpdatedSubscription = { __typename?: 'Subscription', matchScoreUpdated: { __typename?: 'MatchScorecard', _id: string, matchId: string, tournamentId: string, categoryId: string, status: ScorecardStatus, bestOf: number, currentSetIndex: number, servingPlayer?: number | null, leftSidePlayer?: number | null, elapsedSeconds: number, createdAt: string, updatedAt: string, matchSetup?: { __typename?: 'MatchSetupSnapshot', setupMethod: MatchSetupMethod, coinTossWinner?: number | null, coinTossChoice?: CoinTossChoice | null, decidedAt: string } | null, sets: Array<{ __typename?: 'ScorecardSet', setNumber: number, player1Score: number, player2Score: number, isComplete: boolean, winner?: number | null }>, pointHistory: Array<{ __typename?: 'PointEvent', id: string, scoringPlayer: number, servingPlayer: number, setNumber: number, scoreAfter: Array<number>, timestamp: string }>, correctionHistory?: Array<{ __typename?: 'CorrectionEvent', id: string, actorId: string, reason: string, action: MatchCorrectionAction, timestamp: string }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } } };
+
+export type TournamentMatchesUpdatedSubscriptionVariables = Exact<{
+  _tournamentId: Scalars['ID']['input'];
+}>;
+
+
+export type TournamentMatchesUpdatedSubscription = { __typename?: 'Subscription', tournamentMatchesUpdated: string };
+
+export type TournamentStatusChangedSubscriptionVariables = Exact<{
+  _tournamentId: Scalars['ID']['input'];
+}>;
+
+
+export type TournamentStatusChangedSubscription = { __typename?: 'Subscription', tournamentStatusChanged: string };
+
+export type UploadTournamentImageMutationVariables = Exact<{
+  input: UploadTournamentImageInput;
+}>;
+
+
+export type UploadTournamentImageMutation = { __typename?: 'Mutation', uploadTournamentImage: { __typename?: 'UploadPostMediaResponse', url: string, key: string } };
+
+export type UploadAvatarMutationVariables = Exact<{
+  input: UploadAvatarInput;
+}>;
+
+
+export type UploadAvatarMutation = { __typename?: 'Mutation', uploadAvatar: { __typename?: 'UploadResponse', key: string, url: string, user: { __typename?: 'User', _id: string, photoURL?: string | null } } };
+
+export type UpdateProfileMutationVariables = Exact<{
+  input: UpdateProfileInput;
+}>;
+
+
+export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email: string, phone: string, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
+export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
 
-export type GetAllVenueRequestsQueryVariables = Exact<{
-  status?: InputMaybe<VenueRequestStatus>;
-  pagination?: InputMaybe<PaginationInput>;
+export type ApproveVenueRequestMutationVariables = Exact<{
+  requestId: Scalars['ID']['input'];
+  adminNote?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetAllVenueRequestsQuery = { __typename?: 'Query', allVenueRequests: { __typename?: 'VenueRequestList', total: number, page: number, limit: number, hasMore: boolean, requests: Array<{ __typename?: 'VenueRequest', _id: string, requesterId: string, name: string, description?: string | null, sportTypes: Array<SportType>, status: VenueRequestStatus, phoneNumber?: string | null, email?: string | null, coverImageUrl?: string | null, images?: Array<string> | null, rejectionReason?: string | null, adminNote?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, location: { __typename?: 'RequestLocation', address: string, city?: string | null, district?: string | null, ward?: string | null, latitude?: number | null, longitude?: number | null }, courts: Array<{ __typename?: 'RequestCourtInfo', name: string, sportType: SportType, pricePerHour: number, peakPricePerHour: number, isIndoor?: boolean | null }>, requester?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reviewedByAdmin?: { __typename?: 'User', _id: string, displayName: string } | null }> } };
+export type ApproveVenueRequestMutation = { __typename?: 'Mutation', approveVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, reviewedAt?: string | null, reviewedBy?: string | null, adminNote?: string | null } };
+
+export type RejectVenueRequestMutationVariables = Exact<{
+  requestId: Scalars['ID']['input'];
+  rejectionReason: Scalars['String']['input'];
+}>;
+
+
+export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueRequest: { __typename?: 'VenueRequest', _id: string, status: VenueRequestStatus, rejectionReason?: string | null, reviewedAt?: string | null, reviewedBy?: string | null } };
+
+export type GetAllVenueRequestsQueryVariables = Exact<{
+  status?: InputMaybe<VenueRequestStatus>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetAllVenueRequestsQuery = { __typename?: 'Query', allVenueRequestsConnection: { __typename?: 'VenueRequestConnection', totalCount: number, edges: Array<{ __typename?: 'VenueRequestEdge', cursor: string, node: { __typename?: 'VenueRequest', _id: string, requesterId: string, name: string, description?: string | null, sportTypes: Array<SportType>, status: VenueRequestStatus, phoneNumber?: string | null, email?: string | null, coverImageUrl?: string | null, images?: Array<string> | null, rejectionReason?: string | null, adminNote?: string | null, createdAt: string, updatedAt: string, reviewedAt?: string | null, reviewedBy?: string | null, location: { __typename?: 'RequestLocation', address: string, city?: string | null, district?: string | null, ward?: string | null, latitude?: number | null, longitude?: number | null }, courts: Array<{ __typename?: 'RequestCourtInfo', name: string, sportType: SportType, pricePerHour: number, peakPricePerHour: number, isIndoor?: boolean | null }>, requester?: { __typename?: 'User', _id: string, displayName: string, userName: string, photoURL?: string | null } | null, reviewedByAdmin?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetVenueRequestStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetVenueRequestStatsQuery = { __typename?: 'Query', venueRequestStats: { __typename?: 'VenueRequestStats', totalRequests: number, pendingRequests: number, approvedRequests: number, rejectedRequests: number } };
-
-export type NotificationCreatedSubscriptionVariables = Exact<{
-  userId: Scalars['ID']['input'];
-}>;
-
-
-export type NotificationCreatedSubscription = { __typename?: 'Subscription', notificationCreated: { __typename?: 'Notification', _id: string, userId: string, type: NotificationType, title: string, description: string, icon: string, imageUrl?: string | null, isRead: boolean, readAt?: string | null, createdAt: string, updatedAt: string, data?: { __typename?: 'NotificationData', screen?: string | null, targetId?: string | null, action?: string | null, requesterId?: string | null, initialTab?: string | null, actionTaken?: boolean | null, secondaryTargetId?: string | null } | null } };

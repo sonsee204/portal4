@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import type { ErrorLike } from '@apollo/client';
@@ -5,24 +18,16 @@ import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { formatGraphQLError } from '@/lib/errors/format-graphql-error';
-import { ERRORS, COMMON } from '@/lib/strings';
+import { COMMON, ERRORS } from '@/lib/strings';
 
 interface QueryStateProps {
-  /** Whether the query is currently loading */
   loading: boolean;
-  /** Apollo error from useQuery */
   error?: ErrorLike;
-  /** Whether the data set is empty (after loading) */
   empty?: boolean;
-  /** Callback to retry the query */
   onRetry?: () => void;
-  /** Custom message for the empty state */
   emptyMessage?: string;
-  /** Custom message for the empty state icon */
   emptyIcon?: string;
-  /** Number of skeleton rows to show while loading */
   skeletonCount?: number;
-  /** Content to render when data is available */
   children: React.ReactNode;
 }
 
@@ -40,7 +45,6 @@ export function QueryState({
   skeletonCount = 5,
   children,
 }: QueryStateProps) {
-  // Loading state
   if (loading && !error) {
     return (
       <div className="space-y-3">
@@ -51,7 +55,6 @@ export function QueryState({
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 py-16">
@@ -62,7 +65,9 @@ export function QueryState({
             className="text-red-400"
           />
         </div>
-        <p className="mt-3 text-sm font-medium text-red-400">{ERRORS.ERROR_TITLE}</p>
+        <p className="mt-3 text-sm font-medium text-red-400">
+          {ERRORS.ERROR_TITLE}
+        </p>
         <p className="text-muted mt-1 max-w-sm text-center text-xs">
           {formatGraphQLError(error)}
         </p>
@@ -81,7 +86,6 @@ export function QueryState({
     );
   }
 
-  // Empty state
   if (empty) {
     return (
       <div className="border-surface-border flex flex-col items-center justify-center rounded-xl border border-dashed py-16">
@@ -104,6 +108,5 @@ export function QueryState({
     );
   }
 
-  // Data available
   return <>{children}</>;
 }

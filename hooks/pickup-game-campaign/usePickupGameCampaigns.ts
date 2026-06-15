@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client/react';
@@ -5,13 +18,13 @@ import {
   GET_MY_CAMPAIGNS,
   GET_CAMPAIGN,
   GET_CAMPAIGN_STATS,
-} from '@/graphql/queries/pickup-game-campaign';
+} from '@/graphql/pickup-game-campaign/queries';
 import {
   CREATE_PICKUP_GAME_CAMPAIGN,
   UPDATE_PICKUP_GAME_CAMPAIGN,
   ADD_GAMES_TO_CAMPAIGN,
   REMOVE_GAMES_FROM_CAMPAIGN,
-} from '@/graphql/mutations/pickup-game-campaign';
+} from '@/graphql/pickup-game-campaign/mutations';
 import type {
   PickupGameCampaign,
   CampaignStats,

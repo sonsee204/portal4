@@ -1,0 +1,43 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
+import { gql } from 'graphql-tag';
+
+export const CREATE_OTP_TEST_USER_GRANT = gql`
+  mutation CreateOtpTestUserGrant($input: CreateOtpTestUserGrantInput!) {
+    createOtpTestUserGrant(input: $input) {
+      _id
+      userId
+      userDisplayName
+      userRole
+      phone
+      testCode
+      reason
+      enabled
+      allowedPurposes
+      expiresAt
+      createdAt
+    }
+  }
+`;
+
+export const REVOKE_OTP_TEST_USER_GRANT = gql`
+  mutation RevokeOtpTestUserGrant($id: ID!) {
+    revokeOtpTestUserGrant(id: $id) {
+      _id
+      enabled
+      revokedAt
+      updatedAt
+    }
+  }
+`;

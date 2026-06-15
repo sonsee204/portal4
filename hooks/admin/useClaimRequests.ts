@@ -1,71 +1,82 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useQuery } from '@apollo/client/react';
 import {
   GET_CLAIM_REQUESTS,
   GET_CLAIM_REQUEST_STATS,
-} from '@/graphql/queries/claim-requests';
+} from '@/graphql/claim-request/queries';
+import type { GetClaimRequestsQuery } from '@/graphql/generated';
 import type {
   ClaimRequestItem,
   ClaimRequestStatus,
-} from '@/app/(dashboard)/claim-requests/types';
-
-interface ClaimRequestsFilter {
-  status?: ClaimRequestStatus;
-}
-
-interface ClaimRequestsQueryData {
-  claimRequests: {
-    requests: ClaimRequestItem[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface ClaimStatsQueryData {
-  claimRequestStats: {
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-    cancelled: number;
-    thisWeek: number;
-    thisMonth: number;
-  };
-}
+} from '@/app/(dashboard)/admin/claim-requests/types';
+import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 export function useClaimRequests(
-  filter?: ClaimRequestsFilter,
-  pagination?: { page: number; limit: number },
+  filter?: { status?: ClaimRequestStatus },
+  pagination?: LegacyPagePagination,
 ) {
-  const { data, loading, error, refetch } = useQuery<ClaimRequestsQueryData>(
-    GET_CLAIM_REQUESTS,
-    {
-      variables: { filter, pagination },
-      fetchPolicy: 'cache-and-network',
-    },
-  );
+  const result = usePagedConnectionQuery<
+    GetClaimRequestsQuery,
+    ClaimRequestItem,
+    { filter?: { status?: ClaimRequestStatus } }
+  >({
+    query: GET_CLAIM_REQUESTS,
+    pagination,
+    resetKey: JSON.stringify(filter ?? null),
+    variables: { filter },
+    getConnection: (data) => data?.claimRequestsConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      claimRequestsConnection: {
+        ...next.claimRequestsConnection!,
+        edges: mergeConnectionEdges(
+          prev.claimRequestsConnection?.edges ?? [],
+          next.claimRequestsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   return {
-    requests: data?.claimRequests?.requests ?? [],
-    total: data?.claimRequests?.total ?? 0,
-    hasMore: data?.claimRequests?.hasMore ?? false,
-    loading,
-    error,
-    refetch,
+    requests: result.items,
+    total: result.total,
+    totalCount: result.totalCount,
+    hasMore: result.hasMore,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
+    loading: result.loading,
+    error: result.error,
+    refetch: result.refetch,
   };
 }
 
 export function useClaimRequestStats() {
-  const { data, loading, error, refetch } =
-    useQuery<ClaimStatsQueryData>(GET_CLAIM_REQUEST_STATS);
+  const { data, loading, error, refetch } = useQuery<{
+    claimRequestStats: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+      cancelled: number;
+      thisWeek: number;
+      thisMonth: number;
+    };
+  }>(GET_CLAIM_REQUEST_STATS);
 
-  return {
-    stats: data?.claimRequestStats,
-    loading,
-    error,
-    refetch,
-  };
+  return { stats: data?.claimRequestStats, loading, error, refetch };
 }

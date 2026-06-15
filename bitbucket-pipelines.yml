@@ -1,35 +1,64 @@
-image: node:24
+image: node:22
+
+definitions:
+  caches:
+    pnpm: $BITBUCKET_CLONE_DIR/.pnpm-store
+    node-modules: node_modules
+
+  steps:
+    - step: &verify
+        name: Verify
+        caches:
+          - node
+          - pnpm
+          - node-modules
+        script:
+          - corepack enable
+          - corepack prepare pnpm@10.26.2 --activate
+          - export GRAPHQL_SCHEMA_PATH=schema.gql
+          - HUSKY=0 pnpm install --frozen-lockfile
+          - pnpm run check:schema-drift
+          - pnpm run check:codegen-drift
+          - pnpm run verify:a-plus
+        artifacts:
+          - .next/**
+          - public/**
+          - package.json
+          - pnpm-lock.yaml
+          - pnpm-workspace.yaml
+          - next.config.mjs
+
+    - step: &deploy-production
+        name: Build and Deploy Portal to Bizzfly (Production)
+        deployment: production
+        script:
+          - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml pnpm-workspace.yaml next.config.mjs
+          - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
+          - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
+          - rm build.tar.gz
+
+    - step: &deploy-staging
+        name: Build and Deploy Portal to Bizzfly (Staging)
+        deployment: staging
+        script:
+          - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml pnpm-workspace.yaml next.config.mjs
+          - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_STAGING/
+          - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_STAGING && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal-staging || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal-staging' -- start -p 4001"
+          - rm build.tar.gz
 
 pipelines:
+  default:
+    - step: *verify
+
+  pull-requests:
+    '**':
+      - step: *verify
+
   branches:
     main: # Production
-      - step:
-          name: Build and Deploy Portal to Bizzfly (Production)
-          deployment: production
-          caches:
-            - node
-          script:
-            - npm install -g pnpm
-            - pnpm install
-            - scp $SERVER_USER@$SERVER_IP:~/hitri/nalee-sports-backend/src/schema.gql ./schema.gql
-            - pnpm run build
-            - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.mjs
-            - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
-            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal' -- start -p 3001"
-            - rm build.tar.gz
+      - step: *verify
+      - step: *deploy-production
 
     release/staging: # Staging (cùng server, khác DB & storage)
-      - step:
-          name: Build and Deploy Portal to Bizzfly (Staging)
-          deployment: staging
-          caches:
-            - node
-          script:
-            - npm install -g pnpm
-            - pnpm install
-            - scp $SERVER_USER@$SERVER_IP:~/hitri-staging/nalee-sports-backend/src/schema.gql ./schema.gql
-            - pnpm run build
-            - tar -czf build.tar.gz .next public package.json pnpm-lock.yaml next.config.mjs
-            - scp build.tar.gz $SERVER_USER@$SERVER_IP:$DEPLOY_PATH_STAGING/
-            - ssh $SERVER_USER@$SERVER_IP "source ~/.nvm/nvm.sh && cd $DEPLOY_PATH_STAGING && rm -rf .next next.config.ts && tar -xzf build.tar.gz && rm build.tar.gz && pnpm install --prod && pm2 reload hitri-portal-staging || pm2 start node_modules/next/dist/bin/next --name 'hitri-portal-staging' -- start -p 4001"
-            - rm build.tar.gz
+      - step: *verify
+      - step: *deploy-staging

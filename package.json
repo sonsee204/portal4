@@ -1,20 +1,37 @@
 {
   "name": "nalee-sports-portal",
+  "packageManager": "pnpm@10.26.2",
   "version": "1.6",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev --port 3001",
-    "prebuild": "npm run codegen",
+    "prebuild": "pnpm run codegen",
     "build": "next build",
     "start": "next start --port 3001",
     "lint": "eslint",
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "size-gate": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all",
+    "size-gate:strict": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --strict --warn-baseline",
+    "size-gate:warn-baseline:update": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --update-warn-baseline",
+    "dead-code-gate": "node scripts/dead-code-gate.mjs",
+    "dead-code-gate:update": "node scripts/dead-code-gate.mjs --update-baseline",
+    "verify:quick": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run lint && pnpm run size-gate:strict && pnpm run dead-code-gate",
+    "verify:a-plus": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run lint && pnpm test && pnpm run size-gate:strict && pnpm run dead-code-gate && pnpm run check:shared-sync && pnpm run build",
+    "verify:go": "node scripts/check-working-tree-clean.mjs && pnpm run check:schema-drift && pnpm run check:codegen-drift && pnpm run verify:a-plus",
+    "check:codegen-drift": "node scripts/check-codegen-drift.mjs",
+    "check:schema-drift": "node scripts/check-schema-drift.mjs",
+    "check:copyright-header": "node scripts/check-copyright-header.mjs --roots=app,components,hooks,lib,scripts",
     "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal",
     "schema:sync": "node ../scripts/sync-schema.mjs",
+    "check:shared-sync": "node scripts/check-shared-sync.mjs",
     "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
-    "version:sync": "node ../scripts/sync-version.mjs",
-    "dev:https": "next dev --experimental-https --experimental-https-key localhost+1-key.pem --experimental-https-cert localhost+1.pem --port 3003"
+    "version:sync": "node ../scripts/sync-version.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.1.4",
@@ -35,6 +52,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
+    "react-to-print": "^3.0.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",
@@ -53,10 +71,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
     "ionicons": "^8.0.13",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }

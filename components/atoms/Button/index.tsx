@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
@@ -15,7 +28,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   iconLeft?: string;
   iconRight?: string;
-  href?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -27,21 +39,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       iconLeft,
       iconRight,
       children,
-      href,
       ...props
     },
     ref
   ) => {
-    const inner = (
-      <>
-        {iconLeft && <IonIcon name={iconLeft} size="sm" className="-ml-0.5" />}
-        {children}
-        {iconRight && (
-          <IonIcon name={iconRight} size="sm" className="-mr-0.5" />
-        )}
-      </>
-    );
-
     return (
       <button
         ref={ref}
@@ -56,7 +57,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {inner}
+        {iconLeft && <IonIcon name={iconLeft} size="sm" className="-ml-0.5" />}
+        {children}
+        {iconRight && (
+          <IonIcon name={iconRight} size="sm" className="-mr-0.5" />
+        )}
       </button>
     );
   }

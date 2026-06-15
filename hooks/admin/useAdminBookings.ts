@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useMemo } from 'react';
@@ -5,7 +18,18 @@ import { useQuery } from '@apollo/client/react';
 import {
   ADMIN_GET_ALL_BOOKINGS,
   ADMIN_GET_USER_BOOKINGS,
-} from '@/graphql/queries/admin';
+} from '@/graphql/admin/queries';
+import type {
+  AdminGetAllBookingsQuery,
+  AdminGetUserBookingsQuery,
+} from '@/graphql/generated';
+import {
+  connectionNodes,
+  mergeConnectionEdges,
+  resolveConnectionFirst,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
+} from '@/hooks/shared/useCursorConnection';
 
 export interface AdminBooking {
   _id: string;
@@ -18,63 +42,77 @@ export interface AdminBooking {
   courtName: string;
 }
 
-interface AllBookingsResult {
-  adminGetAllBookings: {
-    bookings: AdminBooking[];
-    customerNamesJson: string;
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
-interface UserBookingsResult {
-  adminGetUserBookings: {
-    bookings: AdminBooking[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-  };
-}
-
 interface AllBookingsVariables {
   statuses?: string[];
   fromDate?: string;
   toDate?: string;
-  pagination?: { page: number; limit: number };
+  pagination?: LegacyPagePagination;
 }
 
 export function useAdminAllBookings(
   variables: AllBookingsVariables,
   options?: { skip?: boolean },
 ) {
-  const { data, loading, error, refetch } = useQuery<AllBookingsResult>(
+  const first = resolveConnectionFirst(variables.pagination);
+
+  const { data, loading, error, refetch, fetchMore } = useQuery<AdminGetAllBookingsQuery>(
     ADMIN_GET_ALL_BOOKINGS,
     {
-      variables,
+      variables: {
+        statuses: variables.statuses,
+        fromDate: variables.fromDate,
+        toDate: variables.toDate,
+        pagination: { first, after: variables.pagination?.after ?? null },
+      },
       skip: options?.skip,
     },
   );
 
-  const result = data?.adminGetAllBookings;
+  const connection = data?.adminAllBookingsConnection;
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      statuses: variables.statuses,
+      fromDate: variables.fromDate,
+      toDate: variables.toDate,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      adminAllBookingsConnection: {
+        ...next.adminAllBookingsConnection!,
+        edges: mergeConnectionEdges(
+          prev.adminAllBookingsConnection?.edges ?? [],
+          next.adminAllBookingsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   const customerNames: Record<string, string> = useMemo(() => {
     try {
-      return result?.customerNamesJson
-        ? JSON.parse(result.customerNamesJson)
+      return connection?.customerNamesJson
+        ? JSON.parse(connection.customerNamesJson)
         : {};
     } catch {
       return {};
     }
-  }, [result?.customerNamesJson]);
+  }, [connection?.customerNamesJson]);
 
   return {
-    bookings: result?.bookings ?? [],
+    bookings: connectionNodes(connection?.edges) ?? [],
     customerNames,
-    total: result?.total ?? 0,
-    hasMore: result?.hasMore ?? false,
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading,
     error,
     refetch,
@@ -83,23 +121,59 @@ export function useAdminAllBookings(
 
 export function useAdminUserBookings(
   userId: string,
-  variables: { statuses?: string[]; pagination?: { page: number; limit: number } },
+  variables: {
+    statuses?: string[];
+    pagination?: LegacyPagePagination;
+  },
   options?: { skip?: boolean },
 ) {
-  const { data, loading, error, refetch } = useQuery<UserBookingsResult>(
+  const first = resolveConnectionFirst(variables.pagination);
+
+  const { data, loading, error, refetch, fetchMore } = useQuery<AdminGetUserBookingsQuery>(
     ADMIN_GET_USER_BOOKINGS,
     {
-      variables: { userId, ...variables },
+      variables: {
+        userId,
+        statuses: variables.statuses,
+        pagination: { first, after: variables.pagination?.after ?? null },
+      },
       skip: options?.skip || !userId,
     },
   );
 
-  const result = data?.adminGetUserBookings;
+  const connection = data?.adminUserBookingsConnection;
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      userId,
+      statuses: variables.statuses,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      adminUserBookingsConnection: {
+        ...next.adminUserBookingsConnection!,
+        edges: mergeConnectionEdges(
+          prev.adminUserBookingsConnection?.edges ?? [],
+          next.adminUserBookingsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   return {
-    bookings: result?.bookings ?? [],
-    total: result?.total ?? 0,
-    hasMore: result?.hasMore ?? false,
+    bookings: connectionNodes(connection?.edges) ?? [],
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading,
     error,
     refetch,

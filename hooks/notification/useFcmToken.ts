@@ -1,3 +1,16 @@
+/**
+ * Ao Trình (NALee Sports)
+ * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
+ *
+ * @copyright 2025-2026 Lê Trung Hiếu
+ * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
+ */
+
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -5,7 +18,7 @@ import { useMutation } from '@apollo/client/react';
 import {
   SAVE_FCM_TOKEN,
   REMOVE_FCM_TOKEN,
-} from '@/graphql/mutations/notification';
+} from '@/graphql/notification/mutations';
 import { requestNotificationPermission } from '@/lib/firebase/messaging';
 
 let storedToken: string | null = null;
