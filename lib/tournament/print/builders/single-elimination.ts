@@ -11,11 +11,18 @@
  * is strictly prohibited without prior written consent.
  */
 
+import {
+  eliminationRoundCount,
+  filterMatchesForHalf,
+  intersectHalfSpan,
+  matchGlobalRowSpan,
+} from '../bracket-row-layout';
 import { formatPrintMatchPair } from '../format-player-name';
 import {
   mapMatchesToPrintDrawSlots,
   slotsToEntryRows,
   splitSlotsIntoHalves,
+  type PrintDrawSlot,
 } from '../map-draw-slots';
 import { nextPowerOf2, roundShortLabel } from '../round-labels';
 import type {
@@ -38,8 +45,9 @@ function resolveBracketSize(
 
 function buildRoundColumns(
   matches: PrintMatchInput[],
-  entryCount: number,
-  halfOffset: number,
+  halfSlotStart: number,
+  halfSlotCount: number,
+  fullBracketSize: number,
 ): PrintBracketRoundColumn[] {
   const roundsMap = new Map<number, PrintMatchInput[]>();
   for (const m of matches) {
@@ -49,22 +57,32 @@ function buildRoundColumns(
   }
 
   const roundNums = [...roundsMap.keys()].sort((a, b) => a - b);
-  const totalRounds = roundNums.length;
+  const totalRounds = eliminationRoundCount(fullBracketSize);
 
-  return roundNums.map((roundNum, ri) => {
+  return roundNums.map((roundNum) => {
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
       (a, b) =>
         (a.bracketPosition ?? a.matchNumber) -
         (b.bracketPosition ?? b.matchNumber),
     );
     const label = roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`;
-    const shortLabel = roundShortLabel(ri, totalRounds, label);
-    const span = Math.max(1, entryCount / Math.max(1, roundMatches.length));
+    const shortLabel = roundShortLabel(roundNum - 1, totalRounds, label);
 
-    return {
-      label,
-      shortLabel,
-      matches: roundMatches.map((m, mi) => {
+    const positionedMatches = roundMatches
+      .map((m, mi) => {
+        const { globalFrom, globalTo } = matchGlobalRowSpan(
+          roundNum,
+          m.bracketPosition,
+          mi,
+        );
+        const local = intersectHalfSpan(
+          globalFrom,
+          globalTo,
+          halfSlotStart,
+          halfSlotCount,
+        );
+        if (!local) return null;
+
         const pair = formatPrintMatchPair(
           m.player1,
           m.player2,
@@ -72,32 +90,47 @@ function buildRoundColumns(
           m.player2SlotLabel,
           m.isBye,
         );
-        const rowIndexFrom = halfOffset + Math.floor(mi * span);
-        const rowIndexTo = halfOffset + Math.floor((mi + 1) * span) - 1;
+
         return {
           matchNumber: m.matchNumber,
           matchId: m.id,
-          rowIndexFrom,
-          rowIndexTo,
+          rowIndexFrom: local.localFrom,
+          rowIndexTo: local.localTo,
           player1Label: pair.player1,
           player2Label: pair.player2,
         };
-      }),
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
+
+    return {
+      label,
+      shortLabel,
+      matches: positionedMatches,
     };
   });
 }
 
-function buildHalf(
+function buildHalfFromSlots(
   title: string,
   matches: PrintMatchInput[],
-  bracketSize: number,
-  halfOffset: number,
+  slots: PrintDrawSlot[],
+  halfSlotStart: number,
+  fullBracketSize: number,
 ): PrintBracketHalf {
-  const slots = mapMatchesToPrintDrawSlots(matches, bracketSize);
+  const halfMatches = filterMatchesForHalf(
+    matches,
+    halfSlotStart,
+    slots.length,
+  );
   return {
     title,
     entries: slotsToEntryRows(slots),
-    rounds: buildRoundColumns(matches, slots.length, halfOffset),
+    rounds: buildRoundColumns(
+      halfMatches,
+      halfSlotStart,
+      slots.length,
+      fullBracketSize,
+    ),
   };
 }
 
@@ -110,18 +143,27 @@ export function buildSingleEliminationBracket(
 
   if (effectiveSize > 32) {
     const { halfA, halfB } = splitSlotsIntoHalves(slots);
+    const halfBStart = halfA.length;
     return [
-      buildHalf(`${category.title} — Nhánh 1`, matches, halfA.length, 0),
-      buildHalf(`${category.title} — Nhánh 2`, matches, halfB.length, 0),
+      buildHalfFromSlots(
+        `${category.title} — Nhánh 1`,
+        matches,
+        halfA,
+        0,
+        effectiveSize,
+      ),
+      buildHalfFromSlots(
+        `${category.title} — Nhánh 2`,
+        matches,
+        halfB,
+        halfBStart,
+        effectiveSize,
+      ),
     ];
   }
 
   return [
-    {
-      title: category.title,
-      entries: slotsToEntryRows(slots),
-      rounds: buildRoundColumns(matches, effectiveSize, 0),
-    },
+    buildHalfFromSlots(category.title, matches, slots, 0, effectiveSize),
   ];
 }
 
@@ -131,23 +173,35 @@ export function buildKnockoutHalvesFromMatches(
   bracketSize: number,
 ): PrintBracketHalf[] {
   if (matches.length === 0) return [];
-  const effectiveSize = bracketSize >= 2 ? bracketSize : resolveBracketSize(
-    { id: '', title: categoryTitle, format: 'SINGLE_ELIMINATION' },
-    matches,
-  );
+  const effectiveSize =
+    bracketSize >= 2
+      ? bracketSize
+      : resolveBracketSize(
+          { id: '', title: categoryTitle, format: 'SINGLE_ELIMINATION' },
+          matches,
+        );
   const slots = mapMatchesToPrintDrawSlots(matches, effectiveSize);
   if (effectiveSize > 32) {
     const { halfA, halfB } = splitSlotsIntoHalves(slots);
+    const halfBStart = halfA.length;
     return [
-      buildHalf(`${categoryTitle} — Nhánh 1`, matches, halfA.length, 0),
-      buildHalf(`${categoryTitle} — Nhánh 2`, matches, halfB.length, 0),
+      buildHalfFromSlots(
+        `${categoryTitle} — Nhánh 1`,
+        matches,
+        halfA,
+        0,
+        effectiveSize,
+      ),
+      buildHalfFromSlots(
+        `${categoryTitle} — Nhánh 2`,
+        matches,
+        halfB,
+        halfBStart,
+        effectiveSize,
+      ),
     ];
   }
   return [
-    {
-      title: categoryTitle,
-      entries: slotsToEntryRows(slots),
-      rounds: buildRoundColumns(matches, effectiveSize, 0),
-    },
+    buildHalfFromSlots(categoryTitle, matches, slots, 0, effectiveSize),
   ];
 }
