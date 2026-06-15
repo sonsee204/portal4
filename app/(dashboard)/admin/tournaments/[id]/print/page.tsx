@@ -231,7 +231,11 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
 
         <div className="mt-4">
           {printContent ? (
-            <PrintPreviewFrame zoom={Number(zoom)} printRef={printRef}>
+            <PrintPreviewFrame
+              zoom={Number(zoom)}
+              printRef={printRef}
+              wide={data.activeTab === 'bracket'}
+            >
               {printContent}
             </PrintPreviewFrame>
           ) : data.activeTab === 'bracket' ? (

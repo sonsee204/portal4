@@ -118,6 +118,14 @@ describe('print kernel', () => {
     expect(doc?.halves?.[0]?.entries.length).toBeGreaterThan(0);
   });
 
+  it('formatPrintScheduledLabel uses compact time · date · court', () => {
+    const label = formatPrintScheduledLabel({
+      scheduledAt: '2026-06-06T07:30:00.000+07:00',
+      courtName: 'Sân 4B',
+    });
+    expect(label).toBe('07:30 · 06/06 · Sân 4B');
+  });
+
   it('formatPrintScheduledLabel includes court when present', () => {
     const label = formatPrintScheduledLabel({
       scheduledAt: '2026-06-15T08:30:00.000Z',
@@ -125,6 +133,26 @@ describe('print kernel', () => {
     });
     expect(label).toContain('S1');
     expect(label).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it('32-draw half sheet keeps at most 8 round-1 matches', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 32 };
+    const r1: PrintMatchInput[] = Array.from({ length: 16 }, (_, i) =>
+      match({
+        id: `r1-${i}`,
+        round: 1,
+        bracketPosition: i,
+        matchNumber: 411 + i,
+        scheduledAt: '2026-06-06T07:30:00.000+07:00',
+        courtName: 'S4B',
+        player1: { name: `A${i}` },
+        player2: { name: `B${i}` },
+      }),
+    );
+    const halves = buildSingleEliminationBracket(category, r1);
+    expect(halves).toHaveLength(2);
+    expect(halves[0]?.rounds[0]?.matches.length).toBe(8);
+    expect(halves[1]?.rounds[0]?.matches.length).toBe(8);
   });
 
   it('single elimination bracket includes scheduledLabel on matches', () => {

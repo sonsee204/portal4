@@ -21,6 +21,8 @@ interface PrintPreviewFrameProps {
   zoom?: number;
   className?: string;
   printRef?: RefObject<HTMLDivElement | null>;
+  /** Wider preview for landscape bracket sheets with many round columns. */
+  wide?: boolean;
 }
 
 export function PrintPreviewFrame({
@@ -28,6 +30,7 @@ export function PrintPreviewFrame({
   zoom = 1,
   className,
   printRef,
+  wide = false,
 }: PrintPreviewFrameProps) {
   return (
     <div className="no-print overflow-x-auto rounded-xl border border-white/10 bg-black/20 p-4">
@@ -40,7 +43,7 @@ export function PrintPreviewFrame({
           transform: `scale(${zoom})`,
           transformOrigin: 'top center',
           width: zoom !== 1 ? `${100 / zoom}%` : undefined,
-          maxWidth: '900px',
+          maxWidth: wide ? '1200px' : '900px',
         }}
       >
         <div ref={printRef}>{children}</div>

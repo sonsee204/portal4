@@ -13,23 +13,25 @@
 
 import type { PrintMatchInput } from './types';
 
+function parseScheduledParts(iso: string): { time: string; date: string } | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  return { time: `${h}:${mi}`, date: `${da}/${mo}` };
+}
+
 export function formatPrintScheduledLabel(
   m: Pick<PrintMatchInput, 'scheduledAt' | 'courtName'>,
 ): string | undefined {
   if (!m.scheduledAt) return undefined;
 
-  let timeLabel: string;
-  try {
-    timeLabel = new Date(m.scheduledAt).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return undefined;
-  }
+  const parts = parseScheduledParts(m.scheduledAt);
+  if (!parts) return undefined;
 
   const court = m.courtName?.trim();
-  return court ? `${timeLabel} · ${court}` : timeLabel;
+  const base = `${parts.time} · ${parts.date}`;
+  return court ? `${base} · ${court}` : base;
 }
