@@ -17,7 +17,7 @@ import type { PrintBracketHalf } from '@/lib/tournament/print/types';
 
 const ROW_H = 28;
 const COL_ENTRY = 220;
-const COL_ROUND = 72;
+const COL_ROUND = 88;
 const ENTRY_GAP = 36;
 
 interface PrintBracketHalfSheetProps {
@@ -173,16 +173,24 @@ export function PrintBracketHalfSheet({
                 className="relative"
               >
                 {round.matches.map((m) => {
-                  const top = rowCenterY(m.rowIndexFrom, m.rowIndexTo) - 8;
+                  const hasSchedule = Boolean(m.scheduledLabel);
+                  const boxHeight = hasSchedule ? 26 : 16;
+                  const top =
+                    rowCenterY(m.rowIndexFrom, m.rowIndexTo) - boxHeight / 2;
                   return (
                     <div
                       key={m.matchId}
-                      className="absolute right-1 left-1 rounded border border-gray-500 bg-white px-1 text-center text-[9px]"
-                      style={{ top }}
+                      className="absolute right-0.5 left-0.5 rounded border border-gray-500 bg-white px-0.5 text-center leading-tight"
+                      style={{ top, fontSize: hasSchedule ? 8 : 9 }}
                     >
                       <div className="font-semibold">
                         {formatMatchNumber(m.matchNumber)}
                       </div>
+                      {m.scheduledLabel ? (
+                        <div className="text-[7px] text-gray-700">
+                          {m.scheduledLabel}
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

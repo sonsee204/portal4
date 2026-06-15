@@ -12,21 +12,8 @@
  */
 
 import { formatPrintMatchPair } from '../format-player-name';
+import { formatPrintScheduledLabel } from '../format-print-scheduled-label';
 import type { PrintMatchInput, PrintRoundRobinRow } from '../types';
-
-function scheduledLabel(m: PrintMatchInput): string | undefined {
-  if (!m.scheduledAt) return undefined;
-  try {
-    return new Date(m.scheduledAt).toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return undefined;
-  }
-}
 
 export function buildRoundRobinRows(
   matches: PrintMatchInput[],
@@ -46,7 +33,7 @@ export function buildRoundRobinRows(
         roundLabel: m.roundLabel,
         player1: pair.player1,
         player2: pair.player2,
-        scheduledLabel: scheduledLabel(m),
+        scheduledLabel: formatPrintScheduledLabel(m),
       };
     });
 }

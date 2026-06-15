@@ -73,6 +73,7 @@ export function mapGqlMatchToPrintInput(m: TournamentMatch): PrintMatchInput {
     status: m.status,
     isBye: m.isBye,
     scheduledAt: m.scheduledAt,
+    courtName: m.court?.name ?? undefined,
     player1: m.player1,
     player2: m.player2,
     player1SlotLabel: m.player1SlotLabel,

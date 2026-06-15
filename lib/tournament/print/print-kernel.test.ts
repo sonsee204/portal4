@@ -20,6 +20,7 @@ import {
 } from './bracket-row-layout';
 import { buildSingleEliminationBracket } from './builders/single-elimination';
 import { dedupePrintMatchesById } from './dedupe-matches';
+import { formatPrintScheduledLabel } from './format-print-scheduled-label';
 import { formatDateRangeLabel } from './round-labels';
 import type {
   PrintCategoryInput,
@@ -115,6 +116,32 @@ describe('print kernel', () => {
     const doc = buildBracketDocument(tournament, cat('SINGLE_ELIMINATION'), matches);
     expect(doc?.format).toBe('SINGLE_ELIMINATION');
     expect(doc?.halves?.[0]?.entries.length).toBeGreaterThan(0);
+  });
+
+  it('formatPrintScheduledLabel includes court when present', () => {
+    const label = formatPrintScheduledLabel({
+      scheduledAt: '2026-06-15T08:30:00.000Z',
+      courtName: 'S1',
+    });
+    expect(label).toContain('S1');
+    expect(label).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it('single elimination bracket includes scheduledLabel on matches', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 8 };
+    const matches: PrintMatchInput[] = [
+      match({
+        id: 'm1',
+        matchNumber: 1,
+        bracketPosition: 0,
+        scheduledAt: '2026-06-15T08:30:00.000Z',
+        courtName: 'S1',
+        player1: { name: 'A' },
+        player2: { name: 'B' },
+      }),
+    ];
+    const halves = buildSingleEliminationBracket(category, matches);
+    expect(halves[0]?.rounds[0]?.matches[0]?.scheduledLabel).toContain('S1');
   });
 
   it('single elimination rows pair entries in round 1', () => {
