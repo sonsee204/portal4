@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   MY_SESSIONS,
@@ -25,29 +25,39 @@ import { setClientAccessToken } from '@/lib/apollo/client';
 import { showError, showSuccess } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 
+/** Fetch the current access token from the server cookie and hydrate the
+ *  Apollo in-memory store. Returns `true` when the token was successfully
+ *  synced so callers can gate mutations on it. */
+async function syncTokenFromCookie(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/auth/session', { credentials: 'include' });
+    if (!res.ok) return false;
+
+    const payload = (await res.json()) as { accessToken?: string | null };
+    if (payload.accessToken) {
+      setClientAccessToken(payload.accessToken);
+      return true;
+    }
+  } catch {
+    // Ignore — fall back to whatever the Apollo client already has.
+  }
+  return false;
+}
+
 export function useSessions() {
   const { data, loading, error, refetch } = useQuery<MySessionsQuery>(
     MY_SESSIONS,
     { fetchPolicy: 'network-only' },
   );
 
+  /** Whether the access token has been synced from the cookie at least once. */
+  const tokenSyncedRef = useRef(false);
+
   useEffect(() => {
-    async function syncAccessTokenFromCookie() {
-      try {
-        const res = await fetch('/api/auth/session', { credentials: 'include' });
-        if (!res.ok) return;
-
-        const payload = (await res.json()) as { accessToken?: string | null };
-        if (payload.accessToken) {
-          setClientAccessToken(payload.accessToken);
-          void refetch();
-        }
-      } catch {
-        // Ignore — query will use existing client token or fail visibly.
-      }
-    }
-
-    void syncAccessTokenFromCookie();
+    void syncTokenFromCookie().then((synced) => {
+      tokenSyncedRef.current = synced;
+      if (synced) void refetch();
+    });
   }, [refetch]);
 
   const [revokeSessionMut, { loading: revokingOne }] = useMutation(REVOKE_SESSION, {
@@ -71,14 +81,21 @@ export function useSessions() {
 
   const sessions = data?.mySessions ?? [];
 
+  /** Before firing a destructive session mutation, always re-sync the access
+   *  token so the Bearer header carries the correct session `sid`. */
+  async function withFreshToken<T>(fn: () => Promise<T>): Promise<T> {
+    await syncTokenFromCookie();
+    return fn();
+  }
+
   return {
     sessions,
     loading,
     error,
     refetch,
     revokeSessionById: (sessionId: string) =>
-      revokeSessionMut({ variables: { sessionId } }),
-    revokeOtherSessions: () => revokeOthers(),
+      withFreshToken(() => revokeSessionMut({ variables: { sessionId } })),
+    revokeOtherSessions: () => withFreshToken(() => revokeOthers()),
     revoking: revokingOne || revokingOthers,
   };
 }
