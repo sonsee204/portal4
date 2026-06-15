@@ -17,8 +17,9 @@ import { useMemo } from 'react';
 import type { Tournament } from '@/graphql/generated';
 import { mapTournamentCourts } from '@/lib/tournament/mappers/schedule';
 import { filterMatchesByScheduleDate } from '@/lib/tournament/schedule-match-scope';
+import { computeTimelineDayRange } from '@/lib/tournament/compute-timeline-day-range';
 import type { ScheduleMatch } from '@/types/tournament-schedule';
-import { computeTimelineDayRange } from '../_components/TournamentCourtTimelineGrid';
+import { dedupeScheduleMatchesById } from '../_components/timeline-card-layout';
 import {
   isPastScheduleDate,
   todayCalendarDate,
@@ -64,16 +65,16 @@ export function useScheduleGridDerived({
     () =>
       activeDate
         ? filterMatchesByScheduleDate(displayMatches, activeDate, {
-            includeUnscheduledWithoutDate: false,
-          })
+          includeUnscheduledWithoutDate: false,
+        })
         : displayMatches,
     [displayMatches, activeDate],
   );
 
-  const scheduledDayMatches = useMemo(
-    () => dayMatches.filter((m) => m.courtId && m.startTime),
-    [dayMatches],
-  );
+  const scheduledDayMatches = useMemo(() => {
+    const scheduled = dayMatches.filter((m) => m.courtId && m.startTime);
+    return dedupeScheduleMatchesById(scheduled);
+  }, [dayMatches]);
 
   const dayRange = useMemo(
     () =>

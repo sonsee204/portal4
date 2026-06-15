@@ -12,6 +12,11 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { ScheduleMatch } from '@/types/tournament-schedule';
+import {
+  buildTimelinePlacedMatches,
+  dedupeScheduleMatchesById,
+} from '../_components/timeline-card-layout';
 import {
   calendarKeyFromIso,
   formatScheduleDate,
@@ -19,6 +24,27 @@ import {
   selectedGridDateTime,
   todayCalendarDate,
 } from './schedule-page.derived';
+
+function mockScheduleMatch(
+  id: string,
+  startTime: string,
+  courtId: string,
+): ScheduleMatch {
+  return {
+    id,
+    matchNumber: 1,
+    categoryId: 'c1',
+    categoryTitle: 'Test',
+    round: 1,
+    roundLabel: 'Vòng 1',
+    players: [null, null],
+    playerIds: [null, null],
+    status: 'scheduled',
+    courtId,
+    startTime,
+    estimatedDurationMinutes: 30,
+  };
+}
 
 describe('schedule-page.derived', () => {
   it('calendarKeyFromIso extracts YYYY-MM-DD from ISO datetime', () => {
@@ -44,5 +70,30 @@ describe('schedule-page.derived', () => {
 
   it('todayCalendarDate returns YYYY-MM-DD format', () => {
     expect(todayCalendarDate()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('timeline schedule dedupe', () => {
+  it('dedupeScheduleMatchesById keeps last occurrence', () => {
+    const first = mockScheduleMatch('m1', '09:00', 'Sân 1');
+    const second = { ...first, startTime: '10:00' };
+    expect(dedupeScheduleMatchesById([first, second])).toEqual([second]);
+    expect(dedupeScheduleMatchesById([first])).toEqual([first]);
+  });
+
+  it('buildTimelinePlacedMatches renders one slot per match id per court', () => {
+    const courts = [{ id: 'Sân 1', status: 'available' as const }];
+    const dupes = [
+      mockScheduleMatch('m1', '09:00', 'Sân 1'),
+      mockScheduleMatch('m1', '10:00', 'Sân 1'),
+    ];
+    const placed = buildTimelinePlacedMatches(courts, dupes, 0, {
+      sizing: 'slot',
+      estimatedCardHeightPx: 188,
+      pxPerMinute: 2,
+      isConflict: () => false,
+    });
+    expect(placed.get('Sân 1')).toHaveLength(1);
+    expect(placed.get('Sân 1')![0]!.match.startTime).toBe('10:00');
   });
 });

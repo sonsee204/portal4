@@ -30,6 +30,18 @@ export const REFEREE_TIMELINE_CARD_ESTIMATE_PX = 228;
 
 export type TimelineCardSizing = 'content' | 'slot';
 
+/** Last occurrence wins — guards duplicate API pages / subscription merges. */
+export function dedupeScheduleMatchesById(
+  matches: ScheduleMatch[],
+): ScheduleMatch[] {
+  if (matches.length <= 1) return matches;
+  const byId = new Map<string, ScheduleMatch>();
+  for (const m of matches) {
+    byId.set(m.id, m);
+  }
+  return byId.size === matches.length ? matches : [...byId.values()];
+}
+
 export interface TimelinePlacedMatch {
   match: ScheduleMatch;
   /** Vị trí theo giờ bắt đầu trên trục thời gian */
@@ -129,8 +141,9 @@ export function buildTimelinePlacedMatches(
   activeCourts.forEach((c) => map.set(c.id, []));
 
   const { pxPerMinute, sizing, estimatedCardHeightPx } = options;
+  const uniqueMatches = dedupeScheduleMatchesById(matches);
 
-  matches.forEach((m) => {
+  uniqueMatches.forEach((m) => {
     const timelineStart = getTimelineStartTime(m);
     if (!m.courtId || !timelineStart) return;
     if (!map.has(m.courtId)) return;
@@ -144,7 +157,7 @@ export function buildTimelinePlacedMatches(
         ? Math.max(slotMinHeightPx, 32)
         : slotMinHeightPx;
 
-    const courtMatches = matches.filter(
+    const courtMatches = uniqueMatches.filter(
       (o) =>
         o.id !== m.id && o.courtId === m.courtId && getTimelineStartTime(o),
     );

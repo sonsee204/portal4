@@ -26,6 +26,17 @@ import type {
 import { fetchAllConnectionPages } from '@/hooks/shared/useCursorConnection';
 import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
+function dedupeTournamentMatchesById(
+  matches: TournamentMatch[],
+): TournamentMatch[] {
+  if (matches.length <= 1) return matches;
+  const byId = new Map<string, TournamentMatch>();
+  for (const m of matches) {
+    byId.set(m._id, m);
+  }
+  return byId.size === matches.length ? matches : [...byId.values()];
+}
+
 interface UseTournamentScheduleMatchesOptions {
   tournamentId: string;
   skip?: boolean;
@@ -94,7 +105,7 @@ export function useTournamentScheduleMatches(
       });
 
       if (!mountedRef.current) return;
-      setMatches(all);
+      setMatches(dedupeTournamentMatchesById(all));
       setTotal(totalCount || all.length);
       hasLoadedRef.current = true;
     } catch (err) {
