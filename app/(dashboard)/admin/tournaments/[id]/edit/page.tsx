@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useTournament } from '@/hooks/tournament';
+import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { TournamentFormWizard } from '../../_form/TournamentFormWizard';
 import { mapTournamentToFormData } from '../../_form/_utils/mapFormToInput';
 import { TOURNAMENT } from '@/lib/strings';
@@ -37,6 +38,7 @@ export default function EditTournamentPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const routes = useTournamentRoutes();
   const { tournament, loading, error } = useTournament(id);
 
   if (loading) {
@@ -88,7 +90,7 @@ export default function EditTournamentPage({
           variant="ghost"
           size="sm"
           iconLeft="arrow-back-outline"
-          onClick={() => router.push(`/admin/tournaments/${id}`)}
+          onClick={() => router.push(routes.detail(id))}
         >
           Quay lại
         </Button>
@@ -104,7 +106,7 @@ export default function EditTournamentPage({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/admin/tournaments/${id}`)}
+                onClick={() => router.push(routes.detail(id))}
                 className="mt-4"
               >
                 Quay lại chi tiết giải

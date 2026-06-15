@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
+import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { TOURNAMENT } from '@/lib/strings';
 
 interface ScheduleHeaderSectionProps {
@@ -29,6 +30,7 @@ export function ScheduleHeaderSection({
   matchCount,
 }: ScheduleHeaderSectionProps) {
   const router = useRouter();
+  const routes = useTournamentRoutes();
 
   return (
     <PageHeader
@@ -36,7 +38,7 @@ export function ScheduleHeaderSection({
       description={`${matchCount} trận đấu`}
     >
       <div className="flex items-center gap-2">
-        <Link href={`/admin/tournaments/${tournamentId}/edit`}>
+        <Link href={routes.edit(tournamentId)}>
           <Button variant="outline" size="sm" iconLeft="grid-outline">
             {TOURNAMENT.LABEL_ADD_COURTS_LINK}
           </Button>
@@ -45,7 +47,7 @@ export function ScheduleHeaderSection({
           variant="ghost"
           size="sm"
           iconLeft="arrow-back-outline"
-          onClick={() => router.push('/admin/tournaments')}
+          onClick={() => router.push(routes.detail(tournamentId))}
         >
           Quay lại
         </Button>

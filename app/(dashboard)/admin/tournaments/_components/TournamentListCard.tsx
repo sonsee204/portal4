@@ -68,7 +68,7 @@ export function TournamentListCard({ tournament }: TournamentListCardProps) {
 
   return (
     <Link
-      href={routes.edit(tournament._id)}
+      href={routes.detail(tournament._id)}
       className="block p-4 transition-colors hover:bg-white/5"
     >
       <div className="flex items-start justify-between gap-4">

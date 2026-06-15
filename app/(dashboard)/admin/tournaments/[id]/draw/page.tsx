@@ -46,7 +46,7 @@ export default function DrawPage({
 
   return (
     <>
-      <DrawHeaderSection />
+      <DrawHeaderSection tournamentId={tournamentId} />
       <DrawCategoryTabsSection data={data} />
       <DrawStatsSection data={data} />
       <DrawPendingWarningSection data={data} />

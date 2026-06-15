@@ -15,6 +15,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/atoms/Button';
+import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import type { TournamentDetailPageData } from '../_hooks/useTournamentDetailPageData';
 
 interface TournamentDetailHeaderSectionProps {
@@ -25,6 +26,7 @@ export function TournamentDetailHeaderSection({
   data,
 }: TournamentDetailHeaderSectionProps) {
   const router = useRouter();
+  const routes = useTournamentRoutes();
   const { tournament, statusColor, statusLabel } = data;
 
   if (!tournament) return null;
@@ -51,7 +53,7 @@ export function TournamentDetailHeaderSection({
         variant="ghost"
         size="sm"
         iconLeft="arrow-back-outline"
-        onClick={() => router.push('/admin/tournaments')}
+        onClick={() => router.push(routes.list)}
       >
         Quay lại
       </Button>

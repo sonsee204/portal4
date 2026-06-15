@@ -16,10 +16,16 @@
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
+import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { TOURNAMENT } from '@/lib/strings';
 
-export function DrawHeaderSection() {
+interface DrawHeaderSectionProps {
+  tournamentId: string;
+}
+
+export function DrawHeaderSection({ tournamentId }: DrawHeaderSectionProps) {
   const router = useRouter();
+  const routes = useTournamentRoutes();
 
   return (
     <PageHeader
@@ -30,7 +36,7 @@ export function DrawHeaderSection() {
         variant="ghost"
         size="sm"
         iconLeft="arrow-back-outline"
-        onClick={() => router.push('/admin/tournaments')}
+        onClick={() => router.push(routes.detail(tournamentId))}
       >
         Quay lại
       </Button>

@@ -16,6 +16,7 @@
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
+import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { TOURNAMENT } from '@/lib/strings';
 import { ExportButton } from '../_components/ExportButton';
 import type { RegistrationsPageData } from '../_hooks/useRegistrationsPageData';
@@ -28,6 +29,7 @@ export function RegistrationsHeaderSection({
   data,
 }: RegistrationsHeaderSectionProps) {
   const router = useRouter();
+  const routes = useTournamentRoutes();
   const {
     tournamentId,
     total,
@@ -69,7 +71,7 @@ export function RegistrationsHeaderSection({
         variant="ghost"
         size="sm"
         iconLeft="arrow-back-outline"
-        onClick={() => router.push('/admin/tournaments')}
+        onClick={() => router.push(routes.detail(tournamentId))}
       >
         Quay lại
       </Button>
