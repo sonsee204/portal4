@@ -57,8 +57,12 @@ export function SessionRefreshProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const data = (await res.json()) as {
             accessExpiresAt?: number | null;
+            accessToken?: string | null;
           };
           accessExpiresAt = data.accessExpiresAt ?? null;
+          if (data.accessToken) {
+            setClientAccessToken(data.accessToken);
+          }
         }
       } catch {
         // Use fallback interval

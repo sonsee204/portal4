@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   MY_SESSIONS,
@@ -20,6 +21,7 @@ import {
   REVOKE_OTHER_SESSIONS,
 } from '@/graphql/auth/sessions';
 import type { MySessionsQuery } from '@/graphql/generated';
+import { setClientAccessToken } from '@/lib/apollo/client';
 import { showError, showSuccess } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 
@@ -28,6 +30,25 @@ export function useSessions() {
     MY_SESSIONS,
     { fetchPolicy: 'network-only' },
   );
+
+  useEffect(() => {
+    async function syncAccessTokenFromCookie() {
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include' });
+        if (!res.ok) return;
+
+        const payload = (await res.json()) as { accessToken?: string | null };
+        if (payload.accessToken) {
+          setClientAccessToken(payload.accessToken);
+          void refetch();
+        }
+      } catch {
+        // Ignore — query will use existing client token or fail visibly.
+      }
+    }
+
+    void syncAccessTokenFromCookie();
+  }, [refetch]);
 
   const [revokeSessionMut, { loading: revokingOne }] = useMutation(REVOKE_SESSION, {
     onCompleted: () => {
