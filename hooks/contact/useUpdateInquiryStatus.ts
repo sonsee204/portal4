@@ -15,7 +15,7 @@
 
 import { useCallback } from 'react';
 import { useMutation } from '@apollo/client/react';
-import { UPDATE_CONTACT_INQUIRY_STATUS } from '@/graphql/mutations/contact';
+import { UPDATE_CONTACT_INQUIRY_STATUS } from '@/graphql/contact/mutations';
 import type { ContactInquiry, UpdateInquiryStatusInput } from '@/types';
 
 export function useUpdateInquiryStatus() {

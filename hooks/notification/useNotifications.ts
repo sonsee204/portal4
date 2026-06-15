@@ -14,11 +14,22 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { useCallback, useMemo } from 'react';
-import { GET_NOTIFICATIONS } from '@/graphql/queries/notification';
-import type { Notification, NotificationList } from '@/types/notification';
+import { useMemo } from 'react';
+import { GET_NOTIFICATIONS, GET_UNREAD_NOTIFICATION_COUNT } from '@/graphql/notification/queries';
+import type {
+  GetNotificationsQuery,
+  GetNotificationsQueryVariables,
+  NotificationFilterInput,
+} from '@/graphql/generated';
+import type { Notification } from '@/types/notification';
+import {
+  connectionNodes,
+  mergeConnectionEdges,
+  useConnectionLoadMore,
+} from '@/hooks/shared/useCursorConnection';
+import { NOTIFICATION_LIST_FIRST } from '@/lib/constants/pagination';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = NOTIFICATION_LIST_FIRST;
 
 interface UseNotificationsOptions {
   /** GraphQL enum value: BOOKING, TOURNAMENT, SOCIAL, etc. */
@@ -27,51 +38,56 @@ interface UseNotificationsOptions {
 }
 
 export function useNotifications(options: UseNotificationsOptions = {}) {
-  const filter = useMemo(() => {
-    const f: Record<string, unknown> = {};
-    if (options.type) f.type = options.type;
+  const filter = useMemo((): NotificationFilterInput | undefined => {
+    const f: NotificationFilterInput = {};
+    if (options.type) f.type = options.type as NotificationFilterInput['type'];
     if (options.isRead !== undefined) f.isRead = options.isRead;
     return Object.keys(f).length > 0 ? f : undefined;
   }, [options.type, options.isRead]);
 
-  const { data, loading, error, fetchMore, refetch } = useQuery<{
-    getNotifications: NotificationList;
-  }>(GET_NOTIFICATIONS, {
+  const { data, loading, error, fetchMore, refetch } = useQuery<
+    GetNotificationsQuery,
+    GetNotificationsQueryVariables
+  >(GET_NOTIFICATIONS, {
     variables: {
       filter,
-      pagination: { page: 1, limit: PAGE_SIZE },
+      pagination: { first: PAGE_SIZE, after: null },
     },
     fetchPolicy: 'cache-and-network',
   });
 
-  const notifications: Notification[] =
-    data?.getNotifications?.notifications ?? [];
-  const total = data?.getNotifications?.total ?? 0;
-  const unreadCount = data?.getNotifications?.unreadCount ?? 0;
-  const hasMore = data?.getNotifications?.hasMore ?? false;
+  const { data: unreadData } = useQuery<{ getUnreadNotificationCount: number }>(
+    GET_UNREAD_NOTIFICATION_COUNT,
+    { fetchPolicy: 'cache-and-network' },
+  );
 
-  const loadMore = useCallback(() => {
-    if (!hasMore || loading) return;
-    const nextPage = Math.floor(notifications.length / PAGE_SIZE) + 1;
-    return fetchMore({
-      variables: {
-        filter,
-        pagination: { page: nextPage, limit: PAGE_SIZE },
+  const connection = data?.notificationsConnection;
+  const notifications = connectionNodes(connection?.edges) as unknown as Notification[];
+  const pageInfo = connection?.pageInfo;
+  const total = connection?.totalCount ?? 0;
+  const unreadCount = unreadData?.getUnreadNotificationCount ?? 0;
+  const hasMore = pageInfo?.hasNextPage ?? false;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage: hasMore,
+    endCursor: pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      filter,
+      pagination: { first: PAGE_SIZE, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...prev,
+      notificationsConnection: {
+        ...next.notificationsConnection!,
+        edges: mergeConnectionEdges(
+          prev.notificationsConnection?.edges ?? [],
+          next.notificationsConnection?.edges ?? [],
+        ),
       },
-      updateQuery: (prev, { fetchMoreResult }) => {
-        if (!fetchMoreResult) return prev;
-        return {
-          getNotifications: {
-            ...fetchMoreResult.getNotifications,
-            notifications: [
-              ...prev.getNotifications.notifications,
-              ...fetchMoreResult.getNotifications.notifications,
-            ],
-          },
-        };
-      },
-    });
-  }, [hasMore, loading, notifications.length, fetchMore, filter]);
+    }),
+  });
 
   return {
     notifications,

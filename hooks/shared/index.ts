@@ -13,4 +13,7 @@
 
 export * from './mutation-helpers';
 export * from './types';
+export * from './useCursorConnection';
+export * from './useConnectionPageAfter';
+export * from './usePagedConnectionQuery';
 export * from './useUploadTournamentImage';

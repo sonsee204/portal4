@@ -18,10 +18,44 @@ import {
   setSession,
 } from './session';
 import { GRAPHQL_URL } from './constants';
+import type { PortalCapability } from '@/lib/permissions/portal-permissions';
 
 export type RefreshSessionResult =
   | { ok: true; accessToken: string }
   | { ok: false; reason: 'no_refresh' | 'auth_failure' | 'network_failure' };
+
+const ME_CAPABILITIES_QUERY = `
+  query MeCapabilities {
+    me {
+      role
+      portalCapabilities
+    }
+  }
+`;
+
+async function fetchMeCapabilities(
+  accessToken: string,
+): Promise<{ role: string; portalCapabilities: PortalCapability[] } | null> {
+  try {
+    const response = await fetch(GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-source': 'portal',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ query: ME_CAPABILITIES_QUERY }),
+    });
+    const result = (await response.json()) as {
+      data?: {
+        me: { role: string; portalCapabilities: PortalCapability[] };
+      };
+    };
+    return result.data?.me ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> {
   const refreshToken = await getRefreshToken();
@@ -37,12 +71,14 @@ export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> 
   );
 
   if (result.kind === 'success') {
+    const me = await fetchMeCapabilities(result.accessToken);
     await setSession(
       {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       },
-      result.user.role,
+      me?.role ?? result.user.role,
+      me?.portalCapabilities ?? [],
     );
     return { ok: true, accessToken: result.accessToken };
   }

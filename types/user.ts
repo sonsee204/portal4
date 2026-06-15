@@ -32,4 +32,5 @@ export interface User {
   accountOrigin?: string;
   lastLoginAt?: string;
   createdAt: string;
+  portalCapabilities?: import('@/lib/permissions/portal-permissions').PortalCapability[];
 }

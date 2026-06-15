@@ -14,7 +14,7 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { ADMIN_GET_SYSTEM_STATS } from '@/graphql/queries/admin';
+import { ADMIN_GET_SYSTEM_STATS } from '@/graphql/admin/queries';
 
 export interface SystemStats {
   totalUsers: number;

@@ -25,3 +25,5 @@ export { TimelineItem } from './TimelineItem';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { Stepper } from './Stepper';
+export { ConnectionLoadMore } from './ConnectionLoadMore';
+export { ConnectionPager } from './ConnectionPager';

@@ -3,6 +3,9 @@
   "packageManager": "pnpm@10.26.2",
   "version": "1.6",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev --port 3001",
     "prebuild": "pnpm run codegen",
@@ -12,17 +15,25 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "size-gate": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all",
     "size-gate:strict": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --strict --warn-baseline",
     "size-gate:warn-baseline:update": "node scripts/size-gate.mjs --roots=app,components,hooks,lib --scope=all --update-warn-baseline",
-    "verify:quick": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run size-gate:strict",
-    "verify:a-plus": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run lint && pnpm run size-gate:strict",
-    "verify:go": "node scripts/check-working-tree-clean.mjs && pnpm run check:codegen-drift && pnpm run verify:a-plus",
+    "dead-code-gate": "node scripts/dead-code-gate.mjs",
+    "dead-code-gate:update": "node scripts/dead-code-gate.mjs --update-baseline",
+    "verify:quick": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run lint && pnpm run size-gate:strict && pnpm run dead-code-gate",
+    "verify:a-plus": "pnpm run typecheck && pnpm run check:copyright-header && pnpm run lint && pnpm test && pnpm run size-gate:strict && pnpm run dead-code-gate && pnpm run check:shared-sync && pnpm run build",
+    "verify:go": "node scripts/check-working-tree-clean.mjs && pnpm run check:schema-drift && pnpm run check:codegen-drift && pnpm run verify:a-plus",
     "check:codegen-drift": "node scripts/check-codegen-drift.mjs",
+    "check:schema-drift": "node scripts/check-schema-drift.mjs",
     "check:copyright-header": "node scripts/check-copyright-header.mjs --roots=app,components,hooks,lib,scripts",
     "icons:sync": "node ../scripts/sync-icons.mjs nalee-sports-portal",
     "schema:sync": "node ../scripts/sync-schema.mjs",
+    "check:shared-sync": "node scripts/check-shared-sync.mjs",
     "schedule-dnd:sync": "node ../scripts/sync-schedule-dnd-lib.mjs",
+    "print-kernel:sync": "node ../scripts/sync-tournament-print-kernel.mjs",
+    "check:print-kernel-sync": "node ../scripts/sync-tournament-print-kernel.mjs --check",
+    "sync:shared": "node ../scripts/sync-shared-kernel.mjs --target=nalee-sports-portal",
     "version:sync": "node ../scripts/sync-version.mjs",
     "prepare": "husky"
   },
@@ -45,6 +56,7 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
+    "react-to-print": "^3.0.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",
@@ -68,6 +80,7 @@
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }

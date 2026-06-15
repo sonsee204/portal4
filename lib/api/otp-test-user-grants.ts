@@ -17,10 +17,15 @@
 
 import { getApolloClient } from '@/lib/apollo/client';
 import {
-  CREATE_OTP_TEST_USER_GRANT,
   GET_OTP_TEST_USER_GRANTS,
+} from '@/graphql/otp-test-user-grant/queries';
+import {
+  CREATE_OTP_TEST_USER_GRANT,
   REVOKE_OTP_TEST_USER_GRANT,
-} from '@/graphql/queries/otp-test-user-grants';
+} from '@/graphql/otp-test-user-grant/mutations';
+import type { GetOtpTestUserGrantsQuery } from '@/graphql/generated';
+import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 export type OtpTestUserGrantPurpose = 'SIGN_IN_PHONE';
 
@@ -61,13 +66,14 @@ export async function fetchOtpTestUserGrants(options?: {
   enabled?: boolean;
   userId?: string;
 }): Promise<OtpTestUserGrantList> {
+  const limit = Math.min(options?.limit ?? CURSOR_PAGE_MAX, CURSOR_PAGE_MAX);
   const client = getApolloClient();
-  const result = await client.query<{ otpTestUserGrants: OtpTestUserGrantList }>({
+  const result = await client.query<GetOtpTestUserGrantsQuery>({
     query: GET_OTP_TEST_USER_GRANTS,
     variables: {
       pagination: {
-        page: options?.page ?? 1,
-        limit: options?.limit ?? 50,
+        first: limit,
+        after: null,
       },
       filter: {
         search: options?.search,
@@ -77,15 +83,14 @@ export async function fetchOtpTestUserGrants(options?: {
     },
     fetchPolicy: 'network-only',
   });
-  return (
-    result.data?.otpTestUserGrants ?? {
-      items: [],
-      total: 0,
-      page: 1,
-      limit: 50,
-      hasMore: false,
-    }
-  );
+  const conn = result.data?.otpTestUserGrantsConnection;
+  return {
+    items: (connectionNodes(conn?.edges) ?? []) as OtpTestUserGrant[],
+    total: conn?.totalCount ?? 0,
+    page: options?.page ?? 1,
+    limit,
+    hasMore: conn?.pageInfo?.hasNextPage ?? false,
+  };
 }
 
 export async function createOtpTestUserGrant(

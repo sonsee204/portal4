@@ -15,7 +15,7 @@
 
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { UPLOAD_AVATAR } from '@/graphql/mutations/user';
+import { UPLOAD_AVATAR } from '@/graphql/user/mutations';
 import { useAuthStore } from '@/stores/auth';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { showSuccess } from '@/lib/toast';

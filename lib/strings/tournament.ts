@@ -100,6 +100,15 @@ export const TOURNAMENT = {
   LABEL_SCHEDULE: 'Lịch thi đấu',
   LABEL_SCORING: 'Chấm điểm',
   LABEL_DRAW: 'Bốc thăm / Xếp hạt giống',
+  LABEL_PRINT_DOCUMENTS: 'In tài liệu',
+  LABEL_MASTER_SCHEDULE: 'Lịch thi đấu tổng hợp',
+  LABEL_BRACKET_SHEET: 'Sơ đồ thi đấu',
+  PRINT_UNSCHEDULED_WARNING: (n: number) =>
+    `Còn ${n} trận chưa xếp lịch — lịch in có thể chưa đầy đủ.`,
+  PRINT_UNDRAWN_CATEGORY:
+    'Nội dung này chưa bốc thăm hoặc chưa sẵn sàng để in sơ đồ.',
+  EXPORT_SCHEDULE_FILENAME: (slug: string, date: string) =>
+    `${slug}-lich-thi-dau-${date}.xlsx`,
 
   EMPTY_TOURNAMENTS: 'Chưa có giải đấu nào.',
   EMPTY_CATEGORIES: 'Chưa có nội dung thi đấu nào.',

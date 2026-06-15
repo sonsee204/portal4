@@ -13,42 +13,77 @@
 
 'use client';
 
-import type { AuditLog, AuditLogList, AuditFilterInput } from '@/types';
+import type { AuditFilterInput } from '@/types';
 import type { WatchQueryFetchPolicy } from '@apollo/client';
-
 import { useQuery } from '@apollo/client/react';
-import { AUDIT_GET_LOGS } from '@/graphql/queries/audit';
+import { AUDIT_GET_LOGS } from '@/graphql/audit/queries';
+import type { AuditGetLogsQuery } from '@/graphql/generated';
+import {
+  connectionNodes,
+  mergeConnectionEdges,
+  resolveConnectionFirst,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
+} from '@/hooks/shared/useCursorConnection';
 
-export type AuditLogEntry = AuditLog;
-
-interface AuditLogsResult {
-  auditLogs: AuditLogList;
-}
+export type AuditLogEntry = AuditGetLogsQuery['auditLogsConnection']['edges'][number]['node'];
 
 interface AuditLogsVariables {
   filter?: AuditFilterInput;
-  pagination?: { page: number; limit: number };
+  pagination?: LegacyPagePagination;
 }
 
 export function useAuditLogs(
   variables: AuditLogsVariables,
   options?: { skip?: boolean; fetchPolicy?: WatchQueryFetchPolicy },
 ) {
-  const { data, loading, error, refetch } = useQuery<AuditLogsResult>(
+  const filter = variables.filter;
+  const first = resolveConnectionFirst(variables.pagination);
+
+  const { data, loading, error, refetch, fetchMore } = useQuery<AuditGetLogsQuery>(
     AUDIT_GET_LOGS,
     {
-      variables,
+      variables: {
+        filter,
+        pagination: { first, after: variables.pagination?.after ?? null },
+      },
       skip: options?.skip,
       fetchPolicy: options?.fetchPolicy,
     },
   );
 
-  const result = data?.auditLogs;
+  const connection = data?.auditLogsConnection;
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      filter,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      auditLogsConnection: {
+        ...next.auditLogsConnection!,
+        edges: mergeConnectionEdges(
+          prev.auditLogsConnection?.edges ?? [],
+          next.auditLogsConnection?.edges ?? [],
+        ),
+      },
+    }),
+  });
 
   return {
-    logs: result?.logs ?? [],
-    total: result?.total ?? 0,
-    hasMore: result?.hasMore ?? false,
+    logs: connectionNodes(connection?.edges) ?? [],
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading,
     error,
     refetch,

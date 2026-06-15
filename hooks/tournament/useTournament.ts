@@ -14,7 +14,7 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { GET_TOURNAMENT } from '@/graphql/queries/tournament';
+import { GET_TOURNAMENT } from '@/graphql/tournament/queries';
 import type { Tournament } from '@/graphql/generated';
 
 export function useTournament(id: string, skip = false) {

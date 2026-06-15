@@ -15,7 +15,7 @@
 
 import { useCallback } from 'react';
 import { useMutation } from '@apollo/client/react';
-import { UPLOAD_TOURNAMENT_IMAGE } from '@/graphql/mutations/upload';
+import { UPLOAD_TOURNAMENT_IMAGE } from '@/graphql/upload/mutations';
 import { createSilentMutationOptions } from './mutation-helpers';
 
 interface UploadResult {

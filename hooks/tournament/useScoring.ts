@@ -15,14 +15,14 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_MATCH_SCORECARD } from '@/graphql/queries/tournament';
+import { GET_MATCH_SCORECARD } from '@/graphql/tournament/queries';
 import {
   START_MATCH,
   SCORE_POINT,
   UNDO_LAST_POINT,
   UPDATE_MATCH_RESULT,
-  MATCH_SCORE_UPDATED_SUB,
-} from '@/graphql/mutations/tournament';
+} from '@/graphql/tournament/mutations/scoring';
+import { MATCH_SCORE_UPDATED_SUB } from '@/graphql/tournament/subscriptions';
 import { createSilentMutationOptions, createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { TOURNAMENT } from '@/lib/strings';
 import type {
@@ -44,7 +44,7 @@ export function useMatchScorecard(matchId: string, skip = false) {
   const subscribeToScoreUpdates = () =>
     subscribeToMore<{ matchScoreUpdated: MatchScorecard }>({
       document: MATCH_SCORE_UPDATED_SUB,
-      variables: { matchId },
+      variables: { _matchId: matchId },
       updateQuery: (prev, { subscriptionData }) => {
         const incoming = subscriptionData.data?.matchScoreUpdated;
         if (!incoming) return prev as { matchScorecard: MatchScorecard | null };

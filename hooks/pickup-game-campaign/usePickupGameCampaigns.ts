@@ -18,13 +18,13 @@ import {
   GET_MY_CAMPAIGNS,
   GET_CAMPAIGN,
   GET_CAMPAIGN_STATS,
-} from '@/graphql/queries/pickup-game-campaign';
+} from '@/graphql/pickup-game-campaign/queries';
 import {
   CREATE_PICKUP_GAME_CAMPAIGN,
   UPDATE_PICKUP_GAME_CAMPAIGN,
   ADD_GAMES_TO_CAMPAIGN,
   REMOVE_GAMES_FROM_CAMPAIGN,
-} from '@/graphql/mutations/pickup-game-campaign';
+} from '@/graphql/pickup-game-campaign/mutations';
 import type {
   PickupGameCampaign,
   CampaignStats,

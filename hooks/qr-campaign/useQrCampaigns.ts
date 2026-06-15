@@ -20,12 +20,12 @@ import {
   GET_QR_CAMPAIGN_STATS,
   GET_QR_ANALYTICS_SUMMARY,
   GENERATE_QR_CODE,
-} from '@/graphql/queries/qr-campaign';
+} from '@/graphql/qr-campaign/queries';
 import {
   CREATE_QR_CAMPAIGN,
   UPDATE_QR_CAMPAIGN,
   TOGGLE_QR_CAMPAIGN,
-} from '@/graphql/mutations/qr-campaign';
+} from '@/graphql/qr-campaign/mutations';
 import type {
   QrCampaign,
   QrCampaignStats,
@@ -34,25 +34,65 @@ import type {
   CreateQrCampaignInput,
   UpdateQrCampaignInput,
 } from '@/types';
-import type { PaginationInput } from '@/graphql/generated';
+import type { GetQrCampaignsQuery } from '@/graphql/generated';
+import {
+  connectionNodes,
+  mergeConnectionEdges,
+  resolveConnectionFirst,
+  useConnectionLoadMore,
+  type LegacyPagePagination,
+} from '@/hooks/shared/useCursorConnection';
 
 export function useQrCampaigns(
   filter?: QrCampaignFilterInput,
-  pagination?: PaginationInput,
+  pagination?: LegacyPagePagination,
 ) {
-  const variables: Record<string, unknown> = {};
-  if (filter) variables.filter = filter;
-  if (pagination) variables.pagination = pagination;
+  const first = resolveConnectionFirst(pagination);
 
-  const { data, loading, error, refetch } = useQuery<{
-    getQrCampaigns: QrCampaign[];
-  }>(GET_QR_CAMPAIGNS, {
-    variables,
-    fetchPolicy: 'cache-and-network',
+  const { data, loading, error, refetch, fetchMore } = useQuery<GetQrCampaignsQuery>(
+    GET_QR_CAMPAIGNS,
+    {
+      variables: {
+        filter,
+        pagination: { first, after: pagination?.after ?? null },
+      },
+      fetchPolicy: 'cache-and-network',
+    },
+  );
+
+  const connection = data?.qrCampaignsConnection;
+  const campaigns = connectionNodes(connection?.edges) as QrCampaign[];
+  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+  const totalCount = connection?.totalCount ?? 0;
+
+  const { loadMore } = useConnectionLoadMore({
+    data,
+    hasNextPage,
+    endCursor: connection?.pageInfo?.endCursor,
+    fetchMore,
+    buildVariables: (after) => ({
+      filter,
+      pagination: { first, after },
+    }),
+    mergeResults: (prev, next) => ({
+      ...next,
+      qrCampaignsConnection: {
+        ...next.qrCampaignsConnection!,
+        edges: mergeConnectionEdges(
+          prev.qrCampaignsConnection?.edges ?? [],
+          next.qrCampaignsConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
   return {
-    campaigns: data?.getQrCampaigns ?? [],
+    campaigns,
+    total: totalCount,
+    totalCount,
+    hasMore: hasNextPage,
+    hasNextPage,
+    loadMore,
     loading,
     error,
     refetch,

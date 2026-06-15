@@ -16,6 +16,7 @@
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 
+/** @deprecated Use `ConnectionPager` from `@/components/molecules/ConnectionPager` instead. */
 export interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -27,6 +28,7 @@ export interface PaginationProps {
   className?: string;
 }
 
+/** @deprecated Use `ConnectionPager` from `@/components/molecules/ConnectionPager` instead. */
 export function Pagination({
   currentPage,
   totalPages,

@@ -15,7 +15,7 @@
 
 import { useMutation, useApolloClient } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { UPDATE_PROFILE } from '@/graphql/mutations/user';
+import { UPDATE_PROFILE } from '@/graphql/user/mutations';
 import { useAuthStore } from '@/stores/auth';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import type { AuthUser } from '@/types';

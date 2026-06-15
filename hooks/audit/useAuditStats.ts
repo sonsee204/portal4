@@ -17,7 +17,7 @@ import type { AuditStats } from '@/types';
 import type { WatchQueryFetchPolicy } from '@apollo/client';
 
 import { useQuery } from '@apollo/client/react';
-import { AUDIT_GET_STATS } from '@/graphql/queries/audit';
+import { AUDIT_GET_STATS } from '@/graphql/audit/queries';
 
 export function useAuditStats(options?: {
   fetchPolicy?: WatchQueryFetchPolicy;

@@ -15,7 +15,7 @@
 
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { MARK_NOTIFICATION_ACTION_TAKEN } from '@/graphql/mutations/notification';
+import { MARK_NOTIFICATION_ACTION_TAKEN } from '@/graphql/notification/mutations';
 import type { Notification } from '@/types/notification';
 
 export function useMarkActionTaken() {

@@ -15,11 +15,11 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
+import { GET_REFERRAL_CODES } from '@/graphql/referral/queries';
 import {
-  GET_REFERRAL_CODES,
   CREATE_REFERRAL_CODE,
   TOGGLE_REFERRAL_CODE,
-} from '@/graphql/queries/referral';
+} from '@/graphql/referral/mutations';
 import { formatMutationError } from '@/hooks/shared';
 import { showSuccess, showError } from '@/lib/toast';
 import { GROWTH } from '@/lib/strings';

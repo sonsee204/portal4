@@ -91,7 +91,7 @@ export function computeTimelineDayRange(
       const end = Math.min(
         24 * 60,
         snapUp(now + futureWindowMinutes, GRIDLINE_INTERVAL) +
-          trailingPaddingMinutes
+        trailingPaddingMinutes
       );
       return [start, Math.max(end, start + 2 * 60)];
     }

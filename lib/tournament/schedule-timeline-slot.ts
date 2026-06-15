@@ -113,9 +113,13 @@ export type ScheduleTimeBlock = { startMin: number; endMin: number };
 
 export type ScheduleTimeBlockOptions = {
   courtBufferMinutes?: number;
+  /** When true, endMin includes court buffer after play (referee/court busy window). */
   includeBufferAfter?: boolean;
 };
 
+/**
+ * Unified minute-of-day block for conflict checks (court + referee).
+ */
 export function getScheduleTimeBlock(
   match: ScheduleMatch,
   options: ScheduleTimeBlockOptions = {},

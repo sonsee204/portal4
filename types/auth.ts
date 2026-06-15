@@ -53,6 +53,7 @@ export interface AuthUser {
   gender?: 'MALE' | 'FEMALE' | 'OTHER' | null;
   dateOfBirth?: string | null;
   location?: AuthUserLocation | null;
+  portalCapabilities?: import('@/lib/permissions/portal-permissions').PortalCapability[];
 }
 
 /**

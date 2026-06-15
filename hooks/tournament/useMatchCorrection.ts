@@ -21,7 +21,7 @@ import {
   SET_MATCH_WALKOVER,
   CORRECT_FINISHED_MATCH_RESULT,
   UPDATE_MATCH_RESULT,
-} from '@/graphql/mutations/tournament';
+} from '@/graphql/tournament/mutations/scoring';
 import {
   createMutationOptions,
   strictMutationErrorPolicy,

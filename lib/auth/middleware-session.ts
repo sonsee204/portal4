@@ -85,6 +85,11 @@ export function clearAuthCookies(
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
   response.cookies.delete(cookieNames.USER_ROLE);
+  if ('PORTAL_CAPABILITIES' in cookieNames) {
+    response.cookies.delete(
+      (cookieNames as { PORTAL_CAPABILITIES: string }).PORTAL_CAPABILITIES,
+    );
+  }
 }
 
 export async function resolveAuthSession(
