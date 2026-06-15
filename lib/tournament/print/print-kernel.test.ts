@@ -17,6 +17,7 @@ import { buildBracketDocument, computePrintReadiness } from './build-bracket-she
 import {
   intersectHalfSpan,
   matchGlobalRowSpan,
+  eliminationRoundCount,
 } from './bracket-row-layout';
 import { buildSingleEliminationBracket } from './builders/single-elimination';
 import { dedupePrintMatchesById } from './dedupe-matches';
@@ -118,41 +119,27 @@ describe('print kernel', () => {
     expect(doc?.halves?.[0]?.entries.length).toBeGreaterThan(0);
   });
 
-  it('formatPrintScheduledLabel uses compact time · date · court', () => {
-    const label = formatPrintScheduledLabel({
-      scheduledAt: '2026-06-06T07:30:00.000+07:00',
-      courtName: 'Sân 4B',
-    });
-    expect(label).toBe('07:30 · 06/06 · Sân 4B');
-  });
+  // ── schedule label ──────────────────────────────────────────────────────
 
-  it('formatPrintScheduledLabel includes court when present', () => {
+  it('formatPrintScheduledLabel format: time · date · court', () => {
+    // Use a timezone-agnostic check — we only verify structure, not the exact
+    // hour value, because getHours() depends on the test runner's locale.
     const label = formatPrintScheduledLabel({
       scheduledAt: '2026-06-15T08:30:00.000Z',
       courtName: 'S1',
     });
-    expect(label).toContain('S1');
-    expect(label).toMatch(/\d{2}:\d{2}/);
+    // Expected format: HH:mm · DD/MM · court
+    expect(label).toMatch(/^\d{2}:\d{2} · \d{2}\/\d{2} · S1$/);
   });
 
-  it('32-draw half sheet keeps at most 8 round-1 matches', () => {
-    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 32 };
-    const r1: PrintMatchInput[] = Array.from({ length: 16 }, (_, i) =>
-      match({
-        id: `r1-${i}`,
-        round: 1,
-        bracketPosition: i,
-        matchNumber: 411 + i,
-        scheduledAt: '2026-06-06T07:30:00.000+07:00',
-        courtName: 'S4B',
-        player1: { name: `A${i}` },
-        player2: { name: `B${i}` },
-      }),
-    );
-    const halves = buildSingleEliminationBracket(category, r1);
-    expect(halves).toHaveLength(2);
-    expect(halves[0]?.rounds[0]?.matches.length).toBe(8);
-    expect(halves[1]?.rounds[0]?.matches.length).toBe(8);
+  it('formatPrintScheduledLabel returns undefined when no scheduledAt', () => {
+    expect(formatPrintScheduledLabel({ scheduledAt: null })).toBeUndefined();
+    expect(formatPrintScheduledLabel({ scheduledAt: undefined })).toBeUndefined();
+  });
+
+  it('formatPrintScheduledLabel omits court when absent', () => {
+    const label = formatPrintScheduledLabel({ scheduledAt: '2026-06-15T08:30:00.000Z' });
+    expect(label).toMatch(/^\d{2}:\d{2} · \d{2}\/\d{2}$/);
   });
 
   it('single elimination bracket includes scheduledLabel on matches', () => {
@@ -171,6 +158,66 @@ describe('print kernel', () => {
     const halves = buildSingleEliminationBracket(category, matches);
     expect(halves[0]?.rounds[0]?.matches[0]?.scheduledLabel).toContain('S1');
   });
+
+  // ── round column pre-generation ──────────────────────────────────────────
+
+  it('pre-generates all round columns even when later rounds have no data', () => {
+    // bracketSize=16 → 4 rounds (R16, TK, BK, CK).
+    // Only round 1 has match data → should still produce 4 columns.
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 16 };
+    const matches: PrintMatchInput[] = [
+      match({ id: 'm1', matchNumber: 1, round: 1, bracketPosition: 0 }),
+    ];
+    const halves = buildSingleEliminationBracket(category, matches);
+    const expectedRounds = eliminationRoundCount(16); // 4
+    expect(halves[0]?.rounds.length).toBe(expectedRounds);
+    // Empty rounds still have correct labels
+    expect(halves[0]?.rounds[0]?.shortLabel).toBe('R16');
+    expect(halves[0]?.rounds[1]?.shortLabel).toBe('TK');
+    expect(halves[0]?.rounds[2]?.shortLabel).toBe('BK');
+    expect(halves[0]?.rounds[3]?.shortLabel).toBe('CK');
+    // Empty rounds have no matches
+    expect(halves[0]?.rounds[1]?.matches).toHaveLength(0);
+  });
+
+  it('pre-generates all columns for 128-player bracket (7 rounds)', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 128 };
+    const matches: PrintMatchInput[] = [
+      match({ id: 'm1', matchNumber: 1, round: 1, bracketPosition: 0 }),
+    ];
+    const halves = buildSingleEliminationBracket(category, matches);
+    const expectedRounds = eliminationRoundCount(128); // 7
+    // 128-player bracket splits into 2 halves; each half has all 7 round columns
+    expect(halves).toHaveLength(2);
+    expect(halves[0]?.rounds.length).toBe(expectedRounds);
+    expect(halves[0]?.rounds[0]?.shortLabel).toBe('R128');
+    expect(halves[0]?.rounds[6]?.shortLabel).toBe('CK');
+  });
+
+  // ── 32-draw split ────────────────────────────────────────────────────────
+
+  it('32-draw splits into 2 halves, each with 8 round-1 matches and 5 total rounds', () => {
+    const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 32 };
+    const r1: PrintMatchInput[] = Array.from({ length: 16 }, (_, i) =>
+      match({
+        id: `r1-${i}`,
+        round: 1,
+        bracketPosition: i,
+        matchNumber: 411 + i,
+        scheduledAt: '2026-06-06T07:30:00.000Z',
+        courtName: 'S4B',
+        player1: { name: `A${i}` },
+        player2: { name: `B${i}` },
+      }),
+    );
+    const halves = buildSingleEliminationBracket(category, r1);
+    expect(halves).toHaveLength(2);
+    expect(halves[0]?.rounds.length).toBe(eliminationRoundCount(32)); // 5
+    expect(halves[0]?.rounds[0]?.matches.length).toBe(8);
+    expect(halves[1]?.rounds[0]?.matches.length).toBe(8);
+  });
+
+  // ── row layout ───────────────────────────────────────────────────────────
 
   it('single elimination rows pair entries in round 1', () => {
     const category = { ...cat('SINGLE_ELIMINATION'), bracketSize: 16 };
@@ -203,7 +250,8 @@ describe('print kernel', () => {
     ];
     const halves = buildSingleEliminationBracket(category, matches);
     const half = halves[0]!;
-    expect(half.rounds.length).toBe(2);
+    // 16-player bracket → 4 round columns (R16, TK, BK, CK)
+    expect(half.rounds.length).toBe(eliminationRoundCount(16));
     expect(half.rounds[0]?.shortLabel).toBe('R16');
     expect(half.rounds[0]?.matches[0]).toMatchObject({
       rowIndexFrom: 0,
@@ -250,9 +298,10 @@ describe('print kernel', () => {
     const allMatches = [...r1, ...r2];
     const halves = buildSingleEliminationBracket(category, allMatches);
 
-    // Both halves should have 2 round columns
-    expect(halves[0]?.rounds.length).toBe(2);
-    expect(halves[1]?.rounds.length).toBe(2);
+    // 64-player bracket → 6 round columns (R64, R32, R16, TK, BK, CK), split into 2 halves
+    const expectedRounds = eliminationRoundCount(64); // 6
+    expect(halves[0]?.rounds.length).toBe(expectedRounds);
+    expect(halves[1]?.rounds.length).toBe(expectedRounds);
 
     // Nhánh 1 R1 should have 16 matches (bp 0-15), Nhánh 1 R2 should have 8
     expect(halves[0]?.rounds[0]?.matches.length).toBe(16);
@@ -265,6 +314,8 @@ describe('print kernel', () => {
     });
   });
 
+  // ── round robin ──────────────────────────────────────────────────────────
+
   it('buildBracketDocument round robin', () => {
     const matches: PrintMatchInput[] = [
       match({ id: 'm1', matchNumber: 1, player1: { name: 'A' }, player2: { name: 'B' } }),
@@ -274,6 +325,8 @@ describe('print kernel', () => {
     expect(doc?.roundRobinRows?.length).toBe(2);
     expect(doc?.orientation).toBe('portrait');
   });
+
+  // ── misc ─────────────────────────────────────────────────────────────────
 
   it('computePrintReadiness', () => {
     const r = computePrintReadiness(

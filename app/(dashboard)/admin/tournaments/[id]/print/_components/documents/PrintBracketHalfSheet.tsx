@@ -20,6 +20,10 @@ const COL_ENTRY = 220;
 const COL_ROUND = 96;
 const ENTRY_GAP = 36;
 
+/** Height of a match box with schedule info vs without. */
+const BOX_H_SCHEDULED = 28;
+const BOX_H_PLAIN = 18;
+
 interface PrintBracketHalfSheetProps {
   half: PrintBracketHalf;
   /** Hide redundant title when category has a single half sheet. */
@@ -47,16 +51,18 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
   const height = entryCount * ROW_H;
   const hw = ENTRY_GAP / 2;
 
-  const segments: Array<{ x1: number; y1: number; x2: number; y2: number }> =
-    [];
+  const segments: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
 
   const pushH = (x1: number, y: number, x2: number) => {
+    if (Math.abs(x2 - x1) < 0.5) return;
     segments.push({ x1, y1: y, x2, y2: y });
   };
   const pushV = (x: number, y1: number, y2: number) => {
+    if (Math.abs(y2 - y1) < 0.5) return;
     segments.push({ x1: x, y1, x2: x, y2 });
   };
 
+  // ── Entry stubs: connect entry table rows to round-1 match boxes ──────────
   const firstRound = half.rounds[0];
   if (firstRound) {
     const r1Left = roundColumnLeft(0);
@@ -70,28 +76,39 @@ function BracketConnectors({ half }: { half: PrintBracketHalf }) {
     }
   }
 
+  // ── Inter-round connections ───────────────────────────────────────────────
   for (let ri = 0; ri < half.rounds.length - 1; ri += 1) {
     const current = half.rounds[ri]!;
     const next = half.rounds[ri + 1]!;
-    const colLeft = roundColumnLeft(ri) + COL_ROUND * 0.55;
+    const colExit = roundColumnLeft(ri) + COL_ROUND * 0.55;
     const colMid = roundColumnLeft(ri) + COL_ROUND + ENTRY_GAP * 0.35;
-    const colRight = roundColumnLeft(ri + 1) + COL_ROUND * 0.12;
+    const colEntry = roundColumnLeft(ri + 1) + COL_ROUND * 0.12;
 
-    for (let ki = 0; ki < next.matches.length; ki += 1) {
-      const parent = next.matches[ki];
-      if (!parent) continue;
-      const yParent = rowCenterY(parent.rowIndexFrom, parent.rowIndexTo);
+    if (next.matches.length === 0) {
+      // Next round has no data yet: draw individual exit stubs for each match
+      // so the bracket structure is still visually communicated.
+      for (const m of current.matches) {
+        const yMid = rowCenterY(m.rowIndexFrom, m.rowIndexTo);
+        pushH(colExit, yMid, colMid);
+      }
+    } else {
+      // Normal H-V-H connection pairing two children to one parent match.
+      for (let ki = 0; ki < next.matches.length; ki += 1) {
+        const parent = next.matches[ki];
+        if (!parent) continue;
+        const yParent = rowCenterY(parent.rowIndexFrom, parent.rowIndexTo);
 
-      const topChild = current.matches[ki * 2];
-      const botChild = current.matches[ki * 2 + 1];
-      if (!topChild || !botChild) continue;
+        const topChild = current.matches[ki * 2];
+        const botChild = current.matches[ki * 2 + 1];
+        if (!topChild || !botChild) continue;
 
-      const yTop = rowCenterY(topChild.rowIndexFrom, topChild.rowIndexTo);
-      const yBot = rowCenterY(botChild.rowIndexFrom, botChild.rowIndexTo);
+        const yTop = rowCenterY(topChild.rowIndexFrom, topChild.rowIndexTo);
+        const yBot = rowCenterY(botChild.rowIndexFrom, botChild.rowIndexTo);
 
-      pushH(colLeft, yTop, colMid);
-      pushV(colMid, yTop, yBot);
-      pushH(colMid, yParent, colRight);
+        pushH(colExit, yTop, colMid);
+        pushV(colMid, yTop, yBot);
+        pushH(colMid, yParent, colEntry);
+      }
     }
   }
 
@@ -173,17 +190,23 @@ export function PrintBracketHalfSheet({
                 className="relative"
               >
                 {round.matches.map((m) => {
-                  const top = rowCenterY(m.rowIndexFrom, m.rowIndexTo) - 10;
+                  const boxH = m.scheduledLabel
+                    ? BOX_H_SCHEDULED
+                    : BOX_H_PLAIN;
+                  const top =
+                    rowCenterY(m.rowIndexFrom, m.rowIndexTo) - boxH / 2;
                   return (
                     <div
                       key={m.matchId}
-                      className="absolute right-0 left-0 rounded border border-gray-500 bg-white px-0.5 py-0.5 text-center leading-none"
-                      style={{ top }}
+                      className="absolute right-0 left-0 flex flex-col items-center justify-center overflow-hidden rounded border border-gray-500 bg-white text-center"
+                      style={{ top, height: boxH }}
                     >
-                      <div className="text-[9px] font-semibold">{formatMatchNumber(m.matchNumber)}</div>
+                      <div className="text-[9px] font-semibold leading-none">
+                        {formatMatchNumber(m.matchNumber)}
+                      </div>
                       {m.scheduledLabel ? (
                         <div
-                          className="mt-0.5 truncate text-[7px] text-gray-700"
+                          className="mt-0.5 w-full truncate px-0.5 text-center text-[7px] leading-tight text-gray-700"
                           title={m.scheduledLabel}
                         >
                           {m.scheduledLabel}

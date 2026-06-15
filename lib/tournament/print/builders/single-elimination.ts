@@ -45,6 +45,14 @@ function resolveBracketSize(
   return nextPowerOf2(Math.max(2, round1Count * 2));
 }
 
+/**
+ * Build round columns for one half of the bracket.
+ *
+ * Always generates ALL expected round columns (log₂(fullBracketSize)), even
+ * when later rounds have no match data yet.  This ensures every category
+ * always looks like a complete bracket structure regardless of which rounds
+ * have been played.
+ */
 function buildRoundColumns(
   matches: PrintMatchInput[],
   halfSlotStart: number,
@@ -60,15 +68,20 @@ function buildRoundColumns(
     roundsMap.set(m.round, list);
   }
 
-  const roundNums = [...roundsMap.keys()].sort((a, b) => a - b);
   const totalRounds = eliminationRoundCount(fullBracketSize);
 
-  return roundNums.map((roundNum) => {
+  // Pre-generate every round column (1 … totalRounds) so the bracket always
+  // shows the full skeleton even before later rounds are played.
+  return Array.from({ length: totalRounds }, (_, idx) => {
+    const roundNum = idx + 1;
     const roundMatches = (roundsMap.get(roundNum) ?? []).sort(
       (a, b) => (bpMap.get(a.id) ?? 0) - (bpMap.get(b.id) ?? 0),
     );
-    const label = roundMatches[0]?.roundLabel ?? `Vòng ${roundNum}`;
-    const shortLabel = roundShortLabel(roundNum - 1, totalRounds, label);
+
+    const dataLabel = roundMatches[0]?.roundLabel ?? '';
+    // Compute label purely from position when no match data exists for this round.
+    const shortLabel = roundShortLabel(idx, totalRounds, dataLabel);
+    const label = dataLabel || shortLabel;
 
     const positionedMatches = roundMatches
       .map((m) => {
@@ -102,11 +115,7 @@ function buildRoundColumns(
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
 
-    return {
-      label,
-      shortLabel,
-      matches: positionedMatches,
-    };
+    return { label, shortLabel, matches: positionedMatches };
   });
 }
 
@@ -141,6 +150,8 @@ export function buildSingleEliminationBracket(
   const effectiveSize = resolveBracketSize(category, matches);
   const slots = mapMatchesToPrintDrawSlots(matches, effectiveSize);
 
+  // Split into two halves for brackets with 32+ players so each half fits a
+  // portrait/landscape page with a readable number of rows.
   if (effectiveSize >= 32) {
     const { halfA, halfB } = splitSlotsIntoHalves(slots);
     const halfBStart = halfA.length;
