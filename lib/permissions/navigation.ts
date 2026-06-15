@@ -22,6 +22,7 @@ export interface NavItem {
   label: string;
   icon: string;
   permission?: PortalPermission;
+  ownerOnly?: boolean;
 }
 
 export interface SidebarNavSection {
@@ -55,6 +56,7 @@ export function buildSidebarNav(
       label: route.nav!.label,
       icon: route.nav!.icon,
       permission: route.permission,
+      ownerOnly: route.ownerOnly,
     })),
   }));
 }

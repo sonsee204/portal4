@@ -24,6 +24,7 @@ import { Toggle } from '@/components/atoms/Toggle';
 import { useAuthStore } from '@/stores/auth';
 import { loginSchema, type LoginFormData } from '@/lib/validation/schemas';
 import { loginAction } from '@/lib/auth/actions';
+import { resolvePostLoginPath } from '@/lib/auth/post-login-redirect';
 import { AUTH, ERRORS } from '@/lib/strings';
 
 const REMEMBERED_LOGIN_KEY = 'portal_remembered_login';
@@ -100,7 +101,11 @@ export function LoginForm() {
         setInitialized(true);
       }
 
-      router.push(redirectTo || '/');
+      const destination = result.user
+        ? resolvePostLoginPath(redirectTo, result.user)
+        : '/';
+
+      router.push(destination);
       router.refresh();
     } else if (result?.error) {
       setBackendError(result.error);

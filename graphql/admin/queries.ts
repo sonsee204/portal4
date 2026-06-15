@@ -38,6 +38,7 @@ export const ADMIN_GET_USERS = gql`
           displayName
           userName
           role
+          isOwner
           isActive
           isSuspended
           photoURL

@@ -19,6 +19,7 @@ import {
 } from './session';
 import { refreshSessionFromCookie } from './refresh-server';
 import { GRAPHQL_URL } from './constants';
+import { getServerActionSessionHeaders } from './session-forward-headers';
 import { isUnauthenticatedGraphQLError } from '@/lib/auth/session-core';
 import { AUTH, ERRORS } from '@/lib/strings';
 import type { AuthUser } from '@/types';
@@ -76,12 +77,14 @@ export async function loginAction(
   }
 
   try {
+    const sessionHeaders = await getServerActionSessionHeaders();
     const response = await fetch(GRAPHQL_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-client-source': 'portal',
         'Apollo-Require-Preflight': 'true',
+        ...sessionHeaders,
       },
       body: JSON.stringify({
         query: `
@@ -124,6 +127,7 @@ export async function loginAction(
       { accessToken, refreshToken },
       user.role,
       capabilities,
+      me?.isOwner ?? false,
     );
 
     return {
@@ -137,6 +141,7 @@ export async function loginAction(
           displayName: user.fullName,
           role: user.role as AuthUser['role'],
           portalCapabilities: capabilities,
+          isOwner: false,
         } satisfies AuthUser),
     };
   } catch {
@@ -177,6 +182,7 @@ const ME_QUERY = `
         }
       }
       portalCapabilities
+      isOwner
     }
   }
 `;
@@ -188,10 +194,12 @@ const PORTAL_GQL_HEADERS = {
 } as const;
 
 async function fetchMe(accessToken: string): Promise<AuthUser | null> {
+  const sessionHeaders = await getServerActionSessionHeaders();
   const response = await fetch(GRAPHQL_URL, {
     method: 'POST',
     headers: {
       ...PORTAL_GQL_HEADERS,
+      ...sessionHeaders,
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ query: ME_QUERY }),

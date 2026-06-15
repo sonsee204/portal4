@@ -88,7 +88,7 @@ export const createUserSchema = z.object({
   email: emailValidation,
   phone: phoneValidation,
   password: passwordValidation,
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'FACILITY_OWNER']),
+  role: z.enum(['FACILITY_OWNER']),
 });
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;

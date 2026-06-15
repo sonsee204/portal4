@@ -22,7 +22,6 @@ import { Button } from '@/components/atoms/Button';
 import { Select } from '@/components/atoms/Select';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { ADMIN_CREATE_USER } from '@/graphql/admin/mutations';
-import { useAuthStore } from '@/stores/auth';
 import { showSuccess } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import {
@@ -39,7 +38,6 @@ interface CreateUserDialogProps {
 
 const CREATABLE_ROLES = [
   { value: 'FACILITY_OWNER', label: USERS.ROLES.FACILITY_OWNER },
-  { value: 'ADMIN', label: USERS.ROLES.ADMIN },
 ];
 
 export function CreateUserDialog({
@@ -47,7 +45,6 @@ export function CreateUserDialog({
   onClose,
   onSuccess,
 }: CreateUserDialogProps) {
-  const userRole = useAuthStore((s) => s.user?.role);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -78,12 +75,8 @@ export function CreateUserDialog({
     },
   });
 
-  // Filter roles based on current user's role
-  const availableRoles = CREATABLE_ROLES.filter((r) => {
-    if (userRole === 'SUPER_ADMIN') return true;
-    if (userRole === 'ADMIN') return r.value === 'FACILITY_OWNER';
-    return false;
-  });
+  // Only Facility Owner can be created here; role changes via Owner access-control
+  const availableRoles = CREATABLE_ROLES;
 
   const handleClose = () => {
     setError(null);

@@ -54,6 +54,7 @@ export interface AuthUser {
   dateOfBirth?: string | null;
   location?: AuthUserLocation | null;
   portalCapabilities?: import('@/lib/permissions/portal-permissions').PortalCapability[];
+  isOwner?: boolean;
 }
 
 /**

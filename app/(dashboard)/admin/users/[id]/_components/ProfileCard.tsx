@@ -181,14 +181,6 @@ export function ProfileCard({ user }: ProfileCardProps) {
           >
             {user.isSuspended ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-red-400 hover:bg-red-500/10"
-            iconLeft="trash-outline"
-          >
-            Xóa tài khoản
-          </Button>
         </div>
       </GlassPanel>
 

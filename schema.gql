@@ -3770,6 +3770,19 @@ type DeviceInfo {
   platform: String
 }
 
+type SessionInfo {
+  clientSource: String
+  createdAt: DateTime!
+  deviceInfo: DeviceInfo
+  deviceName: String
+  id: ID!
+  ipAddress: String
+  isCurrent: Boolean!
+  lastUsedAt: DateTime
+  loginLocation: String
+  platform: String
+}
+
 type DiscountCalculationResult {
   """Applied promotions"""
   appliedPromotions: [AppliedPromotion!]!
@@ -6307,6 +6320,12 @@ type Mutation {
 
   """Logout from all devices"""
   signOutAllDevices: Boolean!
+
+  """Revoke all login sessions except the current one"""
+  revokeOtherSessions: Boolean!
+
+  """Revoke a specific login session (not the current one)"""
+  revokeSession(sessionId: ID!): Boolean!
 
   """
   Sign up with phone (ZNS phoneVerificationToken preferred; Firebase ID token fallback)
@@ -9956,6 +9975,9 @@ type Query {
 
   """Get current user profile"""
   me: User!
+
+  """List active login sessions for the current user"""
+  mySessions: [SessionInfo!]!
 
   """Get all message reports (cursor, Admin only)"""
   messageReportsConnection(filter: MessageReportFilterInput, pagination: CursorPageInput): MessageReportConnection!
@@ -14072,6 +14094,9 @@ type User {
   fullName: String!
   gender: Gender
   isActive: Boolean!
+
+  """Whether this user is the platform owner (immutable OWNER_PHONE identity)"""
+  isOwner: Boolean!
 
   """Is user suspended"""
   isSuspended: Boolean!
