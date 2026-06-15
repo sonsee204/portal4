@@ -104,9 +104,9 @@ export default function SessionsPage() {
       </div>
 
       <p className="text-muted mt-3 text-sm">
-        Thiết bị bị đăng xuất có thể còn hiệu lực tối đa ~15 phút (theo thời hạn
-        access token). Push notification trên app mobile sẽ ngừng sau khi đăng
-        xuất phiên từ xa.
+        Thiết bị bị đăng xuất từ xa sẽ bị chặn ngay khi có yêu cầu mạng tiếp
+        theo (thường trong vài giây). Push notification trên app mobile sẽ ngừng
+        sau khi đăng xuất phiên từ xa.
       </p>
 
       <div className="mt-6 space-y-4">
