@@ -149,10 +149,12 @@ export function canAccessRoute(
   role: UserRole | null | undefined,
   pathname: string,
   capabilities: PortalCapability[] = [],
+  isOwner = false,
 ): boolean {
   const entry = matchRouteManifest(pathname);
   if (!entry) return true;
   if (!role) return false;
+  if (entry.ownerOnly && !isOwner) return false;
   if (!canAccessWorkspace(role, entry.workspace, capabilities)) return false;
   return can(role, entry.permission, capabilities);
 }

@@ -79,6 +79,17 @@ describe('portal access', () => {
     expect(canAccessRoute('SUPER_ADMIN', '/admin/users')).toBe(true);
   });
 
+  it('ownerOnly route requires isOwner flag', () => {
+    expect(
+      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], false),
+    ).toBe(false);
+    expect(
+      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], true),
+    ).toBe(true);
+    const entry = matchRouteManifest('/admin/access-control');
+    expect(entry?.ownerOnly).toBe(true);
+  });
+
   it('isAdminRole and isSuperAdminRole', () => {
     expect(isAdminRole('ADMIN')).toBe(true);
     expect(isSuperAdminRole('ADMIN')).toBe(false);

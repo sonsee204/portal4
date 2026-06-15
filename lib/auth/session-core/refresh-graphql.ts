@@ -41,6 +41,7 @@ export async function performTokenRefresh(
   graphqlUrl: string,
   refreshToken: string,
   clientSource: ClientSource,
+  forwardHeaders?: Record<string, string>,
 ): Promise<RefreshResult> {
   try {
     const response = await fetch(graphqlUrl, {
@@ -50,6 +51,7 @@ export async function performTokenRefresh(
         Authorization: `Bearer ${refreshToken}`,
         'x-client-source': clientSource,
         'Apollo-Require-Preflight': 'true',
+        ...forwardHeaders,
       },
       body: JSON.stringify({ query: REFRESH_MUTATION }),
     });

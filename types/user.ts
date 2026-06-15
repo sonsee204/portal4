@@ -26,6 +26,7 @@ export interface User {
   displayName: string;
   userName: string;
   role: UserRole;
+  isOwner?: boolean;
   isActive: boolean;
   isSuspended: boolean;
   photoURL?: string;

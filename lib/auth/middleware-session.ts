@@ -18,6 +18,7 @@ import {
   isJwtExpired,
   performTokenRefresh,
 } from '@/lib/auth/session-core';
+import { buildSessionForwardHeadersFromNextRequest } from '@/lib/auth/session-forward-headers';
 import type {
   BaseCookieOptions,
   ClientSource,
@@ -36,6 +37,7 @@ export interface ResolvedAuthSession {
   accessToken: string | null;
   userId: string | null;
   role: string | null;
+  isOwner: boolean;
   refreshed: boolean;
   refreshTokens?: {
     accessToken: string;
@@ -49,11 +51,14 @@ export interface ResolvedAuthSession {
 function readTokens(
   request: NextRequest,
   cookieNames: SessionCookieNames,
-): { accessToken?: string; refreshToken?: string; userRole?: string } {
+): { accessToken?: string; refreshToken?: string; userRole?: string; isOwner?: string } {
   return {
     accessToken: request.cookies.get(cookieNames.ACCESS_TOKEN)?.value,
     refreshToken: request.cookies.get(cookieNames.REFRESH_TOKEN)?.value,
     userRole: request.cookies.get(cookieNames.USER_ROLE)?.value,
+    isOwner: cookieNames.IS_OWNER
+      ? request.cookies.get(cookieNames.IS_OWNER)?.value
+      : undefined,
   };
 }
 
@@ -85,10 +90,11 @@ export function clearAuthCookies(
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
   response.cookies.delete(cookieNames.USER_ROLE);
-  if ('PORTAL_CAPABILITIES' in cookieNames) {
-    response.cookies.delete(
-      (cookieNames as { PORTAL_CAPABILITIES: string }).PORTAL_CAPABILITIES,
-    );
+  if (cookieNames.PORTAL_CAPABILITIES) {
+    response.cookies.delete(cookieNames.PORTAL_CAPABILITIES);
+  }
+  if (cookieNames.IS_OWNER) {
+    response.cookies.delete(cookieNames.IS_OWNER);
   }
 }
 
@@ -96,10 +102,11 @@ export async function resolveAuthSession(
   request: NextRequest,
   config: MiddlewareAuthConfig,
 ): Promise<ResolvedAuthSession> {
-  const { accessToken, refreshToken, userRole } = readTokens(
+  const { accessToken, refreshToken, userRole, isOwner } = readTokens(
     request,
     config.cookieNames,
   );
+  const ownerFlag = isOwner === '1';
 
   if (accessToken) {
     try {
@@ -111,6 +118,7 @@ export async function resolveAuthSession(
           accessToken,
           userId: tokenPayload.sub ?? null,
           role: tokenPayload.role ?? userRole ?? null,
+          isOwner: ownerFlag,
           refreshed: false,
           authFailure: false,
           networkFailure: false,
@@ -122,6 +130,7 @@ export async function resolveAuthSession(
           accessToken: null,
           userId: null,
           role: null,
+          isOwner: false,
           refreshed: false,
           authFailure: true,
           networkFailure: false,
@@ -135,6 +144,7 @@ export async function resolveAuthSession(
       accessToken: null,
       userId: null,
       role: userRole ?? null,
+      isOwner: ownerFlag,
       refreshed: false,
       authFailure: !accessToken,
       networkFailure: false,
@@ -145,6 +155,7 @@ export async function resolveAuthSession(
     config.graphqlUrl,
     refreshToken,
     config.clientSource,
+    buildSessionForwardHeadersFromNextRequest(request),
   );
 
   if (refreshResult.kind === 'success') {
@@ -158,6 +169,7 @@ export async function resolveAuthSession(
       accessToken: refreshResult.accessToken,
       userId: tokenPayload.sub ?? refreshResult.user._id,
       role: tokenPayload.role ?? refreshResult.user.role,
+      isOwner: ownerFlag,
       refreshed: true,
       refreshTokens: {
         accessToken: refreshResult.accessToken,
@@ -174,6 +186,7 @@ export async function resolveAuthSession(
       accessToken: null,
       userId: null,
       role: null,
+      isOwner: false,
       refreshed: false,
       authFailure: true,
       networkFailure: false,
@@ -184,6 +197,7 @@ export async function resolveAuthSession(
     accessToken: accessToken ?? null,
     userId: null,
     role: userRole ?? null,
+    isOwner: ownerFlag,
     refreshed: false,
     authFailure: false,
     networkFailure: true,

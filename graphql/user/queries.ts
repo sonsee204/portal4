@@ -27,6 +27,7 @@ export const ME_QUERY = gql`
       displayName
       userName
       role
+      isOwner
       portalCapabilities
       photoURL
       bio
@@ -56,6 +57,7 @@ export const GET_USER_PROFILE = gql`
       displayName
       userName
       role
+      isOwner
       portalCapabilities
       isActive
       isSuspended

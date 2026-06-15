@@ -22,7 +22,6 @@ import { FilterChips } from '@/components/molecules/FilterChips';
 import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { Button } from '@/components/atoms/Button';
 import { ProfileCard } from './_components/ProfileCard';
-import { PortalAccessSection } from './_sections/PortalAccessSection';
 import { BookingCard } from './_components/BookingCard';
 import { QueryState } from '@/components/molecules/QueryState';
 import { COMMON } from '@/lib/strings';
@@ -102,11 +101,6 @@ export default function UserDetailPage() {
               {/* Left panel */}
               <div className="space-y-6 lg:col-span-3">
                 <ProfileCard user={user} />
-                <PortalAccessSection
-                  userId={user._id}
-                  userDisplayName={user.displayName || user.fullName}
-                  activeCapabilities={user.portalCapabilities}
-                />
               </div>
 
               {/* Right panel */}

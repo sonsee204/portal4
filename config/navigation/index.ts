@@ -29,20 +29,28 @@ export const sharedProfileNavItem = {
   permission: 'profile.edit' as const,
 };
 
-/** Append profile link to sidebar nav (adds Hệ thống section if missing). */
+export const sharedSessionsNavItem = {
+  href: '/shared/sessions',
+  label: 'Thiết bị & Phiên',
+  icon: 'phone-portrait-outline',
+  permission: 'profile.edit' as const,
+};
+
+/** Append profile + sessions links to sidebar nav (adds Hệ thống section if missing). */
 export function withProfileSection(
   sections: SidebarNavSection[],
 ): SidebarNavSection[] {
+  const systemItems = [sharedProfileNavItem, sharedSessionsNavItem];
   const hasSystem = sections.some((s) => s.section === 'Hệ thống');
   if (hasSystem) {
     return sections.map((section) =>
       section.section === 'Hệ thống'
-        ? { ...section, items: [...section.items, sharedProfileNavItem] }
+        ? { ...section, items: [...section.items, ...systemItems] }
         : section,
     );
   }
   return [
     ...sections,
-    { section: 'Hệ thống', items: [sharedProfileNavItem] },
+    { section: 'Hệ thống', items: systemItems },
   ];
 }
