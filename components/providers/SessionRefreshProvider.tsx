@@ -14,7 +14,10 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { refreshViaApiRoute } from '@/lib/auth/session-core';
+import {
+  isUnauthenticatedGraphQLError,
+  refreshViaApiRoute,
+} from '@/lib/auth/session-core';
 import {
   getClientAccessToken,
   reconnectWebSocket,
@@ -139,7 +142,27 @@ export function SessionRefreshProvider({ children }: { children: ReactNode }) {
           body: SESSION_LIVENESS_QUERY,
         });
 
-        if (res.status === 401 || res.status === 403) {
+        let authError = res.status === 401 || res.status === 403;
+
+        // GraphQL surfaces auth failures as HTTP 200 with an `errors` array,
+        // so inspect the body for an UNAUTHENTICATED code as well.
+        if (!authError && res.ok) {
+          const payload = (await res.json().catch(() => null)) as {
+            errors?: Array<{
+              message?: string;
+              extensions?: { code?: string };
+            }>;
+          } | null;
+          authError =
+            payload?.errors?.some((err) =>
+              isUnauthenticatedGraphQLError(
+                err.extensions?.code,
+                err.message ?? ''
+              )
+            ) ?? false;
+        }
+
+        if (authError) {
           const result = await refreshViaApiRoute();
           if (result.status === 'success') {
             setClientAccessToken(result.accessToken);

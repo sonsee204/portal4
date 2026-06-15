@@ -33,8 +33,11 @@ export function ApolloProvider({ children, accessToken }: ApolloProviderProps) {
     }
   }, [accessToken]);
 
-  // Set initial token synchronously for first render
-  if (accessToken) {
+  // Set initial token synchronously for first render — guard to the browser
+  // only. This component is also rendered on the server during SSR, where
+  // `setClientAccessToken` would mutate a process-global singleton shared
+  // across every concurrent request/user, leaking one user's token to others.
+  if (accessToken && typeof window !== 'undefined') {
     setClientAccessToken(accessToken);
   }
 
