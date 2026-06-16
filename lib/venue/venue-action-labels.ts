@@ -33,6 +33,7 @@ export const VENUE_ACTION_LABELS: Record<VenueAction, string> = {
   [VenueAction.CancelOrder]: 'Hủy đơn hàng',
   [VenueAction.ManageProducts]: 'Quản lý sản phẩm',
   [VenueAction.ManagePromotions]: 'Quản lý khuyến mãi',
+  [VenueAction.ManageExpenses]: 'Quản lý chi phí',
   [VenueAction.ViewSensitiveData]: 'Xem thông tin nhạy cảm',
   [VenueAction.OverridePrice]: 'Điều chỉnh giá thủ công',
 };
