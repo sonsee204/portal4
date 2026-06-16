@@ -19,7 +19,7 @@ import {
   OTP_LENGTH,
   FULLNAME_MIN_LENGTH,
 } from './constants';
-import { VALIDATION, GROWTH } from '@/lib/strings';
+import { VALIDATION, GROWTH, AUTH } from '@/lib/strings';
 
 // ==================== Base Validations ====================
 
@@ -167,6 +167,32 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+/** Authenticated user changes their own password */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, AUTH.CHANGE_PASSWORD.CURRENT_REQUIRED),
+    newPassword: passwordValidation,
+    confirmPassword: z.string().min(1, VALIDATION.CONFIRM_PASSWORD),
+  })
+  .superRefine((data, ctx) => {
+    if (data.newPassword !== data.confirmPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: VALIDATION.PASSWORD_MISMATCH,
+        path: ['confirmPassword'],
+      });
+    }
+    if (data.currentPassword && data.newPassword === data.currentPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: AUTH.CHANGE_PASSWORD.SAME_AS_CURRENT,
+        path: ['newPassword'],
+      });
+    }
+  });
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 /** Admin creates a referral code */
 export const createReferralCodeSchema = z.object({
