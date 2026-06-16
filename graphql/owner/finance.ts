@@ -21,8 +21,17 @@ const FINANCE_PNL_METRIC_FIELDS = gql`
   }
 `;
 
+const FINANCE_PNL_RATE_METRIC_FIELDS = gql`
+  fragment FinancePnlRateMetricFields on FinancePnlRateMetric {
+    value
+    previousValue
+    changePercent
+  }
+`;
+
 export const VENUE_FINANCE_REPORT = gql`
   ${FINANCE_PNL_METRIC_FIELDS}
+  ${FINANCE_PNL_RATE_METRIC_FIELDS}
   query VenueFinanceReport($filter: FinanceFilterInput!) {
     venueFinanceReport(filter: $filter) {
       period {
@@ -35,6 +44,8 @@ export const VENUE_FINANCE_REPORT = gql`
       pendingBookingRevenue
       totalOrders
       completedOrders
+      pipelineOrders
+      pipelineGrossValue
       averageOrderValue
       completionRate
       pnl {
@@ -66,7 +77,7 @@ export const VENUE_FINANCE_REPORT = gql`
           ...FinancePnlMetricFields
         }
         netMarginPercent {
-          ...FinancePnlMetricFields
+          ...FinancePnlRateMetricFields
         }
       }
       byStatus {

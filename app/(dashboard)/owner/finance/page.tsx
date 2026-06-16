@@ -17,6 +17,7 @@ import { useOwnerFinancePageActions } from './_hooks/useOwnerFinancePageActions'
 import { useOwnerFinancePageData } from './_hooks/useOwnerFinancePageData';
 import { OwnerFinanceHeaderSection } from './_sections/OwnerFinanceHeaderSection';
 import { OwnerFinanceFiltersSection } from './_sections/OwnerFinanceFiltersSection';
+import { OwnerFinanceInsightsSection } from './_sections/OwnerFinanceInsightsSection';
 import { OwnerFinancePnlSection } from './_sections/OwnerFinancePnlSection';
 import { OwnerFinanceKpiSection } from './_sections/OwnerFinanceKpiSection';
 import { OwnerFinanceChartsSection } from './_sections/OwnerFinanceChartsSection';
@@ -33,6 +34,7 @@ export default function OwnerFinancePage() {
       <OwnerFinanceHeaderSection data={data} actions={actions} />
       <div className="mt-6 space-y-6">
         <OwnerFinanceFiltersSection data={data} />
+        <OwnerFinanceInsightsSection data={data} />
         <OwnerFinancePnlSection data={data} />
         <OwnerFinanceKpiSection data={data} />
         <OwnerFinanceChartsSection data={data} />

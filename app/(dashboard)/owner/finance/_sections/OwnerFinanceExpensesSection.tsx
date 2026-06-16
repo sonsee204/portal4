@@ -21,6 +21,10 @@ import { Button } from '@/components/atoms/Button';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { VenueAction } from '@/graphql/generated';
 import { formatCurrency } from '@/lib/utils';
+import {
+  FINANCE_TABLE_ROW_CLASS,
+  FINANCE_TABLE_SCROLL_CLASS,
+} from '@/lib/finance/finance-table';
 import { EXPENSE_CATEGORY_LABELS } from '../_hooks/owner-finance-page.constants';
 import type { VenueExpenseNode } from '@/hooks/owner';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
@@ -50,9 +54,7 @@ export function OwnerFinanceExpensesSection({
     <GlassPanel card className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-heading text-base font-bold">
-            Chi phí vận hành
-          </h3>
+          <h3 className="text-heading text-base font-bold">Chi phí vận hành</h3>
           <p className="text-muted text-sm">
             {data.expenseCount} khoản chi phí trong kỳ
           </p>
@@ -78,6 +80,8 @@ export function OwnerFinanceExpensesSection({
       >
         <DataTable<VenueExpenseNode>
           stickyHeader
+          className={FINANCE_TABLE_SCROLL_CLASS}
+          emptyTitle="Không có chi phí trong kỳ"
           columns={[
             { key: 'date', label: 'Ngày' },
             { key: 'category', label: 'Nhóm' },
@@ -87,12 +91,12 @@ export function OwnerFinanceExpensesSection({
           ]}
           data={data.expenses}
           renderRow={(row: VenueExpenseNode) => (
-            <tr key={row._id} className="border-surface-border border-b">
-              <td className="text-body px-4 py-3 text-sm">{row.date}</td>
+            <tr key={row._id} className={FINANCE_TABLE_ROW_CLASS}>
+              <td className="text-faint px-4 py-3 text-xs">{row.date}</td>
               <td className="text-body px-4 py-3 text-sm">
                 {EXPENSE_CATEGORY_LABELS[row.category] ?? row.category}
               </td>
-              <td className="text-heading px-4 py-3 text-right text-sm font-semibold">
+              <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
                 {formatCurrency(row.amount)}
               </td>
               <td className="text-muted px-4 py-3 text-sm">

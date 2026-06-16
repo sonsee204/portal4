@@ -4036,12 +4036,18 @@ type FinancePnlMetric {
   value: Int!
 }
 
+type FinancePnlRateMetric {
+  changePercent: Float!
+  previousValue: Float!
+  value: Float!
+}
+
 type FinancePnlSummary {
   cogs: FinancePnlMetric!
   collected: FinancePnlMetric!
   grossProfit: FinancePnlMetric!
   grossRevenue: FinancePnlMetric!
-  netMarginPercent: FinancePnlMetric!
+  netMarginPercent: FinancePnlRateMetric!
   netProfit: FinancePnlMetric!
   netRevenue: FinancePnlMetric!
   operatingExpenses: FinancePnlMetric!
@@ -15044,6 +15050,14 @@ type VenueFinanceReport {
   """Expected revenue from pending bookings (no order yet)"""
   pendingBookingRevenue: Int!
   period: FinancePeriodInfo!
+
+  """Total order value of pipeline orders created in the period"""
+  pipelineGrossValue: Int!
+
+  """
+  Orders still in pipeline (not completed) created in the selected period
+  """
+  pipelineOrders: Int!
   pnl: FinancePnlSummary!
   totalOrders: Int!
   trend: [FinanceTrendPoint!]!

@@ -31,6 +31,7 @@ export interface StatCardProps {
     text: string;
     variant: BadgeVariant;
   };
+  hint?: string;
   className?: string;
 }
 
@@ -53,6 +54,7 @@ export function StatCard({
   value,
   trend,
   badge,
+  hint,
   className,
 }: StatCardProps) {
   return (
@@ -88,6 +90,7 @@ export function StatCard({
         {badge && <Badge variant={badge.variant}>{badge.text}</Badge>}
       </div>
       <p className="text-muted mb-1 text-sm font-medium">{label}</p>
+      {hint ? <p className="text-faint mb-2 text-xs leading-snug">{hint}</p> : null}
       <h3 className="text-heading text-3xl font-bold">{value}</h3>
     </div>
   );

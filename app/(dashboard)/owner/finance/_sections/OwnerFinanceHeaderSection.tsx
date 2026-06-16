@@ -35,7 +35,7 @@ export function OwnerFinanceHeaderSection({
   return (
     <PageHeader
       title="Tài chính sân"
-      description={`Báo cáo P&L và dòng tiền cho ${scopeLabel}.`}
+      description={`Báo cáo P&L và dòng tiền cho ${scopeLabel}. Doanh thu ghi nhận khi đơn hoàn thành (completed).`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <FinanceExportButton data={data} />

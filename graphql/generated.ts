@@ -3259,13 +3259,20 @@ export type FinancePnlMetric = {
   value: Scalars['Int']['output'];
 };
 
+export type FinancePnlRateMetric = {
+  __typename?: 'FinancePnlRateMetric';
+  changePercent: Scalars['Float']['output'];
+  previousValue: Scalars['Float']['output'];
+  value: Scalars['Float']['output'];
+};
+
 export type FinancePnlSummary = {
   __typename?: 'FinancePnlSummary';
   cogs: FinancePnlMetric;
   collected: FinancePnlMetric;
   grossProfit: FinancePnlMetric;
   grossRevenue: FinancePnlMetric;
-  netMarginPercent: FinancePnlMetric;
+  netMarginPercent: FinancePnlRateMetric;
   netProfit: FinancePnlMetric;
   netRevenue: FinancePnlMetric;
   operatingExpenses: FinancePnlMetric;
@@ -15092,6 +15099,10 @@ export type VenueFinanceReport = {
   /** Expected revenue from pending bookings (no order yet) */
   pendingBookingRevenue: Scalars['Int']['output'];
   period: FinancePeriodInfo;
+  /** Total order value of pipeline orders created in the period */
+  pipelineGrossValue: Scalars['Int']['output'];
+  /** Orders still in pipeline (not completed) created in the selected period */
+  pipelineOrders: Scalars['Int']['output'];
   pnl: FinancePnlSummary;
   totalOrders: Scalars['Int']['output'];
   trend: Array<FinanceTrendPoint>;
@@ -15820,12 +15831,14 @@ export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrant
 
 export type FinancePnlMetricFieldsFragment = { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number };
 
+export type FinancePnlRateMetricFieldsFragment = { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number };
+
 export type VenueFinanceReportQueryVariables = Exact<{
   filter: FinanceFilterInput;
 }>;
 
 
-export type VenueFinanceReportQuery = { __typename?: 'Query', venueFinanceReport: { __typename?: 'VenueFinanceReport', pendingBookingRevenue: number, totalOrders: number, completedOrders: number, averageOrderValue: number, completionRate: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, pnl: { __typename?: 'FinancePnlSummary', grossRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, collected: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, outstanding: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, refunds: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, cogs: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, grossProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, operatingExpenses: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netMarginPercent: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number } }, byStatus: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPaymentMethod: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byOrderType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byCourt: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, expenseByCategory: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, trend: Array<{ __typename?: 'FinanceTrendPoint', label: string, revenue: number, netProfit: number, expenses: number, previousRevenue?: number | null }> } };
+export type VenueFinanceReportQuery = { __typename?: 'Query', venueFinanceReport: { __typename?: 'VenueFinanceReport', pendingBookingRevenue: number, totalOrders: number, completedOrders: number, pipelineOrders: number, pipelineGrossValue: number, averageOrderValue: number, completionRate: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, pnl: { __typename?: 'FinancePnlSummary', grossRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, collected: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, outstanding: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, refunds: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, cogs: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, grossProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, operatingExpenses: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netMarginPercent: { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number } }, byStatus: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPaymentMethod: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byOrderType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byCourt: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, expenseByCategory: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, trend: Array<{ __typename?: 'FinanceTrendPoint', label: string, revenue: number, netProfit: number, expenses: number, previousRevenue?: number | null }> } };
 
 export type VenueFinanceTransactionsConnectionQueryVariables = Exact<{
   filter: FinanceTransactionFilterInput;
