@@ -27,14 +27,13 @@ interface AuthProviderProps {
  * Place this inside dashboard layout to auto-fetch user on mount.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { setUser, setInitialized, isInitialized } = useAuthStore();
+  const { setUser, setInitialized, setLoading } = useAuthStore();
 
   useEffect(() => {
-    if (isInitialized) return;
-
     let cancelled = false;
 
     async function initAuth() {
+      setLoading(true);
       try {
         const user = await getCurrentUser();
         if (!cancelled) {
@@ -54,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [isInitialized, setUser, setInitialized]);
+  }, [setUser, setInitialized, setLoading]);
 
   return <>{children}</>;
 }

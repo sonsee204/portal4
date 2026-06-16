@@ -28,6 +28,7 @@ import {
   getHomePath,
   hasOrganizerCapability,
 } from '@/lib/permissions/access';
+import { matchRouteManifest } from '@/lib/permissions/route-manifest';
 import type { PortalCapability } from '@/lib/permissions/portal-permissions';
 import type { PortalWorkspace } from '@/lib/permissions/portal-permissions';
 import type { UserRole } from '@/types';
@@ -66,6 +67,20 @@ function canAccessPortal(
   return false;
 }
 
+function buildLoginRedirectUrl(request: NextRequest, pathname: string): URL {
+  const loginUrl = new URL('/login', request.url);
+  if (
+    pathname !== '/forbidden' &&
+    pathname !== '/login' &&
+    !PUBLIC_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    )
+  ) {
+    loginUrl.searchParams.set('redirect', pathname);
+  }
+  return loginUrl;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -81,6 +96,7 @@ export async function middleware(request: NextRequest) {
   const capabilities = parsePortalCapabilitiesCookie(
     request.cookies.get(AUTH_COOKIES.PORTAL_CAPABILITIES)?.value,
   );
+  const isOwner = request.cookies.get(AUTH_COOKIES.IS_OWNER)?.value === '1';
 
   if (session.authFailure) {
     if (isPublicRoute) {
@@ -89,8 +105,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    const loginUrl = buildLoginRedirectUrl(request, pathname);
     const response = NextResponse.redirect(loginUrl);
     clearAuthCookies(response, AUTH_COOKIES);
     return response;
@@ -101,8 +116,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    const loginUrl = buildLoginRedirectUrl(request, pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -136,6 +150,11 @@ export async function middleware(request: NextRequest) {
 
   const workspace = getWorkspaceFromPath(pathname);
   if (workspace && role && !canAccessWorkspace(role, workspace, capabilities)) {
+    return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
+
+  const routeEntry = matchRouteManifest(pathname);
+  if (routeEntry?.ownerOnly && !isOwner) {
     return NextResponse.redirect(new URL('/forbidden', request.url));
   }
 

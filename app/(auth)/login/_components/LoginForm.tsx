@@ -24,6 +24,7 @@ import { Toggle } from '@/components/atoms/Toggle';
 import { useAuthStore } from '@/stores/auth';
 import { loginSchema, type LoginFormData } from '@/lib/validation/schemas';
 import { loginAction } from '@/lib/auth/actions';
+import { resolvePostLoginPath } from '@/lib/auth/post-login-redirect';
 import { AUTH, ERRORS } from '@/lib/strings';
 
 const REMEMBERED_LOGIN_KEY = 'portal_remembered_login';
@@ -100,11 +101,8 @@ export function LoginForm() {
         setInitialized(true);
       }
 
-      // Đợi cookie được ghi xong rồi mới chuyển trang
-      setTimeout(() => {
-        router.push(redirectTo || '/');
-        router.refresh();
-      }, 50);
+      router.push(redirectTo || '/');
+      router.refresh();
     } else if (result?.error) {
       setBackendError(result.error);
     }

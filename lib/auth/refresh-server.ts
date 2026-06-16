@@ -11,6 +11,7 @@
  * is strictly prohibited without prior written consent.
  */
 
+import { getServerActionSessionHeaders } from '@/lib/auth/session-forward-headers';
 import { performTokenRefresh } from '@/lib/auth/session-core';
 import {
   clearSession,
@@ -28,6 +29,7 @@ const ME_CAPABILITIES_QUERY = `
   query MeCapabilities {
     me {
       role
+      isOwner
       portalCapabilities
     }
   }
@@ -35,7 +37,11 @@ const ME_CAPABILITIES_QUERY = `
 
 async function fetchMeCapabilities(
   accessToken: string,
-): Promise<{ role: string; portalCapabilities: PortalCapability[] } | null> {
+): Promise<{
+  role: string;
+  isOwner: boolean;
+  portalCapabilities: PortalCapability[];
+} | null> {
   try {
     const response = await fetch(GRAPHQL_URL, {
       method: 'POST',
@@ -48,7 +54,11 @@ async function fetchMeCapabilities(
     });
     const result = (await response.json()) as {
       data?: {
-        me: { role: string; portalCapabilities: PortalCapability[] };
+        me: {
+          role: string;
+          isOwner: boolean;
+          portalCapabilities: PortalCapability[];
+        };
       };
     };
     return result.data?.me ?? null;
@@ -64,10 +74,12 @@ export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> 
     return { ok: false, reason: 'no_refresh' };
   }
 
+  const forwardHeaders = await getServerActionSessionHeaders();
   const result = await performTokenRefresh(
     GRAPHQL_URL,
     refreshToken,
     'portal',
+    forwardHeaders,
   );
 
   if (result.kind === 'success') {
@@ -79,6 +91,7 @@ export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> 
       },
       me?.role ?? result.user.role,
       me?.portalCapabilities ?? [],
+      me?.isOwner ?? false,
     );
     return { ok: true, accessToken: result.accessToken };
   }

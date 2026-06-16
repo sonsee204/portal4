@@ -20,6 +20,7 @@ export const AUTH_COOKIES = {
   REFRESH_TOKEN: 'portal_refresh_token',
   USER_ROLE: 'portal_user_role',
   PORTAL_CAPABILITIES: 'portal_capabilities',
+  IS_OWNER: 'portal_is_owner',
 } as const;
 
 /**
@@ -62,7 +63,15 @@ export const SKIP_MIDDLEWARE_PREFIXES = [
 ] as const;
 
 /**
- * GraphQL API URL (server-side)
+ * GraphQL API URL (server-side).
+ *
+ * Server-side auth calls (signIn, refreshToken, signOut, mySessions,
+ * revokeOtherSessions) mint/return session tokens. They MUST hit the backend
+ * directly, never through a shared reverse-proxy/CDN cache — otherwise a cached
+ * token-bearing response can leak across users/devices.
+ *
+ * Prefer `GRAPHQL_INTERNAL_URL` (e.g. http://127.0.0.1:4000/graphql) which goes
+ * straight to the backend process and bypasses nginx/edge caching entirely.
  */
 
 export const GRAPHQL_URL = 'https://staging-api.hitri.vn/graphql';

@@ -93,4 +93,23 @@ export const AUTH = {
   LOGOUT: {
     SUCCESS: 'Đã đăng xuất',
   },
+  CHANGE_PASSWORD: {
+    TAB_LABEL: 'Bảo mật',
+    TITLE: 'Đổi mật khẩu',
+    DESCRIPTION:
+      'Sau khi đổi mật khẩu, tất cả thiết bị (kể cả thiết bị này) sẽ bị đăng xuất và ngừng nhận thông báo. Bạn cần đăng nhập lại.',
+    CURRENT_PASSWORD_LABEL: 'Mật khẩu hiện tại',
+    CURRENT_PASSWORD_PLACEHOLDER: 'Nhập mật khẩu hiện tại',
+    NEW_PASSWORD_LABEL: 'Mật khẩu mới',
+    NEW_PASSWORD_PLACEHOLDER: 'Nhập mật khẩu mới',
+    CONFIRM_PASSWORD_LABEL: 'Xác nhận mật khẩu mới',
+    CONFIRM_PASSWORD_PLACEHOLDER: 'Nhập lại mật khẩu mới',
+    SUBMIT: 'Đổi mật khẩu',
+    SUBMITTING: 'Đang đổi mật khẩu...',
+    SUCCESS: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.',
+    SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+    SAME_AS_CURRENT: 'Mật khẩu mới phải khác mật khẩu hiện tại',
+    CURRENT_REQUIRED: 'Vui lòng nhập mật khẩu hiện tại',
+    FAILED: 'Đổi mật khẩu thất bại. Vui lòng thử lại.',
+  },
 } as const;

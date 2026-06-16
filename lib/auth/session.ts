@@ -23,6 +23,7 @@ export async function setSession(
   tokens: SessionTokens,
   userRole: string,
   portalCapabilities: PortalCapability[] = [],
+  isOwner = false,
 ): Promise<void> {
   const cookieStore = await cookies();
   const options = buildSessionCookieOptions(tokens, COOKIE_OPTIONS);
@@ -39,6 +40,7 @@ export async function setSession(
     portalCapabilities.join(','),
     options.role,
   );
+  cookieStore.set(AUTH_COOKIES.IS_OWNER, isOwner ? '1' : '0', options.role);
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -63,6 +65,7 @@ export async function clearSession(): Promise<void> {
   cookieStore.delete(AUTH_COOKIES.REFRESH_TOKEN);
   cookieStore.delete(AUTH_COOKIES.USER_ROLE);
   cookieStore.delete(AUTH_COOKIES.PORTAL_CAPABILITIES);
+  cookieStore.delete(AUTH_COOKIES.IS_OWNER);
 }
 
 export async function hasSession(): Promise<boolean> {

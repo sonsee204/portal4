@@ -18,6 +18,7 @@ import {
   isJwtExpired,
   performTokenRefresh,
 } from '@/lib/auth/session-core';
+import { buildSessionForwardHeadersFromNextRequest } from '@/lib/auth/session-forward-headers';
 import type {
   BaseCookieOptions,
   ClientSource,
@@ -36,6 +37,7 @@ export interface ResolvedAuthSession {
   accessToken: string | null;
   userId: string | null;
   role: string | null;
+  isOwner: boolean;
   refreshed: boolean;
   refreshTokens?: {
     accessToken: string;
@@ -54,6 +56,9 @@ function readTokens(
     accessToken: request.cookies.get(cookieNames.ACCESS_TOKEN)?.value,
     refreshToken: request.cookies.get(cookieNames.REFRESH_TOKEN)?.value,
     userRole: request.cookies.get(cookieNames.USER_ROLE)?.value,
+    isOwner: cookieNames.IS_OWNER
+      ? request.cookies.get(cookieNames.IS_OWNER)?.value
+      : undefined,
   };
 }
 
@@ -78,6 +83,21 @@ function applySessionCookies(
   response.cookies.set(config.cookieNames.USER_ROLE, role, options.role);
 }
 
+/**
+ * Mark a response as never-cacheable by any shared cache. MUST be applied to
+ * every response that reads or mutates auth cookies — otherwise a CDN/edge
+ * proxy can store a response carrying one user's `Set-Cookie` and replay it to
+ * another user, which makes sessions bleed across devices.
+ */
+export function applyNoStore(response: NextResponse): void {
+  response.headers.set(
+    'Cache-Control',
+    'private, no-store, no-cache, max-age=0, must-revalidate'
+  );
+  response.headers.set('CDN-Cache-Control', 'no-store');
+  response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
+}
+
 export function clearAuthCookies(
   response: NextResponse,
   cookieNames: SessionCookieNames
@@ -85,21 +105,24 @@ export function clearAuthCookies(
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
   response.cookies.delete(cookieNames.USER_ROLE);
-  if ('PORTAL_CAPABILITIES' in cookieNames) {
-    response.cookies.delete(
-      (cookieNames as { PORTAL_CAPABILITIES: string }).PORTAL_CAPABILITIES,
-    );
+  if (cookieNames.PORTAL_CAPABILITIES) {
+    response.cookies.delete(cookieNames.PORTAL_CAPABILITIES);
   }
+  if (cookieNames.IS_OWNER) {
+    response.cookies.delete(cookieNames.IS_OWNER);
+  }
+  applyNoStore(response);
 }
 
 export async function resolveAuthSession(
   request: NextRequest,
   config: MiddlewareAuthConfig
 ): Promise<ResolvedAuthSession> {
-  const { accessToken, refreshToken, userRole } = readTokens(
+  const { accessToken, refreshToken, userRole, isOwner } = readTokens(
     request,
     config.cookieNames
   );
+  const ownerFlag = isOwner === '1';
 
   if (accessToken) {
     try {
@@ -111,6 +134,7 @@ export async function resolveAuthSession(
           accessToken,
           userId: tokenPayload.sub ?? null,
           role: tokenPayload.role ?? userRole ?? null,
+          isOwner: ownerFlag,
           refreshed: false,
           authFailure: false,
           networkFailure: false,
@@ -156,6 +180,7 @@ export async function resolveAuthSession(
           accessToken: null,
           userId: null,
           role: null,
+          isOwner: false,
           refreshed: false,
           authFailure: true,
           networkFailure: false,
@@ -169,6 +194,7 @@ export async function resolveAuthSession(
       accessToken: null,
       userId: null,
       role: userRole ?? null,
+      isOwner: ownerFlag,
       refreshed: false,
       authFailure: !accessToken,
       networkFailure: false,
@@ -204,8 +230,8 @@ export async function resolveAuthSession(
 
     return {
       accessToken: refreshResult.accessToken,
-      userId,
-      role,
+      userId: tokenPayload.sub ?? refreshResult.user._id,
+      role: tokenPayload.role ?? refreshResult.user.role,
       refreshed: true,
       refreshTokens: {
         accessToken: refreshResult.accessToken,
@@ -222,6 +248,7 @@ export async function resolveAuthSession(
       accessToken: null,
       userId: null,
       role: null,
+      isOwner: false,
       refreshed: false,
       authFailure: true,
       networkFailure: false,
@@ -232,6 +259,7 @@ export async function resolveAuthSession(
     accessToken: accessToken ?? null,
     userId: null,
     role: userRole ?? null,
+    isOwner: ownerFlag,
     refreshed: false,
     authFailure: false,
     networkFailure: true,
@@ -261,6 +289,10 @@ export function enrichAuthResponse(
   if (session.role) {
     response.headers.set('x-user-role', session.role);
   }
+
+  // Authenticated responses may carry refreshed `Set-Cookie` headers — never
+  // let a shared cache store them.
+  applyNoStore(response);
 
   return response;
 }

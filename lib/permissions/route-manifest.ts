@@ -28,6 +28,8 @@ export interface RouteManifestEntry {
   workspace: PortalWorkspace;
   permission: PortalPermission;
   status: RouteStatus;
+  /** Restrict route to platform owner only */
+  ownerOnly?: boolean;
   /** When set, shown in sidebar for this workspace. */
   nav?: RouteNavMeta;
   /** Dynamic segment patterns for child routes (no nav). */
@@ -252,6 +254,18 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
       section: 'Hệ thống',
     },
   },
+  {
+    path: '/admin/access-control',
+    workspace: 'admin',
+    permission: 'users.manage',
+    status: 'live',
+    ownerOnly: true,
+    nav: {
+      label: 'Phân quyền hệ thống',
+      icon: 'key-outline',
+      section: 'Hệ thống',
+    },
+  },
 
   // --- Owner workspace ---
   {
@@ -386,6 +400,17 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     nav: {
       label: 'Hồ sơ cá nhân',
       icon: 'person-outline',
+      section: 'Hệ thống',
+    },
+  },
+  {
+    path: '/shared/sessions',
+    workspace: 'shared',
+    permission: 'profile.edit',
+    status: 'live',
+    nav: {
+      label: 'Thiết bị & Phiên',
+      icon: 'phone-portrait-outline',
       section: 'Hệ thống',
     },
   },

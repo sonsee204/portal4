@@ -40,16 +40,19 @@ interface NavItemConfig {
   label: string;
   icon: string;
   permission?: PortalPermission;
+  ownerOnly?: boolean;
 }
 
 function filterNavByRole(
   nav: SidebarNavSection[],
-  role: UserRole | null
+  role: UserRole | null,
+  isOwner = false,
 ): SidebarNavSection[] {
   return nav
     .map((section) => ({
       ...section,
       items: section.items.filter((item: NavItemConfig) => {
+        if (item.ownerOnly && !isOwner) return false;
         if (!item.permission) return true;
         return can(role, item.permission);
       }),
@@ -68,9 +71,10 @@ export function Sidebar({
   const { mobileNavOpen, setMobileNavOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
   const userRole = user?.role ?? null;
+  const isOwner = user?.isOwner ?? false;
 
   const { logout, isLoggingOut } = useLogout();
-  const filteredNav = filterNavByRole(nav, userRole);
+  const filteredNav = filterNavByRole(nav, userRole, isOwner);
 
   return (
     <>

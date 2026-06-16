@@ -35,23 +35,26 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const isInitialized = useAuthStore((s) => s.isInitialized);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const role = user?.role ?? null;
   const capabilities = user?.portalCapabilities ?? [];
+  const isOwner = user?.isOwner ?? false;
+  const authPending = !isInitialized || isLoading || (isInitialized && !user);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (authPending) return;
 
     if (!role || !canAccessWorkspace(role, workspace, capabilities)) {
       router.replace('/forbidden');
       return;
     }
 
-    if (!canAccessRoute(role, pathname, capabilities)) {
+    if (!canAccessRoute(role, pathname, capabilities, isOwner)) {
       router.replace('/forbidden');
     }
-  }, [isInitialized, role, capabilities, pathname, workspace, router]);
+  }, [authPending, role, capabilities, isOwner, pathname, workspace, router]);
 
-  if (!isInitialized) {
+  if (authPending) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-muted text-sm">Đang tải...</p>
@@ -63,7 +66,7 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     return null;
   }
 
-  if (!canAccessRoute(role, pathname, capabilities)) {
+  if (!canAccessRoute(role, pathname, capabilities, isOwner)) {
     return null;
   }
 

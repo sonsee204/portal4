@@ -82,3 +82,16 @@ export const ADMIN_RESET_USER_PASSWORD = gql`
     }
   }
 `;
+
+export const ADMIN_CHANGE_USER_ROLE = gql`
+  mutation AdminChangeUserRole($userId: ID!, $role: UserRole!) {
+    adminChangeUserRole(userId: $userId, role: $role) {
+      _id
+      role
+      fullName
+      email
+      phone
+      isOwner
+    }
+  }
+`;
