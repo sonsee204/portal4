@@ -2775,6 +2775,17 @@ export type CreateUserSubmittedVenueInput = {
   ward?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateVenueExpenseInput = {
+  amount: Scalars['Int']['input'];
+  category: ExpenseCategory;
+  /** Expense date (YYYY-MM-DD) */
+  date: Scalars['String']['input'];
+  isRecurring?: InputMaybe<Scalars['Boolean']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  venueId: Scalars['ID']['input'];
+};
+
 export type CreateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -3126,6 +3137,25 @@ export type ExecuteDrawInput = {
   seeds?: Array<SeedPlayerInput>;
 };
 
+/** Category of venue operating expense */
+export enum ExpenseCategory {
+  Maintenance = 'MAINTENANCE',
+  Marketing = 'MARKETING',
+  Other = 'OTHER',
+  Rent = 'RENT',
+  Salary = 'SALARY',
+  Supplies = 'SUPPLIES',
+  Tax = 'TAX',
+  Utilities = 'UTILITIES'
+}
+
+export type ExpenseFilterInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['String']['input']>;
+  /** Venue ID */
+  venueId: Scalars['ID']['input'];
+};
+
 export type ExternalBookingInput = {
   /** Ngày đặt (ISO 8601 date) */
   bookingDate: Scalars['String']['input'];
@@ -3177,6 +3207,134 @@ export type FavoriteResult = {
   __typename?: 'FavoriteResult';
   /** Whether venue is now favorited */
   isFavorite: Scalars['Boolean']['output'];
+};
+
+export type FinanceBreakdownItem = {
+  __typename?: 'FinanceBreakdownItem';
+  count: Scalars['Int']['output'];
+  key?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  percentage: Scalars['Float']['output'];
+  revenue: Scalars['Int']['output'];
+};
+
+export type FinanceFilterInput = {
+  /** Include period-to-date comparison with previous period */
+  compareToPrevious?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by court ID */
+  courtId?: InputMaybe<Scalars['ID']['input']>;
+  /** Start date (YYYY-MM-DD) in filter timezone */
+  from: Scalars['String']['input'];
+  granularity?: InputMaybe<FinanceGranularity>;
+  orderType?: InputMaybe<OrderType>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  /** IANA timezone for date boundaries */
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  /** End date (YYYY-MM-DD) in filter timezone */
+  to: Scalars['String']['input'];
+  /** Venue IDs to include. Empty/null = all venues user can view analytics for. */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+/** Time bucket granularity for finance trend charts */
+export enum FinanceGranularity {
+  Day = 'DAY',
+  Month = 'MONTH',
+  Week = 'WEEK'
+}
+
+export type FinancePeriodInfo = {
+  __typename?: 'FinancePeriodInfo';
+  from: Scalars['String']['output'];
+  previousFrom: Scalars['String']['output'];
+  previousTo: Scalars['String']['output'];
+  timezone: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type FinancePnlMetric = {
+  __typename?: 'FinancePnlMetric';
+  changePercent: Scalars['Float']['output'];
+  previousValue: Scalars['Int']['output'];
+  value: Scalars['Int']['output'];
+};
+
+export type FinancePnlSummary = {
+  __typename?: 'FinancePnlSummary';
+  cogs: FinancePnlMetric;
+  collected: FinancePnlMetric;
+  grossProfit: FinancePnlMetric;
+  grossRevenue: FinancePnlMetric;
+  netMarginPercent: FinancePnlMetric;
+  netProfit: FinancePnlMetric;
+  netRevenue: FinancePnlMetric;
+  operatingExpenses: FinancePnlMetric;
+  outstanding: FinancePnlMetric;
+  refunds: FinancePnlMetric;
+};
+
+export type FinanceTransaction = {
+  __typename?: 'FinanceTransaction';
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  courtLabel?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  customerName?: Maybe<Scalars['String']['output']>;
+  grossAmount: Scalars['Int']['output'];
+  netAmount: Scalars['Int']['output'];
+  orderCode: Scalars['String']['output'];
+  orderId: Scalars['ID']['output'];
+  orderType: OrderType;
+  paidAmount: Scalars['Int']['output'];
+  paidAt?: Maybe<Scalars['DateTime']['output']>;
+  paymentMethod?: Maybe<PaymentMethod>;
+  paymentStatus: OrderPaymentStatus;
+  refundAmount: Scalars['Int']['output'];
+  status: OrderStatus;
+  venueId: Scalars['ID']['output'];
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
+export type FinanceTransactionConnection = {
+  __typename?: 'FinanceTransactionConnection';
+  edges: Array<FinanceTransactionEdge>;
+  pageInfo: FinanceTransactionPageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type FinanceTransactionEdge = {
+  __typename?: 'FinanceTransactionEdge';
+  cursor: Scalars['String']['output'];
+  node: FinanceTransaction;
+};
+
+export type FinanceTransactionFilterInput = {
+  courtId?: InputMaybe<Scalars['ID']['input']>;
+  from: Scalars['String']['input'];
+  orderType?: InputMaybe<OrderType>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  to: Scalars['String']['input'];
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type FinanceTransactionPageInfo = {
+  __typename?: 'FinanceTransactionPageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+};
+
+export type FinanceTransactionSortInput = {
+  field?: InputMaybe<Scalars['String']['input']>;
+  order?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FinanceTrendPoint = {
+  __typename?: 'FinanceTrendPoint';
+  expenses: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
+  netProfit: Scalars['Int']['output'];
+  previousRevenue?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
 };
 
 export type FinishMatchEarlyInput = {
@@ -4724,6 +4882,8 @@ export type Mutation = {
   createUserSubmittedVenue: Venue;
   /** Create a new venue (request) */
   createVenue: Venue;
+  /** Create a venue expense */
+  createVenueExpense: VenueExpense;
   /** Create a new venue request */
   createVenueRequest: VenueRequest;
   /** Create venue review */
@@ -4771,6 +4931,8 @@ export type Mutation = {
   deleteTournament: SuccessResponse;
   /** Delete venue */
   deleteVenue: Scalars['Boolean']['output'];
+  /** Delete a venue expense */
+  deleteVenueExpense: Scalars['Boolean']['output'];
   /** Delete venue review */
   deleteVenueReview: Scalars['Boolean']['output'];
   /** Duplicate product */
@@ -5147,6 +5309,8 @@ export type Mutation = {
   updateUserReportStatus: UserReport;
   /** Update venue */
   updateVenue: Venue;
+  /** Update a venue expense */
+  updateVenueExpense: VenueExpense;
   /** Update venue order type configurations */
   updateVenueOrderTypeConfigs: Venue;
   /** Update venue review */
@@ -5802,6 +5966,11 @@ export type MutationCreateVenueArgs = {
 };
 
 
+export type MutationCreateVenueExpenseArgs = {
+  input: CreateVenueExpenseInput;
+};
+
+
 export type MutationCreateVenueRequestArgs = {
   input: CreateVenueRequestInput;
 };
@@ -5924,6 +6093,11 @@ export type MutationDeleteTournamentArgs = {
 
 export type MutationDeleteVenueArgs = {
   venueId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteVenueExpenseArgs = {
+  expenseId: Scalars['ID']['input'];
 };
 
 
@@ -6903,6 +7077,11 @@ export type MutationUpdateUserReportStatusArgs = {
 
 export type MutationUpdateVenueArgs = {
   input: UpdateVenueInput;
+};
+
+
+export type MutationUpdateVenueExpenseArgs = {
+  input: UpdateVenueExpenseInput;
 };
 
 
@@ -8605,7 +8784,7 @@ export type Product = {
   /** Average rating (0-5) */
   averageRating: Scalars['Float']['output'];
   /** Product category */
-  category: ProductCategory;
+  category?: Maybe<ProductCategory>;
   /** Category ID */
   categoryId: Scalars['ID']['output'];
   /** Compare at price (original price for sale display) */
@@ -9880,6 +10059,12 @@ export type Query = {
   venueCategoriesConnection: ProductCategoryConnection;
   /** Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC. */
   venueCourtsConnection: CourtConnection;
+  /** Cursor-paginated venue operating expenses */
+  venueExpensesConnection: VenueExpenseConnection;
+  /** Unified P&L finance report for one or more venues */
+  venueFinanceReport: VenueFinanceReport;
+  /** Cursor-paginated financial transactions (completed orders) */
+  venueFinanceTransactionsConnection: FinanceTransactionConnection;
   /** Cursor-paginated hold bookings for a venue (staff) */
   venueHoldBookingsConnection: BookingConnection;
   /** Cursor-paginated venue orders (for staff) */
@@ -10981,6 +11166,24 @@ export type QueryVenueCategoriesConnectionArgs = {
 export type QueryVenueCourtsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryVenueExpensesConnectionArgs = {
+  filter: ExpenseFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryVenueFinanceReportArgs = {
+  filter: FinanceFilterInput;
+};
+
+
+export type QueryVenueFinanceTransactionsConnectionArgs = {
+  filter: FinanceTransactionFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<FinanceTransactionSortInput>;
 };
 
 
@@ -14044,6 +14247,16 @@ export type UpdateUserReportStatusInput = {
   status: UserReportStatus;
 };
 
+export type UpdateVenueExpenseInput = {
+  amount?: InputMaybe<Scalars['Int']['input']>;
+  category?: InputMaybe<ExpenseCategory>;
+  date?: InputMaybe<Scalars['String']['input']>;
+  expenseId: Scalars['ID']['input'];
+  isRecurring?: InputMaybe<Scalars['Boolean']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+};
+
 export type UpdateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -14637,6 +14850,7 @@ export enum VenueAction {
   CreateBooking = 'CREATE_BOOKING',
   CreateOrder = 'CREATE_ORDER',
   Edit = 'EDIT',
+  ManageExpenses = 'MANAGE_EXPENSES',
   ManageProducts = 'MANAGE_PRODUCTS',
   ManagePromotions = 'MANAGE_PROMOTIONS',
   OverridePrice = 'OVERRIDE_PRICE',
@@ -14779,6 +14993,41 @@ export type VenueEdge = {
   node: Venue;
 };
 
+export type VenueExpense = {
+  __typename?: 'VenueExpense';
+  _id: Scalars['ID']['output'];
+  amount: Scalars['Int']['output'];
+  category: ExpenseCategory;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Scalars['ID']['output'];
+  /** Expense date YYYY-MM-DD */
+  date: Scalars['String']['output'];
+  isRecurring: Scalars['Boolean']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  paymentMethod?: Maybe<PaymentMethod>;
+  updatedAt: Scalars['DateTime']['output'];
+  venueId: Scalars['ID']['output'];
+};
+
+export type VenueExpenseConnection = {
+  __typename?: 'VenueExpenseConnection';
+  edges: Array<VenueExpenseEdge>;
+  pageInfo: VenueExpensePageInfo;
+  totalCount: Scalars['Float']['output'];
+};
+
+export type VenueExpenseEdge = {
+  __typename?: 'VenueExpenseEdge';
+  cursor: Scalars['String']['output'];
+  node: VenueExpense;
+};
+
+export type VenueExpensePageInfo = {
+  __typename?: 'VenueExpensePageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+};
+
 /** External source of imported venue data */
 export enum VenueExternalSource {
   Google = 'GOOGLE',
@@ -14828,6 +15077,24 @@ export type VenueFilterInput = {
   venueType?: InputMaybe<VenueType>;
   /** Filter by multiple venue types */
   venueTypes?: InputMaybe<Array<VenueType>>;
+};
+
+export type VenueFinanceReport = {
+  __typename?: 'VenueFinanceReport';
+  averageOrderValue: Scalars['Int']['output'];
+  byCourt: Array<FinanceBreakdownItem>;
+  byOrderType: Array<FinanceBreakdownItem>;
+  byPaymentMethod: Array<FinanceBreakdownItem>;
+  byStatus: Array<FinanceBreakdownItem>;
+  completedOrders: Scalars['Int']['output'];
+  completionRate: Scalars['Float']['output'];
+  expenseByCategory: Array<FinanceBreakdownItem>;
+  /** Expected revenue from pending bookings (no order yet) */
+  pendingBookingRevenue: Scalars['Int']['output'];
+  period: FinancePeriodInfo;
+  pnl: FinancePnlSummary;
+  totalOrders: Scalars['Int']['output'];
+  trend: Array<FinanceTrendPoint>;
 };
 
 export type VenueLocation = {
@@ -15551,6 +15818,53 @@ export type GetOtpTestUserGrantsQueryVariables = Exact<{
 
 export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type FinancePnlMetricFieldsFragment = { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number };
+
+export type VenueFinanceReportQueryVariables = Exact<{
+  filter: FinanceFilterInput;
+}>;
+
+
+export type VenueFinanceReportQuery = { __typename?: 'Query', venueFinanceReport: { __typename?: 'VenueFinanceReport', pendingBookingRevenue: number, totalOrders: number, completedOrders: number, averageOrderValue: number, completionRate: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, pnl: { __typename?: 'FinancePnlSummary', grossRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, collected: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, outstanding: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, refunds: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, cogs: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, grossProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, operatingExpenses: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netMarginPercent: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number } }, byStatus: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPaymentMethod: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byOrderType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byCourt: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, expenseByCategory: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, trend: Array<{ __typename?: 'FinanceTrendPoint', label: string, revenue: number, netProfit: number, expenses: number, previousRevenue?: number | null }> } };
+
+export type VenueFinanceTransactionsConnectionQueryVariables = Exact<{
+  filter: FinanceTransactionFilterInput;
+  sort?: InputMaybe<FinanceTransactionSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueFinanceTransactionsConnectionQuery = { __typename?: 'Query', venueFinanceTransactionsConnection: { __typename?: 'FinanceTransactionConnection', totalCount: number, edges: Array<{ __typename?: 'FinanceTransactionEdge', cursor: string, node: { __typename?: 'FinanceTransaction', orderId: string, orderCode: string, venueId: string, venueName?: string | null, createdAt: string, completedAt?: string | null, paidAt?: string | null, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, courtLabel?: string | null, customerName?: string | null, grossAmount: number, paidAmount: number, refundAmount: number, netAmount: number } }>, pageInfo: { __typename?: 'FinanceTransactionPageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueExpensesConnectionQueryVariables = Exact<{
+  filter: ExpenseFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueExpensesConnectionQuery = { __typename?: 'Query', venueExpensesConnection: { __typename?: 'VenueExpenseConnection', totalCount: number, edges: Array<{ __typename?: 'VenueExpenseEdge', cursor: string, node: { __typename?: 'VenueExpense', _id: string, venueId: string, category: ExpenseCategory, amount: number, date: string, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean, createdAt: string } }>, pageInfo: { __typename?: 'VenueExpensePageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type CreateVenueExpenseMutationVariables = Exact<{
+  input: CreateVenueExpenseInput;
+}>;
+
+
+export type CreateVenueExpenseMutation = { __typename?: 'Mutation', createVenueExpense: { __typename?: 'VenueExpense', _id: string, category: ExpenseCategory, amount: number, date: string, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean } };
+
+export type UpdateVenueExpenseMutationVariables = Exact<{
+  input: UpdateVenueExpenseInput;
+}>;
+
+
+export type UpdateVenueExpenseMutation = { __typename?: 'Mutation', updateVenueExpense: { __typename?: 'VenueExpense', _id: string, category: ExpenseCategory, amount: number, date: string, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean } };
+
+export type DeleteVenueExpenseMutationVariables = Exact<{
+  expenseId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteVenueExpenseMutation = { __typename?: 'Mutation', deleteVenueExpense: boolean };
+
 export type UpdateVenueMutationVariables = Exact<{
   input: UpdateVenueInput;
 }>;
@@ -15905,7 +16219,7 @@ export type VenueProductsConnectionQueryVariables = Exact<{
 }>;
 
 
-export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, status: ProductStatus, stockQuantity: number, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category: { __typename?: 'ProductCategory', _id: string, name: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, status: ProductStatus, stockQuantity: number, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category?: { __typename?: 'ProductCategory', _id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type LowStockProductsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];

@@ -3445,6 +3445,18 @@ input CreateUserSubmittedVenueInput {
   ward: String
 }
 
+input CreateVenueExpenseInput {
+  amount: Int!
+  category: ExpenseCategory!
+
+  """Expense date (YYYY-MM-DD)"""
+  date: String!
+  isRecurring: Boolean = false
+  note: String
+  paymentMethod: PaymentMethod
+  venueId: ID!
+}
+
 input CreateVenueInput {
   """Advance booking days"""
   advanceBookingDays: Int = 14
@@ -3881,6 +3893,26 @@ input ExecuteDrawInput {
   seeds: [SeedPlayerInput!]! = []
 }
 
+"""Category of venue operating expense"""
+enum ExpenseCategory {
+  MAINTENANCE
+  MARKETING
+  OTHER
+  RENT
+  SALARY
+  SUPPLIES
+  TAX
+  UTILITIES
+}
+
+input ExpenseFilterInput {
+  from: String
+  to: String
+
+  """Venue ID"""
+  venueId: ID!
+}
+
 input ExternalBookingInput {
   """Ngày đặt (ISO 8601 date)"""
   bookingDate: String!
@@ -3948,6 +3980,132 @@ type ExternalBookingSnapshot {
 type FavoriteResult {
   """Whether venue is now favorited"""
   isFavorite: Boolean!
+}
+
+type FinanceBreakdownItem {
+  count: Int!
+  key: String
+  label: String!
+  percentage: Float!
+  revenue: Int!
+}
+
+input FinanceFilterInput {
+  """Include period-to-date comparison with previous period"""
+  compareToPrevious: Boolean = true
+
+  """Filter by court ID"""
+  courtId: ID
+
+  """Start date (YYYY-MM-DD) in filter timezone"""
+  from: String!
+  granularity: FinanceGranularity = DAY
+  orderType: OrderType
+  paymentMethod: PaymentMethod
+
+  """IANA timezone for date boundaries"""
+  timezone: String = "Asia/Ho_Chi_Minh"
+
+  """End date (YYYY-MM-DD) in filter timezone"""
+  to: String!
+
+  """
+  Venue IDs to include. Empty/null = all venues user can view analytics for.
+  """
+  venueIds: [ID!]
+}
+
+"""Time bucket granularity for finance trend charts"""
+enum FinanceGranularity {
+  DAY
+  MONTH
+  WEEK
+}
+
+type FinancePeriodInfo {
+  from: String!
+  previousFrom: String!
+  previousTo: String!
+  timezone: String!
+  to: String!
+}
+
+type FinancePnlMetric {
+  changePercent: Float!
+  previousValue: Int!
+  value: Int!
+}
+
+type FinancePnlSummary {
+  cogs: FinancePnlMetric!
+  collected: FinancePnlMetric!
+  grossProfit: FinancePnlMetric!
+  grossRevenue: FinancePnlMetric!
+  netMarginPercent: FinancePnlMetric!
+  netProfit: FinancePnlMetric!
+  netRevenue: FinancePnlMetric!
+  operatingExpenses: FinancePnlMetric!
+  outstanding: FinancePnlMetric!
+  refunds: FinancePnlMetric!
+}
+
+type FinanceTransaction {
+  completedAt: DateTime
+  courtLabel: String
+  createdAt: DateTime!
+  customerName: String
+  grossAmount: Int!
+  netAmount: Int!
+  orderCode: String!
+  orderId: ID!
+  orderType: OrderType!
+  paidAmount: Int!
+  paidAt: DateTime
+  paymentMethod: PaymentMethod
+  paymentStatus: OrderPaymentStatus!
+  refundAmount: Int!
+  status: OrderStatus!
+  venueId: ID!
+  venueName: String
+}
+
+type FinanceTransactionConnection {
+  edges: [FinanceTransactionEdge!]!
+  pageInfo: FinanceTransactionPageInfo!
+  totalCount: Int!
+}
+
+type FinanceTransactionEdge {
+  cursor: String!
+  node: FinanceTransaction!
+}
+
+input FinanceTransactionFilterInput {
+  courtId: ID
+  from: String!
+  orderType: OrderType
+  paymentMethod: PaymentMethod
+  timezone: String = "Asia/Ho_Chi_Minh"
+  to: String!
+  venueIds: [ID!]
+}
+
+type FinanceTransactionPageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+input FinanceTransactionSortInput {
+  field: String = "completedAt"
+  order: String = "desc"
+}
+
+type FinanceTrendPoint {
+  expenses: Int!
+  label: String!
+  netProfit: Int!
+  previousRevenue: Int
+  revenue: Int!
 }
 
 input FinishMatchEarlyInput {
@@ -5857,6 +6015,9 @@ type Mutation {
   """Create a new venue (request)"""
   createVenue(input: CreateVenueInput!): Venue!
 
+  """Create a venue expense"""
+  createVenueExpense(input: CreateVenueExpenseInput!): VenueExpense!
+
   """Create a new venue request"""
   createVenueRequest(input: CreateVenueRequestInput!): VenueRequest!
 
@@ -5926,6 +6087,9 @@ type Mutation {
 
   """Delete venue"""
   deleteVenue(venueId: ID!): Boolean!
+
+  """Delete a venue expense"""
+  deleteVenueExpense(expenseId: ID!): Boolean!
 
   """Delete venue review"""
   deleteVenueReview(reviewId: ID!): Boolean!
@@ -6517,6 +6681,9 @@ type Mutation {
 
   """Update venue"""
   updateVenue(input: UpdateVenueInput!): Venue!
+
+  """Update a venue expense"""
+  updateVenueExpense(input: UpdateVenueExpenseInput!): VenueExpense!
 
   """Update venue order type configurations"""
   updateVenueOrderTypeConfigs(input: UpdateVenueOrderTypeConfigsInput!): Venue!
@@ -10322,6 +10489,15 @@ type Query {
   """Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC."""
   venueCourtsConnection(pagination: CursorPageInput, venueId: ID!): CourtConnection!
 
+  """Cursor-paginated venue operating expenses"""
+  venueExpensesConnection(filter: ExpenseFilterInput!, pagination: CursorPageInput): VenueExpenseConnection!
+
+  """Unified P&L finance report for one or more venues"""
+  venueFinanceReport(filter: FinanceFilterInput!): VenueFinanceReport!
+
+  """Cursor-paginated financial transactions (completed orders)"""
+  venueFinanceTransactionsConnection(filter: FinanceTransactionFilterInput!, pagination: CursorPageInput, sort: FinanceTransactionSortInput): FinanceTransactionConnection!
+
   """Cursor-paginated hold bookings for a venue (staff)"""
   venueHoldBookingsConnection(pagination: CursorPageInput, venueId: ID!): BookingConnection!
 
@@ -13829,6 +14005,16 @@ input UpdateUserReportStatusInput {
   status: UserReportStatus!
 }
 
+input UpdateVenueExpenseInput {
+  amount: Int
+  category: ExpenseCategory
+  date: String
+  expenseId: ID!
+  isRecurring: Boolean
+  note: String
+  paymentMethod: PaymentMethod
+}
+
 input UpdateVenueInput {
   """Advance booking days"""
   advanceBookingDays: Int
@@ -14566,6 +14752,7 @@ enum VenueAction {
   CREATE_BOOKING
   CREATE_ORDER
   EDIT
+  MANAGE_EXPENSES
   MANAGE_PRODUCTS
   MANAGE_PROMOTIONS
   OVERRIDE_PRICE
@@ -14742,6 +14929,38 @@ type VenueEdge {
   node: Venue!
 }
 
+type VenueExpense {
+  _id: ID!
+  amount: Int!
+  category: ExpenseCategory!
+  createdAt: DateTime!
+  createdBy: ID!
+
+  """Expense date YYYY-MM-DD"""
+  date: String!
+  isRecurring: Boolean!
+  note: String
+  paymentMethod: PaymentMethod
+  updatedAt: DateTime!
+  venueId: ID!
+}
+
+type VenueExpenseConnection {
+  edges: [VenueExpenseEdge!]!
+  pageInfo: VenueExpensePageInfo!
+  totalCount: Float!
+}
+
+type VenueExpenseEdge {
+  cursor: String!
+  node: VenueExpense!
+}
+
+type VenueExpensePageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
 """External source of imported venue data"""
 enum VenueExternalSource {
   GOOGLE
@@ -14810,6 +15029,24 @@ input VenueFilterInput {
 
   """Filter by multiple venue types"""
   venueTypes: [VenueType!]
+}
+
+type VenueFinanceReport {
+  averageOrderValue: Int!
+  byCourt: [FinanceBreakdownItem!]!
+  byOrderType: [FinanceBreakdownItem!]!
+  byPaymentMethod: [FinanceBreakdownItem!]!
+  byStatus: [FinanceBreakdownItem!]!
+  completedOrders: Int!
+  completionRate: Float!
+  expenseByCategory: [FinanceBreakdownItem!]!
+
+  """Expected revenue from pending bookings (no order yet)"""
+  pendingBookingRevenue: Int!
+  period: FinancePeriodInfo!
+  pnl: FinancePnlSummary!
+  totalOrders: Int!
+  trend: [FinanceTrendPoint!]!
 }
 
 type VenueLocation {
