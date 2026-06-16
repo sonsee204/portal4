@@ -17,6 +17,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { DataTable } from '@/components/organisms/DataTable';
 import type { OtpTestPhone } from '@/lib/api/otp-test-phones';
+import { formatDateTime } from '@/lib/utils';
 import { OTP_TEST_PHONES } from '@/lib/strings';
 
 import {
@@ -59,11 +60,11 @@ export function OtpTestPhoneRegistryTable({
       </td>
       <td className="text-muted px-4 py-3 text-xs">
         {row.expiresAt
-          ? new Date(row.expiresAt).toLocaleString('vi-VN')
+          ? formatDateTime(row.expiresAt)
           : OTP_TEST_PHONES.NO_EXPIRY}
       </td>
-      <td className="px-4 py-3 text-center">
-        <div className="flex items-center justify-center gap-1">
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             onClick={() => onEdit(row)}

@@ -1665,6 +1665,15 @@ export enum ClaimRequestStatus {
   Rejected = 'REJECTED'
 }
 
+/** Identifies which client app made the request */
+export enum ClientSource {
+  LandingPage = 'LANDING_PAGE',
+  Mobile = 'MOBILE',
+  Portal = 'PORTAL',
+  Unknown = 'UNKNOWN',
+  WebApp = 'WEB_APP'
+}
+
 /** What the coin-toss winner chose: serve or court side */
 export enum CoinTossChoice {
   Serve = 'SERVE',
@@ -4508,7 +4517,7 @@ export type Mutation = {
   adjustStock: StockMovement;
   /** Approve venue request (Admin only) */
   adminApproveVenue: Venue;
-  /** Change user role (Super Admin only) */
+  /** Change user role (Owner only — centralized access control) */
   adminChangeUserRole: User;
   /** Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER) */
   adminCreateUser: User;
@@ -12212,7 +12221,7 @@ export type ServicePerformance = {
 
 export type SessionInfo = {
   __typename?: 'SessionInfo';
-  clientSource?: Maybe<Scalars['String']['output']>;
+  clientSource?: Maybe<ClientSource>;
   createdAt: Scalars['DateTime']['output'];
   deviceInfo?: Maybe<DeviceInfo>;
   deviceName?: Maybe<Scalars['String']['output']>;
@@ -12220,6 +12229,7 @@ export type SessionInfo = {
   ipAddress?: Maybe<Scalars['String']['output']>;
   isCurrent: Scalars['Boolean']['output'];
   lastUsedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Approximate login location resolved from IP (city, country) */
   loginLocation?: Maybe<Scalars['String']['output']>;
   platform?: Maybe<Scalars['String']['output']>;
 };
@@ -14256,7 +14266,6 @@ export type User = {
   fullName: Scalars['String']['output'];
   gender?: Maybe<Gender>;
   isActive: Scalars['Boolean']['output'];
-  /** Whether this user is the platform owner (immutable OWNER_PHONE identity) */
   isOwner: Scalars['Boolean']['output'];
   /** Is user suspended */
   isSuspended: Scalars['Boolean']['output'];
@@ -15288,16 +15297,6 @@ export type AdminGetSystemStatsQueryVariables = Exact<{ [key: string]: never; }>
 
 export type AdminGetSystemStatsQuery = { __typename?: 'Query', adminGetSystemStats: { __typename?: 'SystemStats', totalUsers: number, activeUsers: number, suspendedUsers: number, totalVenues: number, activeVenues: number, pendingVenues: number, totalBookings: number, totalRevenue: number } };
 
-export type AdminGetAllBookingsQueryVariables = Exact<{
-  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  fromDate?: InputMaybe<Scalars['String']['input']>;
-  toDate?: InputMaybe<Scalars['String']['input']>;
-  pagination?: InputMaybe<CursorPageInput>;
-}>;
-
-
-export type AdminGetAllBookingsQuery = { __typename?: 'Query', adminAllBookingsConnection: { __typename?: 'AdminAllBookingConnection', customerNamesJson: string, totalCount: number, edges: Array<{ __typename?: 'AdminAllBookingEdge', cursor: string, node: { __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
 export type AdminGetUserBookingsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
   statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
@@ -15326,23 +15325,6 @@ export type ResetPasswordMutationVariables = Exact<{
 
 
 export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: { __typename?: 'SuccessResponse', success: boolean, message: string } };
-
-export type MySessionsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type MySessionsQuery = { __typename?: 'Query', mySessions: Array<{ __typename?: 'SessionInfo', id: string, deviceName?: string | null, platform?: string | null, ipAddress?: string | null, loginLocation?: string | null, clientSource?: string | null, lastUsedAt?: string | null, createdAt: string, isCurrent: boolean, deviceInfo?: { __typename?: 'DeviceInfo', deviceId?: string | null, deviceName?: string | null, platform?: string | null, osVersion?: string | null, appVersion?: string | null } | null }> };
-
-export type RevokeSessionMutationVariables = Exact<{
-  sessionId: Scalars['ID']['input'];
-}>;
-
-
-export type RevokeSessionMutation = { __typename?: 'Mutation', revokeSession: boolean };
-
-export type RevokeOtherSessionsMutationVariables = Exact<{ [key: string]: never; }>;
-
-
-export type RevokeOtherSessionsMutation = { __typename?: 'Mutation', revokeOtherSessions: boolean };
 
 export type ReviewClaimRequestMutationVariables = Exact<{
   input: ReviewClaimRequestInput;
@@ -15569,6 +15551,261 @@ export type GetOtpTestUserGrantsQueryVariables = Exact<{
 
 export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type UpdateVenueMutationVariables = Exact<{
+  input: UpdateVenueInput;
+}>;
+
+
+export type UpdateVenueMutation = { __typename?: 'Mutation', updateVenue: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus } };
+
+export type UpdateVenueOrderTypeConfigsMutationVariables = Exact<{
+  input: UpdateVenueOrderTypeConfigsInput;
+}>;
+
+
+export type UpdateVenueOrderTypeConfigsMutation = { __typename?: 'Mutation', updateVenueOrderTypeConfigs: { __typename?: 'Venue', _id: string, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null }> | null } };
+
+export type CreateCourtMutationVariables = Exact<{
+  input: CreateCourtInput;
+}>;
+
+
+export type CreateCourtMutation = { __typename?: 'Mutation', createCourt: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus } };
+
+export type UpdateCourtMutationVariables = Exact<{
+  input: UpdateCourtInput;
+}>;
+
+
+export type UpdateCourtMutation = { __typename?: 'Mutation', updateCourt: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus, defaultPricePerHour: number, peakPricePerHour: number } };
+
+export type DeleteCourtMutationVariables = Exact<{
+  courtId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCourtMutation = { __typename?: 'Mutation', deleteCourt: boolean };
+
+export type ConfirmBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type ConfirmBookingMutation = { __typename?: 'Mutation', confirmBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, status: BookingStatus } } };
+
+export type RejectBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RejectBookingMutation = { __typename?: 'Mutation', rejectBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CancelBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelBookingMutation = { __typename?: 'Mutation', cancelBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CompleteBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteBookingMutation = { __typename?: 'Mutation', completeBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CheckInBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type CheckInBookingMutation = { __typename?: 'Mutation', checkIn: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type MarkNoShowMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkNoShowMutation = { __typename?: 'Mutation', markNoShow: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type ApproveHoldBookingMutationVariables = Exact<{
+  input: ApproveHoldBookingInput;
+}>;
+
+
+export type ApproveHoldBookingMutation = { __typename?: 'Mutation', approveHoldBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type ConfirmHoldBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  paymentMethod?: InputMaybe<PaymentMethod>;
+}>;
+
+
+export type ConfirmHoldBookingMutation = { __typename?: 'Mutation', confirmHoldBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, status: BookingStatus } } };
+
+export type RejectHoldBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RejectHoldBookingMutation = { __typename?: 'Mutation', rejectHoldBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CreateStaffOrderMutationVariables = Exact<{
+  input: CreateOrderInput;
+}>;
+
+
+export type CreateStaffOrderMutation = { __typename?: 'Mutation', createStaffOrder: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } };
+
+export type ConfirmOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type ConfirmOrderMutation = { __typename?: 'Mutation', confirmOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type MarkOrderPreparingMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderPreparingMutation = { __typename?: 'Mutation', markOrderPreparing: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type MarkOrderReadyMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderReadyMutation = { __typename?: 'Mutation', markOrderReady: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type CompleteOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteOrderMutation = { __typename?: 'Mutation', completeOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type CancelOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelOrderMutation = { __typename?: 'Mutation', cancelOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type CancelOrderWithRefundMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  reason: Scalars['String']['input'];
+  refundPercent?: InputMaybe<Scalars['Int']['input']>;
+  refundNote?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelOrderWithRefundMutation = { __typename?: 'Mutation', cancelOrderWithRefund: { __typename?: 'Order', _id: string, status: OrderStatus, paymentStatus: OrderPaymentStatus } };
+
+export type CreateProductMutationVariables = Exact<{
+  input: CreateProductInput;
+}>;
+
+
+export type CreateProductMutation = { __typename?: 'Mutation', createProduct: { __typename?: 'Product', _id: string, name: string, price: number, status: ProductStatus } };
+
+export type UpdateProductMutationVariables = Exact<{
+  input: UpdateProductInput;
+}>;
+
+
+export type UpdateProductMutation = { __typename?: 'Mutation', updateProduct: { __typename?: 'Product', _id: string, name: string, price: number, status: ProductStatus, stockQuantity: number } };
+
+export type DeleteProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProductMutation = { __typename?: 'Mutation', deleteProduct: boolean };
+
+export type PublishProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type PublishProductMutation = { __typename?: 'Mutation', publishProduct: { __typename?: 'Product', _id: string, status: ProductStatus } };
+
+export type UnpublishProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type UnpublishProductMutation = { __typename?: 'Mutation', unpublishProduct: { __typename?: 'Product', _id: string, status: ProductStatus } };
+
+export type ImportStockMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  input: ImportStockInput;
+}>;
+
+
+export type ImportStockMutation = { __typename?: 'Mutation', importStock: { __typename?: 'StockMovement', _id: string, productId: string, quantity: number, importPrice?: number | null, totalCost?: number | null, previousStock: number, newStock: number, createdAt: string } };
+
+export type CreateProductCategoryMutationVariables = Exact<{
+  input: CreateProductCategoryInput;
+}>;
+
+
+export type CreateProductCategoryMutation = { __typename?: 'Mutation', createProductCategory: { __typename?: 'ProductCategory', _id: string, name: string } };
+
+export type UpdateProductCategoryMutationVariables = Exact<{
+  input: UpdateProductCategoryInput;
+}>;
+
+
+export type UpdateProductCategoryMutation = { __typename?: 'Mutation', updateProductCategory: { __typename?: 'ProductCategory', _id: string, name: string } };
+
+export type DeleteProductCategoryMutationVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProductCategoryMutation = { __typename?: 'Mutation', deleteProductCategory: boolean };
+
+export type CreateStaffBookingMutationVariables = Exact<{
+  input: CreateStaffBookingInput;
+}>;
+
+
+export type CreateStaffBookingMutation = { __typename?: 'Mutation', createStaffBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
+
+export type AddVenueStaffMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  permissions: Array<VenueAction> | VenueAction;
+  customTitle?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type AddVenueStaffMutation = { __typename?: 'Mutation', addVenueStaff: { __typename?: 'VenueStaff', _id: string, permissions: Array<VenueAction>, status: VenueStaffStatus } };
+
+export type UpdateVenueStaffPermissionsMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  permissions: Array<VenueAction> | VenueAction;
+}>;
+
+
+export type UpdateVenueStaffPermissionsMutation = { __typename?: 'Mutation', updateVenueStaffPermissions: { __typename?: 'VenueStaff', _id: string, permissions: Array<VenueAction> } };
+
+export type RemoveVenueStaffMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveVenueStaffMutation = { __typename?: 'Mutation', removeVenueStaff: boolean };
+
+export type VenueSummaryFieldsFragment = { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } };
+
 export type GetMyVenuesStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -15579,16 +15816,141 @@ export type MyVenuesConnectionQueryVariables = Exact<{
 }>;
 
 
-export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
-export type VenueBookingsConnectionQueryVariables = Exact<{
-  venueId: Scalars['ID']['input'];
-  filter?: InputMaybe<BookingFilterInput>;
+export type StaffedVenuesConnectionQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, totalPrice: number, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type StaffedVenuesConnectionQuery = { __typename?: 'Query', staffedVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetVenueDetailQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetVenueDetailQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, description?: string | null, status: VenueStatus, phoneNumber?: string | null, email?: string | null, courtCount: number, coverImageUrl?: string | null, images?: Array<string> | null, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, operatingHours: Array<{ __typename?: 'OperatingHours', dayOfWeek: number, openTime: string, closeTime: string, isClosed: boolean, is24Hours?: boolean | null }>, location: { __typename?: 'VenueLocation', address: string, city?: string | null, district?: string | null, latitude?: number | null, longitude?: number | null }, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> | null, marginThresholds?: { __typename?: 'VenueMarginThresholds', warningMargin: number, dangerMargin: number } | null } };
+
+export type VenueCourtsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueCourtsConnectionQuery = { __typename?: 'Query', venueCourtsConnection: { __typename?: 'CourtConnection', totalCount: number, edges: Array<{ __typename?: 'CourtEdge', cursor: string, node: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus, defaultPricePerHour: number, peakPricePerHour: number, displayOrder: number } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<BookingFilterInput>;
+  sort?: InputMaybe<BookingSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, totalPrice: number, finalAmount: number, paymentMethod?: PaymentMethod | null, internalNote?: string | null, holdExpiresAt?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetBookingQueryVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type GetBookingQuery = { __typename?: 'Query', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, sessionNumber?: number | null, totalPrice: number, serviceFee?: number | null, discount?: number | null, finalAmount: number, isManualPrice: boolean, manualPriceNote?: string | null, paymentMethod?: PaymentMethod | null, customerNote?: string | null, internalNote?: string | null, discountCode?: string | null, confirmedAt?: string | null, checkedInAt?: string | null, checkedOutAt?: string | null, cancelledAt?: string | null, cancellationReason?: string | null, holdExpiresAt?: string | null, createdAt: string, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number, isPeakHour: boolean }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string, email?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, totalSessions: number, endDate: string } | null, parentBooking?: { __typename?: 'Booking', _id: string, date: string } | null } };
+
+export type VenueHoldBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueHoldBookingsConnectionQuery = { __typename?: 'Query', venueHoldBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, holdExpiresAt?: string | null, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueRecurringBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueRecurringBookingsConnectionQuery = { __typename?: 'Query', venueRecurringBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueOrdersConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<OrderFilterInput>;
+  sort?: InputMaybe<OrderSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueOrdersConnectionQuery = { __typename?: 'Query', venueOrdersConnection: { __typename?: 'OrderConnection', totalCount: number, edges: Array<{ __typename?: 'OrderEdge', cursor: string, node: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, paymentStatus: OrderPaymentStatus, orderType: OrderType, totalAmount: number, customerName?: string | null, customerPhone?: string | null, createdAt: string, items: Array<{ __typename?: 'OrderItem', itemType: OrderItemType, quantity: number, unitPrice: number, productName: string }> } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetOrderQueryVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type GetOrderQuery = { __typename?: 'Query', order: { __typename?: 'Order', _id: string, orderCode: string, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, customerName?: string | null, customerPhone?: string | null, courtNumber?: string | null, tableNumber?: string | null, subtotal: number, discount?: number | null, discountCode?: string | null, serviceFee?: number | null, tax?: number | null, totalAmount: number, paidAmount?: number | null, note?: string | null, internalNote?: string | null, isManualPrice: boolean, manualPriceNote?: string | null, cancellationReason?: string | null, cancelledAt?: string | null, confirmedAt?: string | null, inProgressAt?: string | null, readyAt?: string | null, completedAt?: string | null, paidAt?: string | null, createdAt: string, customerInfo?: { __typename?: 'OrderCustomerInfo', name: string, phone?: string | null, email?: string | null } | null, items: Array<{ __typename?: 'OrderItem', productName: string, itemType: OrderItemType, quantity: number, unitPrice: number, totalPrice: number, note?: string | null }>, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number, refundPercent: number, refundReason: string, refundNote?: string | null, refundRequestedAt: string, refundCompletedAt?: string | null } | null } };
+
+export type OrdersPendingRefundConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type OrdersPendingRefundConnectionQuery = { __typename?: 'Query', ordersPendingRefundConnection: { __typename?: 'OrderConnection', totalCount: number, edges: Array<{ __typename?: 'OrderEdge', cursor: string, node: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, paymentStatus: OrderPaymentStatus, totalAmount: number, customerName?: string | null, createdAt: string, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueProductsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<ProductFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, status: ProductStatus, stockQuantity: number, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category: { __typename?: 'ProductCategory', _id: string, name: string } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type LowStockProductsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type LowStockProductsQuery = { __typename?: 'Query', lowStockProducts: Array<{ __typename?: 'Product', _id: string, name: string, stockQuantity: number, lowStockThreshold?: number | null }> };
+
+export type ProductStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type ProductStatsQuery = { __typename?: 'Query', productStats: { __typename?: 'ProductStats', totalProducts: number, activeProducts: number, outOfStockProducts: number, lowStockProducts: number } };
+
+export type ProductSalesAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ProductSalesAnalyticsQuery = { __typename?: 'Query', productSalesAnalytics: { __typename?: 'ProductSalesAnalytics', period: string, summary: { __typename?: 'ProductAnalyticsSummary', totalRevenue: number, totalItemsSold: number, totalOrders: number, bestSellingProduct: string, revenueChangePercent: number, itemsChangePercent: number }, salesTrend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number }>, topProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, categoryName: string, quantitySold: number, revenue: number, revenuePercentage: number }> } };
+
+export type VenueCategoriesConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueCategoriesConnectionQuery = { __typename?: 'Query', venueCategoriesConnection: { __typename?: 'ProductCategoryConnection', totalCount: number, edges: Array<{ __typename?: 'ProductCategoryEdge', cursor: string, node: { __typename?: 'ProductCategory', _id: string, name: string, slug: string, displayOrder: number, productCount: number } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueStaffConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueStaffConnectionQuery = { __typename?: 'Query', venueStaffConnection: { __typename?: 'VenueStaffConnection', totalCount: number, edges: Array<{ __typename?: 'VenueStaffEdge', cursor: string, node: { __typename?: 'VenueStaff', _id: string, isOwner: boolean, permissions: Array<VenueAction>, status: VenueStaffStatus, customTitle?: string | null, joinedAt?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenuePendingInvitationsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type VenuePendingInvitationsQuery = { __typename?: 'Query', venuePendingInvitations: Array<{ __typename?: 'VenueStaff', _id: string, status: VenueStaffStatus, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }> };
 
 export type VenueRevenueStatsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15596,7 +15958,7 @@ export type VenueRevenueStatsQueryVariables = Exact<{
 }>;
 
 
-export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
+export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, totalCollectedRevenue: number, totalExpectedRevenue: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number }, orderRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
 
 export type BookingStatsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15605,7 +15967,24 @@ export type BookingStatsQueryVariables = Exact<{
 }>;
 
 
-export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, confirmedBookings: number, cancelledBookings: number, todayBookings: number } };
+export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, pendingBookings: number, confirmedBookings: number, completedBookings: number, cancelledBookings: number, todayBookings: number } };
+
+export type OrderStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  fromDate?: InputMaybe<Scalars['String']['input']>;
+  toDate?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type OrderStatsQuery = { __typename?: 'Query', orderStats: { __typename?: 'OrderStats', totalOrders: number, pendingOrders: number, completedOrders: number, cancelledOrders: number, todayOrders: number, totalRevenue: number, todayRevenue: number } };
+
+export type OrderAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type OrderAnalyticsQuery = { __typename?: 'Query', orderAnalytics: { __typename?: 'OrderAnalytics', period: string, summary: { __typename?: 'OrderAnalyticsSummary', totalOrders: number, totalRevenue: number, averageOrderValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'OrderRevenueDataPoint', label: string, value: number }>, topProducts: Array<{ __typename?: 'TopSellingProduct', productName: string, revenue: number, quantitySold: number }> } };
 
 export type VenueAnalyticsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15613,7 +15992,27 @@ export type VenueAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }> } };
+export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number, peakDay: string, peakHour: string }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }>, bookingDistribution: Array<{ __typename?: 'BookingDistribution', label: string, value: number }>, heatMapData: Array<{ __typename?: 'HeatMapCell', hour: string, day: string, bookings: number, intensity: number }> } };
+
+export type MyVenuesForProductTransferQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyVenuesForProductTransferQuery = { __typename?: 'Query', myVenuesForProductTransfer: Array<{ __typename?: 'Venue', _id: string, name: string }> };
+
+export type GetMyVenueAvailabilityQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  date: Scalars['String']['input'];
+}>;
+
+
+export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null }> }> } };
+
+export type LookupCustomerByPhoneQueryVariables = Exact<{
+  phone: Scalars['String']['input'];
+}>;
+
+
+export type LookupCustomerByPhoneQuery = { __typename?: 'Query', lookupCustomerByPhone?: { __typename?: 'CustomerLookup', _id: string, displayName?: string | null, phone?: string | null, email?: string | null } | null };
 
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 

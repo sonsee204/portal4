@@ -34,8 +34,13 @@ export function WorkspaceSwitcher() {
   const portalCapabilities = user?.portalCapabilities;
 
   const workspaces = useMemo(
-    () => getAccessibleWorkspaces(role, portalCapabilities ?? []),
-    [role, portalCapabilities]
+    () =>
+      getAccessibleWorkspaces(
+        role,
+        portalCapabilities ?? [],
+        user?.hasVenueAccess ?? false
+      ),
+    [role, portalCapabilities, user?.hasVenueAccess]
   );
 
   if (workspaces.length < 2) {

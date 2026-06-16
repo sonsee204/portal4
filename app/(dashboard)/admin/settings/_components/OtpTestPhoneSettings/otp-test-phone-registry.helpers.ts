@@ -23,7 +23,7 @@ export const OTP_TEST_PHONE_REGISTRY_COLUMNS: DataTableColumn[] = [
   { key: 'purposes', label: OTP_TEST_PHONES.COLUMNS.PURPOSES },
   { key: 'status', label: OTP_TEST_PHONES.COLUMNS.STATUS },
   { key: 'expires', label: OTP_TEST_PHONES.COLUMNS.EXPIRES },
-  { key: 'actions', label: OTP_TEST_PHONES.COLUMNS.ACTIONS, align: 'center' },
+  { key: 'actions', label: OTP_TEST_PHONES.COLUMNS.ACTIONS, align: 'right' },
 ];
 
 export function maskPhone(phone: string): string {

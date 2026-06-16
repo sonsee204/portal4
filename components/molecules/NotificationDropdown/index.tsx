@@ -16,7 +16,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import {
   useNotifications,
@@ -225,7 +225,7 @@ function formatTimeAgo(dateStr: string): string {
   if (diffMin < 60) return `${diffMin} phút trước`;
   if (diffHr < 24) return `${diffHr} giờ trước`;
   if (diffDay < 7) return `${diffDay} ngày trước`;
-  return new Date(dateStr).toLocaleDateString('vi-VN');
+  return formatDate(dateStr);
 }
 
 const notificationTypeConfig: Record<

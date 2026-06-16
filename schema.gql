@@ -8557,7 +8557,7 @@ type Product {
   averageRating: Float!
 
   """Product category"""
-  category: ProductCategory!
+  category: ProductCategory
 
   """Category ID"""
   categoryId: ID!

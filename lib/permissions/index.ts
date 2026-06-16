@@ -168,7 +168,7 @@ export const WORKSPACE_LABELS: Record<
   string
 > = {
   admin: 'Platform Admin',
-  owner: 'Venue Operator',
+  owner: 'Chủ sân',
   organizer: 'Tournament Organizer',
   shared: 'Portal',
 };

@@ -21,6 +21,7 @@ import { UserCell } from '@/components/molecules/UserCell';
 import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
 import { QueryState } from '@/components/molecules/QueryState';
+import { formatDate } from '@/lib/utils';
 import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
 import type { User } from '@/types';
 import {
@@ -64,7 +65,7 @@ export function UsersTableSection({ data }: UsersTableSectionProps) {
               { key: 'status', label: 'Trạng thái' },
               { key: 'origin', label: 'Nguồn gốc' },
               { key: 'lastLogin', label: 'Đăng nhập cuối' },
-              { key: 'actions', label: '' },
+              { key: 'actions', label: '', align: 'right' },
             ]}
             data={users}
             renderRow={(u: User) => {
@@ -103,11 +104,11 @@ export function UsersTableSection({ data }: UsersTableSectionProps) {
                   </td>
                   <td className="text-muted px-4 py-3 text-sm">
                     {u.lastLoginAt
-                      ? new Date(u.lastLoginAt).toLocaleDateString('vi-VN')
+                      ? formatDate(u.lastLoginAt)
                       : 'Chưa đăng nhập'}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
                       <IconButton
                         icon="eye-outline"
                         size="sm"

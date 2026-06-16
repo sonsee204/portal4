@@ -13,6 +13,7 @@
 
 import { getServerActionSessionHeaders } from '@/lib/auth/session-forward-headers';
 import { performTokenRefresh } from '@/lib/auth/session-core';
+import { fetchHasVenueAccess } from '@/lib/auth/venue-access';
 import {
   clearSession,
   getRefreshToken,
@@ -84,6 +85,7 @@ export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> 
 
   if (result.kind === 'success') {
     const me = await fetchMeCapabilities(result.accessToken);
+    const hasVenueAccess = await fetchHasVenueAccess(result.accessToken);
     await setSession(
       {
         accessToken: result.accessToken,
@@ -92,6 +94,7 @@ export async function refreshSessionFromCookie(): Promise<RefreshSessionResult> 
       me?.role ?? result.user.role,
       me?.portalCapabilities ?? [],
       me?.isOwner ?? false,
+      hasVenueAccess,
     );
     return { ok: true, accessToken: result.accessToken };
   }

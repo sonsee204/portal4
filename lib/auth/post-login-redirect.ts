@@ -33,7 +33,7 @@ function isBlockedRedirect(path: string): boolean {
 
 export function resolvePostLoginPath(
   redirectTo: string | null | undefined,
-  user: Pick<AuthUser, 'role' | 'portalCapabilities' | 'isOwner'>,
+  user: Pick<AuthUser, 'role' | 'portalCapabilities' | 'isOwner' | 'hasVenueAccess'>,
 ): string {
   const role = user.role as UserRole;
   const capabilities = (user.portalCapabilities ?? []) as PortalCapability[];
@@ -51,7 +51,13 @@ export function resolvePostLoginPath(
   }
 
   if (
-    canAccessRoute(role, path, capabilities, user.isOwner ?? false)
+    canAccessRoute(
+      role,
+      path,
+      capabilities,
+      user.isOwner ?? false,
+      user.hasVenueAccess ?? false,
+    )
   ) {
     return path;
   }

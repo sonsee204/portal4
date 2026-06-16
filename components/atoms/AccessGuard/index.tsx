@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode, Children } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import {
@@ -37,22 +37,40 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const isLoading = useAuthStore((s) => s.isLoading);
   const role = user?.role ?? null;
-  const capabilities = user?.portalCapabilities ?? [];
+  const capabilities = useMemo(
+    () => user?.portalCapabilities ?? [],
+    [user?.portalCapabilities]
+  );
   const isOwner = user?.isOwner ?? false;
+  const hasVenueAccess = user?.hasVenueAccess ?? false;
   const authPending = !isInitialized || isLoading || (isInitialized && !user);
 
   useEffect(() => {
     if (authPending) return;
 
-    if (!role || !canAccessWorkspace(role, workspace, capabilities)) {
+    if (
+      !role ||
+      !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+    ) {
       router.replace('/forbidden');
       return;
     }
 
-    if (!canAccessRoute(role, pathname, capabilities, isOwner)) {
+    if (
+      !canAccessRoute(role, pathname, capabilities, isOwner, hasVenueAccess)
+    ) {
       router.replace('/forbidden');
     }
-  }, [authPending, role, capabilities, isOwner, pathname, workspace, router]);
+  }, [
+    authPending,
+    role,
+    capabilities,
+    isOwner,
+    hasVenueAccess,
+    pathname,
+    workspace,
+    router,
+  ]);
 
   if (authPending) {
     return (
@@ -62,13 +80,16 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     );
   }
 
-  if (!role || !canAccessWorkspace(role, workspace, capabilities)) {
+  if (
+    !role ||
+    !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+  ) {
     return null;
   }
 
-  if (!canAccessRoute(role, pathname, capabilities, isOwner)) {
+  if (!canAccessRoute(role, pathname, capabilities, isOwner, hasVenueAccess)) {
     return null;
   }
 
-  return <>{children}</>;
+  return Children.toArray(children);
 }

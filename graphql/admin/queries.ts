@@ -73,44 +73,6 @@ export const ADMIN_GET_SYSTEM_STATS = gql`
   }
 `;
 
-export const ADMIN_GET_ALL_BOOKINGS = gql`
-  query AdminGetAllBookings(
-    $statuses: [String!]
-    $fromDate: String
-    $toDate: String
-    $pagination: CursorPageInput
-  ) {
-    adminAllBookingsConnection(
-      statuses: $statuses
-      fromDate: $fromDate
-      toDate: $toDate
-      pagination: $pagination
-    ) {
-      customerNamesJson
-      edges {
-        cursor
-        node {
-          _id
-          venueName
-          venueAddress
-          date
-          timeSlots
-          status
-          totalPrice
-          courtName
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
-      totalCount
-    }
-  }
-`;
-
 export const ADMIN_GET_USER_BOOKINGS = gql`
   query AdminGetUserBookings(
     $userId: ID!

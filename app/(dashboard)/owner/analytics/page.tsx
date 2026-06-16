@@ -18,52 +18,191 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Select } from '@/components/atoms/Select';
+import { Button } from '@/components/atoms/Button';
 import { QueryState } from '@/components/molecules/QueryState';
+import {
+  PortalAreaChart,
+  PortalBarChart,
+  PortalDonutChart,
+} from '@/components/molecules/charts';
+import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import {
+  useVenueAnalytics,
+  useOrderAnalytics,
+  useProductSalesAnalytics,
+} from '@/hooks/owner';
 import { formatCurrency } from '@/lib/utils';
-import { useMyVenues, useVenueAnalytics } from '@/hooks/owner';
+import { downloadCsv } from '@/lib/utils/csv-export';
 
 const PERIOD_OPTIONS = [
   { label: 'Tuần', value: 'week' },
   { label: 'Tháng', value: 'month' },
-  { label: 'Quý', value: 'quarter' },
-  { label: 'Năm', value: 'year' },
 ];
 
 export default function OwnerAnalyticsPage() {
-  const { venues } = useMyVenues({ limit: 50 });
-  const [venueId, setVenueId] = useState('');
+  const { selectedVenueId, selectedVenue } = useVenueContext();
   const [period, setPeriod] = useState('month');
 
-  const effectiveVenueId = venueId || venues[0]?._id || null;
-  const { analytics, loading, error, refetch } = useVenueAnalytics(
-    effectiveVenueId,
-    period
+  const {
+    analytics: venueAnalytics,
+    loading: venueLoading,
+    error: venueError,
+    refetch: refetchVenue,
+  } = useVenueAnalytics(selectedVenueId, period);
+  const {
+    analytics: orderAnalytics,
+    loading: orderLoading,
+    error: orderError,
+    refetch: refetchOrder,
+  } = useOrderAnalytics(selectedVenueId, period);
+  const {
+    analytics: productAnalytics,
+    loading: productLoading,
+    error: productError,
+    refetch: refetchProduct,
+  } = useProductSalesAnalytics(selectedVenueId, period);
+
+  const loading = venueLoading || orderLoading || productLoading;
+  const error = venueError ?? orderError ?? productError;
+
+  const venueSummary = venueAnalytics?.summary;
+  const orderSummary = orderAnalytics?.summary;
+  const productSummary = productAnalytics?.summary;
+
+  const bookingTrend = useMemo(
+    () =>
+      (venueAnalytics?.revenueTrend ?? []).map((point) => ({
+        label: point.label,
+        value: point.value,
+      })),
+    [venueAnalytics?.revenueTrend]
   );
 
-  const venueOptions = useMemo(
-    () => venues.map((v) => ({ label: v.name, value: v._id })),
-    [venues]
+  const orderTrend = useMemo(
+    () =>
+      (orderAnalytics?.revenueTrend ?? []).map((point) => ({
+        label: point.label,
+        value: point.value,
+      })),
+    [orderAnalytics?.revenueTrend]
   );
 
-  const summary = analytics?.summary;
+  const bookingDistribution = useMemo(
+    () =>
+      (venueAnalytics?.bookingDistribution ?? []).map((item) => ({
+        label: item.label,
+        value: item.value,
+      })),
+    [venueAnalytics?.bookingDistribution]
+  );
+
+  const topProductsSource = productAnalytics?.topProducts?.length
+    ? productAnalytics.topProducts
+    : (orderAnalytics?.topProducts ?? []);
+
+  const topProducts = topProductsSource.slice(0, 8).map((product) => ({
+    label: product.productName,
+    value: product.revenue,
+  }));
+
+  const handleExport = () => {
+    const rows = [
+      {
+        nhom: 'Đặt sân',
+        chi_tieu: 'Tổng đặt sân',
+        gia_tri: venueSummary?.totalBookings ?? 0,
+      },
+      {
+        nhom: 'Đặt sân',
+        chi_tieu: 'Doanh thu đặt sân',
+        gia_tri: venueSummary?.totalRevenue ?? 0,
+      },
+      {
+        nhom: 'Đặt sân',
+        chi_tieu: 'Thay đổi DT (%)',
+        gia_tri: venueSummary?.revenueChangePercent ?? 0,
+      },
+      {
+        nhom: 'Đơn hàng',
+        chi_tieu: 'Tổng đơn',
+        gia_tri: orderSummary?.totalOrders ?? 0,
+      },
+      {
+        nhom: 'Đơn hàng',
+        chi_tieu: 'Doanh thu đơn',
+        gia_tri: orderSummary?.totalRevenue ?? 0,
+      },
+      {
+        nhom: 'Đơn hàng',
+        chi_tieu: 'Giá trị TB/đơn',
+        gia_tri: orderSummary?.averageOrderValue ?? 0,
+      },
+      {
+        nhom: 'Sản phẩm',
+        chi_tieu: 'Doanh thu SP',
+        gia_tri: productSummary?.totalRevenue ?? 0,
+      },
+      {
+        nhom: 'Sản phẩm',
+        chi_tieu: 'Số lượng bán',
+        gia_tri: productSummary?.totalItemsSold ?? 0,
+      },
+      {
+        nhom: 'Sản phẩm',
+        chi_tieu: 'SP bán chạy nhất',
+        gia_tri: productSummary?.bestSellingProduct ?? '',
+      },
+      ...bookingTrend.map((point) => ({
+        nhom: 'Xu hướng đặt sân',
+        chi_tieu: point.label,
+        gia_tri: point.value,
+      })),
+      ...orderTrend.map((point) => ({
+        nhom: 'Xu hướng đơn hàng',
+        chi_tieu: point.label,
+        gia_tri: point.value,
+      })),
+      ...topProducts.map((product) => ({
+        nhom: 'Top sản phẩm',
+        chi_tieu: product.label,
+        gia_tri: product.value,
+      })),
+    ];
+
+    const venueSlug =
+      selectedVenue?.name?.replace(/\s+/g, '-').toLowerCase() ?? 'venue';
+    downloadCsv(
+      `thong-ke-${venueSlug}-${period}-${new Date().toISOString().slice(0, 10)}.csv`,
+      rows
+    );
+  };
+
+  const handleRetry = () => {
+    void refetchVenue();
+    void refetchOrder();
+    void refetchProduct();
+  };
 
   return (
     <>
       <PageHeader
         title="Thống kê sân"
-        description="Phân tích hiệu suất hoạt động theo từng cơ sở."
+        description="Phân tích đặt sân, đơn hàng và bán hàng theo từng cơ sở."
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft="download-outline"
+            onClick={handleExport}
+            disabled={!venueAnalytics && !orderAnalytics && !productAnalytics}
+          >
+            Export CSV
+          </Button>
+        }
       />
 
-      <GlassPanel card className="mt-6 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {venueOptions.length > 0 && (
-            <Select
-              label="Chọn sân"
-              options={venueOptions}
-              value={effectiveVenueId ?? ''}
-              onChange={(e) => setVenueId(e.target.value)}
-            />
-          )}
+      <GlassPanel card className="mt-6 space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
           <Select
             label="Kỳ báo cáo"
             options={PERIOD_OPTIONS}
@@ -73,63 +212,89 @@ export default function OwnerAnalyticsPage() {
         </div>
 
         <QueryState
-          loading={loading && !analytics}
+          loading={loading && !venueAnalytics && !orderAnalytics}
           error={error}
-          empty={!effectiveVenueId}
+          empty={!selectedVenueId}
           emptyMessage="Chọn sân để xem thống kê."
-          onRetry={() => void refetch()}
+          onRetry={handleRetry}
         >
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <StatCard
               icon="calendar-outline"
               iconColor="text-emerald-400"
               label="Tổng đặt sân"
-              value={String(summary?.totalBookings ?? 0)}
+              value={String(venueSummary?.totalBookings ?? 0)}
             />
             <StatCard
               icon="cash-outline"
               iconColor="text-amber-400"
-              label="Doanh thu"
-              value={formatCurrency(summary?.totalRevenue ?? 0)}
+              label="Doanh thu đặt sân"
+              value={formatCurrency(venueSummary?.totalRevenue ?? 0)}
+            />
+            <StatCard
+              icon="cart-outline"
+              iconColor="text-blue-400"
+              label="Doanh thu đơn hàng"
+              value={formatCurrency(orderSummary?.totalRevenue ?? 0)}
+            />
+            <StatCard
+              icon="receipt-outline"
+              iconColor="text-sky-400"
+              label="Tổng đơn"
+              value={String(orderSummary?.totalOrders ?? 0)}
+            />
+            <StatCard
+              icon="fast-food-outline"
+              iconColor="text-orange-400"
+              label="Doanh thu sản phẩm"
+              value={formatCurrency(productSummary?.totalRevenue ?? 0)}
             />
             <StatCard
               icon="trending-up-outline"
-              iconColor="text-blue-400"
-              label="Thay đổi DT"
-              value={`${summary?.revenueChangePercent?.toFixed(1) ?? 0}%`}
+              iconColor="text-violet-400"
+              label="Thay đổi DT đặt sân"
+              value={`${venueSummary?.revenueChangePercent?.toFixed(1) ?? 0}%`}
             />
           </div>
 
-          {analytics?.revenueTrend && analytics.revenueTrend.length > 0 && (
-            <div className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
               <h3 className="text-heading mb-3 text-sm font-bold">
-                Xu hướng doanh thu
+                Xu hướng doanh thu đặt sân
               </h3>
-              <div className="flex h-40 items-end gap-2">
-                {analytics.revenueTrend.map((point) => {
-                  const max = Math.max(
-                    ...analytics.revenueTrend.map((p) => p.value),
-                    1
-                  );
-                  const h = (point.value / max) * 100;
-                  return (
-                    <div
-                      key={point.label}
-                      className="flex flex-1 flex-col items-center gap-1"
-                    >
-                      <div
-                        className="from-primary to-primary-light w-full rounded-t-md bg-gradient-to-t"
-                        style={{ height: `${h}%` }}
-                      />
-                      <span className="text-faint text-[10px]">
-                        {point.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <PortalAreaChart
+                data={bookingTrend}
+                valueFormatter={(value) => formatCurrency(value)}
+              />
             </div>
-          )}
+            <div>
+              <h3 className="text-heading mb-3 text-sm font-bold">
+                Xu hướng doanh thu đơn hàng
+              </h3>
+              <PortalAreaChart
+                data={orderTrend}
+                valueFormatter={(value) => formatCurrency(value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 className="text-heading mb-3 text-sm font-bold">
+                Phân bổ đặt sân
+              </h3>
+              <PortalDonutChart data={bookingDistribution} />
+            </div>
+            <div>
+              <h3 className="text-heading mb-3 text-sm font-bold">
+                Top sản phẩm theo doanh thu
+              </h3>
+              <PortalBarChart
+                data={topProducts}
+                valueFormatter={(value) => formatCurrency(value)}
+              />
+            </div>
+          </div>
         </QueryState>
       </GlassPanel>
     </>

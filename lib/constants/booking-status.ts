@@ -28,6 +28,10 @@ export const BOOKING_STATUS_LABEL: Record<string, string> = {
   COMPLETED: 'Hoàn thành',
   PENDING: 'Chờ xử lý',
   HOLD: 'Giữ chỗ',
+  HOLD_PENDING: 'Chờ duyệt giữ chỗ',
+  HOLD_ACTIVE: 'Đang giữ chỗ',
   CANCELLED: 'Đã hủy',
   NO_SHOW: 'Vắng mặt',
+  EXPIRED: 'Hết hạn',
+  REJECTED: 'Từ chối',
 };

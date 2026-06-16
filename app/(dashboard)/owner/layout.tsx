@@ -11,10 +11,9 @@
  * is strictly prohibited without prior written consent.
  */
 
-'use client';
-
 import { ownerSidebarNav, withProfileSection } from '@/config/navigation';
 import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboardShell';
+import { VenueContextProvider } from '@/components/providers/VenueContextProvider';
 
 const ownerNavWithProfile = withProfileSection(ownerSidebarNav);
 
@@ -24,8 +23,10 @@ export default function OwnerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <WorkspaceDashboardShell workspace="owner" nav={ownerNavWithProfile}>
-      {children}
-    </WorkspaceDashboardShell>
+    <VenueContextProvider>
+      <WorkspaceDashboardShell workspace="owner" nav={ownerNavWithProfile}>
+        {children}
+      </WorkspaceDashboardShell>
+    </VenueContextProvider>
   );
 }

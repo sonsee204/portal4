@@ -13,6 +13,7 @@
 
 'use client';
 
+import { formatDate } from '@/lib/utils';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
@@ -72,13 +73,13 @@ export function UserDetailPanel({ inquiry }: { inquiry: ContactInquiry }) {
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted">Ngày gửi</span>
           <span className="text-heading font-medium">
-            {new Date(inquiry.createdAt).toLocaleDateString('vi-VN')}
+            {formatDate(inquiry.createdAt)}
           </span>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted">Cập nhật</span>
           <span className="text-heading font-medium">
-            {new Date(inquiry.updatedAt).toLocaleDateString('vi-VN')}
+            {formatDate(inquiry.updatedAt)}
           </span>
         </div>
         {inquiry.repliedByUser && (

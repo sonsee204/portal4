@@ -35,6 +35,10 @@ export type PortalPermission =
   | 'calendar.platform'
   | 'calendar.venue'
   | 'analytics.venue'
+  | 'orders.venue'
+  | 'products.venue'
+  | 'staff.venue'
+  | 'venues.manage'
   | 'tournaments.platform'
   | 'tournaments.organize'
   | 'growth.manage'
@@ -56,10 +60,6 @@ const SUPER_ADMIN_PERMISSIONS: PortalPermission[] = [
   'users.reset_player_password',
   'venues.review_requests',
   'venues.review_claims',
-  'finance.platform',
-  'bookings.platform',
-  'calendar.platform',
-  'tournaments.platform',
   'tournaments.organize',
   'growth.manage',
   'support.manage',
@@ -73,22 +73,22 @@ const ADMIN_PERMISSIONS: PortalPermission[] = [
   'platform.dashboard',
   'venues.review_requests',
   'venues.review_claims',
-  'finance.platform',
-  'bookings.platform',
-  'calendar.platform',
-  'tournaments.platform',
   'growth.manage',
   'support.manage',
   'audit.view',
   'profile.edit',
 ];
 
-const FACILITY_OWNER_PERMISSIONS: PortalPermission[] = [
+export const FACILITY_OWNER_PERMISSIONS: PortalPermission[] = [
   'owner.dashboard',
+  'venues.manage',
   'finance.venue',
   'bookings.venue',
   'calendar.venue',
   'analytics.venue',
+  'orders.venue',
+  'products.venue',
+  'staff.venue',
   'profile.edit',
 ];
 

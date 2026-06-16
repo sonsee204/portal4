@@ -13,7 +13,7 @@
 
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import type { ContactInquiry } from '@/types';
@@ -55,7 +55,7 @@ function formatRelativeTime(dateString: string): string {
   if (diffHour < 24) return TIME.HOURS(diffHour);
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 30) return TIME.DAYS(diffDay);
-  return date.toLocaleDateString('vi-VN');
+  return formatDate(dateString);
 }
 
 export function TicketListItem({
