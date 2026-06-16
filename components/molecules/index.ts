@@ -29,3 +29,4 @@ export { ConnectionLoadMore } from './ConnectionLoadMore';
 export { ConnectionPager } from './ConnectionPager';
 export { CalendarPanel } from './CalendarPanel';
 export { DatePicker } from './DatePicker';
+export { DateRangePicker } from './DateRangePicker';

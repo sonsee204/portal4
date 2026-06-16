@@ -17,19 +17,28 @@ import {
   Area,
   AreaChart as RechartsAreaChart,
   CartesianGrid,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { CHART_THEME } from '@/lib/charts/theme';
+import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
 import { cn } from '@/lib/utils';
 
+export interface PortalAreaChartPoint {
+  label: string;
+  value: number;
+  comparisonValue?: number;
+}
+
 export interface PortalAreaChartProps {
-  data: Array<{ label: string; value: number }>;
+  data: PortalAreaChartPoint[];
   className?: string;
   height?: number;
   valueFormatter?: (value: number) => string;
+  seriesLabel?: string;
+  comparisonLabel?: string;
 }
 
 export function PortalAreaChart({
@@ -37,13 +46,15 @@ export function PortalAreaChart({
   className,
   height = 280,
   valueFormatter = (v) => String(v),
+  seriesLabel = 'Kỳ hiện tại',
+  comparisonLabel = 'Kỳ trước',
 }: PortalAreaChartProps) {
   if (data.length === 0) {
     return (
       <div
         className={cn(
           'text-muted flex items-center justify-center text-sm',
-          className
+          className,
         )}
         style={{ height }}
       >
@@ -51,6 +62,10 @@ export function PortalAreaChart({
       </div>
     );
   }
+
+  const hasComparison = data.some(
+    (point) => point.comparisonValue != null && point.comparisonValue > 0,
+  );
 
   return (
     <div className={cn('w-full', className)} style={{ height }}>
@@ -88,7 +103,7 @@ export function PortalAreaChart({
             tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={48}
+            width={56}
             tickFormatter={valueFormatter}
           />
           <Tooltip
@@ -98,15 +113,30 @@ export function PortalAreaChart({
               borderRadius: 12,
               color: CHART_THEME.tooltipText,
             }}
-            formatter={(value) => [valueFormatter(Number(value)), 'Giá trị']}
+            formatter={(value, name) => [
+              valueFormatter(Number(value)),
+              String(name) === 'value' ? seriesLabel : comparisonLabel,
+            ]}
           />
           <Area
             type="monotone"
             dataKey="value"
+            name="value"
             stroke={CHART_THEME.primary}
             strokeWidth={2}
             fill="url(#portalAreaGradient)"
           />
+          {hasComparison ? (
+            <Line
+              type="monotone"
+              dataKey="comparisonValue"
+              name="comparisonValue"
+              stroke={CHART_COLORS[2]}
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              dot={false}
+            />
+          ) : null}
         </RechartsAreaChart>
       </ResponsiveContainer>
     </div>
