@@ -13,18 +13,38 @@
 
 'use client';
 
+import { useState } from 'react';
 import { PageHeader } from '@/components/organisms/PageHeader';
+import { TabGroup } from '@/components/molecules/TabGroup';
 import { ProfileSettings } from '@/app/(dashboard)/admin/settings/_components/ProfileSettings';
+import { ChangePasswordForm } from './_components/ChangePasswordForm';
+import { AUTH } from '@/lib/strings';
+
+const profileTabs = [
+  { label: 'Thông tin', value: 'profile' },
+  { label: AUTH.CHANGE_PASSWORD.TAB_LABEL, value: 'security' },
+];
 
 export default function ProfilePage() {
+  const [tab, setTab] = useState('profile');
+
   return (
     <>
       <PageHeader
         title="Hồ sơ cá nhân"
-        description="Chỉnh sửa thông tin cá nhân của bạn."
+        description="Chỉnh sửa thông tin cá nhân và bảo mật tài khoản của bạn."
       />
+
+      <TabGroup
+        tabs={profileTabs}
+        active={tab}
+        onChange={setTab}
+        className="mt-6"
+      />
+
       <div className="mt-6">
-        <ProfileSettings />
+        {tab === 'profile' && <ProfileSettings />}
+        {tab === 'security' && <ChangePasswordForm />}
       </div>
     </>
   );
