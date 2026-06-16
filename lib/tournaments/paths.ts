@@ -14,14 +14,16 @@
 export type TournamentWorkspace = 'admin' | 'organizer';
 
 export function getTournamentBasePath(
-  workspace: TournamentWorkspace = 'admin',
+  workspace: TournamentWorkspace = 'admin'
 ): string {
   return workspace === 'organizer'
     ? '/organizer/tournaments'
     : '/admin/tournaments';
 }
 
-export function detectTournamentWorkspace(pathname: string): TournamentWorkspace {
+export function detectTournamentWorkspace(
+  pathname: string
+): TournamentWorkspace {
   return pathname.startsWith('/organizer') ? 'organizer' : 'admin';
 }
 
@@ -35,6 +37,8 @@ export interface TournamentRoutePaths {
   schedule: (id: string) => string;
   print: (id: string) => string;
   scoring: (id: string, matchId: string) => string;
+  /** Đường dẫn quản lý Media của giải đấu */
+  media: (id: string) => string;
 }
 
 export function tournamentRoutes(base: string): TournamentRoutePaths {
@@ -47,6 +51,8 @@ export function tournamentRoutes(base: string): TournamentRoutePaths {
     draw: (id: string) => `${base}/${id}/draw`,
     schedule: (id: string) => `${base}/${id}/schedule`,
     print: (id: string) => `${base}/${id}/print`,
-    scoring: (id: string, matchId: string) => `${base}/${id}/scoring/${matchId}`,
+    scoring: (id: string, matchId: string) =>
+      `${base}/${id}/scoring/${matchId}`,
+    media: (id: string) => `${base}/${id}/media`,
   };
 }

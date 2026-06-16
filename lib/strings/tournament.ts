@@ -98,6 +98,8 @@ export const TOURNAMENT = {
   LABEL_REGISTRATIONS: 'Đăng ký',
   LABEL_BRACKET: 'Nhánh đấu',
   LABEL_SCHEDULE: 'Lịch thi đấu',
+  LABEL_MEDIA: 'Media',
+
   LABEL_SCORING: 'Chấm điểm',
   LABEL_DRAW: 'Bốc thăm / Xếp hạt giống',
   LABEL_PRINT_DOCUMENTS: 'In tài liệu',
@@ -116,14 +118,22 @@ export const TOURNAMENT = {
   EMPTY_MATCHES: 'Chưa có trận đấu nào.',
 
   CONFIRM_DELETE_CATEGORY: 'Bạn có chắc muốn xoá nội dung thi đấu này?',
-  CONFIRM_RESET_BRACKET: 'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
-  CONFIRM_PUBLISH: 'Bạn có chắc muốn đăng giải đấu? Giải đấu sẽ hiển thị công khai.',
-  CONFIRM_OPEN_REGISTRATION: 'Bạn có chắc muốn mở đăng ký? Người chơi có thể đăng ký tham gia.',
-  CONFIRM_CLOSE_REGISTRATION: 'Bạn có chắc muốn đóng đăng ký? Người chơi sẽ không thể đăng ký thêm.',
-  CONFIRM_START_TOURNAMENT: 'Bạn có chắc muốn bắt đầu giải đấu? Thao tác này không thể hoàn tác.',
-  CONFIRM_COMPLETE_TOURNAMENT: 'Bạn có chắc muốn kết thúc giải đấu? Thao tác này không thể hoàn tác.',
-  CONFIRM_CANCEL_TOURNAMENT: 'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
-  CONFIRM_DELETE_TOURNAMENT: 'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
+  CONFIRM_RESET_BRACKET:
+    'Bạn có chắc muốn xoá nhánh đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_PUBLISH:
+    'Bạn có chắc muốn đăng giải đấu? Giải đấu sẽ hiển thị công khai.',
+  CONFIRM_OPEN_REGISTRATION:
+    'Bạn có chắc muốn mở đăng ký? Người chơi có thể đăng ký tham gia.',
+  CONFIRM_CLOSE_REGISTRATION:
+    'Bạn có chắc muốn đóng đăng ký? Người chơi sẽ không thể đăng ký thêm.',
+  CONFIRM_START_TOURNAMENT:
+    'Bạn có chắc muốn bắt đầu giải đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_COMPLETE_TOURNAMENT:
+    'Bạn có chắc muốn kết thúc giải đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_CANCEL_TOURNAMENT:
+    'Bạn có chắc muốn huỷ giải đấu? Thao tác này không thể hoàn tác.',
+  CONFIRM_DELETE_TOURNAMENT:
+    'Bạn có chắc muốn xoá giải đấu này? Toàn bộ dữ liệu liên quan sẽ bị xoá vĩnh viễn và không thể khôi phục.',
   CONFIRM_DUPLICATE_TOURNAMENT:
     'Nhân bản giải đấu này? Một bản sao mới sẽ được tạo ở trạng thái Bản nháp. Bạn có thể chỉnh sửa thông tin trước khi đăng.',
 
@@ -151,8 +161,7 @@ export const TOURNAMENT = {
   LATE_ENTRY_SELECT_CATEGORY: 'Chọn hạng mục',
   LATE_ENTRY_NO_ELIGIBLE_CATEGORY:
     'Không có hạng mục loại trực tiếp đã bốc thăm phù hợp.',
-  LATE_ENTRY_PREVIEW_COUNT: (n: number) =>
-    `${n} trận BYE vòng 1 có thể lấp`,
+  LATE_ENTRY_PREVIEW_COUNT: (n: number) => `${n} trận BYE vòng 1 có thể lấp`,
   LATE_ENTRY_PREVIEW_OPPONENTS: 'Đối thủ tiềm năng',
   LATE_ENTRY_RANDOM_WARNING_LABEL: 'Lưu ý',
   LATE_ENTRY_RANDOM_TITLE: 'Phân bổ ngẫu nhiên',

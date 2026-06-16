@@ -117,6 +117,13 @@ export function TournamentDetailContentSection({
               {TOURNAMENT.LABEL_PRINT_DOCUMENTS}
             </span>
           </Link>
+          <Link
+            href={routes.media(tournamentId)}
+            className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
+          >
+            <IonIcon name="images-outline" size="md" />
+            <span className="font-medium">{TOURNAMENT.LABEL_MEDIA}</span>
+          </Link>
         </div>
       </div>
     </GlassPanel>

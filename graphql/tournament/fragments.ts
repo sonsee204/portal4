@@ -5,10 +5,6 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
- *
- * This source code is the intellectual property of Lê Trung Hiếu.
- * Unauthorized copying, modification, distribution, or use of this code
- * is strictly prohibited without prior written consent.
  */
 
 import { gql } from 'graphql-tag';
@@ -99,6 +95,14 @@ export const TOURNAMENT_DETAIL_FRAGMENT = gql`
     }
   }
   ${TOURNAMENT_CORE_FRAGMENT}
+`;
+
+export const TOURNAMENT_MEDIA_FRAGMENT = gql`
+  fragment TournamentMedia on Tournament {
+    _id
+    # mediaImages   # Comment lại nếu backend chưa có field này
+    # coverImage    # Comment lại nếu backend chưa có field này
+  }
 `;
 
 export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
