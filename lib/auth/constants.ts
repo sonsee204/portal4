@@ -21,6 +21,7 @@ export const AUTH_COOKIES = {
   USER_ROLE: 'portal_user_role',
   PORTAL_CAPABILITIES: 'portal_capabilities',
   IS_OWNER: 'portal_is_owner',
+  HAS_VENUE_ACCESS: 'portal_has_venue_access',
 } as const;
 
 /**

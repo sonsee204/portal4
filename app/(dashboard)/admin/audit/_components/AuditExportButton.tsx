@@ -15,6 +15,7 @@
 
 import { useCallback } from 'react';
 import { Button } from '@/components/atoms/Button';
+import { formatDateTime } from '@/lib/utils';
 import { AUDIT } from '@/lib/strings';
 import type { AuditLogEntry } from '@/hooks/audit';
 
@@ -56,7 +57,7 @@ export function AuditExportButton({ logs, disabled }: AuditExportButtonProps) {
       log.target || '',
       log.status,
       log.ip || '',
-      new Date(log.createdAt).toLocaleString('vi-VN'),
+      formatDateTime(log.createdAt),
       log.errorMessage || '',
     ]);
 

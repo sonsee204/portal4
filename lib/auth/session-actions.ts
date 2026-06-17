@@ -16,11 +16,13 @@
 import {
   setSession,
   getAccessToken,
+  syncVenueAccessCookie,
 } from './session';
 import { refreshSessionFromCookie } from './refresh-server';
 import { GRAPHQL_URL } from './constants';
 import { getServerActionSessionHeaders } from './session-forward-headers';
 import { isUnauthenticatedGraphQLError } from '@/lib/auth/session-core';
+import { fetchHasVenueAccess } from '@/lib/auth/venue-access';
 import { AUTH, ERRORS } from '@/lib/strings';
 import type { AuthUser } from '@/types';
 
@@ -122,27 +124,34 @@ export async function loginAction(
 
     const me = await fetchMe(accessToken);
     const capabilities = me?.portalCapabilities ?? [];
+    const hasVenueAccess = await fetchHasVenueAccess(
+      accessToken,
+      sessionHeaders,
+    );
 
     await setSession(
       { accessToken, refreshToken },
       user.role,
       capabilities,
       me?.isOwner ?? false,
+      hasVenueAccess,
     );
 
     return {
       success: true,
       user:
-        me ??
-        ({
-          _id: user._id,
-          email: user.email,
-          fullName: user.fullName,
-          displayName: user.fullName,
-          role: user.role as AuthUser['role'],
-          portalCapabilities: capabilities,
-          isOwner: false,
-        } satisfies AuthUser),
+        me != null
+          ? { ...me, hasVenueAccess }
+          : ({
+            _id: user._id,
+            email: user.email,
+            fullName: user.fullName,
+            displayName: user.fullName,
+            role: user.role as AuthUser['role'],
+            portalCapabilities: capabilities,
+            isOwner: false,
+            hasVenueAccess,
+          } satisfies AuthUser),
     };
   } catch {
     return {
@@ -242,7 +251,13 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const user = await fetchMe(accessToken);
     if (user) {
-      return user;
+      const sessionHeaders = await getServerActionSessionHeaders();
+      const hasVenueAccess = await fetchHasVenueAccess(
+        accessToken,
+        sessionHeaders,
+      );
+      await syncVenueAccessCookie(hasVenueAccess);
+      return { ...user, hasVenueAccess };
     }
 
     const refreshed = await refreshSessionFromCookie();
@@ -250,7 +265,18 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    return await fetchMe(refreshed.accessToken);
+    const refreshedUser = await fetchMe(refreshed.accessToken);
+    if (!refreshedUser) {
+      return null;
+    }
+
+    const sessionHeaders = await getServerActionSessionHeaders();
+    const hasVenueAccess = await fetchHasVenueAccess(
+      refreshed.accessToken,
+      sessionHeaders,
+    );
+    await syncVenueAccessCookie(hasVenueAccess);
+    return { ...refreshedUser, hasVenueAccess };
   } catch {
     return null;
   }

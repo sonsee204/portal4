@@ -32,11 +32,24 @@ describe('portal access', () => {
     expect(can('ADMIN', 'users.manage')).toBe(false);
   });
 
-  it('ADMIN can access audit, finance, and platform tournaments', () => {
+  it('ADMIN can access audit and growth, not operational platform modules', () => {
     expect(can('ADMIN', 'audit.view')).toBe(true);
-    expect(can('ADMIN', 'finance.platform')).toBe(true);
-    expect(can('ADMIN', 'tournaments.platform')).toBe(true);
+    expect(can('ADMIN', 'growth.manage')).toBe(true);
+    expect(can('ADMIN', 'finance.platform')).toBe(false);
+    expect(can('ADMIN', 'tournaments.platform')).toBe(false);
     expect(can('ADMIN', 'tournaments.organize')).toBe(false);
+  });
+
+  it('SUPER_ADMIN with venue access can open owner workspace', () => {
+    expect(canAccessWorkspace('SUPER_ADMIN', 'owner', [], true)).toBe(true);
+    expect(canAccessRoute('SUPER_ADMIN', '/owner', [], false, true)).toBe(true);
+    expect(canAccessRoute('SUPER_ADMIN', '/owner', [], false, false)).toBe(
+      false,
+    );
+  });
+
+  it('SUPER_ADMIN without venue access cannot open owner workspace', () => {
+    expect(canAccessWorkspace('SUPER_ADMIN', 'owner')).toBe(false);
   });
 
   it('FACILITY_OWNER can access owner workspace only', () => {
@@ -102,8 +115,6 @@ describe('portal access', () => {
   });
 
   it('matchRouteManifest resolves dynamic tournament routes', () => {
-    const adminEntry = matchRouteManifest('/admin/tournaments/abc123/schedule');
-    expect(adminEntry?.permission).toBe('tournaments.platform');
     const orgEntry = matchRouteManifest('/organizer/tournaments/abc123/schedule');
     expect(orgEntry?.permission).toBe('tournaments.organize');
   });

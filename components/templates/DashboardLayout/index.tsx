@@ -47,14 +47,14 @@ export function DashboardLayout({
         workspaceLabel={workspaceLabel}
       />
 
-      <div className="flex flex-1 flex-col lg:ml-72">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-72">
         <div className="bg-primary/5 pointer-events-none absolute top-0 left-0 h-96 w-full blur-3xl" />
 
         <TopHeader breadcrumbs={breadcrumbs} actions={headerActions} />
 
         <main
           className={cn(
-            'relative flex-1 overflow-y-auto px-6 py-8 md:px-8',
+            'relative min-w-0 flex-1 overflow-y-auto px-6 py-8 md:px-8',
             className
           )}
         >

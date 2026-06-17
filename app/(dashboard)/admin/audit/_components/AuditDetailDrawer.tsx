@@ -20,6 +20,7 @@ import { IconButton } from '@/components/atoms/IconButton';
 import type { AuditLogEntry } from '@/hooks/audit';
 import type { AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
+import { formatDateTime } from '@/lib/utils';
 import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditDetailDrawerProps {
@@ -52,18 +53,6 @@ const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
 };
 
 const CATEGORY_LABELS: Record<AuditCategory, string> = AUDIT.CATEGORIES;
-
-function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString('vi-VN', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
 
 function DetailRow({
   icon,
@@ -137,7 +126,9 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
           <div className="flex-1 space-y-1 p-4">
             {/* Status and Action badges */}
             <div className="mb-4 flex items-center gap-2">
-              <Badge variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}>
+              <Badge
+                variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}
+              >
                 {ACTION_LABELS[log.action as AuditAction] ?? log.action}
               </Badge>
               <Badge variant={log.status === 'SUCCESS' ? 'success' : 'danger'}>
@@ -160,7 +151,9 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
             <DetailRow
               icon="layers-outline"
               label={AUDIT.DETAIL.CATEGORY}
-              value={CATEGORY_LABELS[log.category as AuditCategory] ?? log.category}
+              value={
+                CATEGORY_LABELS[log.category as AuditCategory] ?? log.category
+              }
             />
             <DetailRow
               icon="locate-outline"
@@ -197,7 +190,7 @@ export function AuditDetailDrawer({ log, onClose }: AuditDetailDrawerProps) {
             <DetailRow
               icon="time-outline"
               label={AUDIT.DETAIL.TIMESTAMP}
-              value={formatTimestamp(log.createdAt)}
+              value={formatDateTime(log.createdAt)}
             />
 
             {/* Error message */}

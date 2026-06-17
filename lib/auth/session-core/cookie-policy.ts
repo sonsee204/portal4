@@ -28,6 +28,7 @@ export interface SessionCookieNames {
   USER_ROLE: string;
   IS_OWNER?: string;
   PORTAL_CAPABILITIES?: string;
+  HAS_VENUE_ACCESS?: string;
 }
 
 export interface BaseCookieOptions {

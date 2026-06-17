@@ -13,79 +13,29 @@
 
 'use client';
 
-import Link from 'next/link';
-import { PageHeader } from '@/components/organisms/PageHeader';
-import { StatCard } from '@/components/molecules/StatCard';
-import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
-import { Button } from '@/components/atoms/Button';
-import { formatCurrency } from '@/lib/utils';
-import { useMyVenuesStats } from '@/hooks/owner';
+import { useOwnerDashboardData } from './_hooks/useOwnerDashboardData';
+import { OwnerDashboardHeaderSection } from './_sections/OwnerDashboardHeaderSection';
+import { OwnerDashboardStatsSection } from './_sections/OwnerDashboardStatsSection';
+import { OwnerDashboardAlertsSection } from './_sections/OwnerDashboardAlertsSection';
+import { OwnerDashboardVenuesTableSection } from './_sections/OwnerDashboardVenuesTableSection';
 
 export default function OwnerDashboardPage() {
-  const { stats, loading, error, refetch } = useMyVenuesStats();
+  const data = useOwnerDashboardData();
 
   return (
-    <>
-      <PageHeader
-        title="Tổng quan sân"
-        description="Theo dõi hoạt động và doanh thu các sân bạn quản lý."
-      />
+    <div className="space-y-6">
+      <OwnerDashboardHeaderSection />
 
       <QueryState
-        loading={loading && !stats}
-        error={error}
-        onRetry={() => void refetch()}
+        loading={data.loading && !data.stats}
+        error={data.error}
+        onRetry={() => data.refetchAll()}
       >
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <StatCard
-            icon="business-outline"
-            iconColor="text-blue-400"
-            label="Sân quản lý"
-            value={stats ? String(stats.totalVenues) : '—'}
-          />
-          <StatCard
-            icon="calendar-outline"
-            iconColor="text-emerald-400"
-            label="Đặt sân hôm nay"
-            value={stats ? String(stats.todayBookings) : '—'}
-          />
-          <StatCard
-            icon="cash-outline"
-            iconColor="text-amber-400"
-            label="Doanh thu"
-            value={stats ? formatCurrency(stats.totalRevenue) : '—'}
-          />
-        </div>
-
-        <GlassPanel card className="mt-6">
-          <h3 className="text-heading mb-4 text-sm font-bold">
-            Truy cập nhanh
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/owner/venues">
-              <Button variant="secondary" size="sm" iconLeft="business-outline">
-                Sân của tôi
-              </Button>
-            </Link>
-            <Link href="/owner/calendar">
-              <Button variant="secondary" size="sm" iconLeft="calendar-outline">
-                Lịch sân
-              </Button>
-            </Link>
-            <Link href="/owner/bookings">
-              <Button variant="secondary" size="sm" iconLeft="receipt-outline">
-                Đặt sân
-              </Button>
-            </Link>
-            <Link href="/owner/finance">
-              <Button variant="secondary" size="sm" iconLeft="cash-outline">
-                Tài chính
-              </Button>
-            </Link>
-          </div>
-        </GlassPanel>
+        <OwnerDashboardStatsSection data={data} />
+        <OwnerDashboardAlertsSection data={data} />
+        <OwnerDashboardVenuesTableSection data={data} />
       </QueryState>
-    </>
+    </div>
   );
 }

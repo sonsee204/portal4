@@ -18,6 +18,7 @@ import { TimelineItem } from '@/components/molecules/TimelineItem';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Button } from '@/components/atoms/Button';
 import { type AuditLogEntry } from '@/hooks/audit';
+import { formatDateTime } from '@/lib/utils';
 import type { DashboardPageData } from '../_hooks/useDashboardPageData';
 
 interface DashboardMainSectionProps {
@@ -54,11 +55,6 @@ export function DashboardMainSection({ data }: DashboardMainSectionProps) {
                 Người dùng
               </Button>
             </Link>
-            <Link href="/admin/tournaments">
-              <Button variant="secondary" size="sm" iconLeft="trophy-outline">
-                Giải đấu
-              </Button>
-            </Link>
           </div>
         </GlassPanel>
       </div>
@@ -81,7 +77,7 @@ export function DashboardMainSection({ data }: DashboardMainSectionProps) {
                   icon="document-text-outline"
                   iconColor="text-primary bg-primary/20 border-primary/30"
                   title={`${log.actorName}: ${log.action} — ${log.target}`}
-                  time={new Date(log.createdAt).toLocaleString('vi-VN')}
+                  time={formatDateTime(log.createdAt)}
                   isLast={i === recentLogs.length - 1}
                 />
               ))

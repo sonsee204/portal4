@@ -30,6 +30,7 @@ import {
   type DataTableColumn,
 } from '@/components/organisms/DataTable';
 import { useAdminUsers } from '@/hooks/admin/useAdminUsers';
+import { formatDateTime } from '@/lib/utils';
 import { OTP_TEST_PHONES } from '@/lib/strings';
 import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 import { OTP_TEST_USER_GRANTS } from '@/lib/strings/otp-test-user-grants';
@@ -69,7 +70,7 @@ const columns: DataTableColumn[] = [
   {
     key: 'actions',
     label: OTP_TEST_USER_GRANTS.COLUMNS.ACTIONS,
-    align: 'center',
+    align: 'right',
   },
 ];
 
@@ -208,7 +209,7 @@ export function OtpTestUserGrantSettings() {
         </code>
       </td>
       <td className="text-muted px-4 py-3 text-xs">
-        {new Date(row.expiresAt).toLocaleString('vi-VN')}
+        {formatDateTime(row.expiresAt)}
       </td>
       <td className="px-4 py-3">
         <Badge variant={row.enabled ? 'success' : 'danger'}>
@@ -217,8 +218,8 @@ export function OtpTestUserGrantSettings() {
             : OTP_TEST_USER_GRANTS.STATUS_DISABLED}
         </Badge>
       </td>
-      <td className="px-4 py-3 text-center">
-        <div className="flex items-center justify-center gap-1">
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             onClick={() => handleCopyCode(row.testCode)}

@@ -77,7 +77,7 @@ const nextConfig = {
       },
       {
         source: '/tournaments/:path*',
-        destination: '/admin/tournaments/:path*',
+        destination: '/organizer/tournaments/:path*',
         permanent: true,
       },
       {

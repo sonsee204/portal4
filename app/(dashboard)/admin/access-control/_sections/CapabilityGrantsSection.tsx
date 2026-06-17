@@ -164,7 +164,7 @@ export function CapabilityGrantsSection() {
             { key: 'capability', label: 'Quyền' },
             { key: 'status', label: 'Trạng thái' },
             { key: 'reason', label: 'Lý do' },
-            { key: 'actions', label: '', align: 'center' },
+            { key: 'actions', label: '', align: 'right' },
           ]}
           data={grants}
           renderRow={(row: PortalCapabilityGrant) => (
@@ -185,16 +185,18 @@ export function CapabilityGrantsSection() {
                 </Badge>
               </td>
               <td className="text-muted px-4 py-3 text-xs">{row.reason}</td>
-              <td className="px-4 py-3 text-center">
+              <td className="px-4 py-3 text-right">
                 {row.enabled ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={submitting}
-                    onClick={() => void handleRevoke(row._id)}
-                  >
-                    Thu hồi
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={submitting}
+                      onClick={() => void handleRevoke(row._id)}
+                    >
+                      Thu hồi
+                    </Button>
+                  </div>
                 ) : null}
               </td>
             </tr>

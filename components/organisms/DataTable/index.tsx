@@ -28,6 +28,25 @@ export interface DataTableColumn {
   align?: 'left' | 'center' | 'right';
 }
 
+/** Standard actions column — always last, right-aligned. */
+export const DATA_TABLE_ACTIONS_COLUMN: DataTableColumn = {
+  key: 'actions',
+  label: 'Thao tác',
+  align: 'right',
+};
+
+/** Compact actions column (no header label). */
+export const DATA_TABLE_ACTIONS_COLUMN_MINIMAL: DataTableColumn = {
+  key: 'actions',
+  label: '',
+  align: 'right',
+};
+
+export const DATA_TABLE_ACTIONS_CELL_CLASS = 'px-4 py-3 text-right';
+
+export const DATA_TABLE_ACTIONS_INNER_CLASS =
+  'flex flex-wrap items-center justify-end gap-0.5';
+
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
 /* ------------------------------------------------------------------ */
@@ -43,12 +62,17 @@ export interface DataTableProps<T> {
   onSort?: (key: string) => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Keep column headers visible while scrolling the table body */
+  stickyHeader?: boolean;
   className?: string;
 }
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
+
+const STICKY_HEADER_CELL_CLASS =
+  'border-surface-border bg-white text-faint sticky top-0 z-10 border-b shadow-sm dark:bg-[var(--surface)]';
 
 export function DataTable<T>({
   columns,
@@ -59,51 +83,76 @@ export function DataTable<T>({
   onSort,
   emptyTitle = 'No data',
   emptyDescription,
+  stickyHeader = false,
   className,
 }: DataTableProps<T>) {
+  const table = (
+    <table
+      className={cn(
+        'w-full text-left text-sm',
+        stickyHeader ? 'border-separate border-spacing-0' : 'border-collapse'
+      )}
+    >
+      <thead>
+        <tr>
+          {columns.map((col) => (
+            <th
+              key={col.key}
+              className={cn(
+                'text-faint px-4 py-3 text-xs font-semibold tracking-wider uppercase',
+                stickyHeader ? STICKY_HEADER_CELL_CLASS : 'bg-overlay-faint',
+                col.align === 'center' && 'text-center',
+                col.align === 'right' && 'text-right'
+              )}
+            >
+              {col.sortable ? (
+                <button
+                  type="button"
+                  className="hover:text-heading inline-flex items-center gap-1 transition-colors"
+                  onClick={() => onSort?.(col.key)}
+                >
+                  {col.label}
+                  <IonIcon
+                    name={
+                      sortKey === col.key
+                        ? sortDir === 'asc'
+                          ? 'caret-up-outline'
+                          : 'caret-down-outline'
+                        : 'swap-vertical-outline'
+                    }
+                    size="xs"
+                  />
+                </button>
+              ) : (
+                col.label
+              )}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{data.map((row, i) => renderRow(row, i))}</tbody>
+    </table>
+  );
+
+  if (stickyHeader) {
+    return (
+      <div
+        className={cn(
+          'border-surface-border overflow-auto rounded-lg border',
+          className
+        )}
+      >
+        {table}
+        {data.length === 0 && (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={cn('overflow-hidden', className)}>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-overlay-faint">
-            <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={cn(
-                    'text-faint px-4 py-3 text-xs font-semibold tracking-wider uppercase',
-                    col.align === 'center' && 'text-center',
-                    col.align === 'right' && 'text-right'
-                  )}
-                >
-                  {col.sortable ? (
-                    <button
-                      type="button"
-                      className="hover:text-heading inline-flex items-center gap-1 transition-colors"
-                      onClick={() => onSort?.(col.key)}
-                    >
-                      {col.label}
-                      <IonIcon
-                        name={
-                          sortKey === col.key
-                            ? sortDir === 'asc'
-                              ? 'caret-up-outline'
-                              : 'caret-down-outline'
-                            : 'swap-vertical-outline'
-                        }
-                        size="xs"
-                      />
-                    </button>
-                  ) : (
-                    col.label
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>{data.map((row, i) => renderRow(row, i))}</tbody>
-        </table>
-      </div>
+      <div className="overflow-x-auto">{table}</div>
 
       {data.length === 0 && (
         <EmptyState title={emptyTitle} description={emptyDescription} />

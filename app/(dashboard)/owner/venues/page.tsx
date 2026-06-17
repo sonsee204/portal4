@@ -13,16 +13,17 @@
 
 'use client';
 
+import Link from 'next/link';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
+import { Button } from '@/components/atoms/Button';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
-import { useMyVenues } from '@/hooks/owner';
+import { useVenueContext } from '@/components/providers/VenueContextProvider';
+
 export default function OwnerVenuesPage() {
-  const { venues, totalCount, hasNextPage, loadMore, loading, error, refetch } =
-    useMyVenues({ limit: 20 });
+  const { venues, loading, error, refetchVenues } = useVenueContext();
 
   return (
     <>
@@ -37,7 +38,7 @@ export default function OwnerVenuesPage() {
           error={error}
           empty={!loading && venues.length === 0}
           emptyMessage="Bạn chưa quản lý sân nào."
-          onRetry={() => void refetch()}
+          onRetry={() => refetchVenues()}
         >
           <DataTable
             columns={[
@@ -46,6 +47,7 @@ export default function OwnerVenuesPage() {
               { key: 'courts', label: 'Số sân' },
               { key: 'role', label: 'Vai trò' },
               { key: 'status', label: 'Trạng thái' },
+              { key: 'actions', label: '', align: 'right' },
             ]}
             data={venues}
             renderRow={(v) => (
@@ -68,17 +70,21 @@ export default function OwnerVenuesPage() {
                 <td className="px-4 py-3">
                   <Badge variant="neutral">{v.status}</Badge>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/owner/venues/${v._id}`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconLeft="chevron-forward-outline"
+                    >
+                      Chi tiết
+                    </Button>
+                  </Link>
+                </td>
               </tr>
             )}
           />
         </QueryState>
-        <ConnectionPager
-          loadedCount={venues.length}
-          totalCount={totalCount}
-          hasNextPage={hasNextPage}
-          onNext={() => void loadMore()}
-          loading={loading}
-        />
       </GlassPanel>
     </>
   );

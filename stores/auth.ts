@@ -58,3 +58,5 @@ export const selectIsAdmin = (state: AuthState) =>
 export const selectIsSuperAdmin = (state: AuthState) =>
   state.user?.role === 'SUPER_ADMIN';
 export const selectIsOwner = (state: AuthState) => state.user?.isOwner === true;
+export const selectHasVenueAccess = (state: AuthState) =>
+  state.user?.hasVenueAccess === true;
