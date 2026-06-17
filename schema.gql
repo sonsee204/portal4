@@ -856,6 +856,9 @@ input BookedSlotInput {
 type Booking {
   _id: ID!
 
+  """Promotions applied to this booking (for analytics attribution)"""
+  appliedPromotions: [BookingAppliedPromotion!]
+
   """Cancellation reason"""
   cancellationReason: String
 
@@ -1006,6 +1009,14 @@ type Booking {
 
   """Venue ID"""
   venueId: ID!
+}
+
+type BookingAppliedPromotion {
+  """Discount amount from this promotion"""
+  discountAmount: Int!
+
+  """Promotion ID"""
+  promotionId: ID!
 }
 
 """A Relay-style connection for Booking items."""
