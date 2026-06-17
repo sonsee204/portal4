@@ -97,6 +97,14 @@ export function ProductFormModal({ data, actions }: ProductFormModalProps) {
             setProductForm((prev) => ({ ...prev, sku: e.target.value }))
           }
         />
+        <Input
+          label="Đơn vị"
+          value={productForm.unit}
+          placeholder="cái, lon, chai..."
+          onChange={(e) =>
+            setProductForm((prev) => ({ ...prev, unit: e.target.value }))
+          }
+        />
         <Select
           label="Danh mục"
           options={categoryOptions}

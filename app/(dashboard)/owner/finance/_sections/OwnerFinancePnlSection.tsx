@@ -44,7 +44,7 @@ const CASHFLOW_ROWS: PnlRow[] = [
   {
     key: 'grossRevenue',
     label: 'Doanh thu gộp',
-    hint: 'Tổng đơn đã hoàn thành (completed) trong kỳ',
+    hint: 'Tổng đơn đã hoàn thành trong kỳ',
   },
   {
     key: 'collected',
@@ -73,7 +73,7 @@ const PROFIT_ROWS: PnlRow[] = [
   {
     key: 'grossProfit',
     label: 'Lợi nhuận gộp',
-    hint: 'Doanh thu thuần − COGS',
+    hint: 'Doanh thu thuần − giá vốn',
   },
   {
     key: 'operatingExpenses',

@@ -16,9 +16,10 @@
 import { useState } from 'react';
 import { Modal } from '@/components/molecules/Modal';
 import { Button } from '@/components/atoms/Button';
-import { Input } from '@/components/atoms/Input';
+import { CurrencyInput } from '@/components/atoms/CurrencyInput';
 import { Select } from '@/components/atoms/Select';
 import { Textarea } from '@/components/atoms/Textarea';
+import { DatePicker } from '@/components/molecules/DatePicker';
 import type { VenueExpenseNode } from '@/hooks/owner';
 import {
   EXPENSE_CATEGORY_OPTIONS,
@@ -32,6 +33,16 @@ import {
   PaymentMethod,
   UpdateVenueExpenseInput,
 } from '@/graphql/generated';
+import {
+  parseIsoDateOrToday,
+  resolveInitialCoverageMode,
+  toIsoDateOrEmpty,
+  type ExpenseCoverageMode,
+} from '@/lib/finance/expense-coverage';
+import {
+  applyCoveragePreset,
+  ExpenseCoverageFields,
+} from './ExpenseCoverageFields';
 
 interface ExpenseFormModalProps {
   data: OwnerFinancePageData;
@@ -50,21 +61,70 @@ function ExpenseFormModalContent({
   defaultDate: string;
 }) {
   const [category, setCategory] = useState<ExpenseCategory>(
-    () => editingExpense?.category ?? ExpenseCategory.Rent,
+    () => editingExpense?.category ?? ExpenseCategory.Rent
   );
   const [amount, setAmount] = useState(() =>
-    editingExpense ? String(editingExpense.amount) : '',
+    editingExpense ? String(editingExpense.amount) : ''
   );
-  const [date, setDate] = useState(() => editingExpense?.date ?? defaultDate);
+  const [paymentDate, setPaymentDate] = useState(() =>
+    parseIsoDateOrToday(editingExpense?.date ?? defaultDate)
+  );
+  const [coverageMode, setCoverageMode] = useState<ExpenseCoverageMode>(() =>
+    resolveInitialCoverageMode(editingExpense)
+  );
+  const [coverageFrom, setCoverageFrom] = useState(() =>
+    parseIsoDateOrToday(
+      editingExpense?.coverageFrom ?? editingExpense?.date ?? defaultDate
+    )
+  );
+  const [coverageTo, setCoverageTo] = useState(() =>
+    parseIsoDateOrToday(
+      editingExpense?.coverageTo ??
+        editingExpense?.coverageFrom ??
+        editingExpense?.date ??
+        defaultDate
+    )
+  );
   const [note, setNote] = useState(() => editingExpense?.note ?? '');
   const [paymentMethod, setPaymentMethod] = useState(
-    () => editingExpense?.paymentMethod ?? '',
+    () => editingExpense?.paymentMethod ?? ''
   );
+
+  const parsedAmount = Number.parseInt(amount, 10) || 0;
+
+  const handlePaymentDateChange = (nextDate: Date) => {
+    setPaymentDate(nextDate);
+    if (coverageMode === 'single') {
+      setCoverageFrom(nextDate);
+      setCoverageTo(nextDate);
+      return;
+    }
+    setCoverageFrom(nextDate);
+  };
+
+  const handleCoverageModeChange = (mode: ExpenseCoverageMode) => {
+    setCoverageMode(mode);
+    if (mode === 'single') {
+      setCoverageFrom(paymentDate);
+      setCoverageTo(paymentDate);
+      return;
+    }
+    const preset = applyCoveragePreset(paymentDate, 3);
+    setCoverageFrom(preset.from);
+    setCoverageTo(preset.to);
+  };
 
   const handleSubmit = async () => {
     if (!data.selectedVenueId) return;
-    const parsedAmount = Number.parseInt(amount, 10);
     if (!parsedAmount || parsedAmount <= 0) return;
+
+    const date = toIsoDateOrEmpty(paymentDate);
+    const from = toIsoDateOrEmpty(coverageFrom);
+    const to = toIsoDateOrEmpty(coverageTo);
+    if (from > to) return;
+
+    const coveragePayload =
+      coverageMode === 'period' ? { coverageFrom: from, coverageTo: to } : {};
 
     const payload: CreateVenueExpenseInput | UpdateVenueExpenseInput =
       editingExpense
@@ -73,6 +133,7 @@ function ExpenseFormModalContent({
             category,
             amount: parsedAmount,
             date,
+            ...coveragePayload,
             note: note || undefined,
             ...(paymentMethod
               ? { paymentMethod: paymentMethod as PaymentMethod }
@@ -83,6 +144,7 @@ function ExpenseFormModalContent({
             category,
             amount: parsedAmount,
             date,
+            ...coveragePayload,
             note: note || undefined,
             ...(paymentMethod
               ? { paymentMethod: paymentMethod as PaymentMethod }
@@ -107,18 +169,31 @@ function ExpenseFormModalContent({
             setCategory(event.target.value as ExpenseCategory)
           }
         />
-        <Input
+        <CurrencyInput
           label="Số tiền (VND)"
-          type="number"
-          min={0}
           value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          onChange={setAmount}
         />
-        <Input
-          label="Ngày (YYYY-MM-DD)"
-          type="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
+        <DatePicker
+          label="Ngày thanh toán"
+          value={paymentDate}
+          onChange={handlePaymentDateChange}
+        />
+        <ExpenseCoverageFields
+          coverageMode={coverageMode}
+          paymentDate={paymentDate}
+          coverageFrom={coverageFrom}
+          coverageTo={coverageTo}
+          parsedAmount={parsedAmount}
+          onModeChange={handleCoverageModeChange}
+          onCoverageFromChange={setCoverageFrom}
+          onCoverageToChange={setCoverageTo}
+          onApplyPreset={(months) => {
+            setCoverageMode('period');
+            const preset = applyCoveragePreset(paymentDate, months);
+            setCoverageFrom(preset.from);
+            setCoverageTo(preset.to);
+          }}
         />
         <Select
           label="Phương thức thanh toán"
@@ -135,7 +210,6 @@ function ExpenseFormModalContent({
           onChange={(event) => setNote(event.target.value)}
           rows={3}
         />
-
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={actions.closeExpenseModal}>
             Huỷ
@@ -155,11 +229,9 @@ function ExpenseFormModalContent({
 export function ExpenseFormModal({ data, actions }: ExpenseFormModalProps) {
   if (!actions.expenseModalOpen) return null;
 
-  const formKey = actions.editingExpense?._id ?? 'new-expense';
-
   return (
     <ExpenseFormModalContent
-      key={formKey}
+      key={actions.editingExpense?._id ?? 'new-expense'}
       data={data}
       actions={actions}
       editingExpense={actions.editingExpense}

@@ -14,7 +14,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { CurrencyInput } from '@/components/atoms/CurrencyInput';
 import { Input } from '@/components/atoms/Input';
@@ -27,14 +26,14 @@ import {
   useOwnerProductMutations,
   type VenueProductNode,
 } from '@/hooks/owner';
-import { estimateNewAverageCost } from '@/lib/inventory/margin-utils';
-import { isProductOutOfStock } from '@/lib/inventory/product-stock';
+import { projectAverageCostAfterImport } from '@/lib/inventory/margin-utils';
 import { formatCurrency } from '@/lib/utils';
 import { showSuccess, showError } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared/mutation-helpers';
 import type { OwnerProductsPageActions } from '../_hooks/useOwnerProductsPageActions';
 import type { OwnerProductsPageData } from '../_hooks/useOwnerProductsPageData';
 import { ImportStockMarginModal } from './ImportStockMarginModal';
+import { ImportStockProductSummary } from './ImportStockProductSummary';
 
 interface ImportStockModalProps {
   data: OwnerProductsPageData;
@@ -145,6 +144,8 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
           productId: selectedProduct._id,
           quantity,
           importPrice,
+          batchNumber: importStockForm.batchNumber.trim() || undefined,
+          expiryDate: importStockForm.expiryDate.trim() || undefined,
           supplierName: importStockForm.supplierName.trim() || undefined,
           supplierContact: importStockForm.supplierContact.trim() || undefined,
           invoiceNumber: importStockForm.invoiceNumber.trim() || undefined,
@@ -204,9 +205,9 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
       return;
     }
 
-    const estimatedAvgCost = estimateNewAverageCost(
-      selectedProduct.totalImportValue ?? 0,
-      selectedProduct.totalImportQuantity ?? 0,
+    const estimatedAvgCost = projectAverageCostAfterImport(
+      selectedProduct.averageCost,
+      selectedProduct.stockQuantity ?? 0,
       quantity,
       importPrice
     );
@@ -265,7 +266,7 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
       >
         <div className="space-y-5">
           {importStockTarget ? (
-            <ProductSummary product={importStockTarget} />
+            <ImportStockProductSummary product={importStockTarget} />
           ) : (
             <Select
               label="Sản phẩm"
@@ -276,7 +277,7 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
           )}
 
           {selectedProduct && !importStockTarget && (
-            <ProductSummary product={selectedProduct} compact />
+            <ImportStockProductSummary product={selectedProduct} compact />
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -298,6 +299,30 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
               value={importStockForm.importPrice}
               onChange={(value) =>
                 setImportStockForm((prev) => ({ ...prev, importPrice: value }))
+              }
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Số lô (batch)"
+              value={importStockForm.batchNumber}
+              onChange={(event) =>
+                setImportStockForm((prev) => ({
+                  ...prev,
+                  batchNumber: event.target.value,
+                }))
+              }
+            />
+            <Input
+              label="Hạn dùng"
+              type="date"
+              value={importStockForm.expiryDate}
+              onChange={(event) =>
+                setImportStockForm((prev) => ({
+                  ...prev,
+                  expiryDate: event.target.value,
+                }))
               }
             />
           </div>
@@ -384,41 +409,5 @@ export function ImportStockModal({ data, actions }: ImportStockModalProps) {
         onCancel={closeImportMarginModal}
       />
     </>
-  );
-}
-
-function ProductSummary({
-  product,
-  compact = false,
-}: {
-  product: VenueProductNode;
-  compact?: boolean;
-}) {
-  const outOfStock = isProductOutOfStock(product);
-
-  return (
-    <div
-      className={
-        compact
-          ? 'border-surface-border bg-surface-hover/30 rounded-xl border px-4 py-3'
-          : 'border-surface-border bg-surface-hover/40 rounded-xl border px-4 py-4'
-      }
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-body text-sm font-semibold">{product.name}</p>
-          <p className="text-muted mt-1 text-xs">
-            Tồn hiện tại: {product.stockQuantity ?? 0}
-            {product.category?.name ? ` · ${product.category.name}` : ''}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {outOfStock && <Badge variant="danger">Hết hàng</Badge>}
-          <span className="text-sm font-medium text-emerald-400">
-            {formatCurrency(product.price)}
-          </span>
-        </div>
-      </div>
-    </div>
   );
 }

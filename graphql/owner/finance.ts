@@ -108,6 +108,13 @@ export const VENUE_FINANCE_REPORT = gql`
         count
         percentage
       }
+      byRevenueStream {
+        label
+        key
+        revenue
+        count
+        percentage
+      }
       expenseByCategory {
         label
         key
@@ -183,6 +190,9 @@ export const VENUE_EXPENSES_CONNECTION = gql`
           category
           amount
           date
+          coverageFrom
+          coverageTo
+          allocatedAmountInPeriod
           note
           paymentMethod
           isRecurring
@@ -204,6 +214,8 @@ export const CREATE_VENUE_EXPENSE = gql`
       category
       amount
       date
+      coverageFrom
+      coverageTo
       note
       paymentMethod
       isRecurring
@@ -218,6 +230,8 @@ export const UPDATE_VENUE_EXPENSE = gql`
       category
       amount
       date
+      coverageFrom
+      coverageTo
       note
       paymentMethod
       isRecurring

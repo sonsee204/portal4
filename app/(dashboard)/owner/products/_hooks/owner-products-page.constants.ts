@@ -46,6 +46,7 @@ export const PRODUCT_STATUS_CHIPS: FilterChip[] = [
 export const EMPTY_PRODUCT_FORM = {
   name: '',
   sku: '',
+  unit: 'cái',
   price: '',
   stockQuantity: '',
   lowStockThreshold: '5',
@@ -56,6 +57,8 @@ export const EMPTY_IMPORT_STOCK_FORM = {
   productId: '',
   quantity: '',
   importPrice: '',
+  batchNumber: '',
+  expiryDate: '',
   supplierName: '',
   supplierContact: '',
   invoiceNumber: '',

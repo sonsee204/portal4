@@ -28,14 +28,19 @@ export function OwnerFinanceHeaderSection({
   data,
   actions,
 }: OwnerFinanceHeaderSectionProps) {
-  const scopeLabel = data.allVenues
-    ? 'Tất cả sân'
-    : (data.selectedVenue?.name ?? 'Chọn sân');
+  const scopeLabel =
+    data.pageTab === 'portfolio'
+      ? 'Tất cả cơ sở'
+      : data.pageTab === 'operations'
+        ? (data.selectedVenue?.name ?? 'Chọn sân')
+        : data.allVenues
+          ? 'Tất cả sân'
+          : (data.selectedVenue?.name ?? 'Chọn sân');
 
   return (
     <PageHeader
-      title="Tài chính sân"
-      description={`Báo cáo P&L và dòng tiền cho ${scopeLabel}. Doanh thu ghi nhận khi đơn hoàn thành (completed).`}
+      title="Thống kê & Tài chính"
+      description={`Báo cáo P&L, danh mục cơ sở và vận hành sân cho ${scopeLabel}. Doanh thu ghi nhận khi đơn hoàn thành.`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <FinanceExportButton data={data} />

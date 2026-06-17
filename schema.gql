@@ -979,6 +979,9 @@ type Booking {
   """Requested hold duration in minutes (set by customer)"""
   requestedHoldDurationMinutes: Int
 
+  """Schedule type: fixed / single / LEAD promo"""
+  scheduleType: BookingScheduleType!
+
   """Service fee"""
   serviceFee: Int
 
@@ -1361,6 +1364,13 @@ enum BookingPassStatus {
 enum BookingPassVisibility {
   PRIVATE
   PUBLIC
+}
+
+"""Schedule classification: fixed recurring, single, or LEAD promo"""
+enum BookingScheduleType {
+  FIXED
+  LEAD
+  SINGLE
 }
 
 input BookingSortInput {
@@ -3062,6 +3072,9 @@ input CreateProductInput {
   """Track inventory"""
   trackInventory: Boolean
 
+  """Unit of measure (lon, chai, thùng…)"""
+  unit: String
+
   """Variant option names"""
   variantOptions: [String!]
 
@@ -3280,6 +3293,9 @@ input CreateStaffBookingInput {
   """Selected payment method"""
   paymentMethod: PaymentMethod
 
+  """Schedule type override (fixed / single / LEAD promo)"""
+  scheduleType: BookingScheduleType
+
   """Slots to book"""
   slots: [BookedSlotInput!]!
 
@@ -3449,7 +3465,13 @@ input CreateVenueExpenseInput {
   amount: Int!
   category: ExpenseCategory!
 
-  """Expense date (YYYY-MM-DD)"""
+  """Coverage start (YYYY-MM-DD); defaults to payment date"""
+  coverageFrom: String
+
+  """Coverage end (YYYY-MM-DD); defaults to coverageFrom"""
+  coverageTo: String
+
+  """Payment date (YYYY-MM-DD)"""
   date: String!
   isRecurring: Boolean = false
   note: String
@@ -3990,7 +4012,24 @@ type FinanceBreakdownItem {
   revenue: Int!
 }
 
+"""
+How to derive the comparison period: immediately before or same dates last year
+"""
+enum FinanceCompareMode {
+  PREVIOUS_PERIOD
+  SAME_PERIOD_LAST_YEAR
+}
+
+"""Export format for finance reports"""
+enum FinanceExportFormat {
+  CSV
+  XLSX
+}
+
 input FinanceFilterInput {
+  """How to derive the comparison period"""
+  compareMode: FinanceCompareMode = PREVIOUS_PERIOD
+
   """Include period-to-date comparison with previous period"""
   compareToPrevious: Boolean = true
 
@@ -4001,7 +4040,19 @@ input FinanceFilterInput {
   from: String!
   granularity: FinanceGranularity = DAY
   orderType: OrderType
+
+  """Coarse filter: booking orders vs non-booking (retail, F&B, etc.)"""
+  orderTypeCategory: FinanceOrderTypeCategory
   paymentMethod: PaymentMethod
+
+  """Filter orders linked to bookings that used this promotion"""
+  promotionId: ID
+
+  """Filter orders linked to bookings with this schedule type"""
+  scheduleType: BookingScheduleType
+
+  """Filter by order status (default: exclude cancelled)"""
+  status: OrderStatus
 
   """IANA timezone for date boundaries"""
   timezone: String = "Asia/Ho_Chi_Minh"
@@ -4020,6 +4071,12 @@ enum FinanceGranularity {
   DAY
   MONTH
   WEEK
+}
+
+"""Coarse order-type filter for finance reports"""
+enum FinanceOrderTypeCategory {
+  BOOKING
+  NON_BOOKING
 }
 
 type FinancePeriodInfo {
@@ -4090,7 +4147,11 @@ input FinanceTransactionFilterInput {
   courtId: ID
   from: String!
   orderType: OrderType
+  orderTypeCategory: FinanceOrderTypeCategory
   paymentMethod: PaymentMethod
+
+  """Search order code, customer name, or phone"""
+  search: String
   timezone: String = "Asia/Ho_Chi_Minh"
   to: String!
   venueIds: [ID!]
@@ -4876,6 +4937,12 @@ type ImageMedia {
 }
 
 input ImportStockInput {
+  """Batch/lot number for this import"""
+  batchNumber: String
+
+  """Expiry date (YYYY-MM-DD)"""
+  expiryDate: String
+
   """Import price per unit"""
   importPrice: Float!
 
@@ -5121,6 +5188,12 @@ input LocationInput {
   coordinates: CoordinatesInput
   country: String
   displayText: String
+}
+
+type LotAllocationRecord {
+  lotId: ID!
+  quantity: Int!
+  unitCost: Float!
 }
 
 input ManualMatchResultInput {
@@ -7005,6 +7078,37 @@ input OperatingHoursInput {
   openTime: String!
 }
 
+input OperationsFilterInput {
+  """Start date (YYYY-MM-DD) in filter timezone"""
+  from: String!
+
+  """Filter bookings that used this promotion"""
+  promotionId: ID
+
+  """Filter by schedule type (fixed / single)"""
+  scheduleType: BookingScheduleType
+
+  """IANA timezone for date boundaries"""
+  timezone: String = "Asia/Ho_Chi_Minh"
+
+  """End date (YYYY-MM-DD) in filter timezone"""
+  to: String!
+
+  """Venue IDs. Empty = all venues user can view."""
+  venueIds: [ID!]
+}
+
+type OperationsOccupancySummary {
+  """Total bookable slots in period"""
+  availableSlots: Int!
+
+  """Occupancy rate 0–100"""
+  occupancyRate: Float!
+
+  """Booked slots in period"""
+  occupiedSlots: Int!
+}
+
 type Order {
   _id: ID!
 
@@ -8829,6 +8933,9 @@ type Product {
   """Track inventory for this product"""
   trackInventory: Boolean!
 
+  """Unit of measure (e.g. lon, chai, thùng, kg)"""
+  unit: String
+
   """When product was unpublished"""
   unpublishedAt: DateTime
   updatedAt: DateTime!
@@ -10251,7 +10358,7 @@ type Query {
   order(orderId: ID!): Order!
 
   """Get comprehensive order analytics"""
-  orderAnalytics(period: String = "week", venueId: ID!): OrderAnalytics!
+  orderAnalytics(period: String = "week", venueId: ID!): OrderAnalytics! @deprecated(reason: "Use venueFinanceReport instead.")
 
   """Get order by booking ID"""
   orderByBookingId(bookingId: ID!): Order
@@ -10330,7 +10437,7 @@ type Query {
   productBySlug(shopId: ID, slug: String!, venueId: ID): Product
 
   """Get comprehensive product sales analytics for a venue"""
-  productSalesAnalytics(period: String = "week", venueId: ID!): ProductSalesAnalytics!
+  productSalesAnalytics(period: String = "week", venueId: ID!): ProductSalesAnalytics! @deprecated(reason: "Use venueFinanceReport (byRevenueStream.product) instead.")
 
   """Get product statistics"""
   productStats(shopId: ID, venueId: ID): ProductStats!
@@ -10481,7 +10588,7 @@ type Query {
   venueActivitiesConnection(filter: ActivityFilterInput, pagination: CursorPageInput, venueId: ID!): ActivityConnection!
 
   """Get comprehensive venue analytics"""
-  venueAnalytics(period: String = "week", venueId: ID!): VenueAnalytics!
+  venueAnalytics(period: String = "week", venueId: ID!): VenueAnalytics! @deprecated(reason: "Use venueFinanceReport (money) and venueOperationsReport (courts/occupancy) instead.")
 
   """Get venue availability"""
   venueAvailability(date: String!, venueId: ID!): VenueAvailability!
@@ -10498,6 +10605,12 @@ type Query {
   """Cursor-paginated venue operating expenses"""
   venueExpensesConnection(filter: ExpenseFilterInput!, pagination: CursorPageInput): VenueExpenseConnection!
 
+  """Export finance report as CSV content"""
+  venueFinanceExport(filter: FinanceFilterInput!, format: FinanceExportFormat!): VenueFinanceExportResult!
+
+  """Multi-venue P&L portfolio summary"""
+  venueFinancePortfolio(filter: FinanceFilterInput!): VenueFinancePortfolio!
+
   """Unified P&L finance report for one or more venues"""
   venueFinanceReport(filter: FinanceFilterInput!): VenueFinanceReport!
 
@@ -10506,6 +10619,9 @@ type Query {
 
   """Cursor-paginated hold bookings for a venue (staff)"""
   venueHoldBookingsConnection(pagination: CursorPageInput, venueId: ID!): BookingConnection!
+
+  """Court operations report (schedule date axis)"""
+  venueOperationsReport(filter: OperationsFilterInput!): VenueOperationsReport!
 
   """Cursor-paginated venue orders (for staff)"""
   venueOrdersConnection(filter: OrderFilterInput, pagination: CursorPageInput, sort: OrderSortInput, venueId: ID!): OrderConnection!
@@ -12248,6 +12364,9 @@ type StockMovement {
   """Invoice/receipt number"""
   invoiceNumber: String
 
+  """FIFO lot allocations for this sale"""
+  lotAllocations: [LotAllocationRecord!]
+
   """Stock after this movement"""
   newStock: Int!
 
@@ -13772,6 +13891,9 @@ input UpdateProductInput {
   """Track inventory"""
   trackInventory: Boolean
 
+  """Unit of measure (lon, chai, thùng…)"""
+  unit: String
+
   """Variant option names"""
   variantOptions: [String!]
 
@@ -14014,6 +14136,8 @@ input UpdateUserReportStatusInput {
 input UpdateVenueExpenseInput {
   amount: Int
   category: ExpenseCategory
+  coverageFrom: String
+  coverageTo: String
   date: String
   expenseId: ID!
   isRecurring: Boolean
@@ -14937,12 +15061,21 @@ type VenueEdge {
 
 type VenueExpense {
   _id: ID!
+
+  """Accrual amount allocated to the list filter period"""
+  allocatedAmountInPeriod: Int
   amount: Int!
   category: ExpenseCategory!
+
+  """Coverage start (YYYY-MM-DD)"""
+  coverageFrom: String!
+
+  """Coverage end (YYYY-MM-DD)"""
+  coverageTo: String!
   createdAt: DateTime!
   createdBy: ID!
 
-  """Expense date YYYY-MM-DD"""
+  """Payment date (YYYY-MM-DD)"""
   date: String!
   isRecurring: Boolean!
   note: String
@@ -15037,11 +15170,40 @@ input VenueFilterInput {
   venueTypes: [VenueType!]
 }
 
+type VenueFinanceExportResult {
+  """CSV content (UTF-8)"""
+  content: String!
+  filename: String!
+  mimeType: String!
+
+  """Approximate size in bytes"""
+  sizeBytes: Float!
+}
+
+type VenueFinancePortfolio {
+  totalVenues: Int!
+  venues: [VenueFinancePortfolioItem!]!
+}
+
+type VenueFinancePortfolioItem {
+  completedOrders: Int!
+  grossProfit: FinancePnlMetric!
+  grossRevenue: FinancePnlMetric!
+  netMarginPercent: FinancePnlRateMetric!
+  netProfit: FinancePnlMetric!
+  netRevenue: FinancePnlMetric!
+  venueId: ID!
+  venueName: String!
+}
+
 type VenueFinanceReport {
   averageOrderValue: Int!
   byCourt: [FinanceBreakdownItem!]!
   byOrderType: [FinanceBreakdownItem!]!
   byPaymentMethod: [FinanceBreakdownItem!]!
+
+  """Item-level revenue streams (court / product / other)"""
+  byRevenueStream: [FinanceBreakdownItem!]!
   byStatus: [FinanceBreakdownItem!]!
   completedOrders: Int!
   completionRate: Float!
@@ -15109,6 +15271,23 @@ type VenueMarginThresholds {
 
   """Margin % below which shows yellow warning (default 20)"""
   warningMargin: Float!
+}
+
+type VenueOperationsReport {
+  """Breakdown by venue promotion in the selected period"""
+  byPromotion: [FinanceBreakdownItem!]!
+
+  """Breakdown by BookingScheduleType (fixed / single)"""
+  byScheduleType: [FinanceBreakdownItem!]!
+
+  """Court revenue by schedule date (confirmed/completed bookings)"""
+  courtRevenue: Int!
+
+  """Booking heatmap by day/hour"""
+  heatMapData: [HeatMapCell!]!
+  occupancy: OperationsOccupancySummary!
+  period: FinancePeriodInfo!
+  totalBookings: Int!
 }
 
 type VenueOrderTypeConfig {

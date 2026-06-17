@@ -107,6 +107,7 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     setProductForm({
       name: product.name,
       sku: product.sku ?? '',
+      unit: product.unit ?? 'cái',
       price: String(product.price),
       stockQuantity: String(product.stockQuantity ?? 0),
       lowStockThreshold: String(product.lowStockThreshold ?? 5),
@@ -132,6 +133,7 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
         productId: editingProduct._id,
         name: productForm.name.trim(),
         sku: productForm.sku.trim() || undefined,
+        unit: productForm.unit.trim() || 'cái',
         price,
         categoryId: productForm.categoryId,
         stockQuantity: parseInt(productForm.stockQuantity, 10) || 0,
@@ -142,6 +144,7 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
         venueId,
         name: productForm.name.trim(),
         sku: productForm.sku.trim() || undefined,
+        unit: productForm.unit.trim() || 'cái',
         price,
         categoryId: productForm.categoryId,
         stockQuantity: parseInt(productForm.stockQuantity, 10) || 0,

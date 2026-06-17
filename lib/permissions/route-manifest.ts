@@ -269,18 +269,13 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'owner',
     permission: 'finance.venue',
     status: 'live',
-    nav: { label: 'Tài chính', icon: 'cash-outline', section: 'Thống kê' },
+    nav: { label: 'Thống kê & Tài chính', icon: 'analytics-outline', section: 'Thống kê' },
   },
   {
     path: '/owner/analytics',
     workspace: 'owner',
     permission: 'analytics.venue',
     status: 'live',
-    nav: {
-      label: 'Thống kê',
-      icon: 'analytics-outline',
-      section: 'Thống kê',
-    },
   },
 
   // --- Organizer workspace ---

@@ -22,6 +22,7 @@ import {
   VENUE_FINANCE_REPORT,
   VENUE_FINANCE_TRANSACTIONS_CONNECTION,
 } from '@/graphql/owner/finance';
+import { strictMutationErrorPolicy } from '@/hooks/shared/mutation-helpers';
 import type {
   CreateVenueExpenseInput,
   CreateVenueExpenseMutation,
@@ -193,6 +194,7 @@ export function useExpenseMutations() {
     CreateVenueExpenseMutationVariables
   >(CREATE_VENUE_EXPENSE, {
     refetchQueries: ['VenueFinanceReport', 'VenueExpensesConnection'],
+    ...strictMutationErrorPolicy,
   });
 
   const [updateMutation, updateState] = useMutation<
@@ -200,6 +202,7 @@ export function useExpenseMutations() {
     UpdateVenueExpenseMutationVariables
   >(UPDATE_VENUE_EXPENSE, {
     refetchQueries: ['VenueFinanceReport', 'VenueExpensesConnection'],
+    ...strictMutationErrorPolicy,
   });
 
   const [deleteMutation, deleteState] = useMutation<
@@ -207,6 +210,7 @@ export function useExpenseMutations() {
     DeleteVenueExpenseMutationVariables
   >(DELETE_VENUE_EXPENSE, {
     refetchQueries: ['VenueFinanceReport', 'VenueExpensesConnection'],
+    ...strictMutationErrorPolicy,
   });
 
   return {

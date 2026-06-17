@@ -477,7 +477,9 @@ export const VENUE_PRODUCTS_CONNECTION = gql`
           _id
           name
           sku
+          unit
           price
+          averageCost
           status
           stockQuantity
           lowStockThreshold

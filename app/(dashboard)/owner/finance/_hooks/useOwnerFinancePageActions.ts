@@ -15,7 +15,7 @@
 
 import { useCallback, useState } from 'react';
 import { useExpenseMutations, type VenueExpenseNode } from '@/hooks/owner';
-import { showError, showSuccess } from '@/lib/toast';
+import { showSuccess } from '@/lib/toast';
 import type {
   CreateVenueExpenseInput,
   ExpenseCategory,
@@ -62,7 +62,6 @@ export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
         await data.refetchReport();
         return true;
       } catch {
-        showError('Không thể lưu chi phí');
         return false;
       }
     },
@@ -78,7 +77,6 @@ export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
         await data.refetchReport();
         return true;
       } catch {
-        showError('Không thể xoá chi phí');
         return false;
       }
     },
@@ -87,6 +85,8 @@ export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
 
   const handleRetryAll = useCallback(() => {
     void data.refetchReport();
+    void data.refetchPortfolio();
+    void data.refetchOperations();
     void data.refetchTransactions();
     void data.refetchExpenses();
   }, [data]);

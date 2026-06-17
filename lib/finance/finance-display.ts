@@ -36,7 +36,7 @@ export function buildFinanceInsights(report: FinanceReport | null): FinanceInsig
     insights.push({
       tone: 'warning',
       title: 'Có đơn nhưng chưa ghi nhận doanh thu',
-      message: `${report.pipelineOrders} đơn đang xử lý (${formatCurrency(report.pipelineGrossValue)}) chưa chuyển sang trạng thái hoàn thành. Doanh thu chỉ ghi nhận khi đơn completed.`,
+      message: `${report.pipelineOrders} đơn đang xử lý (${formatCurrency(report.pipelineGrossValue)}) chưa chuyển sang trạng thái hoàn thành. Doanh thu chỉ ghi nhận khi đơn hoàn thành.`,
     });
   }
 
@@ -52,8 +52,8 @@ export function buildFinanceInsights(report: FinanceReport | null): FinanceInsig
   if (report.pendingBookingRevenue > 0) {
     insights.push({
       tone: 'info',
-      title: 'Booking chưa có đơn',
-      message: `Dự kiến thêm ${formatCurrency(report.pendingBookingRevenue)} từ booking pending chưa sinh order.`,
+      title: 'Lịch chưa có đơn',
+      message: `Dự kiến thêm ${formatCurrency(report.pendingBookingRevenue)} từ lịch chờ chưa tạo đơn hàng.`,
     });
   }
 

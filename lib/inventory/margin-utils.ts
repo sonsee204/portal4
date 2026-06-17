@@ -70,13 +70,17 @@ export function getMarginLevelLabel(level: MarginLevel): string {
   }
 }
 
-export function estimateNewAverageCost(
-  existingTotalValue: number,
-  existingTotalQty: number,
+/** Project average cost after import using backend `product.averageCost` SSOT. */
+export function projectAverageCostAfterImport(
+  averageCost: number | null | undefined,
+  stockQuantity: number,
   importQty: number,
   importUnitPrice: number,
 ): number {
-  const newTotalValue = existingTotalValue + importUnitPrice * importQty;
-  const newTotalQty = existingTotalQty + importQty;
-  return newTotalQty > 0 ? newTotalValue / newTotalQty : importUnitPrice;
+  const existingQty = Math.max(stockQuantity, 0);
+  const existingValue = (averageCost ?? 0) * existingQty;
+  const newTotalQty = existingQty + importQty;
+  return newTotalQty > 0
+    ? (existingValue + importUnitPrice * importQty) / newTotalQty
+    : importUnitPrice;
 }

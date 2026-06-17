@@ -97,3 +97,14 @@ export {
   type FinanceTransactionNode,
   type VenueExpenseNode,
 } from './useOwnerFinance';
+
+export {
+  useOwnerFinancePortfolio,
+  type VenueFinancePortfolioReport,
+  type VenueFinancePortfolioRow,
+} from './useOwnerFinancePortfolio';
+
+export {
+  useOwnerOperationsReport,
+  type VenueOperationsReportData,
+} from './useOwnerOperationsReport';

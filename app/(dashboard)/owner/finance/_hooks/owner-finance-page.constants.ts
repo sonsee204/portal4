@@ -11,25 +11,48 @@
  * is strictly prohibited without prior written consent.
  */
 
+import { PaymentMethod } from '@/graphql/generated';
+
 export const FINANCE_PAGE_SIZE = 20;
+
+export type OwnerFinancePageTab = 'portfolio' | 'finance' | 'operations';
+
+export const FINANCE_PAGE_TABS = [
+  { label: 'Tổng quan', value: 'portfolio' },
+  { label: 'Tài chính', value: 'finance' },
+  { label: 'Vận hành sân', value: 'operations' },
+] as const;
+
+export const COMPARE_MODE_OPTIONS = [
+  { label: 'Kỳ trước (cùng độ dài)', value: 'PREVIOUS_PERIOD' },
+  { label: 'Cùng kỳ năm trước', value: 'SAME_PERIOD_LAST_YEAR' },
+];
+
+export const SCHEDULE_TYPE_FILTER_OPTIONS = [
+  { label: 'Tất cả loại lịch', value: '' },
+  { label: 'Cố định', value: 'FIXED' },
+  { label: 'Lẻ', value: 'SINGLE' },
+];
 
 export const ORDER_TYPE_FILTER_OPTIONS = [
   { label: 'Tất cả loại đơn', value: '' },
-  { label: 'Đặt sân', value: 'booking' },
-  { label: 'Tại chỗ', value: 'dine_in' },
-  { label: 'Mang đi', value: 'takeaway' },
-  { label: 'Giao ra sân', value: 'delivery_to_court' },
-  { label: 'Bán lẻ', value: 'retail' },
+  { label: 'Đặt sân', value: 'BOOKING' },
+  { label: 'Không phải đặt sân', value: 'NON_BOOKING' },
 ];
+
+export type OrderTypeCategoryFilter =
+  | ''
+  | 'BOOKING'
+  | 'NON_BOOKING';
 
 export const PAYMENT_METHOD_FILTER_OPTIONS = [
   { label: 'Tất cả phương thức', value: '' },
-  { label: 'Tiền mặt', value: 'cash' },
-  { label: 'Chuyển khoản', value: 'bank_transfer' },
-  { label: 'MoMo', value: 'momo' },
-  { label: 'ZaloPay', value: 'zalopay' },
-  { label: 'VNPay', value: 'vnpay' },
-  { label: 'Thẻ', value: 'card' },
+  { label: 'Tiền mặt', value: PaymentMethod.Cash },
+  { label: 'Chuyển khoản', value: PaymentMethod.BankTransfer },
+  { label: 'MoMo', value: PaymentMethod.Momo },
+  { label: 'ZaloPay', value: PaymentMethod.Zalopay },
+  { label: 'VNPay', value: PaymentMethod.Vnpay },
+  { label: 'Thẻ', value: PaymentMethod.Card },
 ];
 
 export const EXPENSE_CATEGORY_OPTIONS = [
@@ -37,7 +60,7 @@ export const EXPENSE_CATEGORY_OPTIONS = [
   { label: 'Lương nhân viên', value: 'SALARY' },
   { label: 'Điện nước', value: 'UTILITIES' },
   { label: 'Bảo trì', value: 'MAINTENANCE' },
-  { label: 'Marketing', value: 'MARKETING' },
+  { label: 'Tiếp thị', value: 'MARKETING' },
   { label: 'Vật tư', value: 'SUPPLIES' },
   { label: 'Thuế & phí', value: 'TAX' },
   { label: 'Khác', value: 'OTHER' },
@@ -46,3 +69,10 @@ export const EXPENSE_CATEGORY_OPTIONS = [
 export const EXPENSE_CATEGORY_LABELS = Object.fromEntries(
   EXPENSE_CATEGORY_OPTIONS.map((option) => [option.value, option.label]),
 );
+
+export const EXPENSE_COVERAGE_PRESETS = [
+  { label: '1 tháng', months: 1 },
+  { label: '3 tháng', months: 3 },
+  { label: '6 tháng', months: 6 },
+  { label: '12 tháng', months: 12 },
+] as const;

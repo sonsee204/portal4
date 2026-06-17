@@ -32,7 +32,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
       loading={data.reportLoading && !data.report}
       error={data.reportError}
       empty={!data.allVenues && !data.selectedVenueId}
-      emptyMessage="Chọn sân để xem KPI."
+      emptyMessage="Chọn sân để xem chỉ số."
       onRetry={() => void data.refetchReport()}
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -40,7 +40,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           icon="checkmark-done-outline"
           iconColor="text-emerald-400"
           label="Đơn hoàn thành"
-          hint="Status completed — ghi nhận doanh thu gộp"
+          hint="Đơn hoàn thành — ghi nhận doanh thu gộp"
           value={String(report?.completedOrders ?? 0)}
           badge={
             report && report.totalOrders > 0
@@ -55,7 +55,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           icon="time-outline"
           iconColor="text-amber-400"
           label="Đơn đang xử lý"
-          hint="Confirmed / pending — chưa ghi doanh thu"
+          hint="Đã xác nhận hoặc chờ xử lý — chưa ghi doanh thu"
           value={String(report?.pipelineOrders ?? 0)}
           badge={
             report && report.pipelineGrossValue > 0
@@ -78,7 +78,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           icon="hourglass-outline"
           iconColor="text-orange-400"
           label="Còn phải thu"
-          hint="Phần chưa thu của đơn pipeline"
+          hint="Phần chưa thu của đơn đang xử lý"
           value={formatCurrency(pnl?.outstanding.value ?? 0)}
           trend={toStatCardTrend(pnl?.outstanding.changePercent)}
         />
@@ -86,7 +86,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           icon="bar-chart-outline"
           iconColor="text-violet-400"
           label="Doanh thu gộp"
-          hint="Tổng đơn completed trong kỳ"
+          hint="Tổng đơn hoàn thành trong kỳ"
           value={formatCurrency(pnl?.grossRevenue.value ?? 0)}
           trend={toStatCardTrend(pnl?.grossRevenue.changePercent)}
         />
@@ -108,7 +108,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           icon="pricetag-outline"
           iconColor="text-blue-400"
           label="TB/đơn hoàn thành"
-          hint="Doanh thu gộp ÷ đơn completed"
+          hint="Doanh thu gộp ÷ số đơn hoàn thành"
           value={formatCurrency(report?.averageOrderValue ?? 0)}
         />
       </div>
@@ -118,8 +118,8 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           <StatCard
             icon="calendar-outline"
             iconColor="text-orange-400"
-            label="Dự kiến (booking pending)"
-            hint="Booking chưa sinh order"
+            label="Doanh thu dự kiến (lịch chờ)"
+            hint="Lịch chưa tạo đơn hàng"
             value={formatCurrency(report?.pendingBookingRevenue ?? 0)}
             className="max-w-sm"
           />

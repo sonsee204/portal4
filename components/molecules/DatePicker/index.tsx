@@ -17,10 +17,12 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { CalendarPanel } from '@/components/molecules/CalendarPanel';
@@ -65,13 +67,22 @@ export function DatePicker({
 }: DatePickerProps) {
   const popoverId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(value));
+  const [popoverStyle, setPopoverStyle] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
 
   const normalizedValue = startOfDay(value);
   const displayValue = formatDisplayDate(normalizedValue, locale);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => {
+    setOpen(false);
+    setPopoverStyle(null);
+  }, []);
 
   const selectDate = useCallback(
     (date: Date) => {
@@ -116,7 +127,9 @@ export function DatePicker({
     if (!open) return;
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (rootRef.current?.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
       close();
     };
 
@@ -131,6 +144,53 @@ export function DatePicker({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [close, open]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const updatePosition = () => {
+      const trigger = triggerRef.current;
+      const popover = popoverRef.current;
+      if (!trigger || !popover) return;
+
+      const gap = 8;
+      const viewportPadding = 8;
+      const triggerRect = trigger.getBoundingClientRect();
+      const popoverRect = popover.getBoundingClientRect();
+
+      let top = triggerRect.bottom + gap;
+      let left =
+        align === 'start'
+          ? triggerRect.left
+          : triggerRect.right - popoverRect.width;
+
+      if (top + popoverRect.height > window.innerHeight - viewportPadding) {
+        top = triggerRect.top - popoverRect.height - gap;
+      }
+
+      left = Math.max(
+        viewportPadding,
+        Math.min(left, window.innerWidth - popoverRect.width - viewportPadding)
+      );
+      top = Math.max(
+        viewportPadding,
+        Math.min(top, window.innerHeight - popoverRect.height - viewportPadding)
+      );
+
+      setPopoverStyle({ top, left });
+    };
+
+    updatePosition();
+    const frame = requestAnimationFrame(updatePosition);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [align, open, viewMonth]);
 
   const handleTriggerKeyDown = (
     event: ReactKeyboardEvent<HTMLButtonElement>
@@ -171,6 +231,7 @@ export function DatePicker({
         ) : null}
 
         <button
+          ref={triggerRef}
           type="button"
           disabled={disabled}
           aria-label={ariaLabel}
@@ -224,28 +285,44 @@ export function DatePicker({
         ) : null}
       </div>
 
-      {open ? (
-        <div
-          id={popoverId}
-          role="dialog"
-          aria-modal="false"
-          aria-label={ariaLabel}
-          className={cn(
-            'absolute top-full z-50 mt-2',
-            align === 'start' ? 'left-0' : 'right-0'
-          )}
-        >
-          <CalendarPanel
-            viewMonth={viewMonth}
-            selectedDate={normalizedValue}
-            onViewMonthChange={setViewMonth}
-            onSelectDate={selectDate}
-            minDate={minDate}
-            maxDate={maxDate}
-            locale={locale}
-          />
-        </div>
-      ) : null}
+      {open
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              id={popoverId}
+              role="dialog"
+              aria-modal="false"
+              aria-label={ariaLabel}
+              style={
+                popoverStyle
+                  ? {
+                      position: 'fixed',
+                      top: popoverStyle.top,
+                      left: popoverStyle.left,
+                      zIndex: 70,
+                    }
+                  : {
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      visibility: 'hidden',
+                      zIndex: 70,
+                    }
+              }
+            >
+              <CalendarPanel
+                viewMonth={viewMonth}
+                selectedDate={normalizedValue}
+                onViewMonthChange={setViewMonth}
+                onSelectDate={selectDate}
+                minDate={minDate}
+                maxDate={maxDate}
+                locale={locale}
+              />
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

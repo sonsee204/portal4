@@ -35,7 +35,7 @@ function buildExportRows(data: OwnerFinancePageData): FinanceExportRow[] {
 
   return [
     { nhom: 'P&L', chi_tieu: 'Doanh thu thuần', gia_tri: report.pnl.netRevenue.value },
-    { nhom: 'P&L', chi_tieu: 'COGS', gia_tri: report.pnl.cogs.value },
+    { nhom: 'P&L', chi_tieu: 'Giá vốn', gia_tri: report.pnl.cogs.value },
     { nhom: 'P&L', chi_tieu: 'Lợi nhuận gộp', gia_tri: report.pnl.grossProfit.value },
     {
       nhom: 'P&L',
@@ -43,11 +43,11 @@ function buildExportRows(data: OwnerFinancePageData): FinanceExportRow[] {
       gia_tri: report.pnl.operatingExpenses.value,
     },
     { nhom: 'P&L', chi_tieu: 'Lãi/lỗ ròng', gia_tri: report.pnl.netProfit.value },
-    { nhom: 'KPI', chi_tieu: 'Đã thu', gia_tri: report.pnl.collected.value },
-    { nhom: 'KPI', chi_tieu: 'Còn phải thu', gia_tri: report.pnl.outstanding.value },
-    { nhom: 'KPI', chi_tieu: 'Hoàn tiền', gia_tri: report.pnl.refunds.value },
-    { nhom: 'KPI', chi_tieu: 'Tổng đơn', gia_tri: report.totalOrders },
-    { nhom: 'KPI', chi_tieu: 'Hoàn thành', gia_tri: report.completedOrders },
+    { nhom: 'Chỉ số', chi_tieu: 'Đã thu', gia_tri: report.pnl.collected.value },
+    { nhom: 'Chỉ số', chi_tieu: 'Còn phải thu', gia_tri: report.pnl.outstanding.value },
+    { nhom: 'Chỉ số', chi_tieu: 'Hoàn tiền', gia_tri: report.pnl.refunds.value },
+    { nhom: 'Chỉ số', chi_tieu: 'Tổng đơn', gia_tri: report.totalOrders },
+    { nhom: 'Chỉ số', chi_tieu: 'Hoàn thành', gia_tri: report.completedOrders },
     ...report.trend.map((point) => ({
       nhom: 'Xu hướng',
       chi_tieu: point.label,
@@ -87,7 +87,7 @@ export function FinanceExportButton({ data }: FinanceExportButtonProps) {
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tai chinh');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tài chính');
     XLSX.writeFile(workbook, buildExportFilename(data, 'xlsx'));
   };
 

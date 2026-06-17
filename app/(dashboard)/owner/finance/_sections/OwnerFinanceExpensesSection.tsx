@@ -21,6 +21,7 @@ import { Button } from '@/components/atoms/Button';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { VenueAction } from '@/graphql/generated';
 import { formatCurrency } from '@/lib/utils';
+import { formatCoverageLabel } from '@/lib/finance/expense-coverage';
 import {
   FINANCE_TABLE_ROW_CLASS,
   FINANCE_TABLE_SCROLL_CLASS,
@@ -56,7 +57,7 @@ export function OwnerFinanceExpensesSection({
         <div>
           <h3 className="text-heading text-base font-bold">Chi phí vận hành</h3>
           <p className="text-muted text-sm">
-            {data.expenseCount} khoản chi phí trong kỳ
+            {data.expenseCount} khoản chi phí ảnh hưởng kỳ
           </p>
         </div>
         <VenueActionGate action={VenueAction.ManageExpenses}>
@@ -81,50 +82,65 @@ export function OwnerFinanceExpensesSection({
         <DataTable<VenueExpenseNode>
           stickyHeader
           className={FINANCE_TABLE_SCROLL_CLASS}
-          emptyTitle="Không có chi phí trong kỳ"
+          emptyTitle="Không có chi phí ảnh hưởng kỳ này"
           columns={[
-            { key: 'date', label: 'Ngày' },
-            { key: 'category', label: 'Nhóm' },
+            { key: 'date', label: 'Ngày TT' },
+            { key: 'coverage', label: 'Kỳ chi phí' },
             { key: 'amount', label: 'Số tiền', align: 'right' },
+            { key: 'allocated', label: 'Trong kỳ', align: 'right' },
+            { key: 'category', label: 'Nhóm' },
             { key: 'note', label: 'Ghi chú' },
             { key: 'actions', label: '', align: 'right' },
           ]}
           data={data.expenses}
-          renderRow={(row: VenueExpenseNode) => (
-            <tr key={row._id} className={FINANCE_TABLE_ROW_CLASS}>
-              <td className="text-faint px-4 py-3 text-xs">{row.date}</td>
-              <td className="text-body px-4 py-3 text-sm">
-                {EXPENSE_CATEGORY_LABELS[row.category] ?? row.category}
-              </td>
-              <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
-                {formatCurrency(row.amount)}
-              </td>
-              <td className="text-muted px-4 py-3 text-sm">
-                {row.note ?? '—'}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <VenueActionGate action={VenueAction.ManageExpenses}>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => actions.openEditExpense(row)}
-                    >
-                      Sửa
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void actions.handleDeleteExpense(row._id)}
-                      disabled={actions.deletingExpense}
-                    >
-                      Xoá
-                    </Button>
-                  </div>
-                </VenueActionGate>
-              </td>
-            </tr>
-          )}
+          renderRow={(row: VenueExpenseNode) => {
+            const coverageFrom = row.coverageFrom ?? row.date;
+            const coverageTo = row.coverageTo ?? row.date;
+
+            return (
+              <tr key={row._id} className={FINANCE_TABLE_ROW_CLASS}>
+                <td className="text-faint px-4 py-3 text-xs">{row.date}</td>
+                <td className="text-body px-4 py-3 text-sm">
+                  {formatCoverageLabel(coverageFrom, coverageTo)}
+                </td>
+                <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
+                  {formatCurrency(row.amount)}
+                </td>
+                <td className="text-body px-4 py-3 text-right text-sm font-medium">
+                  {formatCurrency(row.allocatedAmountInPeriod ?? row.amount)}
+                </td>
+                <td className="text-body px-4 py-3 text-sm">
+                  {EXPENSE_CATEGORY_LABELS[row.category] ?? row.category}
+                </td>
+                <td className="text-muted px-4 py-3 text-sm">
+                  {row.note ?? '—'}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <VenueActionGate action={VenueAction.ManageExpenses}>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => actions.openEditExpense(row)}
+                      >
+                        Sửa
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          void actions.handleDeleteExpense(row._id)
+                        }
+                        disabled={actions.deletingExpense}
+                      >
+                        Xoá
+                      </Button>
+                    </div>
+                  </VenueActionGate>
+                </td>
+              </tr>
+            );
+          }}
         />
 
         <ConnectionPager
