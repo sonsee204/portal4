@@ -17,12 +17,40 @@ export { VenueAction };
 
 export type VenuePermissionSet = VenueAction[];
 
-export function canVenueAction(
+function hasDirectPermission(
+  permissions: VenuePermissionSet | null | undefined,
+  action: VenueAction,
+): boolean {
+  return permissions?.includes(action) ?? false;
+}
+
+/** Mirror backend resolveVenueActionFromStaff implied grants. */
+export function resolveVenueAction(
   permissions: VenuePermissionSet | null | undefined,
   action: VenueAction,
 ): boolean {
   if (!permissions?.length) return false;
-  return permissions.includes(action);
+  if (hasDirectPermission(permissions, action)) return true;
+
+  if (action === VenueAction.ViewBookings) {
+    return (
+      hasDirectPermission(permissions, VenueAction.ApproveBooking) ||
+      hasDirectPermission(permissions, VenueAction.CreateBooking)
+    );
+  }
+
+  if (action === VenueAction.ViewOrders) {
+    return hasDirectPermission(permissions, VenueAction.CreateOrder);
+  }
+
+  return false;
+}
+
+export function canVenueAction(
+  permissions: VenuePermissionSet | null | undefined,
+  action: VenueAction,
+): boolean {
+  return resolveVenueAction(permissions, action);
 }
 
 export function canAnyVenueAction(
@@ -30,7 +58,7 @@ export function canAnyVenueAction(
   actions: VenueAction[],
 ): boolean {
   if (!permissions?.length) return false;
-  return actions.some((action) => permissions.includes(action));
+  return actions.some((action) => resolveVenueAction(permissions, action));
 }
 
 export function canAllVenueActions(
@@ -38,7 +66,7 @@ export function canAllVenueActions(
   actions: VenueAction[],
 ): boolean {
   if (!permissions?.length) return false;
-  return actions.every((action) => permissions.includes(action));
+  return actions.every((action) => resolveVenueAction(permissions, action));
 }
 
 /** Maps owner routes to required venue actions (any match grants access). */

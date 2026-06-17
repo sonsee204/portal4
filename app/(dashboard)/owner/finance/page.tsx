@@ -13,6 +13,9 @@
 
 'use client';
 
+import { VenueAction } from '@/graphql/generated';
+import { VenueActionGate } from '@/components/atoms/VenueActionGate';
+import { EmptyState } from '@/components/molecules/EmptyState';
 import { useOwnerFinancePageActions } from './_hooks/useOwnerFinancePageActions';
 import { useOwnerFinancePageData } from './_hooks/useOwnerFinancePageData';
 import { OwnerFinanceHeaderSection } from './_sections/OwnerFinanceHeaderSection';
@@ -28,7 +31,7 @@ import { OwnerFinanceExpensesSection } from './_sections/OwnerFinanceExpensesSec
 import { OwnerFinanceOperationsSection } from './_sections/OwnerFinanceOperationsSection';
 import { ExpenseFormModal } from './_components/ExpenseFormModal';
 
-export default function OwnerFinancePage() {
+function FinancePageContent() {
   const data = useOwnerFinancePageData();
   const actions = useOwnerFinancePageActions(data);
 
@@ -60,5 +63,24 @@ export default function OwnerFinancePage() {
       </div>
       <ExpenseFormModal data={data} actions={actions} />
     </>
+  );
+}
+
+export default function OwnerFinancePage() {
+  return (
+    <VenueActionGate
+      action={VenueAction.ViewAnalytics}
+      fallback={
+        <div className="py-16">
+          <EmptyState
+            title="Không có quyền xem tài chính"
+            description="Quyền xem thống kê cho phép truy cập báo cáo tài chính và biểu đồ. Liên hệ chủ sân để được cấp quyền."
+            icon="lock-closed-outline"
+          />
+        </div>
+      }
+    >
+      <FinancePageContent />
+    </VenueActionGate>
   );
 }

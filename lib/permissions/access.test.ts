@@ -92,15 +92,26 @@ describe('portal access', () => {
     expect(canAccessRoute('SUPER_ADMIN', '/admin/users')).toBe(true);
   });
 
-  it('ownerOnly route requires isOwner flag', () => {
+  it('platformOwnerOnly route requires SUPER_ADMIN', () => {
     expect(
-      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], false),
+      canAccessRoute('ADMIN', '/admin/access-control', [], false),
     ).toBe(false);
     expect(
-      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], true),
+      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], false),
     ).toBe(true);
     const entry = matchRouteManifest('/admin/access-control');
-    expect(entry?.ownerOnly).toBe(true);
+    expect(entry?.platformOwnerOnly).toBe(true);
+  });
+
+  it('venueOwnerOnly route requires venue owner flag', () => {
+    expect(canAccessRoute('FACILITY_OWNER', '/owner/staff', [], false)).toBe(
+      false,
+    );
+    expect(canAccessRoute('FACILITY_OWNER', '/owner/staff', [], true)).toBe(
+      true,
+    );
+    const entry = matchRouteManifest('/owner/staff');
+    expect(entry?.venueOwnerOnly).toBe(true);
   });
 
   it('isAdminRole and isSuperAdminRole', () => {

@@ -187,6 +187,12 @@ export async function middleware(request: NextRequest) {
   }
 
   const routeEntry = matchRouteManifest(pathname);
+  if (routeEntry?.platformOwnerOnly && role !== 'SUPER_ADMIN') {
+    return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
+  if (routeEntry?.venueOwnerOnly && !isOwner) {
+    return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
   if (routeEntry?.ownerOnly && !isOwner) {
     return NextResponse.redirect(new URL('/forbidden', request.url));
   }

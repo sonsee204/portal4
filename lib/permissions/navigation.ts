@@ -22,6 +22,9 @@ export interface NavItem {
   label: string;
   icon: string;
   permission?: PortalPermission;
+  platformOwnerOnly?: boolean;
+  venueOwnerOnly?: boolean;
+  /** @deprecated Use platformOwnerOnly or venueOwnerOnly */
   ownerOnly?: boolean;
 }
 
@@ -56,6 +59,8 @@ export function buildSidebarNav(
       label: route.nav!.label,
       icon: route.nav!.icon,
       permission: route.permission,
+      platformOwnerOnly: route.platformOwnerOnly,
+      venueOwnerOnly: route.venueOwnerOnly,
       ownerOnly: route.ownerOnly,
     })),
   }));

@@ -45,6 +45,8 @@ interface NavItemConfig {
   label: string;
   icon: string;
   permission?: PortalPermission;
+  platformOwnerOnly?: boolean;
+  venueOwnerOnly?: boolean;
   ownerOnly?: boolean;
 }
 
@@ -66,14 +68,20 @@ function filterNavByRole(
     .map((section) => ({
       ...section,
       items: section.items.filter((item: NavItemConfig) => {
-        if (item.ownerOnly) {
-          if (item.href.startsWith('/owner/')) {
-            const isVenueOwnerOnAnyVenue =
-              venueFilter?.venues.some((venue) => venue.isOwner) ?? false;
-            if (!isVenueOwnerOnAnyVenue && !venueFilter?.isVenueOwner) {
-              return false;
-            }
-          } else if (!isOwner) {
+        if (
+          item.venueOwnerOnly ||
+          (item.ownerOnly && item.href.startsWith('/owner/'))
+        ) {
+          const isVenueOwnerOnAnyVenue =
+            venueFilter?.venues.some((venue) => venue.isOwner) ?? false;
+          if (!isVenueOwnerOnAnyVenue && !venueFilter?.isVenueOwner) {
+            return false;
+          }
+        } else if (
+          item.platformOwnerOnly ||
+          (item.ownerOnly && !item.href.startsWith('/owner/'))
+        ) {
+          if (!isOwner) {
             return false;
           }
         }

@@ -174,7 +174,15 @@ export function canAccessRoute(
   const entry = matchRouteManifest(pathname);
   if (!entry) return true;
   if (!role) return false;
-  if (entry.ownerOnly && !isOwner) return false;
+  if (entry.platformOwnerOnly && !isSuperAdminRole(role)) return false;
+  if (entry.venueOwnerOnly && !isOwner) return false;
+  if (entry.ownerOnly) {
+    if (pathname.startsWith('/owner/')) {
+      if (!isOwner) return false;
+    } else if (!isSuperAdminRole(role)) {
+      return false;
+    }
+  }
   if (
     !canAccessWorkspace(role, entry.workspace, capabilities, hasVenueAccess)
   ) {

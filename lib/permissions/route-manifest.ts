@@ -28,7 +28,11 @@ export interface RouteManifestEntry {
   workspace: PortalWorkspace;
   permission: PortalPermission;
   status: RouteStatus;
-  /** Restrict route to platform owner only */
+  /** Restrict route to platform super-admin only */
+  platformOwnerOnly?: boolean;
+  /** Restrict route to venue owner (not delegated staff) */
+  venueOwnerOnly?: boolean;
+  /** @deprecated Use platformOwnerOnly or venueOwnerOnly */
   ownerOnly?: boolean;
   /** When set, shown in sidebar for this workspace. */
   nav?: RouteNavMeta;
@@ -182,7 +186,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'admin',
     permission: 'users.manage',
     status: 'live',
-    ownerOnly: true,
+    platformOwnerOnly: true,
     nav: {
       label: 'Phân quyền hệ thống',
       icon: 'key-outline',
@@ -257,7 +261,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'owner',
     permission: 'staff.venue',
     status: 'live',
-    ownerOnly: true,
+    venueOwnerOnly: true,
     nav: {
       label: 'Nhân viên',
       icon: 'people-outline',

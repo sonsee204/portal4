@@ -42,6 +42,16 @@ export function getVenueActionLabel(action: VenueAction): string {
   return VENUE_ACTION_LABELS[action] ?? action;
 }
 
+/** Short descriptions for staff permission UI. */
+export const VENUE_ACTION_DESCRIPTIONS: Partial<Record<VenueAction, string>> = {
+  [VenueAction.ViewAnalytics]:
+    'Báo cáo tài chính, biểu đồ và thống kê vận hành trên portal/mobile',
+  [VenueAction.ViewSensitiveData]:
+    'Doanh thu, P&L và dữ liệu nhạy cảm khác',
+  [VenueAction.CreateBooking]:
+    'Tạo đặt sân hộ khách — tự bao gồm xem lịch đặt sân (VIEW_BOOKINGS)',
+};
+
 export function mergeVenuePermissions(
   selected: VenueAction[],
 ): VenueAction[] {
