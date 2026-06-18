@@ -11,20 +11,10 @@
  * is strictly prohibited without prior written consent.
  */
 
-export type TournamentWorkspace = 'admin' | 'organizer';
+export const TOURNAMENT_BASE_PATH = '/organizer/tournaments';
 
-export function getTournamentBasePath(
-  workspace: TournamentWorkspace = 'admin'
-): string {
-  return workspace === 'organizer'
-    ? '/organizer/tournaments'
-    : '/admin/tournaments';
-}
-
-export function detectTournamentWorkspace(
-  pathname: string
-): TournamentWorkspace {
-  return pathname.startsWith('/organizer') ? 'organizer' : 'admin';
+export function getTournamentBasePath(): string {
+  return TOURNAMENT_BASE_PATH;
 }
 
 export interface TournamentRoutePaths {
