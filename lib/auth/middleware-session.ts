@@ -86,7 +86,7 @@ function applySessionCookies(
 /**
  * Mark a response as never-cacheable by any shared cache. MUST be applied to
  * every response that reads or mutates auth cookies — otherwise a CDN/edge
- * proxy can store a response carrying one user's `Set-Cookie` and replay it to
+ * proxy can store a response carrying one user's Set-Cookie and replay it to
  * another user, which makes sessions bleed across devices.
  */
 export function applyNoStore(response: NextResponse): void {
@@ -110,9 +110,6 @@ export function clearAuthCookies(
   }
   if (cookieNames.IS_OWNER) {
     response.cookies.delete(cookieNames.IS_OWNER);
-  }
-  if (cookieNames.HAS_VENUE_ACCESS) {
-    response.cookies.delete(cookieNames.HAS_VENUE_ACCESS);
   }
   applyNoStore(response);
 }
@@ -293,7 +290,7 @@ export function enrichAuthResponse(
     response.headers.set('x-user-role', session.role);
   }
 
-  // Authenticated responses may carry refreshed `Set-Cookie` headers — never
+  // Authenticated responses may carry refreshed Set-Cookie headers — never
   // let a shared cache store them.
   applyNoStore(response);
 
