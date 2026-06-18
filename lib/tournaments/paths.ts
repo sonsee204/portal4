@@ -41,7 +41,9 @@ export interface TournamentRoutePaths {
   media: (id: string) => string;
 }
 
-export function tournamentRoutes(base: string): TournamentRoutePaths {
+export function tournamentRoutes(
+  base: string = TOURNAMENT_BASE_PATH
+): TournamentRoutePaths {
   return {
     list: base,
     create: `${base}/create`,
@@ -56,3 +58,11 @@ export function tournamentRoutes(base: string): TournamentRoutePaths {
     media: (id: string) => `${base}/${id}/media`,
   };
 }
+
+/** @deprecated Admin tournament routes removed — always organizer workspace. */
+export function detectTournamentWorkspace(_pathname: string): 'organizer' {
+  return 'organizer';
+}
+
+/** @deprecated Use TOURNAMENT_BASE_PATH or tournamentRoutes() instead. */
+export type TournamentWorkspace = 'organizer';

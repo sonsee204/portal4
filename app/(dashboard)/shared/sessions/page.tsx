@@ -21,12 +21,8 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { QueryState } from '@/components/molecules/QueryState';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import { useState } from 'react';
+import { formatDateTime } from '@/lib/utils';
 import { useSessions } from './_hooks/useSessions';
-
-function formatRelative(date?: string | null) {
-  if (!date) return '—';
-  return new Date(date).toLocaleString('vi-VN');
-}
 
 function formatDeviceLabel(session: {
   deviceName?: string | null;
@@ -144,7 +140,11 @@ export default function SessionsPage() {
                         ? `Vị trí: ${session.loginLocation} · `
                         : ''}
                       IP: {session.ipAddress ?? '—'} · Hoạt động:{' '}
-                      {formatRelative(session.lastUsedAt ?? session.createdAt)}
+                      {(() => {
+                        const activityAt =
+                          session.lastUsedAt ?? session.createdAt;
+                        return activityAt ? formatDateTime(activityAt) : '—';
+                      })()}
                     </p>
                   </div>
                 </div>

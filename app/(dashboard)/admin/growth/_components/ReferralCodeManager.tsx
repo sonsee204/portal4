@@ -44,7 +44,7 @@ const columns: DataTableColumn[] = [
   { key: 'usage', label: GROWTH.REFERRAL.COLUMNS.USAGE, align: 'right' },
   { key: 'signups', label: GROWTH.REFERRAL.COLUMNS.SIGNUPS, align: 'right' },
   { key: 'revenue', label: GROWTH.REFERRAL.COLUMNS.REVENUE, align: 'right' },
-  { key: 'actions', label: '', align: 'center' },
+  { key: 'actions', label: '', align: 'right' },
 ];
 
 export function ReferralCodeManager() {
@@ -150,8 +150,8 @@ export function ReferralCodeManager() {
           : '-'}
       </td>
 
-      <td className="px-4 py-3 text-center">
-        <div className="flex items-center justify-center gap-1">
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             onClick={() => handleCopyCode(code.code)}

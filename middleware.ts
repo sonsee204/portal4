@@ -97,6 +97,8 @@ export async function middleware(request: NextRequest) {
     request.cookies.get(AUTH_COOKIES.PORTAL_CAPABILITIES)?.value,
   );
   const isOwner = request.cookies.get(AUTH_COOKIES.IS_OWNER)?.value === '1';
+  const hasVenueAccess =
+    request.cookies.get(AUTH_COOKIES.HAS_VENUE_ACCESS)?.value === '1';
 
   if (session.authFailure) {
     if (isPublicRoute) {
@@ -143,13 +145,44 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/calendar' && role) {
-    const calendarPath =
-      role === 'FACILITY_OWNER' ? '/owner/calendar' : '/admin/calendar';
-    return NextResponse.redirect(new URL(calendarPath, request.url));
+    if (hasVenueAccess || role === 'FACILITY_OWNER') {
+      return NextResponse.redirect(new URL('/owner/calendar', request.url));
+    }
+    return NextResponse.redirect(
+      new URL(getHomePath(role, capabilities), request.url),
+    );
+  }
+
+  if (pathname.startsWith('/admin/tournaments')) {
+    const suffix = pathname.slice('/admin/tournaments'.length);
+    return NextResponse.redirect(
+      new URL(`/organizer/tournaments${suffix}`, request.url),
+    );
+  }
+
+  if (pathname === '/admin/finance' || pathname.startsWith('/admin/finance/')) {
+    if (hasVenueAccess || role === 'FACILITY_OWNER') {
+      return NextResponse.redirect(new URL('/owner/finance', request.url));
+    }
+    return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
+
+  if (
+    pathname === '/admin/calendar' ||
+    pathname.startsWith('/admin/calendar/')
+  ) {
+    if (hasVenueAccess || role === 'FACILITY_OWNER') {
+      return NextResponse.redirect(new URL('/owner/calendar', request.url));
+    }
+    return NextResponse.redirect(new URL('/forbidden', request.url));
   }
 
   const workspace = getWorkspaceFromPath(pathname);
-  if (workspace && role && !canAccessWorkspace(role, workspace, capabilities)) {
+  if (
+    workspace &&
+    role &&
+    !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+  ) {
     return NextResponse.redirect(new URL('/forbidden', request.url));
   }
 

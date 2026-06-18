@@ -24,6 +24,7 @@ export async function setSession(
   userRole: string,
   portalCapabilities: PortalCapability[] = [],
   isOwner = false,
+  hasVenueAccess = false,
 ): Promise<void> {
   const cookieStore = await cookies();
   const options = buildSessionCookieOptions(tokens, COOKIE_OPTIONS);
@@ -41,6 +42,11 @@ export async function setSession(
     options.role,
   );
   cookieStore.set(AUTH_COOKIES.IS_OWNER, isOwner ? '1' : '0', options.role);
+  cookieStore.set(
+    AUTH_COOKIES.HAS_VENUE_ACCESS,
+    hasVenueAccess ? '1' : '0',
+    options.role,
+  );
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -58,6 +64,25 @@ export async function getUserRole(): Promise<string | null> {
   return cookieStore.get(AUTH_COOKIES.USER_ROLE)?.value ?? null;
 }
 
+export async function syncVenueAccessCookie(
+  hasVenueAccess: boolean,
+): Promise<void> {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get(AUTH_COOKIES.REFRESH_TOKEN)?.value;
+  if (!refreshToken) return;
+
+  const options = buildSessionCookieOptions(
+    { accessToken: '', refreshToken },
+    COOKIE_OPTIONS,
+  );
+
+  cookieStore.set(
+    AUTH_COOKIES.HAS_VENUE_ACCESS,
+    hasVenueAccess ? '1' : '0',
+    options.role,
+  );
+}
+
 export async function clearSession(): Promise<void> {
   const cookieStore = await cookies();
 
@@ -66,6 +91,7 @@ export async function clearSession(): Promise<void> {
   cookieStore.delete(AUTH_COOKIES.USER_ROLE);
   cookieStore.delete(AUTH_COOKIES.PORTAL_CAPABILITIES);
   cookieStore.delete(AUTH_COOKIES.IS_OWNER);
+  cookieStore.delete(AUTH_COOKIES.HAS_VENUE_ACCESS);
 }
 
 export async function hasSession(): Promise<boolean> {

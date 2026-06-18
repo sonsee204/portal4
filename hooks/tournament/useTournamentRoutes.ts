@@ -14,16 +14,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { usePathname } from 'next/navigation';
 import {
-  detectTournamentWorkspace,
-  getTournamentBasePath,
+  TOURNAMENT_BASE_PATH,
   tournamentRoutes,
   type TournamentRoutePaths,
 } from '@/lib/tournaments/paths';
 
 export function useTournamentRoutes(): TournamentRoutePaths {
-  const pathname = usePathname();
-  const base = getTournamentBasePath(detectTournamentWorkspace(pathname));
-  return useMemo(() => tournamentRoutes(base), [base]);
+  return useMemo(() => tournamentRoutes(TOURNAMENT_BASE_PATH), []);
 }

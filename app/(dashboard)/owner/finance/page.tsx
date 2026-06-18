@@ -13,96 +13,52 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
-import { PageHeader } from '@/components/organisms/PageHeader';
-import { StatCard } from '@/components/molecules/StatCard';
-import { GlassPanel } from '@/components/molecules/GlassPanel';
-import { Select } from '@/components/atoms/Select';
-import { QueryState } from '@/components/molecules/QueryState';
-import { formatCurrency } from '@/lib/utils';
-import { useMyVenues, useVenueRevenueStats } from '@/hooks/owner';
-
-const PERIOD_OPTIONS = [
-  { label: 'Tuần', value: 'week' },
-  { label: 'Tháng', value: 'month' },
-  { label: 'Quý', value: 'quarter' },
-  { label: 'Năm', value: 'year' },
-];
+import { useOwnerFinancePageActions } from './_hooks/useOwnerFinancePageActions';
+import { useOwnerFinancePageData } from './_hooks/useOwnerFinancePageData';
+import { OwnerFinanceHeaderSection } from './_sections/OwnerFinanceHeaderSection';
+import { OwnerFinanceFiltersSection } from './_sections/OwnerFinanceFiltersSection';
+import { OwnerFinancePortfolioSection } from './_sections/OwnerFinancePortfolioSection';
+import { OwnerFinanceInsightsSection } from './_sections/OwnerFinanceInsightsSection';
+import { OwnerFinancePnlSection } from './_sections/OwnerFinancePnlSection';
+import { OwnerFinanceKpiSection } from './_sections/OwnerFinanceKpiSection';
+import { OwnerFinanceChartsSection } from './_sections/OwnerFinanceChartsSection';
+import { OwnerFinanceWaterfallSection } from './_sections/OwnerFinanceWaterfallSection';
+import { OwnerFinanceTransactionsSection } from './_sections/OwnerFinanceTransactionsSection';
+import { OwnerFinanceExpensesSection } from './_sections/OwnerFinanceExpensesSection';
+import { OwnerFinanceOperationsSection } from './_sections/OwnerFinanceOperationsSection';
+import { ExpenseFormModal } from './_components/ExpenseFormModal';
 
 export default function OwnerFinancePage() {
-  const { venues } = useMyVenues({ limit: 50 });
-  const [venueId, setVenueId] = useState('');
-  const [period, setPeriod] = useState('month');
-
-  const effectiveVenueId = venueId || venues[0]?._id || null;
-  const { stats, loading, error, refetch } = useVenueRevenueStats(
-    effectiveVenueId,
-    period
-  );
-
-  const venueOptions = useMemo(
-    () => venues.map((v) => ({ label: v.name, value: v._id })),
-    [venues]
-  );
+  const data = useOwnerFinancePageData();
+  const actions = useOwnerFinancePageActions(data);
 
   return (
     <>
-      <PageHeader
-        title="Tài chính sân"
-        description="Theo dõi doanh thu theo từng cơ sở."
-      />
+      <OwnerFinanceHeaderSection data={data} actions={actions} />
+      <div className="mt-6 space-y-6">
+        <OwnerFinanceFiltersSection data={data} />
 
-      <GlassPanel card className="mt-6 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {venueOptions.length > 0 && (
-            <Select
-              label="Chọn sân"
-              options={venueOptions}
-              value={effectiveVenueId ?? ''}
-              onChange={(e) => setVenueId(e.target.value)}
-            />
-          )}
-          <Select
-            label="Kỳ báo cáo"
-            options={PERIOD_OPTIONS}
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-          />
-        </div>
+        {data.pageTab === 'portfolio' ? (
+          <OwnerFinancePortfolioSection data={data} />
+        ) : null}
 
-        <QueryState
-          loading={loading && !stats}
-          error={error}
-          empty={!effectiveVenueId}
-          emptyMessage="Chọn sân để xem tài chính."
-          onRetry={() => void refetch()}
-        >
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard
-              icon="cash-outline"
-              iconColor="text-emerald-400"
-              label="Đã thu"
-              value={formatCurrency(
-                stats?.bookingRevenue?.collectedRevenue ?? 0
-              )}
-            />
-            <StatCard
-              icon="trending-up-outline"
-              iconColor="text-blue-400"
-              label="Dự kiến"
-              value={formatCurrency(
-                stats?.bookingRevenue?.expectedRevenue ?? 0
-              )}
-            />
-            <StatCard
-              icon="analytics-outline"
-              iconColor="text-amber-400"
-              label="Tăng trưởng"
-              value={`${stats?.growthPercentage?.toFixed(1) ?? 0}%`}
-            />
-          </div>
-        </QueryState>
-      </GlassPanel>
+        {data.pageTab === 'finance' ? (
+          <>
+            <OwnerFinanceInsightsSection data={data} />
+            <OwnerFinancePnlSection data={data} />
+            <OwnerFinanceWaterfallSection data={data} />
+            <OwnerFinanceKpiSection data={data} />
+            <OwnerFinanceChartsSection data={data} />
+            <OwnerFinanceTransactionsSection data={data} />
+            <OwnerFinanceExpensesSection data={data} actions={actions} />
+          </>
+        ) : null}
+
+        {data.pageTab === 'operations' ? (
+          <OwnerFinanceOperationsSection data={data} />
+        ) : null}
+      </div>
+      <ExpenseFormModal data={data} actions={actions} />
     </>
   );
 }

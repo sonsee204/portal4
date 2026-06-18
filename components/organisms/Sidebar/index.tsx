@@ -25,6 +25,11 @@ import { can, ROLE_DISPLAY_NAMES } from '@/lib/permissions';
 import { useLogout } from '@/hooks/useLogout';
 import type { SidebarNavSection } from '@/lib/permissions/navigation';
 import type { PortalPermission } from '@/lib/permissions';
+import { useOptionalVenueContext } from '@/components/providers/VenueContextProvider';
+import {
+  canAccessOwnerRoute,
+  type VenuePermissionSet,
+} from '@/lib/venue/permissions';
 
 export type { SidebarNavSection };
 
@@ -47,14 +52,54 @@ function filterNavByRole(
   nav: SidebarNavSection[],
   role: UserRole | null,
   isOwner = false,
+  hasVenueAccess = false,
+  venueFilter?: {
+    venues: Array<{
+      myPermissions?: import('@/graphql/generated').VenueAction[] | null;
+      isOwner?: boolean;
+    }>;
+    permissions: VenuePermissionSet;
+    isVenueOwner: boolean;
+  }
 ): SidebarNavSection[] {
   return nav
     .map((section) => ({
       ...section,
       items: section.items.filter((item: NavItemConfig) => {
-        if (item.ownerOnly && !isOwner) return false;
-        if (!item.permission) return true;
-        return can(role, item.permission);
+        if (item.ownerOnly) {
+          if (item.href.startsWith('/owner/')) {
+            const isVenueOwnerOnAnyVenue =
+              venueFilter?.venues.some((venue) => venue.isOwner) ?? false;
+            if (!isVenueOwnerOnAnyVenue && !venueFilter?.isVenueOwner) {
+              return false;
+            }
+          } else if (!isOwner) {
+            return false;
+          }
+        }
+        if (
+          item.permission &&
+          !can(role, item.permission, [], hasVenueAccess)
+        ) {
+          return false;
+        }
+        if (venueFilter && item.href.startsWith('/owner/')) {
+          const visibleOnSelectedVenue = canAccessOwnerRoute(
+            item.href,
+            venueFilter.permissions,
+            venueFilter.isVenueOwner
+          );
+          if (visibleOnSelectedVenue) return true;
+
+          return venueFilter.venues.some((venue) =>
+            canAccessOwnerRoute(
+              item.href,
+              (venue.myPermissions ?? []) as VenuePermissionSet,
+              venue.isOwner ?? false
+            )
+          );
+        }
+        return true;
       }),
     }))
     .filter((section) => section.items.length > 0);
@@ -72,9 +117,23 @@ export function Sidebar({
   const user = useAuthStore((s) => s.user);
   const userRole = user?.role ?? null;
   const isOwner = user?.isOwner ?? false;
+  const hasVenueAccess = user?.hasVenueAccess ?? false;
+  const venueContext = useOptionalVenueContext();
 
   const { logout, isLoggingOut } = useLogout();
-  const filteredNav = filterNavByRole(nav, userRole, isOwner);
+  const filteredNav = filterNavByRole(
+    nav,
+    userRole,
+    isOwner,
+    hasVenueAccess,
+    venueContext
+      ? {
+          venues: venueContext.venues,
+          permissions: venueContext.permissions,
+          isVenueOwner: venueContext.isOwner,
+        }
+      : undefined
+  );
 
   return (
     <>

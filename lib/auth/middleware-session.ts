@@ -111,6 +111,9 @@ export function clearAuthCookies(
   if (cookieNames.IS_OWNER) {
     response.cookies.delete(cookieNames.IS_OWNER);
   }
+  if (cookieNames.HAS_VENUE_ACCESS) {
+    response.cookies.delete(cookieNames.HAS_VENUE_ACCESS);
+  }
   applyNoStore(response);
 }
 

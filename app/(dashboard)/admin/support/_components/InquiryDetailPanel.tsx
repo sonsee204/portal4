@@ -18,6 +18,7 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { IonIcon } from '@/components/atoms/IonIcon';
+import { formatDateTime } from '@/lib/utils';
 import { useUpdateInquiryStatus } from '@/hooks/contact';
 import { formatMutationError } from '@/hooks/shared';
 import { showSuccess, showError } from '@/lib/toast';
@@ -114,8 +115,7 @@ export function InquiryDetailPanel({
             {subjectLabel[inquiry.subject]}
           </h3>
           <p className="text-faint text-xs">
-            {inquiry.name} &middot;{' '}
-            {new Date(inquiry.createdAt).toLocaleString('vi-VN')}
+            {inquiry.name} &middot; {formatDateTime(inquiry.createdAt)}
           </p>
         </div>
         <Badge variant={statusVariant[inquiry.status]} dot>
@@ -172,7 +172,7 @@ export function InquiryDetailPanel({
                 <span className="font-medium">
                   {inquiry.repliedByUser.fullName}
                 </span>{' '}
-                &middot; {new Date(inquiry.repliedAt).toLocaleString('vi-VN')}
+                &middot; {formatDateTime(inquiry.repliedAt)}
               </p>
             </div>
           )}
