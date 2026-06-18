@@ -228,19 +228,19 @@ export async function resolveAuthSession(
     userId = userId ?? refreshResult.user._id;
     role = role ?? refreshResult.user.role;
 
-    return {
-      accessToken: refreshResult.accessToken,
-      userId: tokenPayload.sub ?? refreshResult.user._id,
-      role: tokenPayload.role ?? refreshResult.user.role,
-      refreshed: true,
-      refreshTokens: {
-        accessToken: refreshResult.accessToken,
-        refreshToken: refreshResult.refreshToken,
-        role: refreshResult.user.role,
-      },
-      authFailure: false,
-      networkFailure: false,
-    };
+    // return {
+    //   accessToken: refreshResult.accessToken,
+    //   userId: tokenPayload.sub ?? refreshResult.user._id,
+    //   role: tokenPayload.role ?? refreshResult.user.role,
+    //   refreshed: true,
+    //   refreshTokens: {
+    //     accessToken: refreshResult.accessToken,
+    //     refreshToken: refreshResult.refreshToken,
+    //     role: refreshResult.user.role,
+    //   },
+    //   authFailure: false,
+    //   networkFailure: false,
+    // };
   }
 
   if (refreshResult.kind === 'auth_failure') {
