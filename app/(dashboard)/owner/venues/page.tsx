@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
@@ -20,10 +21,27 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { QueryState } from '@/components/molecules/QueryState';
-import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerManagedVenues } from '@/hooks/owner';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+
+const VENUE_SORT_FIELDS = ['name', 'newest', 'rating', 'popularity'] as const;
 
 export default function OwnerVenuesPage() {
-  const { venues, loading, error, refetchVenues } = useVenueContext();
+  const sort = useDataTableSortUrl({
+    allowedFields: VENUE_SORT_FIELDS,
+    defaultField: 'name',
+    defaultDir: 'asc',
+  });
+
+  const sortInput = useMemo(
+    () => toSortByOrder(sort.sortField, sort.sortDir),
+    [sort.sortField, sort.sortDir]
+  );
+
+  const { venues, loading, error, refetch } = useOwnerManagedVenues(sortInput, {
+    limit: 50,
+  });
 
   return (
     <>
@@ -38,11 +56,11 @@ export default function OwnerVenuesPage() {
           error={error}
           empty={!loading && venues.length === 0}
           emptyMessage="Bạn chưa quản lý sân nào."
-          onRetry={() => refetchVenues()}
+          onRetry={() => refetch()}
         >
           <DataTable
             columns={[
-              { key: 'name', label: 'Tên sân' },
+              { key: 'name', label: 'Tên sân', sortable: true },
               { key: 'address', label: 'Địa chỉ' },
               { key: 'courts', label: 'Số sân' },
               { key: 'role', label: 'Vai trò' },
@@ -50,6 +68,10 @@ export default function OwnerVenuesPage() {
               { key: 'actions', label: '', align: 'right' },
             ]}
             data={venues}
+            sortKey={sort.sortField}
+            sortDir={sort.sortDir}
+            onSort={sort.handleSort}
+            sortLoading={loading && venues.length > 0}
             renderRow={(v) => (
               <tr
                 key={v._id}

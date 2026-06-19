@@ -13,10 +13,8 @@
 
 'use client';
 
-import { adminSidebarNav, withProfileSection } from '@/config/navigation';
+import { adminSidebarNav } from '@/config/navigation';
 import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboardShell';
-
-const adminNavWithProfile = withProfileSection(adminSidebarNav);
 
 export default function AdminLayout({
   children,
@@ -24,7 +22,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <WorkspaceDashboardShell workspace="admin" nav={adminNavWithProfile}>
+    <WorkspaceDashboardShell workspace="admin" nav={adminSidebarNav}>
       {children}
     </WorkspaceDashboardShell>
   );

@@ -13,20 +13,7 @@
 
 import { gql } from 'graphql-tag';
 
-export const VENUE_PROMOTIONS_FOR_FILTER = gql`
-  query VenuePromotionsForFilter($venueId: ID!) {
-    venuePromotionsConnection(venueId: $venueId, pagination: { first: 50 }) {
-      edges {
-        node {
-          _id
-          name
-          code
-          status
-        }
-      }
-    }
-  }
-`;
+export { VENUE_PROMOTIONS_CONNECTION as VENUE_PROMOTIONS_FOR_FILTER } from '../promotions/queries';
 
 const FINANCE_PNL_METRIC_FIELDS = gql`
   fragment FinancePnlMetricFields on FinancePnlMetric {

@@ -19,31 +19,38 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { QueryState } from '@/components/molecules/QueryState';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { TicketListItem } from './_components/TicketListItem';
 import { InquiryDetailPanel } from './_components/InquiryDetailPanel';
 import { UserDetailPanel } from './_components/UserDetailPanel';
 import { useContactInquiries, useContactInquiryStats } from '@/hooks/contact';
 import type { ContactInquiry, ContactInquiryFilterInput } from '@/types';
 import { InquiryStatusEnum } from '@/types';
-import { SUPPORT, COMMON, PAGINATION } from '@/lib/strings';
+import { SUPPORT, COMMON } from '@/lib/strings';
 
 type FilterValue = 'all' | InquiryStatusEnum;
 
 export default function SupportPage() {
   const [filter, setFilter] = useState<FilterValue>('all');
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filterInput: ContactInquiryFilterInput = {
     ...(filter !== 'all' && { status: filter }),
     ...(search && { search }),
-    page,
     limit: 20,
   };
 
-  const { inquiries, totalPages, loading, error, refetch } =
-    useContactInquiries(filterInput);
+  const {
+    inquiries,
+    total,
+    hasNextPage,
+    loadMore,
+    isLoadingMore,
+    loading,
+    error,
+    refetch,
+  } = useContactInquiries(filterInput);
 
   const { stats, refetch: refetchStats } = useContactInquiryStats();
 
@@ -76,13 +83,11 @@ export default function SupportPage() {
 
   const handleFilterChange = (val: string) => {
     setFilter(val as FilterValue);
-    setPage(1);
     setSelectedId(null);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1);
     setSelectedId(null);
   };
 
@@ -132,28 +137,15 @@ export default function SupportPage() {
               ))}
             </QueryState>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="text-muted hover:text-heading text-xs disabled:opacity-40"
-                >
-                  {PAGINATION.PREVIOUS}
-                </button>
-                <span className="text-faint text-xs">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="text-muted hover:text-heading text-xs disabled:opacity-40"
-                >
-                  {PAGINATION.NEXT}
-                </button>
-              </div>
-            )}
+            <ConnectionInfiniteScroll
+              hasNextPage={hasNextPage}
+              onLoadMore={() => void loadMore()}
+              loading={loading && inquiries.length === 0}
+              loadingMore={isLoadingMore}
+              loadedCount={inquiries.length}
+              totalCount={total}
+              onRetry={() => void refetch()}
+            />
           </div>
         </GlassPanel>
 

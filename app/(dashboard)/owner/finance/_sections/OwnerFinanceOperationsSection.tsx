@@ -26,7 +26,12 @@ interface OwnerFinanceOperationsSectionProps {
 }
 
 const HEATMAP_DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-const HEATMAP_HOURS = ['06', '08', '10', '12', '14', '16', '18', '20'];
+
+const HEATMAP_CELL_SIZE = '2.25rem';
+
+function buildHeatmapGridTemplate(columnCount: number): string {
+  return `2.25rem repeat(${columnCount}, ${HEATMAP_CELL_SIZE})`;
+}
 
 export function OwnerFinanceOperationsSection({
   data,
@@ -73,6 +78,13 @@ export function OwnerFinanceOperationsSection({
     [operations?.byScheduleType]
   );
 
+  const heatmapHours = useMemo(() => {
+    const hours = [
+      ...new Set((operations?.heatMapData ?? []).map((cell) => cell.hour)),
+    ];
+    return hours.sort((left, right) => Number(left) - Number(right));
+  }, [operations?.heatMapData]);
+
   const heatmapGrid = useMemo(() => {
     const cells = operations?.heatMapData ?? [];
     const lookup = new Map(
@@ -81,12 +93,14 @@ export function OwnerFinanceOperationsSection({
 
     return HEATMAP_DAYS.map((dayLabel) => ({
       dayLabel,
-      cells: HEATMAP_HOURS.map((hour) => ({
+      cells: heatmapHours.map((hour) => ({
         hour,
         intensity: lookup.get(`${dayLabel}-${hour}`) ?? 0,
       })),
     }));
-  }, [operations?.heatMapData]);
+  }, [heatmapHours, operations?.heatMapData]);
+
+  const heatmapGridTemplate = buildHeatmapGridTemplate(heatmapHours.length);
 
   return (
     <QueryState
@@ -121,6 +135,7 @@ export function OwnerFinanceOperationsSection({
             iconColor="text-amber-400"
             label="Doanh thu sân (lịch)"
             value={formatCurrency(operations?.courtRevenue ?? 0)}
+            signedValue={operations?.courtRevenue ?? 0}
             hint="Theo ngày lịch đặt sân"
           />
         </div>
@@ -143,6 +158,7 @@ export function OwnerFinanceOperationsSection({
             <PortalBarChart
               data={bookingsByScheduleType}
               valueFormatter={(value) => String(value)}
+              axisTickFormatter={(value) => String(value)}
             />
           </GlassPanel>
         </div>
@@ -172,6 +188,7 @@ export function OwnerFinanceOperationsSection({
               <PortalBarChart
                 data={bookingsByPromotion}
                 valueFormatter={(value) => String(value)}
+                axisTickFormatter={(value) => String(value)}
               />
             ) : (
               <div className="text-muted flex h-40 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm">
@@ -197,10 +214,13 @@ export function OwnerFinanceOperationsSection({
             row.cells.some((cell) => cell.intensity > 0)
           ) ? (
             <div className="overflow-x-auto">
-              <div className="min-w-[480px]">
-                <div className="text-muted mb-2 grid grid-cols-[40px_repeat(8,minmax(0,1fr))] gap-1 text-[10px]">
+              <div className="mx-auto w-fit min-w-0">
+                <div
+                  className="text-muted mb-2 grid gap-1.5 text-[11px]"
+                  style={{ gridTemplateColumns: heatmapGridTemplate }}
+                >
                   <span />
-                  {HEATMAP_HOURS.map((hour) => (
+                  {heatmapHours.map((hour) => (
                     <span key={hour} className="text-center">
                       {hour}h
                     </span>
@@ -209,7 +229,8 @@ export function OwnerFinanceOperationsSection({
                 {heatmapGrid.map((row) => (
                   <div
                     key={row.dayLabel}
-                    className="mb-1 grid grid-cols-[40px_repeat(8,minmax(0,1fr))] gap-1"
+                    className="mb-1.5 grid gap-1.5 last:mb-0"
+                    style={{ gridTemplateColumns: heatmapGridTemplate }}
                   >
                     <span className="text-muted flex items-center text-xs font-medium">
                       {row.dayLabel}
@@ -219,7 +240,7 @@ export function OwnerFinanceOperationsSection({
                         key={`${row.dayLabel}-${cell.hour}`}
                         title={`${row.dayLabel} ${cell.hour}:00 — ${Math.round(cell.intensity * 100)}%`}
                         className={cn(
-                          'aspect-square rounded-sm border border-white/5',
+                          'size-9 rounded-md border border-white/5',
                           cell.intensity >= 0.75
                             ? 'bg-emerald-500/70'
                             : cell.intensity >= 0.5

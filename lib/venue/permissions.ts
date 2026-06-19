@@ -17,12 +17,40 @@ export { VenueAction };
 
 export type VenuePermissionSet = VenueAction[];
 
-export function canVenueAction(
+function hasDirectPermission(
+  permissions: VenuePermissionSet | null | undefined,
+  action: VenueAction,
+): boolean {
+  return permissions?.includes(action) ?? false;
+}
+
+/** Mirror backend resolveVenueActionFromStaff implied grants. */
+export function resolveVenueAction(
   permissions: VenuePermissionSet | null | undefined,
   action: VenueAction,
 ): boolean {
   if (!permissions?.length) return false;
-  return permissions.includes(action);
+  if (hasDirectPermission(permissions, action)) return true;
+
+  if (action === VenueAction.ViewBookings) {
+    return (
+      hasDirectPermission(permissions, VenueAction.ApproveBooking) ||
+      hasDirectPermission(permissions, VenueAction.CreateBooking)
+    );
+  }
+
+  if (action === VenueAction.ViewOrders) {
+    return hasDirectPermission(permissions, VenueAction.CreateOrder);
+  }
+
+  return false;
+}
+
+export function canVenueAction(
+  permissions: VenuePermissionSet | null | undefined,
+  action: VenueAction,
+): boolean {
+  return resolveVenueAction(permissions, action);
 }
 
 export function canAnyVenueAction(
@@ -30,7 +58,7 @@ export function canAnyVenueAction(
   actions: VenueAction[],
 ): boolean {
   if (!permissions?.length) return false;
-  return actions.some((action) => permissions.includes(action));
+  return actions.some((action) => resolveVenueAction(permissions, action));
 }
 
 export function canAllVenueActions(
@@ -38,42 +66,61 @@ export function canAllVenueActions(
   actions: VenueAction[],
 ): boolean {
   if (!permissions?.length) return false;
-  return actions.every((action) => permissions.includes(action));
+  return actions.every((action) => resolveVenueAction(permissions, action));
 }
 
 /** Maps owner routes to required venue actions (any match grants access). */
 export const OWNER_ROUTE_VENUE_ACTIONS: Record<string, VenueAction[]> = {
+  '/owner': [VenueAction.View],
   '/owner/venues': [VenueAction.View],
   '/owner/calendar': [VenueAction.ViewBookings],
   '/owner/bookings': [VenueAction.ViewBookings],
   '/owner/orders': [VenueAction.ViewOrders],
   '/owner/products': [VenueAction.ManageProducts],
+  '/owner/promotions': [VenueAction.ManagePromotions],
+  '/owner/stats': [VenueAction.ViewAnalytics],
   '/owner/finance': [VenueAction.ViewAnalytics],
   '/owner/analytics': [VenueAction.ViewAnalytics],
 };
 
+function normalizePathname(pathname: string): string {
+  return pathname.endsWith('/') && pathname.length > 1
+    ? pathname.slice(0, -1)
+    : pathname;
+}
+
+const SORTED_OWNER_ROUTES = Object.entries(OWNER_ROUTE_VENUE_ACTIONS).sort(
+  (a, b) => b[0].length - a[0].length,
+);
+
+function matchesOwnerRoute(normalized: string, route: string): boolean {
+  if (route === '/owner') {
+    return normalized === '/owner';
+  }
+  return normalized === route || normalized.startsWith(`${route}/`);
+}
+
 export function canAccessOwnerRoute(
   pathname: string,
   permissions: VenuePermissionSet | null | undefined,
-  isOwner: boolean,
+  isVenueOwner: boolean,
 ): boolean {
-  if (pathname.startsWith('/owner/staff')) {
-    return isOwner;
-  }
-  if (pathname.startsWith('/owner/venues/')) {
-    return canVenueAction(permissions, VenueAction.View);
+  const normalized = normalizePathname(pathname);
+
+  if (normalized.startsWith('/owner/staff')) {
+    return isVenueOwner;
   }
 
-  const normalized =
-    pathname.endsWith('/') && pathname.length > 1
-      ? pathname.slice(0, -1)
-      : pathname;
+  if (normalized.startsWith('/owner/venues/')) {
+    return isVenueOwner || canVenueAction(permissions, VenueAction.View);
+  }
 
-  for (const [route, actions] of Object.entries(OWNER_ROUTE_VENUE_ACTIONS)) {
-    if (normalized === route || normalized.startsWith(`${route}/`)) {
+  for (const [route, actions] of SORTED_OWNER_ROUTES) {
+    if (matchesOwnerRoute(normalized, route)) {
+      if (isVenueOwner) return true;
       return canAnyVenueAction(permissions, actions);
     }
   }
 
-  return true;
+  return false;
 }

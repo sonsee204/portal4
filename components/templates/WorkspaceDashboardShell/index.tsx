@@ -12,7 +12,6 @@
 import { usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/templates/DashboardLayout';
 import { AccessGuard } from '@/components/atoms/AccessGuard';
-import { WorkspaceSwitcher } from '@/components/molecules/WorkspaceSwitcher';
 import { VenueSwitcher } from '@/components/molecules/VenueSwitcher';
 import { getBreadcrumbLabel } from '@/lib/permissions/navigation';
 import { WORKSPACE_LABELS, type PortalWorkspace } from '@/lib/permissions';
@@ -66,7 +65,6 @@ export function WorkspaceDashboardShell({
               <VenueSwitcher key="venue-switcher" />
             ) : null}
             {extraHeaderActions}
-            <WorkspaceSwitcher key="workspace-switcher" />
           </div>
         }
       >

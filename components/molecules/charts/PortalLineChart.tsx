@@ -23,7 +23,8 @@ import {
   YAxis,
 } from 'recharts';
 import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
-import { cn } from '@/lib/utils';
+import { formatCompactCurrency } from '@/lib/charts/format-currency';
+import { cn, formatCurrency } from '@/lib/utils';
 
 export interface PortalLineChartPoint {
   label: string;
@@ -36,6 +37,7 @@ export interface PortalLineChartProps {
   className?: string;
   height?: number;
   valueFormatter?: (value: number) => string;
+  axisTickFormatter?: (value: number) => string;
   seriesLabel?: string;
   comparisonLabel?: string;
 }
@@ -44,7 +46,8 @@ export function PortalLineChart({
   data,
   className,
   height = 280,
-  valueFormatter = (v) => String(v),
+  valueFormatter = formatCurrency,
+  axisTickFormatter = formatCompactCurrency,
   seriesLabel = 'Kỳ hiện tại',
   comparisonLabel = 'Kỳ trước',
 }: PortalLineChartProps) {
@@ -53,7 +56,7 @@ export function PortalLineChart({
       <div
         className={cn(
           'text-muted flex items-center justify-center text-sm',
-          className,
+          className
         )}
         style={{ height }}
       >
@@ -63,7 +66,7 @@ export function PortalLineChart({
   }
 
   const hasComparison = data.some(
-    (point) => point.comparisonValue != null && point.comparisonValue > 0,
+    (point) => point.comparisonValue != null && point.comparisonValue > 0
   );
 
   return (
@@ -88,8 +91,8 @@ export function PortalLineChart({
             tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={48}
-            tickFormatter={valueFormatter}
+            width={52}
+            tickFormatter={(value) => axisTickFormatter(Number(value))}
           />
           <Tooltip
             contentStyle={{

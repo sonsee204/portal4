@@ -41,7 +41,7 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     () => user?.portalCapabilities ?? [],
     [user?.portalCapabilities]
   );
-  const isOwner = user?.isOwner ?? false;
+  const isPlatformOwner = user?.isOwner ?? false;
   const hasVenueAccess = user?.hasVenueAccess ?? false;
   const authPending = !isInitialized || isLoading || (isInitialized && !user);
 
@@ -57,7 +57,13 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     }
 
     if (
-      !canAccessRoute(role, pathname, capabilities, isOwner, hasVenueAccess)
+      !canAccessRoute(
+        role,
+        pathname,
+        capabilities,
+        isPlatformOwner,
+        hasVenueAccess
+      )
     ) {
       router.replace('/forbidden');
     }
@@ -65,7 +71,7 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     authPending,
     role,
     capabilities,
-    isOwner,
+    isPlatformOwner,
     hasVenueAccess,
     pathname,
     workspace,
@@ -87,7 +93,15 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
     return null;
   }
 
-  if (!canAccessRoute(role, pathname, capabilities, isOwner, hasVenueAccess)) {
+  if (
+    !canAccessRoute(
+      role,
+      pathname,
+      capabilities,
+      isPlatformOwner,
+      hasVenueAccess
+    )
+  ) {
     return null;
   }
 

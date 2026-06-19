@@ -15,6 +15,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { Badge } from '@/components/atoms/Badge';
+import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { Modal } from '@/components/molecules/Modal';
 import { QueryState } from '@/components/molecules/QueryState';
 import { BookingDetailFooterActions } from '@/app/(dashboard)/owner/bookings/_components/BookingDetailFooterActions';
@@ -27,6 +28,7 @@ import {
 import { cn, formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
 import { useBookingDetail } from '@/hooks/owner/useBookingDetail';
 import { useBookingDetailActions } from '@/hooks/owner/useBookingDetailActions';
+import { VenueAction } from '@/graphql/generated';
 import { RECURRING_FREQUENCY_LABEL } from '@/app/(dashboard)/owner/bookings/_hooks/owner-bookings-page.constants';
 import {
   formatGroupedBookingSlotsSummary,
@@ -273,9 +275,11 @@ function BookingDetailContent({
 
       <section className="space-y-3">
         <h3 className="text-heading text-sm font-semibold">Thanh toán</h3>
-        {booking.isManualPrice ? (
-          <Badge variant="info">Giá thủ công</Badge>
-        ) : null}
+        <VenueActionGate action={VenueAction.ViewSensitiveData} fallback={null}>
+          {booking.isManualPrice ? (
+            <Badge variant="info">Giá thủ công</Badge>
+          ) : null}
+        </VenueActionGate>
         <dl className="space-y-2">
           <DetailRow
             label={payment.subtotalLabel}
@@ -320,11 +324,13 @@ function BookingDetailContent({
             value={BOOKING_SOURCE_LABEL[booking.source] ?? booking.source}
           />
         </dl>
-        {booking.isManualPrice && booking.manualPriceNote ? (
-          <p className="bg-primary/5 text-primary rounded-lg px-3 py-2 text-xs">
-            Lý do: {booking.manualPriceNote}
-          </p>
-        ) : null}
+        <VenueActionGate action={VenueAction.ViewSensitiveData} fallback={null}>
+          {booking.isManualPrice && booking.manualPriceNote ? (
+            <p className="bg-primary/5 text-primary rounded-lg px-3 py-2 text-xs">
+              Lý do: {booking.manualPriceNote}
+            </p>
+          ) : null}
+        </VenueActionGate>
       </section>
 
       {(booking.customerNote || booking.internalNote) && (

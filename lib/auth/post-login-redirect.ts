@@ -37,7 +37,7 @@ export function resolvePostLoginPath(
 ): string {
   const role = user.role as UserRole;
   const capabilities = (user.portalCapabilities ?? []) as PortalCapability[];
-  const home = getHomePath(role, capabilities);
+  const home = getHomePath(role, capabilities, user.hasVenueAccess ?? false);
 
   const candidate = redirectTo?.trim();
   if (!candidate || candidate === '/') {

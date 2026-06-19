@@ -17,8 +17,13 @@ export const GET_POST_REPORTS_FOR_ADMIN = gql`
   query GetPostReportsForAdmin(
     $filter: PostReportFilterInput
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
-    getPostReportsForAdminConnection(filter: $filter, pagination: $pagination) {
+    getPostReportsForAdminConnection(
+      filter: $filter
+      pagination: $pagination
+      sort: $sort
+    ) {
       edges {
         cursor
         node {
@@ -82,8 +87,13 @@ export const GET_USER_REPORTS_FOR_ADMIN = gql`
   query GetUserReportsForAdmin(
     $filter: UserReportFilterInput
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
-    getUserReportsForAdminConnection(filter: $filter, pagination: $pagination) {
+    getUserReportsForAdminConnection(
+      filter: $filter
+      pagination: $pagination
+      sort: $sort
+    ) {
       edges {
         cursor
         node {
@@ -143,8 +153,13 @@ export const GET_MESSAGE_REPORTS_FOR_ADMIN = gql`
   query GetMessageReportsForAdmin(
     $filter: MessageReportFilterInput
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
-    messageReportsConnection(filter: $filter, pagination: $pagination) {
+    messageReportsConnection(
+      filter: $filter
+      pagination: $pagination
+      sort: $sort
+    ) {
       edges {
         cursor
         node {

@@ -29,10 +29,7 @@ import {
 import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 import { toIsoDateString } from '@/lib/date/calendar';
 import { buildHourSlotsForDay } from '@/lib/venue/operating-hours';
-import {
-  buildCalendarBookingSegments,
-  VENUE_CALENDAR_VISIBLE_STATUSES,
-} from '@/lib/venue/calendar-booking-segments';
+import { buildCalendarSegmentsFromAvailability } from '@/lib/venue/calendar-availability-segments';
 import {
   buildStaffSlotKey,
   sumStaffSelectedSlots,
@@ -44,7 +41,6 @@ import { VenueAction, PaymentMethod } from '@/graphql/generated';
 import {
   useCreateStaffBooking,
   useMyVenueAvailability,
-  useVenueBookings,
   useVenueCourts,
   useVenueDetail,
 } from '@/hooks/owner';
@@ -74,19 +70,10 @@ export default function OwnerCalendarPage() {
     [venue?.operatingHours, currentDate]
   );
 
-  const { bookings, loading, error, refetch } = useVenueBookings(
-    selectedVenueId,
-    {
-      fromDate: dateStr,
-      toDate: dateStr,
-      statuses: VENUE_CALENDAR_VISIBLE_STATUSES,
-    },
-    { limit: CURSOR_PAGE_MAX }
-  );
-
   const {
     courts: availabilityCourts,
     loading: availabilityLoading,
+    error: availabilityError,
     refetch: refetchAvailability,
   } = useMyVenueAvailability(selectedVenueId, dateStr);
 
@@ -95,6 +82,7 @@ export default function OwnerCalendarPage() {
 
   const { courts: venueCourts, loading: courtsLoading } = useVenueCourts(
     selectedVenueId,
+    undefined,
     { limit: CURSOR_PAGE_MAX }
   );
 
@@ -107,26 +95,15 @@ export default function OwnerCalendarPage() {
       return fromVenue;
     }
 
-    const fromAvailability = availabilityCourts
+    return availabilityCourts
       .map((court) => court.courtName)
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, 'vi'));
-    if (fromAvailability.length > 0) {
-      return fromAvailability;
-    }
-
-    const fromBookings = new Set<string>();
-    bookings.forEach((booking) => {
-      booking.slots?.forEach((slot) => {
-        if (slot.courtName) fromBookings.add(slot.courtName);
-      });
-    });
-    return Array.from(fromBookings).sort((a, b) => a.localeCompare(b, 'vi'));
-  }, [venueCourts, availabilityCourts, bookings]);
+  }, [venueCourts, availabilityCourts]);
 
   const calendarSegments = useMemo(
-    () => buildCalendarBookingSegments(bookings),
-    [bookings]
+    () => buildCalendarSegmentsFromAvailability(availabilityCourts),
+    [availabilityCourts]
   );
 
   const selectedSlotKeys = useMemo(
@@ -219,14 +196,13 @@ export default function OwnerCalendarPage() {
 
       setShowStaffBookingForm(false);
       setSelectedSlots([]);
-      await Promise.all([refetch(), refetchAvailability()]);
+      await refetchAvailability();
     },
     [
       selectedVenueId,
       selectedSlots,
       createStaffBooking,
       dateStr,
-      refetch,
       refetchAvailability,
     ]
   );
@@ -238,11 +214,7 @@ export default function OwnerCalendarPage() {
       : 'Chọn khung giờ trống trên lịch để đặt lịch cho khách.';
 
   const pageLoading =
-    loading ||
-    venueLoading ||
-    venueDetailLoading ||
-    courtsLoading ||
-    availabilityLoading;
+    venueLoading || venueDetailLoading || courtsLoading || availabilityLoading;
 
   return (
     <div className="flex w-full min-w-0 flex-col">
@@ -259,10 +231,10 @@ export default function OwnerCalendarPage() {
       <GlassPanel card className="mt-6 w-full min-w-0 overflow-hidden p-0">
         <QueryState
           loading={pageLoading && !selectedVenueId}
-          error={error}
+          error={availabilityError}
           empty={!selectedVenueId}
           emptyMessage="Chọn cơ sở ở thanh trên để xem lịch."
-          onRetry={() => void Promise.all([refetch(), refetchAvailability()])}
+          onRetry={() => void refetchAvailability()}
         >
           <VenueActionGate action={VenueAction.CreateBooking}>
             <StaffSelectedSlotsBar
@@ -307,7 +279,7 @@ export default function OwnerCalendarPage() {
         open={selectedBookingId != null}
         onClose={() => setSelectedBookingId(null)}
         onActionComplete={async () => {
-          await Promise.all([refetch(), refetchAvailability()]);
+          await refetchAvailability();
         }}
       />
     </div>

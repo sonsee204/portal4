@@ -17,8 +17,13 @@ export const GET_OTP_TEST_USER_GRANTS = gql`
   query GetOtpTestUserGrants(
     $pagination: CursorPageInput
     $filter: OtpTestUserGrantFilterInput
+    $sort: CursorSortInput
   ) {
-    otpTestUserGrantsConnection(pagination: $pagination, filter: $filter) {
+    otpTestUserGrantsConnection(
+      pagination: $pagination
+      filter: $filter
+      sort: $sort
+    ) {
       edges {
         cursor
         node {

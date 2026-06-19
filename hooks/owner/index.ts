@@ -20,7 +20,7 @@ export type {
   VenueDetailNode,
 } from './owner-venue.types';
 
-export { useMyVenues, useMyVenuesStats } from './useOwnerMyVenues';
+export { useMyVenues, useMyVenuesStats, useOwnerManagedVenues } from './useOwnerMyVenues';
 export { useVenueBookings } from './useOwnerVenueBookingsConnection';
 export {
   useBookingStats,
@@ -49,6 +49,20 @@ export {
   type VenueOrderNode,
   type PendingRefundOrderNode,
 } from './useOwnerOrders';
+
+export {
+  useVenueEnabledOrderTypes,
+  type VenueEnabledOrderTypeConfig,
+} from './useVenueOrderTypes';
+export { useValidateOrderPromoCode } from './useValidateOrderPromoCode';
+
+export {
+  useVenuePromotions,
+  type VenuePromotionNode,
+} from './useVenuePromotions';
+export { usePromotionStats } from './usePromotionStats';
+export { usePromotion, type PromotionDetailNode } from './usePromotion';
+export { usePromotionMutations } from './usePromotionMutations';
 
 export {
   useVenueProducts,

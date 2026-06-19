@@ -16,6 +16,7 @@
 import { QueryState } from '@/components/molecules/QueryState';
 import { useOwnerDashboardData } from './_hooks/useOwnerDashboardData';
 import { OwnerDashboardHeaderSection } from './_sections/OwnerDashboardHeaderSection';
+import { OwnerStaffWelcomeBanner } from './_sections/OwnerStaffWelcomeBanner';
 import { OwnerDashboardStatsSection } from './_sections/OwnerDashboardStatsSection';
 import { OwnerDashboardAlertsSection } from './_sections/OwnerDashboardAlertsSection';
 import { OwnerDashboardVenuesTableSection } from './_sections/OwnerDashboardVenuesTableSection';
@@ -26,6 +27,7 @@ export default function OwnerDashboardPage() {
   return (
     <div className="space-y-6">
       <OwnerDashboardHeaderSection />
+      <OwnerStaffWelcomeBanner />
 
       <QueryState
         loading={data.loading && !data.stats}

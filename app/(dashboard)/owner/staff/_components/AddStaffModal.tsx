@@ -15,8 +15,7 @@
 
 import { Modal } from '@/components/molecules/Modal';
 import { Button } from '@/components/atoms/Button';
-import type { VenueAction } from '@/graphql/generated';
-import { AddStaffForm } from './AddStaffForm';
+import { AddStaffForm, type AddStaffSubmitInput } from './AddStaffForm';
 
 const ADD_STAFF_FORM_ID = 'add-staff-form';
 
@@ -24,7 +23,7 @@ interface AddStaffModalProps {
   open: boolean;
   loading?: boolean;
   onClose: () => void;
-  onSubmit: (userId: string, permissions: VenueAction[]) => Promise<boolean>;
+  onSubmit: (input: AddStaffSubmitInput) => Promise<boolean>;
 }
 
 function AddStaffModalContent({
@@ -32,8 +31,8 @@ function AddStaffModalContent({
   onClose,
   onSubmit,
 }: Omit<AddStaffModalProps, 'open'>) {
-  const handleSubmit = async (userId: string, permissions: VenueAction[]) => {
-    const ok = await onSubmit(userId, permissions);
+  const handleSubmit = async (input: AddStaffSubmitInput) => {
+    const ok = await onSubmit(input);
     if (ok) onClose();
     return ok;
   };
@@ -43,7 +42,7 @@ function AddStaffModalContent({
       open
       onClose={onClose}
       title="Thêm nhân viên"
-      size="md"
+      size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={loading}>

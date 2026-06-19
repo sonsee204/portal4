@@ -13,13 +13,28 @@
 
 import type { FilterChip } from '@/components/molecules/FilterChips';
 import type { TabItem } from '@/components/molecules/TabGroup';
-import { OrderStatus } from '@/graphql/generated';
+import { OrderPaymentStatus, OrderStatus, OrderType } from '@/graphql/generated';
+import { ORDER_PAYMENT_STATUS_LABEL } from '@/lib/constants/order-status';
 
 export const PAGE_SIZE = 20;
 
+export type OrderViewTab = 'all' | 'booking' | 'non_booking';
+
 export const ORDER_VIEW_TABS: TabItem[] = [
   { label: 'Tất cả đơn', value: 'all' },
-  { label: 'Chờ hoàn tiền', value: 'pending_refund' },
+  { label: 'Đơn đặt sân', value: 'booking' },
+  { label: 'Đơn không phải đặt sân', value: 'non_booking' },
+];
+
+/** Mọi loại đơn trừ đặt sân — khớp finance `NON_BOOKING`. */
+export const NON_BOOKING_ORDER_TYPES: OrderType[] = [
+  OrderType.Training,
+  OrderType.DineIn,
+  OrderType.Takeaway,
+  OrderType.DeliveryToCourt,
+  OrderType.Retail,
+  OrderType.Rental,
+  OrderType.Membership,
 ];
 
 export const ORDER_STATUS_CHIPS: FilterChip[] = [
@@ -30,6 +45,31 @@ export const ORDER_STATUS_CHIPS: FilterChip[] = [
   { label: 'Sẵn sàng', value: OrderStatus.Ready },
   { label: 'Hoàn thành', value: OrderStatus.Completed },
   { label: 'Đã hủy', value: OrderStatus.Cancelled },
+];
+
+export const ORDER_PAYMENT_STATUS_CHIPS: FilterChip[] = [
+  { label: 'Tất cả', value: 'ALL' },
+  {
+    label: ORDER_PAYMENT_STATUS_LABEL.PENDING,
+    value: OrderPaymentStatus.Pending,
+  },
+  {
+    label: ORDER_PAYMENT_STATUS_LABEL.PARTIAL,
+    value: OrderPaymentStatus.Partial,
+  },
+  { label: ORDER_PAYMENT_STATUS_LABEL.PAID, value: OrderPaymentStatus.Paid },
+  {
+    label: ORDER_PAYMENT_STATUS_LABEL.REFUND_PARTIAL,
+    value: OrderPaymentStatus.RefundPartial,
+  },
+  {
+    label: ORDER_PAYMENT_STATUS_LABEL.REFUNDED,
+    value: OrderPaymentStatus.Refunded,
+  },
+  {
+    label: ORDER_PAYMENT_STATUS_LABEL.REFUND_PENDING,
+    value: OrderPaymentStatus.RefundPending,
+  },
 ];
 
 export const FNB_ORDER_TYPES = new Set([

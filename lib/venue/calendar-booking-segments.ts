@@ -205,7 +205,12 @@ export function resolveCalendarSegmentKind(
 }
 
 export function isCalendarSegmentClickable(status: string | undefined): boolean {
-  return isConfirmedBookingStatus(status);
+  const normalized = normalizeBookingStatus(status);
+  return (
+    isConfirmedBookingStatus(status) ||
+    normalized === 'hold_active' ||
+    normalized === 'expired'
+  );
 }
 
 function hashBookingId(bookingId: string): number {

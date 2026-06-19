@@ -17,6 +17,7 @@ import { Button } from '@/components/atoms/Button';
 import { cn } from '@/lib/utils';
 import { formatConnectionRange } from './connection-pager.utils';
 
+/** @deprecated Use `ConnectionInfiniteScroll` from `@/components/molecules/ConnectionInfiniteScroll` instead. */
 export interface ConnectionPagerProps {
   loadedCount: number;
   totalCount?: number | null;
@@ -28,6 +29,7 @@ export interface ConnectionPagerProps {
   className?: string;
 }
 
+/** @deprecated Use `ConnectionInfiniteScroll` from `@/components/molecules/ConnectionInfiniteScroll` instead. */
 export function ConnectionPager({
   loadedCount,
   totalCount,
@@ -44,10 +46,12 @@ export function ConnectionPager({
     <div
       className={cn(
         'border-surface-border bg-surface flex flex-col items-center justify-between gap-3 rounded-xl border px-4 py-3 sm:flex-row',
-        className,
+        className
       )}
     >
-      <p className="text-muted text-sm">{formatConnectionRange(loadedCount, totalCount)}</p>
+      <p className="text-muted text-sm">
+        {formatConnectionRange(loadedCount, totalCount)}
+      </p>
       <div className="flex items-center gap-2">
         {onPrevious ? (
           <Button

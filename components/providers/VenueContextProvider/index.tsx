@@ -38,6 +38,7 @@ import {
   type VenuePermissionSet,
 } from '@/lib/venue/permissions';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { isStatsAllVenuesPath } from '@/lib/venue/venue-selection';
 
 const STORAGE_KEY = 'portal-owner-selected-venue';
 
@@ -51,6 +52,9 @@ interface VenueContextValue {
   venues: OwnerVenueSummary[];
   selectedVenue: OwnerVenueSummary | null;
   selectedVenueId: string | null;
+  /** Finance stats: aggregate all venues instead of a single selection. */
+  financeAllVenues: boolean;
+  setFinanceAllVenues: (value: boolean) => void;
   permissions: VenuePermissionSet;
   isOwner: boolean;
   loading: boolean;
@@ -91,6 +95,12 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [manualVenueId, setManualVenueId] = useState<string | null>(null);
+  const [financeAllVenuesSelection, setFinanceAllVenuesSelection] =
+    useState(false);
+
+  const setFinanceAllVenues = useCallback((value: boolean) => {
+    setFinanceAllVenuesSelection(value);
+  }, []);
 
   const {
     data: ownedData,
@@ -119,6 +129,11 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
     return dedupeVenues(owned, staffed);
   }, [ownedData, staffedData]);
 
+  const financeAllVenues =
+    isStatsAllVenuesPath(pathname) &&
+    financeAllVenuesSelection &&
+    venues.length > 1;
+
   const queryVenueId = searchParams.get('venueId');
 
   const defaultVenueId = useMemo(() => {
@@ -131,6 +146,11 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
     const stored = readStoredVenueId();
     if (stored && venues.some((v) => v._id === stored)) {
       return stored;
+    }
+
+    const ownedVenue = venues.find((v) => v.isOwner);
+    if (ownedVenue) {
+      return ownedVenue._id;
     }
 
     return venues[0]?._id ?? null;
@@ -162,13 +182,14 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
   const isOwner = selectedVenue?.isOwner ?? false;
 
   const canVenue = useCallback(
-    (action: VenueAction) => canVenueAction(permissions, action),
-    [permissions]
+    (action: VenueAction) => isOwner || canVenueAction(permissions, action),
+    [permissions, isOwner]
   );
 
   const canAnyVenue = useCallback(
-    (actions: VenueAction[]) => canAnyVenueAction(permissions, actions),
-    [permissions]
+    (actions: VenueAction[]) =>
+      isOwner || canAnyVenueAction(permissions, actions),
+    [permissions, isOwner]
   );
 
   const refetchVenues = useCallback(() => {
@@ -181,6 +202,8 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
       venues,
       selectedVenue,
       selectedVenueId,
+      financeAllVenues,
+      setFinanceAllVenues,
       permissions,
       isOwner,
       loading: ownedLoading || staffedLoading,
@@ -194,6 +217,8 @@ export function VenueContextProvider({ children }: { children: ReactNode }) {
       venues,
       selectedVenue,
       selectedVenueId,
+      financeAllVenues,
+      setFinanceAllVenues,
       permissions,
       isOwner,
       ownedLoading,

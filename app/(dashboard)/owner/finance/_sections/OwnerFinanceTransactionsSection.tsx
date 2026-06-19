@@ -15,25 +15,30 @@
 
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Badge } from '@/components/atoms/Badge';
 import { formatOrderTypeLabel } from '@/lib/constants/order-type';
 import { formatPaymentMethodLabel } from '@/lib/constants/payment-method';
+import { extractCourtLabelFromBreakdownLabel } from '@/lib/finance/aggregate-court-revenue';
 import {
   FINANCE_TABLE_ROW_CLASS,
   FINANCE_TABLE_SCROLL_CLASS,
 } from '@/lib/finance/finance-table';
+import { getSignedValueClassName } from '@/lib/finance/stat-card-trend';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { ViewOrderDetailButton } from '../../orders/_components/ViewOrderDetailButton';
 import type { FinanceTransactionNode } from '@/hooks/owner';
+import type { OwnerFinancePageActions } from '../_hooks/useOwnerFinancePageActions';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 
 interface OwnerFinanceTransactionsSectionProps {
   data: OwnerFinancePageData;
+  actions: Pick<OwnerFinancePageActions, 'openOrderDetail'>;
 }
 
 export function OwnerFinanceTransactionsSection({
   data,
+  actions,
 }: OwnerFinanceTransactionsSectionProps) {
   return (
     <GlassPanel card className="space-y-4">
@@ -64,7 +69,7 @@ export function OwnerFinanceTransactionsSection({
             { key: 'completedAt', label: 'Hoàn thành', sortable: true },
             { key: 'orderType', label: 'Loại đơn', align: 'center' },
             { key: 'paymentMethod', label: 'Thanh toán', align: 'center' },
-            { key: 'courtLabel', label: 'Sân / khung giờ' },
+            { key: 'courtLabel', label: 'Sân con' },
             {
               key: 'grossAmount',
               label: 'Doanh thu gộp',
@@ -77,11 +82,27 @@ export function OwnerFinanceTransactionsSection({
               align: 'right',
               sortable: true,
             },
+            {
+              key: 'profitAmount',
+              label: 'Lãi',
+              align: 'right',
+              sortable: true,
+            },
+            { key: 'actions', label: 'Thao tác', align: 'right' },
           ]}
           data={data.transactions}
           sortKey={data.sortField}
           sortDir={data.sortDir}
           onSort={data.handleSort}
+          sortLoading={data.transactionSortLoading}
+          infiniteScroll={{
+            loadedCount: data.transactions.length,
+            totalCount: data.transactionCount,
+            hasNextPage: data.hasMoreTransactions,
+            onLoadMore: () => void data.loadMoreTransactions(),
+            loading: data.transactionsLoading && data.transactions.length === 0,
+            loadingMore: data.isLoadingMoreTransactions,
+          }}
           renderRow={(row: FinanceTransactionNode) => (
             <tr key={row.orderId} className={FINANCE_TABLE_ROW_CLASS}>
               <td className="text-body px-4 py-3 font-mono text-sm">
@@ -104,7 +125,9 @@ export function OwnerFinanceTransactionsSection({
                 {formatPaymentMethodLabel(row.paymentMethod)}
               </td>
               <td className="text-body px-4 py-3 text-sm">
-                {row.courtLabel ?? '—'}
+                {row.courtLabel
+                  ? extractCourtLabelFromBreakdownLabel(row.courtLabel)
+                  : '—'}
               </td>
               <td className="text-body px-4 py-3 text-right text-sm">
                 {formatCurrency(row.grossAmount)}
@@ -112,16 +135,24 @@ export function OwnerFinanceTransactionsSection({
               <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
                 {formatCurrency(row.netAmount)}
               </td>
+              <td
+                className={`px-4 py-3 text-right text-sm font-medium ${getSignedValueClassName(row.profitAmount)}`}
+              >
+                <div>{formatCurrency(row.profitAmount)}</div>
+                <div
+                  className={`text-xs font-normal ${getSignedValueClassName(row.profitMarginPercent)}`}
+                >
+                  {row.profitMarginPercent.toFixed(1)}%
+                </div>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <ViewOrderDetailButton
+                  orderId={row.orderId}
+                  onOpen={actions.openOrderDetail}
+                />
+              </td>
             </tr>
           )}
-        />
-
-        <ConnectionPager
-          loadedCount={data.transactions.length}
-          totalCount={data.transactionCount}
-          hasNextPage={data.hasMoreTransactions}
-          onNext={() => void data.loadMoreTransactions()}
-          loading={data.transactionsLoading}
         />
       </QueryState>
     </GlassPanel>

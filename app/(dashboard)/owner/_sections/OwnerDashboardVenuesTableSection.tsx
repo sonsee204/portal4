@@ -13,11 +13,13 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
+import { useDataTableSort } from '@/hooks/shared/useDataTableSort';
 import type { OwnerDashboardData } from '../_hooks/useOwnerDashboardData';
 
 interface OwnerDashboardVenuesTableSectionProps {
@@ -28,6 +30,37 @@ export function OwnerDashboardVenuesTableSection({
   data,
 }: OwnerDashboardVenuesTableSectionProps) {
   const { venues } = data;
+  const { sortField, sortDir, handleSort } = useDataTableSort({
+    defaultField: 'name',
+    defaultDir: 'asc',
+  });
+
+  const sortedVenues = useMemo(() => {
+    const list = [...venues];
+    list.sort((left, right) => {
+      let leftValue: string | number;
+      let rightValue: string | number;
+      switch (sortField) {
+        case 'courtCount':
+          leftValue = left.courtCount ?? 0;
+          rightValue = right.courtCount ?? 0;
+          break;
+        case 'name':
+        default:
+          leftValue = left.name;
+          rightValue = right.name;
+          break;
+      }
+      if (typeof leftValue === 'string' && typeof rightValue === 'string') {
+        return sortDir === 'asc'
+          ? leftValue.localeCompare(rightValue, 'vi')
+          : rightValue.localeCompare(leftValue, 'vi');
+      }
+      const delta = Number(leftValue) - Number(rightValue);
+      return sortDir === 'asc' ? delta : -delta;
+    });
+    return list;
+  }, [sortDir, sortField, venues]);
 
   if (venues.length === 0) return null;
 
@@ -36,12 +69,20 @@ export function OwnerDashboardVenuesTableSection({
       <h3 className="text-heading mb-4 text-sm font-bold">So sánh sân</h3>
       <DataTable
         columns={[
-          { key: 'name', label: 'Tên sân' },
-          { key: 'courts', label: 'Số sân con' },
+          { key: 'name', label: 'Tên sân', sortable: true },
+          {
+            key: 'courts',
+            label: 'Số sân con',
+            sortable: true,
+            sortField: 'courtCount',
+          },
           { key: 'role', label: 'Vai trò' },
           { key: 'actions', label: '', align: 'right' },
         ]}
-        data={venues}
+        data={sortedVenues}
+        sortKey={sortField}
+        sortDir={sortDir}
+        onSort={handleSort}
         renderRow={(v) => (
           <tr
             key={v._id}

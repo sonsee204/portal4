@@ -20,13 +20,14 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { cn, formatDateTime } from '@/lib/utils';
 import { MessageReportDetail } from '../_components/MessageReportDetail';
+import { MESSAGE_FILTER_CHIPS } from '../_hooks/moderation-page.constants';
 import {
-  MESSAGE_FILTER_CHIPS,
-} from '../_hooks/moderation-page.constants';
-import { shortDisplayId, truncateText } from '../_hooks/moderation-page.derived';
+  shortDisplayId,
+  truncateText,
+} from '../_hooks/moderation-page.derived';
 import type { ModerationPageActions } from '../_hooks/useModerationPageActions';
 import type { ModerationPageData } from '../_hooks/useModerationPageData';
 import { MESSAGE_REPORT_STATUS_LABELS } from '../types';
@@ -51,9 +52,13 @@ export function MessageReportsTabSection({
     msgTotalCount,
     msgHasNextPage,
     loadMoreMsgReports,
+    msgIsLoadingMore,
     setSelectedMsgReportId,
     effectiveMsgReportId,
     selectedMsgReport,
+    msgSortField,
+    msgSortDir,
+    handleMsgSort,
   } = data;
   const {
     handleMsgStatusFilterChange,
@@ -78,9 +83,7 @@ export function MessageReportsTabSection({
           loading={msgReportsLoading && msgReports.length === 0}
           error={msgReportsError}
           empty={
-            !msgReportsLoading &&
-            !msgReportsError &&
-            msgReports.length === 0
+            !msgReportsLoading && !msgReportsError && msgReports.length === 0
           }
           emptyMessage="Không có báo cáo tin nhắn nào."
           onRetry={() => {
@@ -93,10 +96,13 @@ export function MessageReportsTabSection({
               { key: 'reason', label: 'Lý do' },
               { key: 'messageId', label: 'ID tin nhắn' },
               { key: 'reporterId', label: 'ID người báo cáo' },
-              { key: 'status', label: 'Trạng thái' },
-              { key: 'createdAt', label: 'Ngày tạo' },
+              { key: 'status', label: 'Trạng thái', sortable: true },
+              { key: 'createdAt', label: 'Ngày tạo', sortable: true },
             ]}
             data={msgReports}
+            sortKey={msgSortField}
+            sortDir={msgSortDir}
+            onSort={handleMsgSort}
             emptyTitle="Không có báo cáo tin nhắn nào"
             renderRow={(r: MessageModerationReport) => {
               const isActive = r._id === effectiveMsgReportId;
@@ -106,7 +112,7 @@ export function MessageReportsTabSection({
                   onClick={() => setSelectedMsgReportId(r._id)}
                   className={cn(
                     'border-surface-border cursor-pointer border-b transition-colors',
-                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover',
+                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover'
                   )}
                 >
                   <td className="text-faint px-4 py-3 font-mono text-xs">
@@ -143,15 +149,13 @@ export function MessageReportsTabSection({
             }}
           />
         </QueryState>
-        <ConnectionPager
+        <ConnectionInfiniteScroll
           loadedCount={msgReports.length}
           totalCount={msgTotalCount ?? msgTotal}
           hasNextPage={msgHasNextPage}
-          onNext={() => {
-            void loadMoreMsgReports();
-            setSelectedMsgReportId(null);
-          }}
-          loading={msgReportsLoading}
+          onLoadMore={() => void loadMoreMsgReports()}
+          loading={msgReportsLoading && msgReports.length === 0}
+          loadingMore={msgIsLoadingMore}
         />
       </GlassPanel>
 

@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Avatar } from '@/components/atoms/Avatar';
@@ -23,6 +24,7 @@ import {
   type BreadcrumbItem,
 } from '@/components/molecules/Breadcrumb';
 import { NotificationBell } from '@/components/molecules/NotificationBell';
+import { UserMenuDropdown } from '@/components/molecules/UserMenuDropdown';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import { ROLE_DISPLAY_NAMES } from '@/lib/permissions';
@@ -37,6 +39,8 @@ export interface TopHeaderProps {
 export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
   const { setMobileNavOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.displayName || user?.fullName || 'Người dùng';
   const initials =
@@ -84,8 +88,8 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
         <ThemeToggle />
         <NotificationBell />
         <div className="bg-surface-border hidden h-8 w-px md:block" />
-        <div className="hidden items-center gap-3 md:flex">
-          <div className="text-right">
+        <div ref={userMenuRef} className="relative flex items-center gap-3">
+          <div className="hidden text-right md:block">
             <p
               className="text-heading max-w-[140px] truncate text-sm font-bold"
               title={displayName}
@@ -96,11 +100,27 @@ export function TopHeader({ breadcrumbs, actions, className }: TopHeaderProps) {
               {user?.role ? ROLE_DISPLAY_NAMES[user.role] : ''}
             </p>
           </div>
-          <Avatar
-            fallback={initials}
-            src={user?.photoURL}
-            status="online"
-            size="sm"
+          <button
+            type="button"
+            onClick={() => setUserMenuOpen((open) => !open)}
+            className={cn(
+              'rounded-full transition-opacity hover:opacity-90',
+              userMenuOpen && 'ring-primary/40 ring-2'
+            )}
+            aria-label="Menu tài khoản"
+            aria-expanded={userMenuOpen}
+          >
+            <Avatar
+              fallback={initials}
+              src={user?.photoURL}
+              status="online"
+              size="sm"
+            />
+          </button>
+          <UserMenuDropdown
+            open={userMenuOpen}
+            onClose={() => setUserMenuOpen(false)}
+            containerRef={userMenuRef}
           />
         </div>
       </div>

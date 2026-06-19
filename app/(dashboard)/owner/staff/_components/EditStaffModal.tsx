@@ -16,21 +16,33 @@
 import { useState } from 'react';
 import { Modal } from '@/components/molecules/Modal';
 import { Button } from '@/components/atoms/Button';
+import { Input } from '@/components/atoms/Input';
 import type { VenueStaffNode } from '@/hooks/owner';
 import type { VenueAction } from '@/graphql/generated';
 import { VenueAction as VenueActionEnum } from '@/graphql/generated';
 import { mergeVenuePermissions } from '@/lib/venue/venue-action-labels';
 import { StaffPermissionsForm } from './StaffPermissionsForm';
 
-interface EditStaffPermissionsModalProps {
+const CUSTOM_TITLE_MAX_LENGTH = 50;
+
+export type EditStaffSaveInput = {
+  permissions: VenueAction[];
+  customTitle: string;
+};
+
+interface EditStaffModalProps {
   staff: VenueStaffNode | null;
   open: boolean;
   loading?: boolean;
   onClose: () => void;
-  onSave: (userId: string, permissions: VenueAction[]) => Promise<boolean>;
+  onSave: (
+    userId: string,
+    input: EditStaffSaveInput,
+    staff: VenueStaffNode,
+  ) => Promise<boolean>;
 }
 
-function EditStaffPermissionsModalContent({
+function EditStaffModalContent({
   staff,
   loading,
   onClose,
@@ -39,15 +51,23 @@ function EditStaffPermissionsModalContent({
   staff: VenueStaffNode;
   loading?: boolean;
   onClose: () => void;
-  onSave: (userId: string, permissions: VenueAction[]) => Promise<boolean>;
+  onSave: EditStaffModalProps['onSave'];
 }) {
   const [permissions, setPermissions] = useState<VenueAction[]>(() =>
-    staff.permissions.filter((p) => p !== VenueActionEnum.View)
+    (staff.permissions ?? []).filter((p) => p !== VenueActionEnum.View),
   );
+  const [customTitle, setCustomTitle] = useState(staff.customTitle ?? '');
 
   const handleSave = async () => {
     if (!staff.user?._id) return;
-    const ok = await onSave(staff.user._id, mergeVenuePermissions(permissions));
+    const ok = await onSave(
+      staff.user._id,
+      {
+        permissions: mergeVenuePermissions(permissions),
+        customTitle: customTitle.trim(),
+      },
+      staff,
+    );
     if (ok) onClose();
   };
 
@@ -55,8 +75,8 @@ function EditStaffPermissionsModalContent({
     <Modal
       open
       onClose={onClose}
-      title="Chỉnh sửa quyền nhân viên"
-      size="md"
+      title="Chỉnh sửa nhân viên"
+      size="lg"
       footer={
         <>
           <Button
@@ -72,7 +92,7 @@ function EditStaffPermissionsModalContent({
             onClick={() => void handleSave()}
             disabled={loading}
           >
-            Lưu quyền
+            Lưu thay đổi
           </Button>
         </>
       }
@@ -84,6 +104,23 @@ function EditStaffPermissionsModalContent({
             {staff.user?.displayName ?? '—'}
           </span>
         </p>
+
+        <div>
+          <Input
+            label="Chức danh"
+            placeholder="VD: Lễ tân, Thu ngân"
+            value={customTitle}
+            onChange={(event) => setCustomTitle(event.target.value)}
+            maxLength={CUSTOM_TITLE_MAX_LENGTH}
+            disabled={staff.isOwner}
+          />
+          <p className="text-faint mt-1 text-xs">
+            {staff.isOwner
+              ? 'Chủ sân không cần chức danh tùy chỉnh.'
+              : 'Tùy chọn — hiển thị bên cạnh tên nhân viên.'}
+          </p>
+        </div>
+
         <StaffPermissionsForm
           selected={permissions}
           onChange={setPermissions}
@@ -99,17 +136,17 @@ function EditStaffPermissionsModalContent({
   );
 }
 
-export function EditStaffPermissionsModal({
+export function EditStaffModal({
   staff,
   open,
   loading,
   onClose,
   onSave,
-}: EditStaffPermissionsModalProps) {
+}: EditStaffModalProps) {
   if (!open || !staff) return null;
 
   return (
-    <EditStaffPermissionsModalContent
+    <EditStaffModalContent
       key={staff._id}
       staff={staff}
       loading={loading}

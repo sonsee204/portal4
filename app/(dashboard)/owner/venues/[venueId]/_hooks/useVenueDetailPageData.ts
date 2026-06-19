@@ -3,7 +3,7 @@
  * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
  *
  * @copyright 2025-2026 Lê Trung Hiếu
- * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @author Lê Trung Hiếu <letrunghieu@gmail.com>
  * @license Proprietary - All rights reserved
  *
  * This source code is the intellectual property of Lê Trung Hiếu.
@@ -13,12 +13,16 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
 import {
   useVenueDetail,
   useVenueCourts,
 } from '@/hooks/owner';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
+
+const COURT_SORT_FIELDS = ['displayOrder', 'name'] as const;
 
 export function useVenueDetailPageData(venueId: string) {
   const { venues, setSelectedVenueId } = useVenueContext();
@@ -28,6 +32,17 @@ export function useVenueDetailPageData(venueId: string) {
       setSelectedVenueId(venueId);
     }
   }, [venueId, venues, setSelectedVenueId]);
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: COURT_SORT_FIELDS,
+    defaultField: 'displayOrder',
+    defaultDir: 'asc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const {
     venue,
@@ -41,13 +56,16 @@ export function useVenueDetailPageData(venueId: string) {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading: courtsLoading,
     error: courtsError,
     refetch: refetchCourts,
-  } = useVenueCourts(venueId, { limit: 50 });
+  } = useVenueCourts(venueId, sort, { limit: 50 });
 
   const loading = venueLoading || courtsLoading;
   const error = venueError ?? courtsError;
+
+  const courtsSortLoading = courtsLoading && courts.length > 0;
 
   const refetchAll = () => {
     void refetchVenue();
@@ -61,9 +79,14 @@ export function useVenueDetailPageData(venueId: string) {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetchAll,
+    sortField,
+    sortDir,
+    handleSort,
+    sortLoading: courtsSortLoading,
   };
 }
 

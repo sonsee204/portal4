@@ -14,8 +14,12 @@
 import { gql } from 'graphql-tag';
 
 export const AUDIT_GET_LOGS = gql`
-  query AuditGetLogs($filter: AuditFilterInput, $pagination: CursorPageInput) {
-    auditLogsConnection(filter: $filter, pagination: $pagination) {
+  query AuditGetLogs(
+    $filter: AuditFilterInput
+    $pagination: CursorPageInput
+    $sort: CursorSortInput
+  ) {
+    auditLogsConnection(filter: $filter, pagination: $pagination, sort: $sort) {
       edges {
         cursor
         node {

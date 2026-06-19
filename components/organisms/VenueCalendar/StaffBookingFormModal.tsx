@@ -13,16 +13,20 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Select } from '@/components/atoms/Select';
 import { Modal } from '@/components/molecules/Modal';
+import {
+  UserPhoneLookupField,
+  type UserPhoneLookupResult,
+} from '@/components/molecules/UserPhoneLookupField';
 import { PaymentMethod } from '@/graphql/generated';
-import { useLookupCustomerByPhone } from '@/hooks/owner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { formatCompactBookingSlots } from '@/lib/venue/booking-slots-display';
 import type { StaffSelectedSlot } from '@/lib/venue/calendar-staff-booking';
+import { PHONE_REGEX } from '@/lib/validation/constants';
 
 const PAYMENT_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
   { value: PaymentMethod.Cash, label: 'Tiền mặt' },
@@ -59,24 +63,16 @@ function StaffBookingFormContent({
   onClose,
   onConfirm,
 }: StaffBookingFormContentProps) {
-  const { lookupCustomerByPhone, loading: lookingUp } =
-    useLookupCustomerByPhone();
-
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [selectedUser, setSelectedUser] =
+    useState<UserPhoneLookupResult | null>(null);
   const [internalNote, setInternalNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     PaymentMethod.Cash
   );
-  const [lookupForPhone, setLookupForPhone] = useState<string | null>(null);
-  const [lookupCustomer, setLookupCustomer] = useState<{
-    _id: string;
-    displayName?: string | null;
-    phone?: string | null;
-  } | null>(null);
 
-  const normalizedPhone = customerPhone.trim();
-  const phoneDigits = normalizedPhone.replace(/\D/g, '');
+  const normalizedPhone = customerPhone.trim().replace(/\s/g, '');
 
   const totalPrice = useMemo(
     () => selectedSlots.reduce((sum, slot) => sum + slot.price, 0),
@@ -95,37 +91,9 @@ function StaffBookingFormContent({
     [selectedSlots]
   );
 
-  useEffect(() => {
-    if (phoneDigits.length < 10) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void lookupCustomerByPhone(normalizedPhone).then((user) => {
-        setLookupForPhone(normalizedPhone);
-        setLookupCustomer(user);
-        if (user) {
-          setCustomerName((current) =>
-            current.trim() ? current : (user.displayName ?? '')
-          );
-        }
-      });
-    }, 500);
-
-    return () => window.clearTimeout(timer);
-  }, [phoneDigits, normalizedPhone, lookupCustomerByPhone]);
-
-  const lookupIsCurrent = lookupForPhone === normalizedPhone;
-  const foundCustomer =
-    phoneDigits.length >= 10 && lookupIsCurrent ? lookupCustomer : null;
-  const customerId = foundCustomer?._id;
-  const foundCustomerLabel = foundCustomer
-    ? (foundCustomer.displayName ?? foundCustomer.phone ?? foundCustomer._id)
-    : null;
-
   const isValid =
     customerName.trim().length > 0 &&
-    phoneDigits.length >= 10 &&
+    PHONE_REGEX.test(normalizedPhone) &&
     selectedSlots.length > 0;
 
   return (
@@ -143,7 +111,7 @@ function StaffBookingFormContent({
             disabled={!isValid || loading}
             onClick={() =>
               void onConfirm({
-                ...(customerId ? { customerId } : {}),
+                ...(selectedUser?._id ? { customerId: selectedUser._id } : {}),
                 customerName: customerName.trim(),
                 customerPhone: normalizedPhone,
                 ...(internalNote.trim()
@@ -175,30 +143,20 @@ function StaffBookingFormContent({
           </p>
         </div>
 
-        <Input
-          label="Số điện thoại"
-          value={customerPhone}
-          onChange={(event) => setCustomerPhone(event.target.value)}
-          placeholder="0901234567"
-          inputMode="tel"
-        />
-        {lookingUp ? (
-          <p className="text-faint text-xs">Đang tra cứu khách hàng…</p>
-        ) : foundCustomerLabel ? (
-          <p className="text-xs text-emerald-600">
-            Đã tìm thấy tài khoản: {foundCustomerLabel}
-          </p>
-        ) : phoneDigits.length >= 10 ? (
-          <p className="text-faint text-xs">
-            Khách walk-in (chưa có tài khoản)
-          </p>
-        ) : null}
-
-        <Input
-          label="Tên khách"
-          value={customerName}
-          onChange={(event) => setCustomerName(event.target.value)}
-          placeholder="Nguyễn Văn A"
+        <UserPhoneLookupField
+          phone={customerPhone}
+          onPhoneChange={(value) => {
+            setCustomerPhone(value);
+            setSelectedUser(null);
+          }}
+          selectedUser={selectedUser}
+          onUserChange={setSelectedUser}
+          customerName={customerName}
+          onCustomerNameChange={setCustomerName}
+          showNameInput
+          showWalkInHint
+          autoApply
+          autoFillName
         />
 
         <Select

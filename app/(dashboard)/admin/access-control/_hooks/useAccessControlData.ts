@@ -13,10 +13,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAdminUsers } from '@/hooks/admin';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
+import { ADMIN_USERS_SORT_FIELDS } from '../../users/_hooks/useUsersPageData';
 
 const PAGE_SIZE = 20;
+const GRANT_SORT_FIELDS = ['createdAt', 'grantedAt'] as const;
 
 export function useAccessControlData() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,11 +32,38 @@ export function useAccessControlData() {
     isOwner?: boolean;
   } | null>(null);
 
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: ADMIN_USERS_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'userSort',
+    dirParam: 'userDir',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
+
+  const grantSortState = useDataTableSortUrl({
+    allowedFields: GRANT_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'grantSort',
+    dirParam: 'grantDir',
+  });
+
+  const grantSort = useMemo(
+    () => toSortByOrder(grantSortState.sortField, grantSortState.sortDir),
+    [grantSortState.sortField, grantSortState.sortDir],
+  );
+
   const {
     users,
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -43,6 +74,7 @@ export function useAccessControlData() {
         ? undefined
         : (roleFilter as import('@/types').UserRole),
     pagination: { limit: PAGE_SIZE },
+    sort,
   });
 
   return {
@@ -52,10 +84,18 @@ export function useAccessControlData() {
     setRoleFilter,
     changeRoleUser,
     setChangeRoleUser,
+    sortField,
+    sortDir,
+    handleSort,
+    grantSortField: grantSortState.sortField,
+    grantSortDir: grantSortState.sortDir,
+    handleGrantSort: grantSortState.handleSort,
+    grantSort,
     users,
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

@@ -537,6 +537,8 @@ enum AuditAction {
   USER_UNSUSPEND
   VENUE_APPROVE
   VENUE_REJECT
+  VENUE_STAFF_ACCEPTED
+  VENUE_STAFF_REMOVED
   VENUE_SUSPEND
 }
 
@@ -901,6 +903,14 @@ type Booking {
 
   """Customer user"""
   customer: User
+
+  """
+  Resolved customer name for lists/calendar (user, walk-in snapshot, recurring parent fallback)
+  """
+  customerDisplayName: String
+
+  """Resolved customer phone for lists/calendar"""
+  customerDisplayPhone: String
 
   """Customer user ID (null for walk-in)"""
   customerId: ID
@@ -3624,6 +3634,14 @@ input CursorPageInput {
   last: Int
 }
 
+input CursorSortInput {
+  """Mongo field to sort by (domain whitelist)"""
+  sortBy: String
+
+  """Sort direction"""
+  sortOrder: String
+}
+
 type CustomLocation {
   """Địa chỉ"""
   address: String!
@@ -4124,6 +4142,8 @@ type FinancePnlSummary {
 }
 
 type FinanceTransaction {
+  """Giá vốn hàng bán (COGS) gắn với đơn"""
+  cogsAmount: Int!
   completedAt: DateTime
   courtLabel: String
   createdAt: DateTime!
@@ -4137,6 +4157,12 @@ type FinanceTransaction {
   paidAt: DateTime
   paymentMethod: PaymentMethod
   paymentStatus: OrderPaymentStatus!
+
+  """Lợi nhuận gộp = doanh thu gộp − giá vốn"""
+  profitAmount: Int!
+
+  """Biên lợi nhuận gộp = lãi / doanh thu gộp × 100"""
+  profitMarginPercent: Float!
   refundAmount: Int!
   status: OrderStatus!
   venueId: ID!
@@ -9963,16 +9989,16 @@ type Query {
   adminUserBookingsConnection(pagination: CursorPageInput, statuses: [String!], userId: ID!): AdminBookingItemConnection!
 
   """Get all users (Super Admin only, cursor)"""
-  adminUsersConnection(isActive: Boolean, isSuspended: Boolean, pagination: CursorPageInput, role: UserRole, searchQuery: String): UserConnection!
+  adminUsersConnection(isActive: Boolean, isSuspended: Boolean, pagination: CursorPageInput, role: UserRole, searchQuery: String, sort: CursorSortInput): UserConnection!
 
   """Get all venue requests with filters (Admin only, cursor)"""
-  allVenueRequestsConnection(pagination: CursorPageInput, status: VenueRequestStatus): VenueRequestConnection!
+  allVenueRequestsConnection(pagination: CursorPageInput, sort: CursorSortInput, status: VenueRequestStatus): VenueRequestConnection!
 
   """Get a single audit log by ID (Admin only)"""
   auditLogDetail(id: ID!): AuditLog!
 
   """Get paginated audit logs (Admin only, cursor)"""
-  auditLogsConnection(filter: AuditFilterInput, pagination: CursorPageInput): AuditLogConnection!
+  auditLogsConnection(filter: AuditFilterInput, pagination: CursorPageInput, sort: CursorSortInput): AuditLogConnection!
 
   """Get audit statistics (Admin only)"""
   auditStats: AuditStats!
@@ -10054,7 +10080,7 @@ type Query {
   claimRequestStats: ClaimRequestStats!
 
   """Cursor-paginated claim requests — Admin only."""
-  claimRequestsConnection(filter: ClaimRequestFilterInput, pagination: CursorPageInput): VenueClaimRequestConnection!
+  claimRequestsConnection(filter: ClaimRequestFilterInput, pagination: CursorPageInput, sort: CursorSortInput): VenueClaimRequestConnection!
 
   """Cursor-paginated replies to a parent comment."""
   commentRepliesConnection(commentId: ID!, pagination: CursorPageInput, postId: ID!): PostCommentConnection!
@@ -10144,7 +10170,7 @@ type Query {
   getPostReportStats: PostReportStats!
 
   """Get all post reports with filters (Admin only, cursor)"""
-  getPostReportsForAdminConnection(filter: PostReportFilterInput, pagination: CursorPageInput): PostReportConnection!
+  getPostReportsForAdminConnection(filter: PostReportFilterInput, pagination: CursorPageInput, sort: CursorSortInput): PostReportConnection!
 
   """Get import history for a product"""
   getProductImportHistory(limit: Int = 10, productId: ID!): [StockMovement!]!
@@ -10186,7 +10212,7 @@ type Query {
   getUserReportStats: UserReportStats!
 
   """Get all user reports with filters (Admin only, cursor)"""
-  getUserReportsForAdminConnection(filter: UserReportFilterInput, pagination: CursorPageInput): UserReportConnection!
+  getUserReportsForAdminConnection(filter: UserReportFilterInput, pagination: CursorPageInput, sort: CursorSortInput): UserReportConnection!
 
   """Get members of a group (cursor)"""
   groupMembersConnection(groupId: ID!, pagination: CursorPageInput): GroupMemberConnection!
@@ -10264,7 +10290,7 @@ type Query {
   me: User!
 
   """Get all message reports (cursor, Admin only)"""
-  messageReportsConnection(filter: MessageReportFilterInput, pagination: CursorPageInput): MessageReportConnection!
+  messageReportsConnection(filter: MessageReportFilterInput, pagination: CursorPageInput, sort: CursorSortInput): MessageReportConnection!
 
   """Get messages in a conversation (cursor)"""
   messagesConnection(conversationId: ID!, pagination: CursorPageInput): MessageConnection!
@@ -10387,19 +10413,19 @@ type Query {
   otpTestPhone(id: ID!): OtpTestPhone!
 
   """List OTP test phones (SUPER_ADMIN only, cursor)"""
-  otpTestPhonesConnection(filter: OtpTestPhoneFilterInput, pagination: CursorPageInput): OtpTestPhoneConnection!
+  otpTestPhonesConnection(filter: OtpTestPhoneFilterInput, pagination: CursorPageInput, sort: CursorSortInput): OtpTestPhoneConnection!
 
   """Get OTP test user grant by id (SUPER_ADMIN only)"""
   otpTestUserGrant(id: ID!): OtpTestUserGrant!
 
   """List OTP test user grants (SUPER_ADMIN only, cursor)"""
-  otpTestUserGrantsConnection(filter: OtpTestUserGrantFilterInput, pagination: CursorPageInput): OtpTestUserGrantConnection!
+  otpTestUserGrantsConnection(filter: OtpTestUserGrantFilterInput, pagination: CursorPageInput, sort: CursorSortInput): OtpTestUserGrantConnection!
 
   """Cursor-paginated pending claim requests — Admin only."""
   pendingClaimRequestsConnection(pagination: CursorPageInput): VenueClaimRequestConnection!
 
   """Get pending venue requests (Admin only, cursor)"""
-  pendingVenueRequestsConnection(pagination: CursorPageInput): VenueRequestConnection!
+  pendingVenueRequestsConnection(pagination: CursorPageInput, sort: CursorSortInput): VenueRequestConnection!
 
   """Lấy chi tiết kèo"""
   pickupGame(gameId: ID!): PickupGame
@@ -10414,7 +10440,7 @@ type Query {
   popularSports: [Sport!]!
 
   """List portal capability grants (SUPER_ADMIN only, cursor)"""
-  portalCapabilityGrantsConnection(filter: PortalCapabilityGrantFilterInput, pagination: CursorPageInput): PortalCapabilityGrantConnection!
+  portalCapabilityGrantsConnection(filter: PortalCapabilityGrantFilterInput, pagination: CursorPageInput, sort: CursorSortInput): PortalCapabilityGrantConnection!
 
   """Cursor-paginated top-level comments of a post."""
   postCommentsConnection(pagination: CursorPageInput, postId: ID!): PostCommentConnection!
@@ -10608,13 +10634,25 @@ type Query {
   venueBookingsConnection(filter: BookingFilterInput, pagination: CursorPageInput, sort: BookingSortInput, venueId: ID!): BookingConnection!
 
   """Get venue categories (cursor)"""
-  venueCategoriesConnection(pagination: CursorPageInput, venueId: ID!): ProductCategoryConnection!
+  venueCategoriesConnection(pagination: CursorPageInput, sort: CursorSortInput, venueId: ID!): ProductCategoryConnection!
 
   """Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC."""
-  venueCourtsConnection(pagination: CursorPageInput, venueId: ID!): CourtConnection!
+  venueCourtsConnection(pagination: CursorPageInput, sort: CursorSortInput, venueId: ID!): CourtConnection!
+
+  """
+  Permission-aware venue dashboard payload — field resolvers return null or empty shapes when staff lacks tier access
+  """
+  venueDashboardSummary(
+    """Analytics period: week, month, etc."""
+    period: String
+
+    """Revenue breakdown period: day, week, month, quarter, year"""
+    revenuePeriod: String
+    venueId: ID!
+  ): VenueDashboardSummary!
 
   """Cursor-paginated venue operating expenses"""
-  venueExpensesConnection(filter: ExpenseFilterInput!, pagination: CursorPageInput): VenueExpenseConnection!
+  venueExpensesConnection(filter: ExpenseFilterInput!, pagination: CursorPageInput, sort: CursorSortInput): VenueExpenseConnection!
 
   """Export finance report as CSV content"""
   venueFinanceExport(filter: FinanceFilterInput!, format: FinanceExportFormat!): VenueFinanceExportResult!
@@ -10629,7 +10667,7 @@ type Query {
   venueFinanceTransactionsConnection(filter: FinanceTransactionFilterInput!, pagination: CursorPageInput, sort: FinanceTransactionSortInput): FinanceTransactionConnection!
 
   """Cursor-paginated hold bookings for a venue (staff)"""
-  venueHoldBookingsConnection(pagination: CursorPageInput, venueId: ID!): BookingConnection!
+  venueHoldBookingsConnection(pagination: CursorPageInput, sort: BookingSortInput, venueId: ID!): BookingConnection!
 
   """Court operations report (schedule date axis)"""
   venueOperationsReport(filter: OperationsFilterInput!): VenueOperationsReport!
@@ -10641,16 +10679,16 @@ type Query {
   venuePendingInvitations(venueId: ID!): [VenueStaff!]!
 
   """Get venue products (menu, cursor)"""
-  venueProductsConnection(filter: ProductFilterInput, pagination: CursorPageInput, venueId: ID!): ProductConnection!
+  venueProductsConnection(filter: ProductFilterInput, pagination: CursorPageInput, sort: ProductSortInput, venueId: ID!): ProductConnection!
 
   """Get venue promotion summary for display"""
   venuePromotionSummary(venueId: ID!): VenuePromotionSummary!
 
   """Get venue promotions (for venue owner/staff, cursor)"""
-  venuePromotionsConnection(filter: PromotionFilterInput, pagination: CursorPageInput, venueId: ID!): PromotionConnection!
+  venuePromotionsConnection(filter: PromotionFilterInput, pagination: CursorPageInput, sort: PromotionSortInput, venueId: ID!): PromotionConnection!
 
   """Cursor-paginated recurring master bookings for a venue (staff)"""
-  venueRecurringBookingsConnection(pagination: CursorPageInput, venueId: ID!): BookingConnection!
+  venueRecurringBookingsConnection(pagination: CursorPageInput, sort: BookingSortInput, venueId: ID!): BookingConnection!
 
   """Get venue request by ID"""
   venueRequest(requestId: ID!): VenueRequest!
@@ -10669,7 +10707,7 @@ type Query {
   venueReviewsConnection(pagination: CursorPageInput, venueId: ID!): VenueReviewConnection!
 
   """Cursor-paginated venue staff. Sort: isOwner DESC, joinedAt ASC."""
-  venueStaffConnection(pagination: CursorPageInput, venueId: ID!): VenueStaffConnection!
+  venueStaffConnection(pagination: CursorPageInput, sort: CursorSortInput, venueId: ID!): VenueStaffConnection!
 
   """
   Cursor-paginated venues. Default sort: createdAt DESC; distance sort delegates to geo path.
@@ -14431,6 +14469,11 @@ type User {
   followingCount: Float!
   fullName: String!
   gender: Gender
+
+  """
+  Whether user can access portal owner workspace (active venue staff or owned venues)
+  """
+  hasVenuePortalAccess: Boolean!
   isActive: Boolean!
   isOwner: Boolean!
 
@@ -14958,6 +15001,10 @@ type VenueAnalytics {
   venueName: String!
 }
 
+type VenueAnalyticsPreview {
+  venueAnalytics: VenueAnalytics!
+}
+
 type VenueAvailability {
   """Court availabilities"""
   courts: [CourtAvailability!]!
@@ -15059,6 +15106,20 @@ type VenueConnection {
   Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
   """
   totalCount: Int!
+}
+
+type VenueDashboardSummary {
+  """Analytics preview when staff has VIEW_ANALYTICS"""
+  analyticsPreview: VenueAnalyticsPreview
+
+  """Counts when staff has VIEW_BOOKINGS and/or VIEW_ORDERS"""
+  operational: VenueOperationalStats
+
+  """Revenue when staff has VIEW_SENSITIVE_DATA"""
+  sensitive: VenueSensitiveStats
+
+  """Venue with myPermissions"""
+  venue: Venue!
 }
 
 """An edge in the VenueConnection."""
@@ -15282,6 +15343,11 @@ type VenueMarginThresholds {
 
   """Margin % below which shows yellow warning (default 20)"""
   warningMargin: Float!
+}
+
+type VenueOperationalStats {
+  bookingStats: BookingStats!
+  orderStats: OrderStats!
 }
 
 type VenueOperationsReport {
@@ -15649,6 +15715,10 @@ type VenueReviewEdge {
 
   """The review at the end of the edge."""
   node: VenueReview!
+}
+
+type VenueSensitiveStats {
+  revenueStats: VenueRevenueStats!
 }
 
 input VenueSortInput {

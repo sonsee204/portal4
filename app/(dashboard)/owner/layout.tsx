@@ -11,11 +11,10 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { ownerSidebarNav, withProfileSection } from '@/config/navigation';
+import { ownerSidebarNav } from '@/config/navigation';
 import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboardShell';
 import { VenueContextProvider } from '@/components/providers/VenueContextProvider';
-
-const ownerNavWithProfile = withProfileSection(ownerSidebarNav);
+import { VenueRouteGuard } from '@/components/atoms/VenueRouteGuard';
 
 export default function OwnerLayout({
   children,
@@ -24,9 +23,11 @@ export default function OwnerLayout({
 }) {
   return (
     <VenueContextProvider>
-      <WorkspaceDashboardShell workspace="owner" nav={ownerNavWithProfile}>
-        {children}
-      </WorkspaceDashboardShell>
+      <VenueRouteGuard>
+        <WorkspaceDashboardShell workspace="owner" nav={ownerSidebarNav}>
+          {children}
+        </WorkspaceDashboardShell>
+      </VenueRouteGuard>
     </VenueContextProvider>
   );
 }

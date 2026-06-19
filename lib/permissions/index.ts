@@ -37,6 +37,7 @@ export {
   can,
   canAll,
   canAny,
+  canAccessPortal,
   canAccessRoute,
   canAccessWorkspace,
   canWithCapabilities,
@@ -167,8 +168,8 @@ export const WORKSPACE_LABELS: Record<
   import('./portal-permissions').PortalWorkspace,
   string
 > = {
-  admin: 'Platform Admin',
+  admin: 'Quản trị nền tảng',
   owner: 'Chủ sân',
-  organizer: 'Tournament Organizer',
-  shared: 'Portal',
+  organizer: 'Tổ chức giải đấu',
+  shared: 'Cá nhân',
 };

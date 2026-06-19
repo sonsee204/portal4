@@ -17,8 +17,13 @@ export const GET_CLAIM_REQUESTS = gql`
   query GetClaimRequests(
     $filter: ClaimRequestFilterInput
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
-    claimRequestsConnection(filter: $filter, pagination: $pagination) {
+    claimRequestsConnection(
+      filter: $filter
+      pagination: $pagination
+      sort: $sort
+    ) {
       edges {
         cursor
         node {

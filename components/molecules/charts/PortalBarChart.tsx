@@ -23,21 +23,34 @@ import {
   YAxis,
 } from 'recharts';
 import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
-import { cn } from '@/lib/utils';
+import { formatCompactCurrency } from '@/lib/charts/format-currency';
+import { cn, formatCurrency } from '@/lib/utils';
 
 export interface PortalBarChartProps {
   data: Array<{ label: string; value: number }>;
   className?: string;
   height?: number;
+  /** Tooltip value formatter — full currency by default. */
   valueFormatter?: (value: number) => string;
+  /** Y-axis tick formatter — compact K/M/B by default. */
+  axisTickFormatter?: (value: number) => string;
+  /** Show every category label on the X axis instead of skipping crowded ticks. */
+  showAllCategoryLabels?: boolean;
+  /** Rotate X axis labels (degrees). */
+  categoryLabelAngle?: number;
 }
 
 export function PortalBarChart({
   data,
   className,
   height = 280,
-  valueFormatter = (v) => String(v),
+  valueFormatter = formatCurrency,
+  axisTickFormatter = formatCompactCurrency,
+  showAllCategoryLabels = false,
+  categoryLabelAngle = 0,
 }: PortalBarChartProps) {
+  const xAxisAngle = showAllCategoryLabels ? categoryLabelAngle : 0;
+  const bottomMargin = showAllCategoryLabels ? (xAxisAngle !== 0 ? 48 : 24) : 0;
   if (data.length === 0) {
     return (
       <div
@@ -57,7 +70,7 @@ export function PortalBarChart({
       <ResponsiveContainer width="100%" height="100%">
         <RechartsBarChart
           data={data}
-          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: 0, bottom: bottomMargin }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -66,6 +79,10 @@ export function PortalBarChart({
           />
           <XAxis
             dataKey="label"
+            interval={showAllCategoryLabels ? 0 : 'preserveStartEnd'}
+            angle={xAxisAngle}
+            textAnchor={xAxisAngle !== 0 ? 'end' : 'middle'}
+            height={showAllCategoryLabels ? (xAxisAngle !== 0 ? 56 : 32) : 30}
             tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
             axisLine={false}
             tickLine={false}
@@ -74,8 +91,8 @@ export function PortalBarChart({
             tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={48}
-            tickFormatter={valueFormatter}
+            width={52}
+            tickFormatter={(value) => axisTickFormatter(Number(value))}
           />
           <Tooltip
             contentStyle={{

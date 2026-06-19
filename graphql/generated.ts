@@ -482,6 +482,8 @@ export enum AuditAction {
   UserUnsuspend = 'USER_UNSUSPEND',
   VenueApprove = 'VENUE_APPROVE',
   VenueReject = 'VENUE_REJECT',
+  VenueStaffAccepted = 'VENUE_STAFF_ACCEPTED',
+  VenueStaffRemoved = 'VENUE_STAFF_REMOVED',
   VenueSuspend = 'VENUE_SUSPEND'
 }
 
@@ -756,6 +758,8 @@ export type BookedSlotInput = {
 export type Booking = {
   __typename?: 'Booking';
   _id: Scalars['ID']['output'];
+  /** Promotions applied to this booking (for analytics attribution) */
+  appliedPromotions?: Maybe<Array<BookingAppliedPromotion>>;
   /** Cancellation reason */
   cancellationReason?: Maybe<Scalars['String']['output']>;
   /** Cancelled at */
@@ -785,6 +789,10 @@ export type Booking = {
   createdByStaffId?: Maybe<Scalars['ID']['output']>;
   /** Customer user */
   customer?: Maybe<User>;
+  /** Resolved customer name for lists/calendar (user, walk-in snapshot, recurring parent fallback) */
+  customerDisplayName?: Maybe<Scalars['String']['output']>;
+  /** Resolved customer phone for lists/calendar */
+  customerDisplayPhone?: Maybe<Scalars['String']['output']>;
   /** Customer user ID (null for walk-in) */
   customerId?: Maybe<Scalars['ID']['output']>;
   /** Customer info (for staff/walk-in bookings) */
@@ -856,6 +864,14 @@ export type Booking = {
   venue?: Maybe<Venue>;
   /** Venue ID */
   venueId: Scalars['ID']['output'];
+};
+
+export type BookingAppliedPromotion = {
+  __typename?: 'BookingAppliedPromotion';
+  /** Discount amount from this promotion */
+  discountAmount: Scalars['Int']['output'];
+  /** Promotion ID */
+  promotionId: Scalars['ID']['output'];
 };
 
 /** A Relay-style connection for Booking items. */
@@ -2900,6 +2916,13 @@ export type CursorPageInput = {
   last?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CursorSortInput = {
+  /** Mongo field to sort by (domain whitelist) */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Sort direction */
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CustomLocation = {
   __typename?: 'CustomLocation';
   /** Địa chỉ */
@@ -3327,6 +3350,8 @@ export type FinancePnlSummary = {
 
 export type FinanceTransaction = {
   __typename?: 'FinanceTransaction';
+  /** Giá vốn hàng bán (COGS) gắn với đơn */
+  cogsAmount: Scalars['Int']['output'];
   completedAt?: Maybe<Scalars['DateTime']['output']>;
   courtLabel?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
@@ -3340,6 +3365,10 @@ export type FinanceTransaction = {
   paidAt?: Maybe<Scalars['DateTime']['output']>;
   paymentMethod?: Maybe<PaymentMethod>;
   paymentStatus: OrderPaymentStatus;
+  /** Lợi nhuận gộp = doanh thu gộp − giá vốn */
+  profitAmount: Scalars['Int']['output'];
+  /** Biên lợi nhuận gộp = lãi / doanh thu gộp × 100 */
+  profitMarginPercent: Scalars['Float']['output'];
   refundAmount: Scalars['Int']['output'];
   status: OrderStatus;
   venueId: Scalars['ID']['output'];
@@ -10161,6 +10190,8 @@ export type Query = {
   venueCategoriesConnection: ProductCategoryConnection;
   /** Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC. */
   venueCourtsConnection: CourtConnection;
+  /** Permission-aware venue dashboard payload — field resolvers return null or empty shapes when staff lacks tier access */
+  venueDashboardSummary: VenueDashboardSummary;
   /** Cursor-paginated venue operating expenses */
   venueExpensesConnection: VenueExpenseConnection;
   /** Export finance report as CSV content */
@@ -10238,11 +10269,13 @@ export type QueryAdminUsersConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
   role?: InputMaybe<UserRole>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
 export type QueryAllVenueRequestsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   status?: InputMaybe<VenueRequestStatus>;
 };
 
@@ -10255,6 +10288,7 @@ export type QueryAuditLogDetailArgs = {
 export type QueryAuditLogsConnectionArgs = {
   filter?: InputMaybe<AuditFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10392,6 +10426,7 @@ export type QueryClaimRequestArgs = {
 export type QueryClaimRequestsConnectionArgs = {
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10529,6 +10564,7 @@ export type QueryGetPostReportByIdArgs = {
 export type QueryGetPostReportsForAdminConnectionArgs = {
   filter?: InputMaybe<PostReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10589,6 +10625,7 @@ export type QueryGetUserReportByIdArgs = {
 export type QueryGetUserReportsForAdminConnectionArgs = {
   filter?: InputMaybe<UserReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10712,6 +10749,7 @@ export type QueryMatchScorecardArgs = {
 export type QueryMessageReportsConnectionArgs = {
   filter?: InputMaybe<MessageReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10904,6 +10942,7 @@ export type QueryOtpTestPhoneArgs = {
 export type QueryOtpTestPhonesConnectionArgs = {
   filter?: InputMaybe<OtpTestPhoneFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10915,6 +10954,7 @@ export type QueryOtpTestUserGrantArgs = {
 export type QueryOtpTestUserGrantsConnectionArgs = {
   filter?: InputMaybe<OtpTestUserGrantFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10925,6 +10965,7 @@ export type QueryPendingClaimRequestsConnectionArgs = {
 
 export type QueryPendingVenueRequestsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10947,6 +10988,7 @@ export type QueryPickupGamesConnectionArgs = {
 export type QueryPortalCapabilityGrantsConnectionArgs = {
   filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -11267,12 +11309,21 @@ export type QueryVenueBookingsConnectionArgs = {
 
 export type QueryVenueCategoriesConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
 export type QueryVenueCourtsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
+  venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryVenueDashboardSummaryArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  revenuePeriod?: InputMaybe<Scalars['String']['input']>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11280,6 +11331,7 @@ export type QueryVenueCourtsConnectionArgs = {
 export type QueryVenueExpensesConnectionArgs = {
   filter: ExpenseFilterInput;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -11308,6 +11360,7 @@ export type QueryVenueFinanceTransactionsConnectionArgs = {
 
 export type QueryVenueHoldBookingsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<BookingSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11333,6 +11386,7 @@ export type QueryVenuePendingInvitationsArgs = {
 export type QueryVenueProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<ProductSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11345,12 +11399,14 @@ export type QueryVenuePromotionSummaryArgs = {
 export type QueryVenuePromotionsConnectionArgs = {
   filter?: InputMaybe<PromotionFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<PromotionSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
 export type QueryVenueRecurringBookingsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<BookingSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11374,6 +11430,7 @@ export type QueryVenueReviewsConnectionArgs = {
 
 export type QueryVenueStaffConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -14608,6 +14665,8 @@ export type User = {
   followingCount: Scalars['Float']['output'];
   fullName: Scalars['String']['output'];
   gender?: Maybe<Gender>;
+  /** Whether user can access portal owner workspace (active venue staff or owned venues) */
+  hasVenuePortalAccess: Scalars['Boolean']['output'];
   isActive: Scalars['Boolean']['output'];
   isOwner: Scalars['Boolean']['output'];
   /** Is user suspended */
@@ -15034,6 +15093,11 @@ export type VenueAnalytics = {
   venueName: Scalars['String']['output'];
 };
 
+export type VenueAnalyticsPreview = {
+  __typename?: 'VenueAnalyticsPreview';
+  venueAnalytics: VenueAnalytics;
+};
+
 export type VenueAvailability = {
   __typename?: 'VenueAvailability';
   /** Court availabilities */
@@ -15112,6 +15176,18 @@ export type VenueConnection = {
   pageInfo: PageInfo;
   /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type VenueDashboardSummary = {
+  __typename?: 'VenueDashboardSummary';
+  /** Analytics preview when staff has VIEW_ANALYTICS */
+  analyticsPreview?: Maybe<VenueAnalyticsPreview>;
+  /** Counts when staff has VIEW_BOOKINGS and/or VIEW_ORDERS */
+  operational?: Maybe<VenueOperationalStats>;
+  /** Revenue when staff has VIEW_SENSITIVE_DATA */
+  sensitive?: Maybe<VenueSensitiveStats>;
+  /** Venue with myPermissions */
+  venue: Venue;
 };
 
 /** An edge in the VenueConnection. */
@@ -15304,6 +15380,12 @@ export type VenueMarginThresholds = {
   dangerMargin: Scalars['Float']['output'];
   /** Margin % below which shows yellow warning (default 20) */
   warningMargin: Scalars['Float']['output'];
+};
+
+export type VenueOperationalStats = {
+  __typename?: 'VenueOperationalStats';
+  bookingStats: BookingStats;
+  orderStats: OrderStats;
 };
 
 export type VenueOperationsReport = {
@@ -15592,6 +15674,11 @@ export type VenueReviewEdge = {
   node: VenueReview;
 };
 
+export type VenueSensitiveStats = {
+  __typename?: 'VenueSensitiveStats';
+  revenueStats: VenueRevenueStats;
+};
+
 export type VenueSortInput = {
   /** Sort by field */
   sortBy?: InputMaybe<Scalars['String']['input']>;
@@ -15739,6 +15826,7 @@ export type AdminGetUsersQueryVariables = Exact<{
   isSuspended?: InputMaybe<Scalars['Boolean']['input']>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15761,6 +15849,7 @@ export type AdminGetUserBookingsQuery = { __typename?: 'Query', adminUserBooking
 export type AuditGetLogsQueryVariables = Exact<{
   filter?: InputMaybe<AuditFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15788,6 +15877,7 @@ export type ReviewClaimRequestMutation = { __typename?: 'Mutation', reviewClaimR
 export type GetClaimRequestsQueryVariables = Exact<{
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15857,6 +15947,7 @@ export type DeleteMessageByAdminMutation = { __typename?: 'Mutation', deleteMess
 export type GetPostReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<PostReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15870,6 +15961,7 @@ export type GetPostReportStatsQuery = { __typename?: 'Query', getPostReportStats
 export type GetUserReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<UserReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15883,6 +15975,7 @@ export type GetUserReportStatsQuery = { __typename?: 'Query', getUserReportStats
 export type GetMessageReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<MessageReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15976,6 +16069,7 @@ export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTe
 export type GetOtpTestPhonesQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<OtpTestPhoneFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15998,6 +16092,7 @@ export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOt
 export type GetOtpTestUserGrantsQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -16021,10 +16116,11 @@ export type VenueFinanceTransactionsConnectionQueryVariables = Exact<{
 }>;
 
 
-export type VenueFinanceTransactionsConnectionQuery = { __typename?: 'Query', venueFinanceTransactionsConnection: { __typename?: 'FinanceTransactionConnection', totalCount: number, edges: Array<{ __typename?: 'FinanceTransactionEdge', cursor: string, node: { __typename?: 'FinanceTransaction', orderId: string, orderCode: string, venueId: string, venueName?: string | null, createdAt: string, completedAt?: string | null, paidAt?: string | null, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, courtLabel?: string | null, customerName?: string | null, grossAmount: number, paidAmount: number, refundAmount: number, netAmount: number } }>, pageInfo: { __typename?: 'FinanceTransactionPageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueFinanceTransactionsConnectionQuery = { __typename?: 'Query', venueFinanceTransactionsConnection: { __typename?: 'FinanceTransactionConnection', totalCount: number, edges: Array<{ __typename?: 'FinanceTransactionEdge', cursor: string, node: { __typename?: 'FinanceTransaction', orderId: string, orderCode: string, venueId: string, venueName?: string | null, createdAt: string, completedAt?: string | null, paidAt?: string | null, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, courtLabel?: string | null, customerName?: string | null, grossAmount: number, paidAmount: number, refundAmount: number, netAmount: number, cogsAmount: number, profitAmount: number, profitMarginPercent: number } }>, pageInfo: { __typename?: 'FinanceTransactionPageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type VenueExpensesConnectionQueryVariables = Exact<{
   filter: ExpenseFilterInput;
+  sort?: InputMaybe<CursorSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
@@ -16051,13 +16147,6 @@ export type DeleteVenueExpenseMutationVariables = Exact<{
 
 
 export type DeleteVenueExpenseMutation = { __typename?: 'Mutation', deleteVenueExpense: boolean };
-
-export type VenuePromotionsForFilterQueryVariables = Exact<{
-  venueId: Scalars['ID']['input'];
-}>;
-
-
-export type VenuePromotionsForFilterQuery = { __typename?: 'Query', venuePromotionsConnection: { __typename?: 'PromotionConnection', edges: Array<{ __typename?: 'PromotionEdge', node: { __typename?: 'Promotion', _id: string, name: string, code?: string | null, status: PromotionStatus } }> } };
 
 export type FinancePeriodFieldsFragment = { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string };
 
@@ -16207,12 +16296,34 @@ export type MarkOrderReadyMutationVariables = Exact<{
 
 export type MarkOrderReadyMutation = { __typename?: 'Mutation', markOrderReady: { __typename?: 'Order', _id: string, status: OrderStatus } };
 
+export type MarkOrderDeliveredMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderDeliveredMutation = { __typename?: 'Mutation', markOrderDelivered: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
 export type CompleteOrderMutationVariables = Exact<{
   orderId: Scalars['ID']['input'];
 }>;
 
 
 export type CompleteOrderMutation = { __typename?: 'Mutation', completeOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type UploadPaymentProofMutationVariables = Exact<{
+  input: UploadPaymentProofInput;
+}>;
+
+
+export type UploadPaymentProofMutation = { __typename?: 'Mutation', uploadPaymentProof: { __typename?: 'Order', _id: string, paymentProofImages?: Array<string> | null } };
+
+export type RemovePaymentProofImageMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  imageUrl: Scalars['String']['input'];
+}>;
+
+
+export type RemovePaymentProofImageMutation = { __typename?: 'Mutation', removePaymentProofImage: { __typename?: 'Order', _id: string, paymentProofImages?: Array<string> | null } };
 
 export type CancelOrderMutationVariables = Exact<{
   orderId: Scalars['ID']['input'];
@@ -16322,6 +16433,15 @@ export type UpdateVenueStaffPermissionsMutationVariables = Exact<{
 
 export type UpdateVenueStaffPermissionsMutation = { __typename?: 'Mutation', updateVenueStaffPermissions: { __typename?: 'VenueStaff', _id: string, permissions: Array<VenueAction> } };
 
+export type UpdateVenueStaffTitleMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  customTitle: Scalars['String']['input'];
+}>;
+
+
+export type UpdateVenueStaffTitleMutation = { __typename?: 'Mutation', updateVenueStaffTitle: { __typename?: 'VenueStaff', _id: string, customTitle?: string | null, permissions: Array<VenueAction>, status: VenueStaffStatus } };
+
 export type RemoveVenueStaffMutationVariables = Exact<{
   venueId: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
@@ -16329,6 +16449,99 @@ export type RemoveVenueStaffMutationVariables = Exact<{
 
 
 export type RemoveVenueStaffMutation = { __typename?: 'Mutation', removeVenueStaff: boolean };
+
+export type PromotionCoreFragment = { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null };
+
+export type PromotionUserBriefFragment = { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string };
+
+export type PromotionDetailExtraFragment = { __typename?: 'Promotion', shortDescription?: string | null, productCategoryIds?: Array<string> | null, displayOrder: number, createdBy: string, reviewedBy?: string | null, reviewedAt?: string | null, rejectionReason?: string | null, isWithinDateRange: boolean, isUsageLimitReached: boolean, remainingUsage?: number | null, createdByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, reviewedByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, stackingRules?: { __typename?: 'StackingRules', canStack: boolean, maxStackDiscountPercent?: number | null, maxStackDiscountAmount?: number | null, stackableWithIds?: Array<string> | null, stackableWithCategories?: Array<PromotionCategory> | null } | null };
+
+export type CreatePromotionMutationVariables = Exact<{
+  input: CreatePromotionInput;
+}>;
+
+
+export type CreatePromotionMutation = { __typename?: 'Mutation', createPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type UpdatePromotionMutationVariables = Exact<{
+  input: UpdatePromotionInput;
+}>;
+
+
+export type UpdatePromotionMutation = { __typename?: 'Mutation', updatePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type SubmitPromotionForApprovalMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type SubmitPromotionForApprovalMutation = { __typename?: 'Mutation', submitPromotionForApproval: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type ReviewPromotionMutationVariables = Exact<{
+  input: ReviewPromotionInput;
+}>;
+
+
+export type ReviewPromotionMutation = { __typename?: 'Mutation', reviewPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type ActivatePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type ActivatePromotionMutation = { __typename?: 'Mutation', activatePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type PausePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type PausePromotionMutation = { __typename?: 'Mutation', pausePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type CancelPromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type CancelPromotionMutation = { __typename?: 'Mutation', cancelPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type DeletePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePromotionMutation = { __typename?: 'Mutation', deletePromotion: boolean };
+
+export type VenuePromotionsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<PromotionFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<PromotionSortInput>;
+}>;
+
+
+export type VenuePromotionsConnectionQuery = { __typename?: 'Query', venuePromotionsConnection: { __typename?: 'PromotionConnection', totalCount: number, edges: Array<{ __typename?: 'PromotionEdge', cursor: string, node: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetPromotionQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPromotionQuery = { __typename?: 'Query', promotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, shortDescription?: string | null, productCategoryIds?: Array<string> | null, displayOrder: number, createdBy: string, reviewedBy?: string | null, reviewedAt?: string | null, rejectionReason?: string | null, isWithinDateRange: boolean, isUsageLimitReached: boolean, remainingUsage?: number | null, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null, createdByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, reviewedByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, stackingRules?: { __typename?: 'StackingRules', canStack: boolean, maxStackDiscountPercent?: number | null, maxStackDiscountAmount?: number | null, stackableWithIds?: Array<string> | null, stackableWithCategories?: Array<PromotionCategory> | null } | null } };
+
+export type GetPromotionStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetPromotionStatsQuery = { __typename?: 'Query', promotionStats: { __typename?: 'PromotionStats', total: number, active: number, pendingApproval: number, draft: number, paused: number, expired: number, cancelled: number, totalUsage: number, totalDiscountGiven: number } };
+
+export type ValidateOrderPromoCodeQueryVariables = Exact<{
+  input: ValidateOrderPromoCodeInput;
+}>;
+
+
+export type ValidateOrderPromoCodeQuery = { __typename?: 'Query', validateOrderPromoCode: { __typename?: 'PromoCodeValidationResult', isValid: boolean, errorMessage?: string | null, estimatedDiscount?: number | null, promotion?: { __typename?: 'Promotion', _id: string, code?: string | null, name: string, type: PromotionType, value: number, maxDiscountAmount?: number | null } | null } };
 
 export type VenueSummaryFieldsFragment = { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } };
 
@@ -16358,8 +16571,18 @@ export type GetVenueDetailQueryVariables = Exact<{
 
 export type GetVenueDetailQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, description?: string | null, status: VenueStatus, phoneNumber?: string | null, email?: string | null, courtCount: number, coverImageUrl?: string | null, images?: Array<string> | null, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, operatingHours: Array<{ __typename?: 'OperatingHours', dayOfWeek: number, openTime: string, closeTime: string, isClosed: boolean, is24Hours?: boolean | null }>, location: { __typename?: 'VenueLocation', address: string, city?: string | null, district?: string | null, latitude?: number | null, longitude?: number | null }, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> | null, marginThresholds?: { __typename?: 'VenueMarginThresholds', warningMargin: number, dangerMargin: number } | null } };
 
+export type VenuesConnectionQueryVariables = Exact<{
+  filter?: InputMaybe<VenueFilterInput>;
+  sort?: InputMaybe<VenueSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenuesConnectionQuery = { __typename?: 'Query', venuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
 export type VenueCourtsConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
@@ -16374,7 +16597,7 @@ export type VenueBookingsConnectionQueryVariables = Exact<{
 }>;
 
 
-export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, totalPrice: number, finalAmount: number, paymentMethod?: PaymentMethod | null, internalNote?: string | null, holdExpiresAt?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, totalPrice: number, finalAmount: number, paymentMethod?: PaymentMethod | null, internalNote?: string | null, holdExpiresAt?: string | null, customerDisplayName?: string | null, customerDisplayPhone?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type GetBookingQueryVariables = Exact<{
   bookingId: Scalars['ID']['input'];
@@ -16385,19 +16608,21 @@ export type GetBookingQuery = { __typename?: 'Query', booking: { __typename?: 'B
 
 export type VenueHoldBookingsConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<BookingSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type VenueHoldBookingsConnectionQuery = { __typename?: 'Query', venueHoldBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, holdExpiresAt?: string | null, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueHoldBookingsConnectionQuery = { __typename?: 'Query', venueHoldBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, holdExpiresAt?: string | null, customerDisplayName?: string | null, customerDisplayPhone?: string | null, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type VenueRecurringBookingsConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<BookingSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type VenueRecurringBookingsConnectionQuery = { __typename?: 'Query', venueRecurringBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueRecurringBookingsConnectionQuery = { __typename?: 'Query', venueRecurringBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, customerDisplayName?: string | null, customerDisplayPhone?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type VenueOrdersConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -16414,7 +16639,7 @@ export type GetOrderQueryVariables = Exact<{
 }>;
 
 
-export type GetOrderQuery = { __typename?: 'Query', order: { __typename?: 'Order', _id: string, orderCode: string, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, customerName?: string | null, customerPhone?: string | null, courtNumber?: string | null, tableNumber?: string | null, subtotal: number, discount?: number | null, discountCode?: string | null, serviceFee?: number | null, tax?: number | null, totalAmount: number, paidAmount?: number | null, note?: string | null, internalNote?: string | null, isManualPrice: boolean, manualPriceNote?: string | null, cancellationReason?: string | null, cancelledAt?: string | null, confirmedAt?: string | null, inProgressAt?: string | null, readyAt?: string | null, completedAt?: string | null, paidAt?: string | null, createdAt: string, customerInfo?: { __typename?: 'OrderCustomerInfo', name: string, phone?: string | null, email?: string | null } | null, items: Array<{ __typename?: 'OrderItem', productName: string, itemType: OrderItemType, quantity: number, unitPrice: number, totalPrice: number, note?: string | null }>, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number, refundPercent: number, refundReason: string, refundNote?: string | null, refundRequestedAt: string, refundCompletedAt?: string | null } | null } };
+export type GetOrderQuery = { __typename?: 'Query', order: { __typename?: 'Order', _id: string, orderCode: string, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, customerName?: string | null, customerPhone?: string | null, courtNumber?: string | null, tableNumber?: string | null, subtotal: number, discount?: number | null, discountCode?: string | null, serviceFee?: number | null, tax?: number | null, totalAmount: number, paidAmount?: number | null, paymentProofImages?: Array<string> | null, note?: string | null, internalNote?: string | null, isManualPrice: boolean, manualPriceNote?: string | null, cancellationReason?: string | null, cancelledAt?: string | null, confirmedAt?: string | null, inProgressAt?: string | null, readyAt?: string | null, deliveredAt?: string | null, completedAt?: string | null, paidAt?: string | null, createdAt: string, customerInfo?: { __typename?: 'OrderCustomerInfo', name: string, phone?: string | null, email?: string | null } | null, items: Array<{ __typename?: 'OrderItem', productName: string, itemType: OrderItemType, quantity: number, unitPrice: number, totalPrice: number, note?: string | null }>, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number, refundPercent: number, refundReason: string, refundNote?: string | null, refundRequestedAt: string, refundCompletedAt?: string | null } | null } };
 
 export type OrdersPendingRefundConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -16427,11 +16652,12 @@ export type OrdersPendingRefundConnectionQuery = { __typename?: 'Query', ordersP
 export type VenueProductsConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
   filter?: InputMaybe<ProductFilterInput>;
+  sort?: InputMaybe<ProductSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, unit?: string | null, price: number, averageCost?: number | null, status: ProductStatus, stockQuantity: number, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category?: { __typename?: 'ProductCategory', _id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, unit?: string | null, price: number, averageCost?: number | null, status: ProductStatus, stockQuantity: number, trackInventory: boolean, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category?: { __typename?: 'ProductCategory', _id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type LowStockProductsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -16457,6 +16683,7 @@ export type ProductSalesAnalyticsQuery = { __typename?: 'Query', productSalesAna
 
 export type VenueCategoriesConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
@@ -16465,6 +16692,7 @@ export type VenueCategoriesConnectionQuery = { __typename?: 'Query', venueCatego
 
 export type VenueStaffConnectionQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
@@ -16476,7 +16704,7 @@ export type VenuePendingInvitationsQueryVariables = Exact<{
 }>;
 
 
-export type VenuePendingInvitationsQuery = { __typename?: 'Query', venuePendingInvitations: Array<{ __typename?: 'VenueStaff', _id: string, status: VenueStaffStatus, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }> };
+export type VenuePendingInvitationsQuery = { __typename?: 'Query', venuePendingInvitations: Array<{ __typename?: 'VenueStaff', _id: string, isOwner: boolean, permissions: Array<VenueAction>, status: VenueStaffStatus, customTitle?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null }> };
 
 export type VenueRevenueStatsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -16531,7 +16759,7 @@ export type GetMyVenueAvailabilityQueryVariables = Exact<{
 }>;
 
 
-export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null }> }> } };
+export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null, customerName?: string | null, customerPhone?: string | null, isRecurring?: boolean | null }> }> } };
 
 export type LookupCustomerByPhoneQueryVariables = Exact<{
   phone: Scalars['String']['input'];
@@ -16539,6 +16767,13 @@ export type LookupCustomerByPhoneQueryVariables = Exact<{
 
 
 export type LookupCustomerByPhoneQuery = { __typename?: 'Query', lookupCustomerByPhone?: { __typename?: 'CustomerLookup', _id: string, displayName?: string | null, phone?: string | null, email?: string | null } | null };
+
+export type GetVenueEnabledOrderTypesQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetVenueEnabledOrderTypesQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, hasOrderService: boolean, enabledOrderTypes: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> } };
 
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
@@ -16609,6 +16844,7 @@ export type RevokePortalCapabilityMutation = { __typename?: 'Mutation', revokePo
 export type PortalCapabilityGrantsConnectionQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -17157,7 +17393,14 @@ export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isOwner: boolean, portalCapabilities: Array<PortalCapability>, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isOwner: boolean, portalCapabilities: Array<PortalCapability>, hasVenuePortalAccess: boolean, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+
+export type SearchUserByPhoneQueryVariables = Exact<{
+  phone: Scalars['String']['input'];
+}>;
+
+
+export type SearchUserByPhoneQuery = { __typename?: 'Query', searchUserByPhone?: { __typename?: 'UserContactLookup', _id: string, fullName: string, displayName: string, phone: string, email?: string | null, photoURL?: string | null } | null };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];
@@ -17185,6 +17428,7 @@ export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueR
 export type GetAllVenueRequestsQueryVariables = Exact<{
   status?: InputMaybe<VenueRequestStatus>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 

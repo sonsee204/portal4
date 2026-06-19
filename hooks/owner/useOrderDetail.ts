@@ -23,9 +23,11 @@ export function useOrderDetail(
   orderId: string | null,
   options?: { skip?: boolean },
 ) {
+  const shouldSkip = !orderId || Boolean(options?.skip);
+
   const { data, loading, error, refetch } = useQuery<GetOrderQuery>(GET_ORDER, {
     variables: { orderId: orderId ?? '' },
-    skip: !orderId || options?.skip,
+    skip: shouldSkip,
   });
 
   return {

@@ -15,7 +15,6 @@
 
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import type { VenueCategoryNode } from '@/hooks/owner';
 import { CategoryRowActions } from '../_components/CategoryRowActions';
 import type { OwnerProductsPageActions } from '../_hooks/useOwnerProductsPageActions';
@@ -39,8 +38,13 @@ export function OwnerCategoriesSection({
     categories,
     categoriesTotalCount,
     categoriesHasNextPage,
+    categoriesIsLoadingMore,
     categoriesLoading,
     categoriesError,
+    categorySortField,
+    categorySortDir,
+    handleCategorySort,
+    categorySortLoading,
     refetchAll,
   } = data;
 
@@ -57,16 +61,39 @@ export function OwnerCategoriesSection({
       >
         <DataTable
           columns={[
-            { key: 'name', label: 'Tên danh mục' },
+            { key: 'name', label: 'Tên danh mục', sortable: true },
             { key: 'slug', label: 'Slug' },
-            { key: 'order', label: 'Thứ tự' },
-            { key: 'products', label: 'Sản phẩm', align: 'right' },
+            {
+              key: 'order',
+              label: 'Thứ tự',
+              sortable: true,
+              sortField: 'displayOrder',
+            },
+            {
+              key: 'products',
+              label: 'Sản phẩm',
+              align: 'right',
+              sortable: true,
+              sortField: 'productCount',
+            },
             { key: 'actions', label: 'Thao tác', align: 'right' },
           ]}
           stickyHeader
           className={TABLE_SCROLL_CLASS_NAME}
           data={categories}
           emptyTitle="Chưa có danh mục"
+          sortKey={categorySortField}
+          sortDir={categorySortDir}
+          onSort={handleCategorySort}
+          sortLoading={categorySortLoading}
+          infiniteScroll={{
+            loadedCount: categories.length,
+            totalCount: categoriesTotalCount,
+            hasNextPage: categoriesHasNextPage,
+            onLoadMore: handleCategoriesLoadMore,
+            loading: categoriesLoading && categories.length === 0,
+            loadingMore: categoriesIsLoadingMore,
+          }}
           renderRow={(category: VenueCategoryNode) => (
             <tr
               key={category._id}
@@ -91,14 +118,6 @@ export function OwnerCategoriesSection({
           )}
         />
       </QueryState>
-
-      <ConnectionPager
-        loadedCount={categories.length}
-        totalCount={categoriesTotalCount}
-        hasNextPage={categoriesHasNextPage}
-        onNext={handleCategoriesLoadMore}
-        loading={categoriesLoading}
-      />
     </>
   );
 }

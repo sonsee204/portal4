@@ -24,20 +24,15 @@ import {
 } from '@/lib/auth/constants';
 import { createPortalMiddlewareAuthConfig } from '@/lib/auth/middleware-config';
 import {
+  canAccessPortal,
   canAccessWorkspace,
   getHomePath,
-  hasOrganizerCapability,
 } from '@/lib/permissions/access';
 import { matchRouteManifest } from '@/lib/permissions/route-manifest';
 import type { PortalCapability } from '@/lib/permissions/portal-permissions';
 import type { PortalWorkspace } from '@/lib/permissions/portal-permissions';
 import type { UserRole } from '@/types';
 
-const STAFF_PORTAL_ROLES: UserRole[] = [
-  'SUPER_ADMIN',
-  'ADMIN',
-  'FACILITY_OWNER',
-];
 const middlewareAuthConfig = createPortalMiddlewareAuthConfig();
 
 function parsePortalCapabilitiesCookie(
@@ -56,15 +51,6 @@ function getWorkspaceFromPath(pathname: string): PortalWorkspace | null {
   if (pathname.startsWith('/organizer')) return 'organizer';
   if (pathname.startsWith('/shared') || pathname === '/forbidden') return 'shared';
   return null;
-}
-
-function canAccessPortal(
-  role: UserRole,
-  capabilities: PortalCapability[],
-): boolean {
-  if (STAFF_PORTAL_ROLES.includes(role)) return true;
-  if (role === 'PLAYER' && hasOrganizerCapability(capabilities)) return true;
-  return false;
 }
 
 function buildLoginRedirectUrl(request: NextRequest, pathname: string): URL {
@@ -96,7 +82,8 @@ export async function middleware(request: NextRequest) {
   const capabilities = parsePortalCapabilitiesCookie(
     request.cookies.get(AUTH_COOKIES.PORTAL_CAPABILITIES)?.value,
   );
-  const isOwner = request.cookies.get(AUTH_COOKIES.IS_OWNER)?.value === '1';
+  const isPlatformOwner =
+    request.cookies.get(AUTH_COOKIES.IS_OWNER)?.value === '1';
   const hasVenueAccess =
     request.cookies.get(AUTH_COOKIES.HAS_VENUE_ACCESS)?.value === '1';
 
@@ -124,7 +111,7 @@ export async function middleware(request: NextRequest) {
 
   const role = session.role as UserRole | null;
 
-  if (role && !canAccessPortal(role, capabilities)) {
+  if (role && !canAccessPortal(role, capabilities, hasVenueAccess)) {
     if (!isPublicRoute) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'unauthorized');
@@ -135,12 +122,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute && pathname === '/login' && role) {
-    const home = getHomePath(role, capabilities);
+    const home = getHomePath(role, capabilities, hasVenueAccess);
     return NextResponse.redirect(new URL(home, request.url));
   }
 
   if (pathname === '/' && role) {
-    const home = getHomePath(role, capabilities);
+    const home = getHomePath(role, capabilities, hasVenueAccess);
     return NextResponse.redirect(new URL(home, request.url));
   }
 
@@ -149,7 +136,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/owner/calendar', request.url));
     }
     return NextResponse.redirect(
-      new URL(getHomePath(role, capabilities), request.url),
+      new URL(getHomePath(role, capabilities, hasVenueAccess), request.url),
     );
   }
 
@@ -162,7 +149,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === '/admin/finance' || pathname.startsWith('/admin/finance/')) {
     if (hasVenueAccess || role === 'FACILITY_OWNER') {
-      return NextResponse.redirect(new URL('/owner/finance', request.url));
+      return NextResponse.redirect(new URL('/owner/stats/finance', request.url));
     }
     return NextResponse.redirect(new URL('/forbidden', request.url));
   }
@@ -187,8 +174,13 @@ export async function middleware(request: NextRequest) {
   }
 
   const routeEntry = matchRouteManifest(pathname);
-  if (routeEntry?.ownerOnly && !isOwner) {
+  if (routeEntry?.platformOwnerOnly && !isPlatformOwner) {
     return NextResponse.redirect(new URL('/forbidden', request.url));
+  }
+  if (routeEntry?.ownerOnly && !routeEntry.venueOwnerOnly && !isPlatformOwner) {
+    if (!pathname.startsWith('/owner/') && role !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/forbidden', request.url));
+    }
   }
 
   const response = NextResponse.next();

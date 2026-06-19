@@ -15,7 +15,6 @@
 
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { Badge } from '@/components/atoms/Badge';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -45,8 +44,13 @@ export function OwnerProductsTableSection({
     products,
     productsTotalCount,
     productsHasNextPage,
+    productsIsLoadingMore,
     productsLoading,
     productsError,
+    productSortField,
+    productSortDir,
+    handleProductSort,
+    productSortLoading,
     refetchAll,
   } = data;
 
@@ -63,18 +67,35 @@ export function OwnerProductsTableSection({
       >
         <DataTable
           columns={[
-            { key: 'name', label: 'Tên' },
+            { key: 'name', label: 'Tên', sortable: true },
             { key: 'sku', label: 'SKU' },
             { key: 'category', label: 'Danh mục' },
-            { key: 'stock', label: 'Tồn kho' },
-            { key: 'status', label: 'Trạng thái', align: 'center' },
-            { key: 'price', label: 'Giá', align: 'right' },
+            {
+              key: 'stock',
+              label: 'Tồn kho',
+              sortable: true,
+              sortField: 'stockQuantity',
+            },
+            { key: 'status', label: 'Trạng thái', align: 'center', sortable: true },
+            { key: 'price', label: 'Giá', align: 'right', sortable: true },
             { key: 'actions', label: 'Thao tác', align: 'right' },
           ]}
           stickyHeader
           className={TABLE_SCROLL_CLASS_NAME}
           data={products}
           emptyTitle="Chưa có sản phẩm"
+          sortKey={productSortField}
+          sortDir={productSortDir}
+          onSort={handleProductSort}
+          sortLoading={productSortLoading}
+          infiniteScroll={{
+            loadedCount: products.length,
+            totalCount: productsTotalCount,
+            hasNextPage: productsHasNextPage,
+            onLoadMore: handleProductsLoadMore,
+            loading: productsLoading && products.length === 0,
+            loadingMore: productsIsLoadingMore,
+          }}
           renderRow={(product: VenueProductNode) => {
             const isLowStock =
               product.stockQuantity != null &&
@@ -120,14 +141,6 @@ export function OwnerProductsTableSection({
           }}
         />
       </QueryState>
-
-      <ConnectionPager
-        loadedCount={products.length}
-        totalCount={productsTotalCount}
-        hasNextPage={productsHasNextPage}
-        onNext={handleProductsLoadMore}
-        loading={productsLoading}
-      />
     </>
   );
 }

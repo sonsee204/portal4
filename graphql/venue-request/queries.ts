@@ -17,8 +17,13 @@ export const GET_ALL_VENUE_REQUESTS = gql`
   query GetAllVenueRequests(
     $status: VenueRequestStatus
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
-    allVenueRequestsConnection(status: $status, pagination: $pagination) {
+    allVenueRequestsConnection(
+      status: $status
+      pagination: $pagination
+      sort: $sort
+    ) {
       edges {
         cursor
         node {
