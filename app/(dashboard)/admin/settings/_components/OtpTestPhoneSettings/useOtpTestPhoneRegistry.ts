@@ -13,11 +13,13 @@
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { formatMutationError } from '@/hooks/shared';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import {
   createOtpTestPhone,
   fetchOtpTestPhones,
@@ -38,6 +40,8 @@ import {
   type EditForm,
 } from './otp-test-phone-registry.schemas';
 
+const OTP_PHONE_SORT_FIELDS = ['phone', 'createdAt'] as const;
+
 export function useOtpTestPhoneRegistry() {
   const [items, setItems] = useState<OtpTestPhone[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +49,19 @@ export function useOtpTestPhoneRegistry() {
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null);
   const [editing, setEditing] = useState<OtpTestPhone | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: OTP_PHONE_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'otpPhoneSort',
+    dirParam: 'otpPhoneDir',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const createForm = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
@@ -71,14 +88,14 @@ export function useOtpTestPhoneRegistry() {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchOtpTestPhones({ limit: CURSOR_PAGE_MAX });
+      const result = await fetchOtpTestPhones({ limit: CURSOR_PAGE_MAX, sort });
       setItems(result.items);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sort]);
 
   useEffect(() => {
     void load();
@@ -196,5 +213,8 @@ export function useOtpTestPhoneRegistry() {
     onEdit,
     handleToggle,
     handleCopyFirebase,
+    sortField,
+    sortDir,
+    handleSort,
   };
 }

@@ -45,6 +45,9 @@ export function OtpTestPhoneRegistrySettings() {
     openEdit,
     handleToggle,
     handleCopyFirebase,
+    sortField,
+    sortDir,
+    handleSort,
   } = useOtpTestPhoneRegistry();
 
   return (
@@ -119,6 +122,9 @@ export function OtpTestPhoneRegistrySettings() {
           onEdit={openEdit}
           onCopyFirebase={handleCopyFirebase}
           onToggle={handleToggle}
+          sortKey={sortField}
+          sortDir={sortDir}
+          onSort={handleSort}
         />
       </QueryState>
     </div>

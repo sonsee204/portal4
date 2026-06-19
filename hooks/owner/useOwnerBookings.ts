@@ -30,15 +30,21 @@ import {
   REJECT_BOOKING,
   REJECT_HOLD_BOOKING,
 } from '@/graphql/owner/mutations';
-import type { VenueBookingsConnectionQuery } from '@/graphql/generated';
+import type {
+  BookingSortInput,
+  VenueBookingsConnectionQuery,
+} from '@/graphql/generated';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 
 export type OwnerBookingNode = NonNullable<
   NonNullable<
@@ -90,31 +96,33 @@ export type OwnerRecurringBookingNode = {
 
 export function useVenueHoldBookings(
   venueId: string | null,
+  sort?: BookingSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { venueId: venueId ?? '' };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<HoldBookingsQueryResult>(VENUE_HOLD_BOOKINGS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueHoldBookingsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueHoldBookingsConnection: {
@@ -133,6 +141,7 @@ export function useVenueHoldBookings(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -141,31 +150,33 @@ export function useVenueHoldBookings(
 
 export function useVenueRecurringBookings(
   venueId: string | null,
+  sort?: BookingSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { venueId: venueId ?? '' };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<RecurringBookingsQueryResult>(VENUE_RECURRING_BOOKINGS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueRecurringBookingsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueRecurringBookingsConnection: {
@@ -184,6 +195,7 @@ export function useVenueRecurringBookings(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

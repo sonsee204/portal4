@@ -15,6 +15,8 @@ import {
   buildSidebarNav,
   type SidebarNavSection,
 } from '@/lib/permissions/navigation';
+import { can, type PortalCapability, type PortalPermission } from '@/lib/permissions';
+import type { UserRole } from '@/types';
 
 export type { SidebarNavSection };
 
@@ -22,35 +24,63 @@ export const adminSidebarNav = buildSidebarNav('admin');
 export const ownerSidebarNav = buildSidebarNav('owner');
 export const organizerSidebarNav = buildSidebarNav('organizer');
 
-export const sharedProfileNavItem = {
+export interface UserAccountMenuItem {
+  href: string;
+  label: string;
+  icon: string;
+  permission?: PortalPermission;
+  platformOwnerOnly?: boolean;
+}
+
+export const sharedProfileNavItem: UserAccountMenuItem = {
   href: '/shared/profile',
   label: 'Hồ sơ cá nhân',
   icon: 'person-outline',
-  permission: 'profile.edit' as const,
+  permission: 'profile.edit',
 };
 
-export const sharedSessionsNavItem = {
+export const sharedSessionsNavItem: UserAccountMenuItem = {
   href: '/shared/sessions',
   label: 'Thiết bị & Phiên',
   icon: 'phone-portrait-outline',
-  permission: 'profile.edit' as const,
+  permission: 'profile.edit',
 };
 
-/** Append profile + sessions links to sidebar nav (adds Hệ thống section if missing). */
-export function withProfileSection(
-  sections: SidebarNavSection[],
-): SidebarNavSection[] {
-  const systemItems = [sharedProfileNavItem, sharedSessionsNavItem];
-  const hasSystem = sections.some((s) => s.section === 'Hệ thống');
-  if (hasSystem) {
-    return sections.map((section) =>
-      section.section === 'Hệ thống'
-        ? { ...section, items: [...section.items, ...systemItems] }
-        : section,
-    );
-  }
-  return [
-    ...sections,
-    { section: 'Hệ thống', items: systemItems },
-  ];
+/** Account/system links shown in header avatar menu (not sidebar). */
+export const USER_ACCOUNT_MENU_ITEMS: UserAccountMenuItem[] = [
+  {
+    href: '/admin/settings',
+    label: 'Cài đặt',
+    icon: 'settings-outline',
+    permission: 'system.settings',
+  },
+  {
+    href: '/admin/access-control',
+    label: 'Phân quyền hệ thống',
+    icon: 'key-outline',
+    permission: 'users.manage',
+    platformOwnerOnly: true,
+  },
+  sharedProfileNavItem,
+  sharedSessionsNavItem,
+];
+
+export function getUserAccountMenuItems(
+  role: UserRole | null | undefined,
+  capabilities: PortalCapability[] = [],
+  isPlatformOwner = false,
+  hasVenueAccess = false,
+): UserAccountMenuItem[] {
+  if (!role) return [];
+
+  return USER_ACCOUNT_MENU_ITEMS.filter((item) => {
+    if (item.platformOwnerOnly && !isPlatformOwner) return false;
+    if (
+      item.permission &&
+      !can(role, item.permission, capabilities, hasVenueAccess)
+    ) {
+      return false;
+    }
+    return true;
+  });
 }

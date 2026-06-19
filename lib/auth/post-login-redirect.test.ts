@@ -47,4 +47,30 @@ describe('resolvePostLoginPath', () => {
       '/admin/access-control',
     );
   });
+
+  it('redirects PLAYER venue staff to owner workspace', () => {
+    const playerStaff = {
+      role: 'PLAYER' as const,
+      portalCapabilities: [],
+      isOwner: false,
+      hasVenueAccess: true,
+    };
+
+    expect(resolvePostLoginPath(null, playerStaff)).toBe('/owner');
+    expect(resolvePostLoginPath('/owner/bookings', playerStaff)).toBe(
+      '/owner/bookings',
+    );
+    expect(resolvePostLoginPath('/admin/users', playerStaff)).toBe('/owner');
+  });
+
+  it('redirects PLAYER without venue access away from owner routes', () => {
+    const playerOnly = {
+      role: 'PLAYER' as const,
+      portalCapabilities: [],
+      isOwner: false,
+      hasVenueAccess: false,
+    };
+
+    expect(resolvePostLoginPath('/owner/bookings', playerOnly)).toBe('/login');
+  });
 });

@@ -5,13 +5,17 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
+ *
+ * This source code is the intellectual property of Lê Trung Hiếu.
+ * Unauthorized copying, modification, distribution, or use of this code
+ * is strictly prohibited without prior written consent.
  */
 
 'use client';
 
 import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/atoms/Button';
+import { usePathname, useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { useAuthStore } from '@/stores/auth';
 import {
@@ -27,8 +31,32 @@ const WORKSPACE_HOME: Record<PortalWorkspace, string> = {
   shared: '/shared/profile',
 };
 
-export function WorkspaceSwitcher() {
+const WORKSPACE_ICONS: Record<PortalWorkspace, string> = {
+  admin: 'shield-outline',
+  owner: 'business-outline',
+  organizer: 'trophy-outline',
+  shared: 'person-outline',
+};
+
+function resolveCurrentWorkspace(pathname: string): PortalWorkspace | null {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/owner')) return 'owner';
+  if (pathname.startsWith('/organizer')) return 'organizer';
+  if (pathname.startsWith('/shared')) return 'shared';
+  return null;
+}
+
+export interface WorkspaceSwitcherProps {
+  variant?: 'sidebar' | 'header';
+  className?: string;
+}
+
+export function WorkspaceSwitcher({
+  variant = 'sidebar',
+  className,
+}: WorkspaceSwitcherProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const role = user?.role ?? null;
   const portalCapabilities = user?.portalCapabilities;
@@ -43,34 +71,78 @@ export function WorkspaceSwitcher() {
     [role, portalCapabilities, user?.hasVenueAccess]
   );
 
+  const currentWorkspace = resolveCurrentWorkspace(pathname);
+
   if (workspaces.length < 2) {
     return null;
   }
 
+  const isSidebar = variant === 'sidebar';
+
   return (
-    <div className="relative">
+    <div className={cn('relative', className)}>
       <details className="group">
-        <summary className="text-secondary hover:text-primary flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium transition-colors">
+        <summary
+          className={cn(
+            'text-secondary hover:text-primary flex cursor-pointer list-none items-center gap-2 rounded-xl transition-colors',
+            isSidebar
+              ? 'border-surface-border bg-surface/60 hover:bg-surface-hover w-full border px-3 py-2.5 text-sm font-medium'
+              : 'px-2 py-1 text-sm font-medium'
+          )}
+        >
           <IonIcon name="swap-horizontal-outline" size="sm" />
-          <span className="hidden sm:inline">Workspace</span>
+          <span className="min-w-0 flex-1 truncate">Không gian làm việc</span>
+          {currentWorkspace ? (
+            <span className="text-faint hidden truncate text-xs sm:inline">
+              {WORKSPACE_LABELS[currentWorkspace]}
+            </span>
+          ) : null}
           <IonIcon
             name="chevron-down-outline"
             size="sm"
-            className="transition-transform group-open:rotate-180"
+            className={cn(
+              'shrink-0 transition-transform group-open:rotate-180',
+              isSidebar && 'group-open:-rotate-180'
+            )}
           />
         </summary>
-        <div className="border-surface-border bg-surface absolute right-0 z-50 mt-2 min-w-[200px] rounded-xl border p-1 shadow-2xl">
-          {workspaces.map((ws) => (
-            <Button
-              key={ws}
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => router.push(WORKSPACE_HOME[ws])}
-            >
-              {WORKSPACE_LABELS[ws]}
-            </Button>
-          ))}
+        <div
+          className={cn(
+            'border-surface-border bg-surface absolute z-50 min-w-[220px] rounded-xl border p-1 shadow-2xl',
+            isSidebar
+              ? 'right-0 bottom-full left-0 mb-2 w-full'
+              : 'right-0 mt-2'
+          )}
+        >
+          <p className="text-faint px-3 py-2 text-[10px] font-bold tracking-widest uppercase">
+            Chuyển không gian
+          </p>
+          {workspaces.map((ws) => {
+            const isActive = ws === currentWorkspace;
+            return (
+              <button
+                key={ws}
+                type="button"
+                onClick={() => router.push(WORKSPACE_HOME[ws])}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-body hover:bg-surface-hover'
+                )}
+              >
+                <IonIcon
+                  name={WORKSPACE_ICONS[ws]}
+                  size="sm"
+                  className={isActive ? 'text-primary' : 'text-muted'}
+                />
+                <span className="flex-1">{WORKSPACE_LABELS[ws]}</span>
+                {isActive ? (
+                  <IonIcon name="checkmark-outline" size="sm" />
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </details>
     </div>

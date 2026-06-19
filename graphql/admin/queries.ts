@@ -20,6 +20,7 @@ export const ADMIN_GET_USERS = gql`
     $isSuspended: Boolean
     $searchQuery: String
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
     adminUsersConnection(
       role: $role
@@ -27,6 +28,7 @@ export const ADMIN_GET_USERS = gql`
       isSuspended: $isSuspended
       searchQuery: $searchQuery
       pagination: $pagination
+      sort: $sort
     ) {
       edges {
         cursor

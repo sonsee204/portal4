@@ -15,8 +15,8 @@ import { GRAPHQL_URL } from './constants';
 
 const VENUE_ACCESS_QUERY = `
   query PortalVenueAccess {
-    myVenuesStats {
-      totalVenues
+    me {
+      hasVenuePortalAccess
     }
   }
 `;
@@ -39,10 +39,10 @@ export async function fetchHasVenueAccess(
     });
 
     const result = (await response.json()) as {
-      data?: { myVenuesStats?: { totalVenues?: number } };
+      data?: { me?: { hasVenuePortalAccess?: boolean } };
     };
 
-    return (result.data?.myVenuesStats?.totalVenues ?? 0) > 0;
+    return result.data?.me?.hasVenuePortalAccess === true;
   } catch {
     return false;
   }

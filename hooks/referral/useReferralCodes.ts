@@ -68,7 +68,7 @@ export function useCreateReferralCode(options?: {
 export function useToggleReferralCode(options?: {
   onSuccess?: () => void;
 }) {
-  const [mutation] = useMutation<{
+  const [mutation, { loading }] = useMutation<{
     toggleReferralCode: ReferralCode;
   }>(TOGGLE_REFERRAL_CODE, {
     onCompleted: () => {
@@ -88,5 +88,5 @@ export function useToggleReferralCode(options?: {
     [mutation],
   );
 
-  return { toggleCode };
+  return { toggleCode, loading };
 }

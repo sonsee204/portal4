@@ -18,7 +18,7 @@ import {
   GET_ALL_VENUE_REQUESTS,
   GET_VENUE_REQUEST_STATS,
 } from '@/graphql/venue-request/queries';
-import type { GetAllVenueRequestsQuery } from '@/graphql/generated';
+import type { GetAllVenueRequestsQuery, CursorSortInput } from '@/graphql/generated';
 import type {
   VenueRequestItem,
   VenueRequestStatus,
@@ -29,6 +29,7 @@ import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/
 export function useVenueRequests(
   status?: VenueRequestStatus,
   pagination?: LegacyPagePagination,
+  sort?: CursorSortInput,
 ) {
   const result = usePagedConnectionQuery<
     GetAllVenueRequestsQuery,
@@ -38,6 +39,7 @@ export function useVenueRequests(
     query: GET_ALL_VENUE_REQUESTS,
     pagination,
     resetKey: JSON.stringify(status ?? null),
+    sort,
     variables: { status },
     getConnection: (data) => data?.allVenueRequestsConnection,
     mergeConnection: (prev, next) => ({
@@ -59,6 +61,7 @@ export function useVenueRequests(
     hasMore: result.hasMore,
     hasNextPage: result.hasNextPage,
     loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

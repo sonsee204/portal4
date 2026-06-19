@@ -165,6 +165,9 @@ export const VENUE_FINANCE_TRANSACTIONS_CONNECTION = gql`
           paidAmount
           refundAmount
           netAmount
+          cogsAmount
+          profitAmount
+          profitMarginPercent
         }
       }
       pageInfo {
@@ -178,9 +181,14 @@ export const VENUE_FINANCE_TRANSACTIONS_CONNECTION = gql`
 export const VENUE_EXPENSES_CONNECTION = gql`
   query VenueExpensesConnection(
     $filter: ExpenseFilterInput!
+    $sort: CursorSortInput
     $pagination: CursorPageInput
   ) {
-    venueExpensesConnection(filter: $filter, pagination: $pagination) {
+    venueExpensesConnection(
+      filter: $filter
+      sort: $sort
+      pagination: $pagination
+    ) {
       totalCount
       edges {
         cursor

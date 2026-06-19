@@ -122,9 +122,40 @@ export const GET_VENUE_DETAIL = gql`
   }
 `;
 
+export const VENUES_CONNECTION = gql`
+  ${VENUE_SUMMARY_FIELDS}
+  query VenuesConnection(
+    $filter: VenueFilterInput
+    $sort: VenueSortInput
+    $pagination: CursorPageInput
+  ) {
+    venuesConnection(filter: $filter, sort: $sort, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          ...VenueSummaryFields
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      totalCount
+    }
+  }
+`;
+
 export const VENUE_COURTS_CONNECTION = gql`
-  query VenueCourtsConnection($venueId: ID!, $pagination: CursorPageInput) {
-    venueCourtsConnection(venueId: $venueId, pagination: $pagination) {
+  query VenueCourtsConnection(
+    $venueId: ID!
+    $sort: CursorSortInput
+    $pagination: CursorPageInput
+  ) {
+    venueCourtsConnection(
+      venueId: $venueId
+      sort: $sort
+      pagination: $pagination
+    ) {
       edges {
         cursor
         node {
@@ -185,6 +216,12 @@ export const VENUE_BOOKINGS_CONNECTION = gql`
             startTime
             endTime
             price
+          }
+          customerDisplayName
+          customerDisplayPhone
+          customerInfo {
+            name
+            phone
           }
           customer {
             _id
@@ -268,9 +305,14 @@ export const GET_BOOKING = gql`
 export const VENUE_HOLD_BOOKINGS_CONNECTION = gql`
   query VenueHoldBookingsConnection(
     $venueId: ID!
+    $sort: BookingSortInput
     $pagination: CursorPageInput
   ) {
-    venueHoldBookingsConnection(venueId: $venueId, pagination: $pagination) {
+    venueHoldBookingsConnection(
+      venueId: $venueId
+      sort: $sort
+      pagination: $pagination
+    ) {
       edges {
         cursor
         node {
@@ -282,6 +324,12 @@ export const VENUE_HOLD_BOOKINGS_CONNECTION = gql`
             courtName
             startTime
             endTime
+          }
+          customerDisplayName
+          customerDisplayPhone
+          customerInfo {
+            name
+            phone
           }
           customer {
             _id
@@ -301,9 +349,14 @@ export const VENUE_HOLD_BOOKINGS_CONNECTION = gql`
 export const VENUE_RECURRING_BOOKINGS_CONNECTION = gql`
   query VenueRecurringBookingsConnection(
     $venueId: ID!
+    $sort: BookingSortInput
     $pagination: CursorPageInput
   ) {
-    venueRecurringBookingsConnection(venueId: $venueId, pagination: $pagination) {
+    venueRecurringBookingsConnection(
+      venueId: $venueId
+      sort: $sort
+      pagination: $pagination
+    ) {
       edges {
         cursor
         node {
@@ -315,6 +368,12 @@ export const VENUE_RECURRING_BOOKINGS_CONNECTION = gql`
             endDate
             totalSessions
             durationMonths
+          }
+          customerDisplayName
+          customerDisplayPhone
+          customerInfo {
+            name
+            phone
           }
           customer {
             _id
@@ -406,6 +465,7 @@ export const GET_ORDER = gql`
       tax
       totalAmount
       paidAmount
+      paymentProofImages
       note
       internalNote
       isManualPrice
@@ -423,6 +483,7 @@ export const GET_ORDER = gql`
       confirmedAt
       inProgressAt
       readyAt
+      deliveredAt
       completedAt
       paidAt
       createdAt
@@ -464,11 +525,13 @@ export const VENUE_PRODUCTS_CONNECTION = gql`
   query VenueProductsConnection(
     $venueId: ID!
     $filter: ProductFilterInput
+    $sort: ProductSortInput
     $pagination: CursorPageInput
   ) {
     venueProductsConnection(
       venueId: $venueId
       filter: $filter
+      sort: $sort
       pagination: $pagination
     ) {
       edges {
@@ -482,6 +545,7 @@ export const VENUE_PRODUCTS_CONNECTION = gql`
           averageCost
           status
           stockQuantity
+          trackInventory
           lowStockThreshold
           lastImportPrice
           totalImportValue
@@ -554,8 +618,16 @@ export const PRODUCT_SALES_ANALYTICS = gql`
 `;
 
 export const VENUE_CATEGORIES_CONNECTION = gql`
-  query VenueCategoriesConnection($venueId: ID!, $pagination: CursorPageInput) {
-    venueCategoriesConnection(venueId: $venueId, pagination: $pagination) {
+  query VenueCategoriesConnection(
+    $venueId: ID!
+    $sort: CursorSortInput
+    $pagination: CursorPageInput
+  ) {
+    venueCategoriesConnection(
+      venueId: $venueId
+      sort: $sort
+      pagination: $pagination
+    ) {
       edges {
         cursor
         node {
@@ -576,8 +648,16 @@ export const VENUE_CATEGORIES_CONNECTION = gql`
 `;
 
 export const VENUE_STAFF_CONNECTION = gql`
-  query VenueStaffConnection($venueId: ID!, $pagination: CursorPageInput) {
-    venueStaffConnection(venueId: $venueId, pagination: $pagination) {
+  query VenueStaffConnection(
+    $venueId: ID!
+    $sort: CursorSortInput
+    $pagination: CursorPageInput
+  ) {
+    venueStaffConnection(
+      venueId: $venueId
+      sort: $sort
+      pagination: $pagination
+    ) {
       edges {
         cursor
         node {
@@ -608,11 +688,15 @@ export const VENUE_PENDING_INVITATIONS = gql`
   query VenuePendingInvitations($venueId: ID!) {
     venuePendingInvitations(venueId: $venueId) {
       _id
+      isOwner
+      permissions
       status
+      customTitle
       user {
         _id
         displayName
         phone
+        email
       }
     }
   }
@@ -748,6 +832,9 @@ export const GET_MY_VENUE_AVAILABILITY = gql`
           holdBookingId
           bookingId
           bookingStatus
+          customerName
+          customerPhone
+          isRecurring
         }
       }
     }
@@ -764,3 +851,23 @@ export const LOOKUP_CUSTOMER_BY_PHONE = gql`
     }
   }
 `;
+
+export const GET_VENUE_ENABLED_ORDER_TYPES = gql`
+  query GetVenueEnabledOrderTypes($venueId: ID!) {
+    venue(venueId: $venueId) {
+      _id
+      name
+      hasOrderService
+      enabledOrderTypes {
+        orderType
+        isEnabled
+        label
+        icon
+        color
+        displayOrder
+      }
+    }
+  }
+`;
+
+export { VALIDATE_ORDER_PROMO_CODE } from './promotions/queries';

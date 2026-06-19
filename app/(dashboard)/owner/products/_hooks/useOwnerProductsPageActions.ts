@@ -20,6 +20,7 @@ import {
   type VenueCategoryNode,
   type VenueProductNode,
 } from '@/hooks/owner';
+import { ProductStatus } from '@/graphql/generated';
 import {
   EMPTY_CATEGORY_FORM,
   EMPTY_IMPORT_STOCK_FORM,
@@ -36,6 +37,12 @@ export interface ImportStockMarginAnalysis {
   estimatedAvgCost: number;
   importPrice: number;
   quantity: number;
+}
+
+export interface ProductStatusToggleTarget {
+  productId: string;
+  productName: string;
+  action: 'publish' | 'unpublish';
 }
 
 export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
@@ -69,6 +76,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
 
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [statusToggleTarget, setStatusToggleTarget] =
+    useState<ProductStatusToggleTarget | null>(null);
 
   const [importStockModalOpen, setImportStockModalOpen] = useState(false);
   const [importStockTarget, setImportStockTarget] =
@@ -186,6 +195,31 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     [productMutations, refetchAll],
   );
 
+  const openStatusToggleDialog = useCallback((product: VenueProductNode) => {
+    setStatusToggleTarget({
+      productId: product._id,
+      productName: product.name,
+      action:
+        product.status === ProductStatus.Active ? 'unpublish' : 'publish',
+    });
+  }, []);
+
+  const closeStatusToggleDialog = useCallback(() => {
+    if (productMutations.mutationLoading) return;
+    setStatusToggleTarget(null);
+  }, [productMutations.mutationLoading]);
+
+  const handleStatusToggleConfirm = useCallback(async () => {
+    if (!statusToggleTarget) return;
+
+    if (statusToggleTarget.action === 'publish') {
+      await handlePublishProduct(statusToggleTarget.productId);
+    } else {
+      await handleUnpublishProduct(statusToggleTarget.productId);
+    }
+    setStatusToggleTarget(null);
+  }, [handlePublishProduct, handleUnpublishProduct, statusToggleTarget]);
+
   const openImportStock = useCallback((product?: VenueProductNode) => {
     setImportStockTarget(product ?? null);
     setImportStockForm({
@@ -300,6 +334,10 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     handleDeleteProduct,
     handlePublishProduct,
     handleUnpublishProduct,
+    statusToggleTarget,
+    openStatusToggleDialog,
+    closeStatusToggleDialog,
+    handleStatusToggleConfirm,
     importStockModalOpen,
     importStockTarget,
     importStockForm,

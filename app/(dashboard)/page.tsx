@@ -35,9 +35,11 @@ export default async function DashboardHubPage() {
   const capabilities = parsePortalCapabilitiesCookie(
     cookieStore.get(AUTH_COOKIES.PORTAL_CAPABILITIES)?.value
   );
+  const hasVenueAccess =
+    cookieStore.get(AUTH_COOKIES.HAS_VENUE_ACCESS)?.value === '1';
 
   if (role) {
-    redirect(getHomePath(role, capabilities));
+    redirect(getHomePath(role, capabilities, hasVenueAccess));
   }
 
   redirect('/login');

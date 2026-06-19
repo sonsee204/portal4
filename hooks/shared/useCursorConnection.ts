@@ -11,7 +11,7 @@
  * is strictly prohibited without prior written consent.
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { CURSOR_PAGE_MAX, DEFAULT_CONNECTION_FIRST } from '@/lib/constants/pagination';
 
@@ -73,13 +73,15 @@ export function useConnectionLoadMore<TData>(config: {
   buildVariables: (after: string) => Record<string, unknown>;
   mergeResults: (prev: TData, next: TData) => TData;
 }) {
-  const isLoadingMoreRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { hasNextPage, endCursor, fetchMore, buildVariables, mergeResults } =
     config;
 
   const loadMore = useCallback(async () => {
-    if (!hasNextPage || !endCursor || isLoadingMoreRef.current) return;
-    isLoadingMoreRef.current = true;
+    if (!hasNextPage || !endCursor || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setIsLoadingMore(true);
     try {
       await fetchMore({
         variables: buildVariables(endCursor),
@@ -89,11 +91,12 @@ export function useConnectionLoadMore<TData>(config: {
         },
       });
     } finally {
-      isLoadingMoreRef.current = false;
+      loadingMoreRef.current = false;
+      setIsLoadingMore(false);
     }
   }, [hasNextPage, endCursor, fetchMore, buildVariables, mergeResults]);
 
-  return { loadMore, isLoadingMore: isLoadingMoreRef };
+  return { loadMore, isLoadingMore };
 }
 
 const FETCH_ALL_PAGES_ABSOLUTE_MAX = 500;

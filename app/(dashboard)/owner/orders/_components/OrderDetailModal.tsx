@@ -15,6 +15,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { Badge } from '@/components/atoms/Badge';
+import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { Modal } from '@/components/molecules/Modal';
 import { QueryState } from '@/components/molecules/QueryState';
 import { OrderDetailFooterActions } from './OrderDetailFooterActions';
@@ -32,6 +33,8 @@ import {
 } from '@/lib/constants/order-item-type';
 import { cn, formatCurrency, formatDateTime } from '@/lib/utils';
 import { ORDER_TYPE_LABEL } from '../_hooks/owner-orders-page.constants';
+import { VenueAction } from '@/graphql/generated';
+import { OrderPaymentProofSection } from '@/components/organisms/OrderPaymentProofSection';
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   CASH: 'Tiền mặt',
@@ -46,7 +49,8 @@ export interface OrderDetailModalProps {
   orderId: string | null;
   open: boolean;
   onClose: () => void;
-  actions: OwnerOrdersPageActions;
+  /** Omit on read-only surfaces (e.g. finance ledger). */
+  actions?: OwnerOrdersPageActions;
 }
 
 function DetailRow({
@@ -70,8 +74,10 @@ function DetailRow({
 
 function OrderDetailContent({
   order,
+  onImagesChange,
 }: {
   order: NonNullable<ReturnType<typeof useOrderDetail>['order']>;
+  onImagesChange?: () => void;
 }) {
   const customerName =
     order.customerName?.trim() || order.customerInfo?.name?.trim() || undefined;
@@ -215,11 +221,24 @@ function OrderDetailContent({
                 : undefined
             }
           />
-          {order.isManualPrice && order.manualPriceNote && (
-            <DetailRow label="Ghi chú giá" value={order.manualPriceNote} />
-          )}
+          <VenueActionGate
+            action={VenueAction.ViewSensitiveData}
+            fallback={null}
+          >
+            {order.isManualPrice && order.manualPriceNote && (
+              <DetailRow label="Ghi chú giá" value={order.manualPriceNote} />
+            )}
+          </VenueActionGate>
         </dl>
       </section>
+
+      <OrderPaymentProofSection
+        key={order._id}
+        orderId={order._id}
+        paymentMethod={order.paymentMethod}
+        paymentProofImages={order.paymentProofImages}
+        onImagesChange={onImagesChange}
+      />
 
       {(order.note || order.internalNote) && (
         <section className="space-y-3">
@@ -231,27 +250,35 @@ function OrderDetailContent({
         </section>
       )}
 
-      {order.refundInfo?.refundAmount != null &&
-        order.refundInfo.refundAmount > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-heading text-sm font-semibold">Hoàn tiền</h3>
-            <dl className="space-y-2">
-              <DetailRow
-                label="Số tiền hoàn"
-                value={formatCurrency(order.refundInfo.refundAmount)}
-                valueClassName="text-amber-400 font-medium"
-              />
-              {order.refundInfo.refundPercent != null && (
+      <VenueActionGate action={VenueAction.ViewSensitiveData} fallback={null}>
+        {order.refundInfo?.refundAmount != null &&
+          order.refundInfo.refundAmount > 0 && (
+            <section className="space-y-3">
+              <h3 className="text-heading text-sm font-semibold">Hoàn tiền</h3>
+              <dl className="space-y-2">
                 <DetailRow
-                  label="Tỷ lệ"
-                  value={`${order.refundInfo.refundPercent}%`}
+                  label="Số tiền hoàn"
+                  value={formatCurrency(order.refundInfo.refundAmount)}
+                  valueClassName="text-amber-400 font-medium"
                 />
-              )}
-              <DetailRow label="Lý do" value={order.refundInfo.refundReason} />
-              <DetailRow label="Ghi chú" value={order.refundInfo.refundNote} />
-            </dl>
-          </section>
-        )}
+                {order.refundInfo.refundPercent != null && (
+                  <DetailRow
+                    label="Tỷ lệ"
+                    value={`${order.refundInfo.refundPercent}%`}
+                  />
+                )}
+                <DetailRow
+                  label="Lý do"
+                  value={order.refundInfo.refundReason}
+                />
+                <DetailRow
+                  label="Ghi chú"
+                  value={order.refundInfo.refundNote}
+                />
+              </dl>
+            </section>
+          )}
+      </VenueActionGate>
 
       {order.cancellationReason && (
         <section className="space-y-3">
@@ -310,27 +337,29 @@ export function OrderDetailModal({
     skip: !open,
   });
 
-  const {
-    actionLoading,
-    handleConfirm,
-    handleMarkPreparing,
-    handleMarkReady,
-    handleComplete,
-    openCancelModal,
-  } = actions;
+  const actionLoading = actions?.actionLoading ?? false;
 
   const wasLoadingRef = useRef(actionLoading);
 
   useEffect(() => {
+    if (!actions) return;
     if (wasLoadingRef.current && !actionLoading && open) {
       void refetch();
     }
     wasLoadingRef.current = actionLoading;
-  }, [actionLoading, open, refetch]);
+  }, [actionLoading, actions, open, refetch]);
 
   const footerActions = useMemo(() => {
-    if (!order) return null;
+    if (!order || !actions) return null;
 
+    const {
+      handleConfirm,
+      handleMarkPreparing,
+      handleMarkReady,
+      handleMarkDelivered,
+      openCompleteModal,
+      openCancelModal,
+    } = actions;
     const refetchDetail = () => void refetch();
 
     return (
@@ -350,24 +379,16 @@ export function OrderDetailModal({
             await handleMarkReady(id);
             refetchDetail();
           },
-          handleComplete: async (id) => {
-            await handleComplete(id);
+          handleMarkDelivered: async (id) => {
+            await handleMarkDelivered(id);
             refetchDetail();
           },
+          openCompleteModal,
           openCancelModal,
         }}
       />
     );
-  }, [
-    actionLoading,
-    handleComplete,
-    handleConfirm,
-    handleMarkPreparing,
-    handleMarkReady,
-    openCancelModal,
-    order,
-    refetch,
-  ]);
+  }, [actionLoading, actions, order, refetch]);
 
   return (
     <Modal
@@ -384,7 +405,12 @@ export function OrderDetailModal({
         emptyMessage="Không tìm thấy đơn hàng."
         onRetry={() => void refetch()}
       >
-        {order && <OrderDetailContent order={order} />}
+        {order && (
+          <OrderDetailContent
+            order={order}
+            onImagesChange={() => void refetch()}
+          />
+        )}
       </QueryState>
     </Modal>
   );

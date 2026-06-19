@@ -13,8 +13,8 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
-import { useApolloClient, useQuery } from '@apollo/client/react';
+import { useMemo } from 'react';
+import { useQuery } from '@apollo/client/react';
 import {
   GET_CONTACT_INQUIRIES,
   GET_CONTACT_INQUIRY_STATS,
@@ -26,76 +26,52 @@ import type {
 } from '@/types';
 import type { GetContactInquiriesQuery } from '@/graphql/generated';
 import {
-  connectionNodes,
-  resolveConnectionFirst,
-  totalPagesFromCount,
+  mergeConnectionEdges,
 } from '@/hooks/shared/useCursorConnection';
-import { useConnectionPageAfter } from '@/hooks/shared/useConnectionPageAfter';
+import { useInfiniteConnectionQuery } from '@/hooks/shared/useInfiniteConnectionQuery';
+
+type ContactInquiryNode =
+  GetContactInquiriesQuery['contactInquiriesConnection']['edges'][number]['node'];
 
 export function useContactInquiries(filter: ContactInquiryFilterInput) {
-  const page = filter.page ?? 1;
-  const first = resolveConnectionFirst({ limit: filter.limit });
   const connectionFilter = useMemo(() => {
-    // page/limit drive cursor pagination; omit from GraphQL filter
     const rest = { ...filter };
     delete rest.page;
     delete rest.limit;
     return rest;
   }, [filter]);
-  const resetKey = JSON.stringify(connectionFilter);
 
-  const client = useApolloClient();
-  const prefetchPage = useCallback(
-    async (after: string | null, pageSize: number) => {
-      const { data } = await client.query<GetContactInquiriesQuery>({
-        query: GET_CONTACT_INQUIRIES,
-        variables: { filter: connectionFilter, pagination: { first: pageSize, after } },
-        fetchPolicy: 'network-only',
-      });
-      const conn = data?.contactInquiriesConnection;
-      return {
-        endCursor: conn?.pageInfo?.endCursor,
-        hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
-      };
-    },
-    [client, connectionFilter],
-  );
-
-  const { after, resolving, rememberEndCursor } = useConnectionPageAfter({
-    page,
-    first,
-    resetKey,
-    prefetchPage,
+  const result = useInfiniteConnectionQuery<
+    GetContactInquiriesQuery,
+    ContactInquiryNode,
+    { filter: Omit<ContactInquiryFilterInput, 'page' | 'limit'> }
+  >({
+    query: GET_CONTACT_INQUIRIES,
+    pagination: { limit: filter.limit },
+    resetKey: JSON.stringify(connectionFilter),
+    variables: { filter: connectionFilter },
+    getConnection: (data) => data?.contactInquiriesConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      contactInquiriesConnection: {
+        ...next.contactInquiriesConnection!,
+        edges: mergeConnectionEdges(
+          prev.contactInquiriesConnection?.edges ?? [],
+          next.contactInquiriesConnection?.edges ?? [],
+        ),
+      },
+    }),
   });
 
-  const { data, loading, error, refetch } = useQuery<GetContactInquiriesQuery>(
-    GET_CONTACT_INQUIRIES,
-    {
-      variables: {
-        filter: connectionFilter,
-        pagination: { first, after },
-      },
-      skip: page > 1 && resolving,
-      fetchPolicy: 'cache-and-network',
-    },
-  );
-
-  const connection = data?.contactInquiriesConnection;
-  useEffect(() => {
-    rememberEndCursor(page, connection?.pageInfo?.endCursor);
-  }, [page, connection?.pageInfo?.endCursor, rememberEndCursor]);
-
-  const total = connection?.totalCount ?? 0;
-  const inquiries = connectionNodes(connection?.edges) as unknown as ContactInquiry[];
-
   return {
-    inquiries,
-    total,
-    page,
-    totalPages: totalPagesFromCount(total, first),
-    loading: loading || resolving,
-    error,
-    refetch,
+    inquiries: result.items as unknown as ContactInquiry[],
+    total: result.total,
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
+    loading: result.loading,
+    error: result.error,
+    refetch: result.refetch,
   };
 }
 

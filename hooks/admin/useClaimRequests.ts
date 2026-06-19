@@ -18,7 +18,7 @@ import {
   GET_CLAIM_REQUESTS,
   GET_CLAIM_REQUEST_STATS,
 } from '@/graphql/claim-request/queries';
-import type { GetClaimRequestsQuery } from '@/graphql/generated';
+import type { GetClaimRequestsQuery, CursorSortInput } from '@/graphql/generated';
 import type {
   ClaimRequestItem,
   ClaimRequestStatus,
@@ -29,6 +29,7 @@ import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/
 export function useClaimRequests(
   filter?: { status?: ClaimRequestStatus },
   pagination?: LegacyPagePagination,
+  sort?: CursorSortInput,
 ) {
   const result = usePagedConnectionQuery<
     GetClaimRequestsQuery,
@@ -37,6 +38,7 @@ export function useClaimRequests(
   >({
     query: GET_CLAIM_REQUESTS,
     pagination,
+    sort,
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.claimRequestsConnection,
@@ -59,6 +61,7 @@ export function useClaimRequests(
     hasMore: result.hasMore,
     hasNextPage: result.hasNextPage,
     loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

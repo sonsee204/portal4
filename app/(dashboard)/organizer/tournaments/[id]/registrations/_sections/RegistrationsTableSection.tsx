@@ -14,14 +14,11 @@
 'use client';
 
 import { GlassPanel } from '@/components/molecules/GlassPanel';
-import { Pagination } from '@/components/organisms/Pagination';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { TOURNAMENT } from '@/lib/strings';
-import { PAGE_SIZE } from '../_hooks/registrations-page.constants';
 import type { RegistrationsPageActions } from '../_hooks/useRegistrationsPageActions';
 import type { RegistrationsPageData } from '../_hooks/useRegistrationsPageData';
-import {
-  RegistrationTableHead,
-} from './registrations-table.columns';
+import { RegistrationTableHead } from './registrations-table.columns';
 import { RegistrationTableRow } from './registrations-table.row';
 
 interface RegistrationsTableSectionProps {
@@ -33,9 +30,16 @@ export function RegistrationsTableSection({
   data,
   actions,
 }: RegistrationsTableSectionProps) {
-  const { registrations, loading, total, totalPages, currentPage, selectedIds } =
-    data;
-  const { toggleSelectAll, handlePageChange } = actions;
+  const {
+    registrations,
+    loading,
+    total,
+    hasNextPage,
+    loadMore,
+    isLoadingMore,
+    selectedIds,
+  } = data;
+  const { toggleSelectAll } = actions;
   const tableCtx = { data, actions };
 
   return (
@@ -68,15 +72,14 @@ export function RegistrationsTableSection({
               ))}
             </tbody>
           </table>
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={total}
-              pageSize={PAGE_SIZE}
-              onPageChange={handlePageChange}
-            />
-          )}
+          <ConnectionInfiniteScroll
+            hasNextPage={hasNextPage}
+            onLoadMore={() => void loadMore()}
+            loading={loading && registrations.length === 0}
+            loadingMore={isLoadingMore}
+            loadedCount={registrations.length}
+            totalCount={total}
+          />
         </GlassPanel>
       )}
     </div>

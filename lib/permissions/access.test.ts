@@ -10,10 +10,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   can,
+  canAccessPortal,
   canAccessRoute,
   canAccessWorkspace,
-  getHomePath,
   getEffectivePermissions,
+  getHomePath,
   hasOrganizerCapability,
   isAdminRole,
   isSuperAdminRole,
@@ -75,6 +76,7 @@ describe('portal access', () => {
     expect(getHomePath('ADMIN')).toBe('/admin');
     expect(getHomePath('FACILITY_OWNER')).toBe('/owner');
     expect(getHomePath('PLAYER', ['TOURNAMENT_ORGANIZER'])).toBe('/organizer');
+    expect(getHomePath('PLAYER', [], true)).toBe('/owner');
   });
 
   it('FACILITY_OWNER denied /admin/users', () => {
@@ -92,26 +94,44 @@ describe('portal access', () => {
     expect(canAccessRoute('SUPER_ADMIN', '/admin/users')).toBe(true);
   });
 
-  it('platformOwnerOnly route requires SUPER_ADMIN', () => {
+  it('platformOwnerOnly route requires platform owner flag', () => {
     expect(
       canAccessRoute('ADMIN', '/admin/access-control', [], false),
     ).toBe(false);
     expect(
       canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], false),
+    ).toBe(false);
+    expect(
+      canAccessRoute('SUPER_ADMIN', '/admin/access-control', [], true),
     ).toBe(true);
     const entry = matchRouteManifest('/admin/access-control');
     expect(entry?.platformOwnerOnly).toBe(true);
   });
 
-  it('venueOwnerOnly route requires venue owner flag', () => {
+  it('owner staff route uses venue layer not platform owner flag', () => {
     expect(canAccessRoute('FACILITY_OWNER', '/owner/staff', [], false)).toBe(
-      false,
+      true,
     );
     expect(canAccessRoute('FACILITY_OWNER', '/owner/staff', [], true)).toBe(
       true,
     );
     const entry = matchRouteManifest('/owner/staff');
     expect(entry?.venueOwnerOnly).toBe(true);
+  });
+
+  it('venue staff gets minimal portal permissions not full owner set', () => {
+    const perms = getEffectivePermissions('PLAYER', [], true);
+    expect(perms).toContain('owner.dashboard');
+    expect(perms).not.toContain('bookings.venue');
+    expect(perms).not.toContain('staff.venue');
+  });
+
+  it('PLAYER with venue access can enter owner workspace routes at portal layer', () => {
+    expect(canAccessPortal('PLAYER', [], true)).toBe(true);
+    expect(canAccessRoute('PLAYER', '/owner/bookings', [], false, true)).toBe(
+      true,
+    );
+    expect(can('PLAYER', 'bookings.venue', [], true)).toBe(false);
   });
 
   it('isAdminRole and isSuperAdminRole', () => {

@@ -29,23 +29,80 @@ type FinanceExportRow = {
   gia_tri: number | string;
 };
 
-function buildExportRows(data: OwnerFinancePageData): FinanceExportRow[] {
+function buildPortfolioExportRows(
+  data: OwnerFinancePageData
+): FinanceExportRow[] {
+  const venues = data.portfolio?.venues ?? [];
+  if (venues.length === 0) return [];
+
+  return venues.flatMap((venue) => [
+    {
+      nhom: venue.venueName,
+      chi_tieu: 'Doanh thu gộp',
+      gia_tri: venue.grossRevenue.value,
+    },
+    {
+      nhom: venue.venueName,
+      chi_tieu: 'Lãi ròng',
+      gia_tri: venue.netProfit.value,
+    },
+    {
+      nhom: venue.venueName,
+      chi_tieu: 'Biên LN ròng (%)',
+      gia_tri: venue.netMarginPercent.value,
+    },
+    {
+      nhom: venue.venueName,
+      chi_tieu: 'Lợi nhuận gộp',
+      gia_tri: venue.grossProfit.value,
+    },
+    {
+      nhom: venue.venueName,
+      chi_tieu: 'Đơn hoàn thành',
+      gia_tri: venue.completedOrders,
+    },
+  ]);
+}
+
+function buildFinanceExportRows(
+  data: OwnerFinancePageData
+): FinanceExportRow[] {
   const report = data.report;
   if (!report) return [];
 
   return [
-    { nhom: 'P&L', chi_tieu: 'Doanh thu thuần', gia_tri: report.pnl.netRevenue.value },
+    {
+      nhom: 'P&L',
+      chi_tieu: 'Doanh thu thuần',
+      gia_tri: report.pnl.netRevenue.value,
+    },
     { nhom: 'P&L', chi_tieu: 'Giá vốn', gia_tri: report.pnl.cogs.value },
-    { nhom: 'P&L', chi_tieu: 'Lợi nhuận gộp', gia_tri: report.pnl.grossProfit.value },
+    {
+      nhom: 'P&L',
+      chi_tieu: 'Lợi nhuận gộp',
+      gia_tri: report.pnl.grossProfit.value,
+    },
     {
       nhom: 'P&L',
       chi_tieu: 'Chi phí vận hành',
       gia_tri: report.pnl.operatingExpenses.value,
     },
-    { nhom: 'P&L', chi_tieu: 'Lãi/lỗ ròng', gia_tri: report.pnl.netProfit.value },
+    {
+      nhom: 'P&L',
+      chi_tieu: 'Lãi/lỗ ròng',
+      gia_tri: report.pnl.netProfit.value,
+    },
     { nhom: 'Chỉ số', chi_tieu: 'Đã thu', gia_tri: report.pnl.collected.value },
-    { nhom: 'Chỉ số', chi_tieu: 'Còn phải thu', gia_tri: report.pnl.outstanding.value },
-    { nhom: 'Chỉ số', chi_tieu: 'Hoàn tiền', gia_tri: report.pnl.refunds.value },
+    {
+      nhom: 'Chỉ số',
+      chi_tieu: 'Còn phải thu',
+      gia_tri: report.pnl.outstanding.value,
+    },
+    {
+      nhom: 'Chỉ số',
+      chi_tieu: 'Hoàn tiền',
+      gia_tri: report.pnl.refunds.value,
+    },
     { nhom: 'Chỉ số', chi_tieu: 'Tổng đơn', gia_tri: report.totalOrders },
     { nhom: 'Chỉ số', chi_tieu: 'Hoàn thành', gia_tri: report.completedOrders },
     ...report.trend.map((point) => ({
@@ -66,15 +123,49 @@ function buildExportRows(data: OwnerFinancePageData): FinanceExportRow[] {
   ];
 }
 
-function buildExportFilename(data: OwnerFinancePageData, extension: 'csv' | 'xlsx') {
+function buildExportRows(data: OwnerFinancePageData): FinanceExportRow[] {
+  if (data.pageTab === 'portfolio') {
+    if (data.allVenues) {
+      return buildPortfolioExportRows(data);
+    }
+    const portfolioRows = buildPortfolioExportRows(data);
+    const reportRows = buildFinanceExportRows(data);
+    return portfolioRows.length > 0 ? portfolioRows : reportRows;
+  }
+
+  return buildFinanceExportRows(data);
+}
+
+function buildExportFilename(
+  data: OwnerFinancePageData,
+  extension: 'csv' | 'xlsx'
+) {
+  const tabSlug =
+    data.pageTab === 'portfolio'
+      ? 'tong-quan'
+      : data.pageTab === 'operations'
+        ? 'van-hanh'
+        : 'tai-chinh';
   const slug = data.allVenues
     ? 'tat-ca-san'
     : (data.selectedVenue?.name?.replace(/\s+/g, '-').toLowerCase() ?? 'venue');
 
-  return `tai-chinh-${slug}-${data.dateRange.from}-${data.dateRange.to}.${extension}`;
+  return `${tabSlug}-${slug}-${data.dateRange.from}-${data.dateRange.to}.${extension}`;
+}
+
+function canExport(data: OwnerFinancePageData): boolean {
+  if (data.pageTab === 'portfolio') {
+    if (data.allVenues) {
+      return (data.portfolio?.venues.length ?? 0) > 0;
+    }
+    return Boolean(data.report) || (data.portfolio?.venues.length ?? 0) > 0;
+  }
+  return Boolean(data.report);
 }
 
 export function FinanceExportButton({ data }: FinanceExportButtonProps) {
+  const exportEnabled = canExport(data);
+
   const handleExportCsv = () => {
     const rows = buildExportRows(data);
     if (rows.length === 0) return;
@@ -87,7 +178,11 @@ export function FinanceExportButton({ data }: FinanceExportButtonProps) {
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tài chính');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      data.pageTab === 'portfolio' ? 'Tổng quan' : 'Tài chính'
+    );
     XLSX.writeFile(workbook, buildExportFilename(data, 'xlsx'));
   };
 
@@ -98,7 +193,7 @@ export function FinanceExportButton({ data }: FinanceExportButtonProps) {
         size="sm"
         iconLeft="download-outline"
         onClick={handleExportCsv}
-        disabled={!data.report}
+        disabled={!exportEnabled}
       >
         CSV
       </Button>
@@ -107,7 +202,7 @@ export function FinanceExportButton({ data }: FinanceExportButtonProps) {
         size="sm"
         iconLeft="document-outline"
         onClick={handleExportExcel}
-        disabled={!data.report}
+        disabled={!exportEnabled}
       >
         Excel
       </Button>

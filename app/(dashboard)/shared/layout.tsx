@@ -18,7 +18,6 @@ import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboa
 import {
   adminSidebarNav,
   ownerSidebarNav,
-  withProfileSection,
 } from '@/config/navigation';
 import { useAuthStore } from '@/stores/auth';
 
@@ -30,8 +29,7 @@ export default function SharedLayout({
   const role = useAuthStore((s) => s.user?.role);
 
   const nav = useMemo(() => {
-    const base = role === 'FACILITY_OWNER' ? ownerSidebarNav : adminSidebarNav;
-    return withProfileSection(base);
+    return role === 'FACILITY_OWNER' ? ownerSidebarNav : adminSidebarNav;
   }, [role]);
 
   return (

@@ -19,7 +19,7 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { TabGroup } from '@/components/molecules/TabGroup';
 import { FilterChips } from '@/components/molecules/FilterChips';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { Button } from '@/components/atoms/Button';
 import { ProfileCard } from './_components/ProfileCard';
 import { BookingCard } from './_components/BookingCard';
@@ -47,6 +47,7 @@ export default function UserDetailPage() {
     totalCount: bookingTotalCount,
     hasNextPage: bookingsHasNextPage,
     loadMore: loadMoreBookings,
+    isLoadingMore: bookingsIsLoadingMore,
     loading: bookingsLoading,
   } = useAdminUserBookings(
     userId ?? '',
@@ -174,12 +175,13 @@ export default function UserDetailPage() {
                         </p>
                       </div>
                     )}
-                    <ConnectionPager
+                    <ConnectionInfiniteScroll
                       loadedCount={userBookings.length}
                       totalCount={bookingTotalCount ?? bookingTotal}
                       hasNextPage={bookingsHasNextPage}
-                      onNext={() => void loadMoreBookings()}
-                      loading={bookingsLoading}
+                      onLoadMore={() => void loadMoreBookings()}
+                      loading={bookingsLoading && userBookings.length === 0}
+                      loadingMore={bookingsIsLoadingMore}
                     />
                   </div>
                 )}

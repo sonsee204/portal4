@@ -13,8 +13,13 @@ export const PORTAL_CAPABILITY_GRANTS_CONNECTION = gql`
   query PortalCapabilityGrantsConnection(
     $pagination: CursorPageInput
     $filter: PortalCapabilityGrantFilterInput
+    $sort: CursorSortInput
   ) {
-    portalCapabilityGrantsConnection(pagination: $pagination, filter: $filter) {
+    portalCapabilityGrantsConnection(
+      pagination: $pagination
+      filter: $filter
+      sort: $sort
+    ) {
       edges {
         node {
           _id

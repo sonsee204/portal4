@@ -6,16 +6,16 @@ Admin dashboard (port **3001**). `lib/tournament/` sync từ web qua `pnpm sched
 
 ## Stack & lệnh chạy
 
-| Mục | Lệnh |
-|-----|------|
-| Dev | `pnpm dev` (port 3001) |
-| Build | `pnpm build` |
-| Codegen | `pnpm codegen` |
-| Schema sync (từ BE) | `pnpm schema:sync` → `pnpm codegen` |
-| Schedule DnD sync (từ web) | `pnpm schedule-dnd:sync` |
-| Print kernel sync (từ web) | `pnpm print-kernel:sync` |
-| Lint | `pnpm lint` |
-| Typecheck | `pnpm typecheck` |
+| Mục                        | Lệnh                                |
+| -------------------------- | ----------------------------------- |
+| Dev                        | `pnpm dev` (port 3001)              |
+| Build                      | `pnpm build`                        |
+| Codegen                    | `pnpm codegen`                      |
+| Schema sync (từ BE)        | `pnpm schema:sync` → `pnpm codegen` |
+| Schedule DnD sync (từ web) | `pnpm schedule-dnd:sync`            |
+| Print kernel sync (từ web) | `pnpm print-kernel:sync`            |
+| Lint                       | `pnpm lint`                         |
+| Typecheck                  | `pnpm typecheck`                    |
 
 GraphQL schema: `../nalee-sports-backend/src/schema.gql` (hoặc `schema.gql` sau sync). Generated: `graphql/generated.ts` — **không sửa tay**.
 
@@ -50,10 +50,20 @@ God pages đã split (P4): schedule, draw, registrations, moderation. Mỗi file
 
 ### Pagination
 
-- Cursor `*Connection` + helpers: `hooks/shared/useCursorConnection.ts`, `usePagedConnectionQuery.ts`
-- UI: `ConnectionPager` (admin tables), `ConnectionLoadMore` (feeds)
+- Cursor `*Connection` + helpers: `hooks/shared/useCursorConnection.ts`, `useInfiniteConnectionQuery.ts`, `usePagedConnectionQuery.ts`
+- Data: `useConnectionLoadMore` + `mergeConnectionEdges` (append); `isLoadingMore` cho spinner fetchMore
+- UI: **`ConnectionInfiniteScroll`** — mọi list/table cursor (IntersectionObserver sentinel, `rootMargin: 240px`)
+- Optional: `DataTable` prop `infiniteScroll` để gắn footer không boilerplate
+- `@deprecated`: `ConnectionPager`, `ConnectionLoadMore`, `Pagination` — không dùng cho table mới
 - ESLint cấm `PaginationInput` / offset literals mới trong `hooks/**` (allowlist shrink dần)
-- Legacy `Pagination` organism — deprecated; migrate sang `ConnectionPager`
+
+### DataTable sort
+
+- **Server-side** (cursor lists): `useDataTableSortUrl` + `toSortByOrder` / `toFinanceSortVariables` → connection hook truyền `$sort` → `buildSortedConnectionVariables` (kể cả `fetchMore`)
+- **Client-side** chỉ dataset nhỏ đã load hết (portfolio, dashboard venues, growth aggregates)
+- URL: `?sort=<field>&dir=asc|desc` (whitelist per page)
+- Cột computed (`customerDisplayName`, `slots`, `actions`) → **không** `sortable`
+- ADR: `docs/architecture/cursor-table-sort.md`
 
 ## Error handling
 

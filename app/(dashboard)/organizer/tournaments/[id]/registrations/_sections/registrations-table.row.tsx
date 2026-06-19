@@ -60,8 +60,8 @@ export function RegistrationTableRow({ reg, ctx }: RegistrationTableRowProps) {
     handleBibCancel,
     handlePaymentUpdate,
     handleReject,
+    handleApprove,
     handleDelete,
-    approve,
   } = ctx.actions;
 
   return (
@@ -84,9 +84,7 @@ export function RegistrationTableRow({ reg, ctx }: RegistrationTableRowProps) {
           {reg.school && (
             <div className="text-secondary text-xs">{reg.school}</div>
           )}
-          {reg.club && (
-            <div className="text-secondary text-xs">{reg.club}</div>
-          )}
+          {reg.club && <div className="text-secondary text-xs">{reg.club}</div>}
         </button>
       </td>
       <td className="p-3">
@@ -184,7 +182,7 @@ export function RegistrationTableRow({ reg, ctx }: RegistrationTableRowProps) {
           onChange={(e) =>
             handlePaymentUpdate(
               reg._id,
-              e.target.value as TournamentPaymentStatus,
+              e.target.value as TournamentPaymentStatus
             )
           }
           disabled={isActionLoading}
@@ -213,7 +211,7 @@ export function RegistrationTableRow({ reg, ctx }: RegistrationTableRowProps) {
             reg.registrationStatus === RegistrationStatus.Waitlisted) && (
             <button
               type="button"
-              onClick={() => void approve(reg._id)}
+              onClick={() => handleApprove(reg)}
               disabled={isActionLoading}
               className="text-primary hover:bg-primary/10 rounded-lg p-1.5 transition-colors disabled:opacity-50"
               title="Duyệt"

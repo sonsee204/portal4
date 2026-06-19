@@ -14,24 +14,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import {
   PortalBarChart,
   PortalDonutChart,
 } from '@/components/molecules/charts';
-import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
+import { aggregateRevenueByCourt } from '@/lib/finance/aggregate-court-revenue';
 import { formatCurrency } from '@/lib/utils';
+import { FinanceTrendComboChart } from '../_components/FinanceTrendComboChart';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 
 interface OwnerFinanceChartsSectionProps {
@@ -83,10 +74,12 @@ export function OwnerFinanceChartsSection({
 
   const courtData = useMemo(
     () =>
-      (data.report?.byCourt ?? []).slice(0, 8).map((item) => ({
-        label: item.label,
-        value: item.revenue,
-      })),
+      aggregateRevenueByCourt(
+        (data.report?.byCourt ?? []).map((item) => ({
+          label: item.label,
+          revenue: item.revenue,
+        }))
+      ),
     [data.report?.byCourt]
   );
 
@@ -113,63 +106,7 @@ export function OwnerFinanceChartsSection({
           <h3 className="text-heading mb-3 text-sm font-bold">
             Doanh thu vs lãi ròng
           </h3>
-          {trendCombo.length > 0 ? (
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart
-                  data={trendCombo}
-                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={CHART_THEME.grid}
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={64}
-                    tickFormatter={(value) => formatCurrency(Number(value))}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: CHART_THEME.tooltipBg,
-                      border: `1px solid ${CHART_THEME.tooltipBorder}`,
-                      borderRadius: 12,
-                      color: CHART_THEME.tooltipText,
-                    }}
-                    formatter={(value, name) => [
-                      formatCurrency(Number(value)),
-                      name === 'revenue' ? 'Doanh thu' : 'Lãi ròng',
-                    ]}
-                  />
-                  <Bar
-                    dataKey="revenue"
-                    name="revenue"
-                    fill={CHART_COLORS[0]}
-                    radius={[6, 6, 0, 0]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="netProfit"
-                    name="netProfit"
-                    stroke={CHART_COLORS[1]}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-muted text-sm">Không có dữ liệu xu hướng.</p>
-          )}
+          <FinanceTrendComboChart data={trendCombo} height={300} />
         </GlassPanel>
 
         <GlassPanel card>
@@ -178,6 +115,7 @@ export function OwnerFinanceChartsSection({
           </h3>
           <PortalBarChart
             data={courtData}
+            showAllCategoryLabels
             valueFormatter={(value) => formatCurrency(value)}
           />
         </GlassPanel>

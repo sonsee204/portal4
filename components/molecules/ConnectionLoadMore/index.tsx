@@ -17,6 +17,7 @@ import { Button } from '@/components/atoms/Button';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { cn } from '@/lib/utils';
 
+/** @deprecated Use `ConnectionInfiniteScroll` from `@/components/molecules/ConnectionInfiniteScroll` instead. */
 export interface ConnectionLoadMoreProps {
   hasNextPage: boolean;
   onLoadMore: () => void;
@@ -26,6 +27,7 @@ export interface ConnectionLoadMoreProps {
   className?: string;
 }
 
+/** @deprecated Use `ConnectionInfiniteScroll` from `@/components/molecules/ConnectionInfiniteScroll` instead. */
 export function ConnectionLoadMore({
   hasNextPage,
   onLoadMore,

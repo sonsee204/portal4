@@ -17,11 +17,11 @@ export const FINANCE_PAGE_SIZE = 20;
 
 export type OwnerFinancePageTab = 'portfolio' | 'finance' | 'operations';
 
-export const FINANCE_PAGE_TABS = [
-  { label: 'Tổng quan', value: 'portfolio' },
-  { label: 'Tài chính', value: 'finance' },
-  { label: 'Vận hành sân', value: 'operations' },
-] as const;
+export const FINANCE_PAGE_TAB_ROUTES = {
+  portfolio: '/owner/stats/overview',
+  finance: '/owner/stats/finance',
+  operations: '/owner/stats/operations',
+} as const satisfies Record<OwnerFinancePageTab, string>;
 
 export const COMPARE_MODE_OPTIONS = [
   { label: 'Kỳ trước (cùng độ dài)', value: 'PREVIOUS_PERIOD' },

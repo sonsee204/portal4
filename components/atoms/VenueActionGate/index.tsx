@@ -44,13 +44,15 @@ export function VenueActionGate({
   }
 
   if (hasAccess && action) {
-    hasAccess = canVenue(action);
+    hasAccess = isOwner || canVenue(action);
   }
 
   if (hasAccess && actions?.length) {
-    hasAccess = requireAll
-      ? canAllVenueActions(permissions, actions)
-      : canAnyVenueAction(permissions, actions);
+    hasAccess =
+      isOwner ||
+      (requireAll
+        ? canAllVenueActions(permissions, actions)
+        : canAnyVenueAction(permissions, actions));
   }
 
   return hasAccess ? <>{children}</> : <>{fallback}</>;

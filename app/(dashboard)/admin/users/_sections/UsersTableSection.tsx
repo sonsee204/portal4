@@ -16,7 +16,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { UserCell } from '@/components/molecules/UserCell';
 import { Badge } from '@/components/atoms/Badge';
 import { IconButton } from '@/components/atoms/IconButton';
@@ -42,9 +42,13 @@ export function UsersTableSection({ data }: UsersTableSectionProps) {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
+    sortField,
+    sortDir,
+    handleSort,
   } = data;
 
   return (
@@ -60,14 +64,27 @@ export function UsersTableSection({ data }: UsersTableSectionProps) {
         >
           <DataTable
             columns={[
-              { key: 'name', label: 'Người dùng', sortable: true },
-              { key: 'role', label: 'Vai trò' },
+              {
+                key: 'name',
+                label: 'Người dùng',
+                sortable: true,
+                sortField: 'fullName',
+              },
+              { key: 'role', label: 'Vai trò', sortable: true },
               { key: 'status', label: 'Trạng thái' },
               { key: 'origin', label: 'Nguồn gốc' },
-              { key: 'lastLogin', label: 'Đăng nhập cuối' },
+              {
+                key: 'lastLogin',
+                label: 'Đăng nhập cuối',
+                sortable: true,
+                sortField: 'lastLoginAt',
+              },
               { key: 'actions', label: '', align: 'right' },
             ]}
             data={users}
+            sortKey={sortField}
+            sortDir={sortDir}
+            onSort={handleSort}
             renderRow={(u: User) => {
               const status = getStatusBadge(u);
               return (
@@ -124,12 +141,13 @@ export function UsersTableSection({ data }: UsersTableSectionProps) {
         </QueryState>
       </div>
 
-      <ConnectionPager
+      <ConnectionInfiniteScroll
         loadedCount={users.length}
         totalCount={totalCount ?? total}
         hasNextPage={hasNextPage}
-        onNext={() => void loadMore()}
-        loading={loading}
+        onLoadMore={() => void loadMore()}
+        loading={loading && users.length === 0}
+        loadingMore={isLoadingMore}
         className="mt-4"
       />
     </>

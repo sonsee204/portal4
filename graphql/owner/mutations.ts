@@ -189,11 +189,38 @@ export const MARK_ORDER_READY = gql`
   }
 `;
 
+export const MARK_ORDER_DELIVERED = gql`
+  mutation MarkOrderDelivered($orderId: ID!) {
+    markOrderDelivered(orderId: $orderId) {
+      _id
+      status
+    }
+  }
+`;
+
 export const COMPLETE_ORDER = gql`
   mutation CompleteOrder($orderId: ID!) {
     completeOrder(orderId: $orderId) {
       _id
       status
+    }
+  }
+`;
+
+export const UPLOAD_PAYMENT_PROOF = gql`
+  mutation UploadPaymentProof($input: UploadPaymentProofInput!) {
+    uploadPaymentProof(input: $input) {
+      _id
+      paymentProofImages
+    }
+  }
+`;
+
+export const REMOVE_PAYMENT_PROOF_IMAGE = gql`
+  mutation RemovePaymentProofImage($orderId: ID!, $imageUrl: String!) {
+    removePaymentProofImage(orderId: $orderId, imageUrl: $imageUrl) {
+      _id
+      paymentProofImages
     }
   }
 `;
@@ -377,6 +404,25 @@ export const UPDATE_VENUE_STAFF_PERMISSIONS = gql`
     ) {
       _id
       permissions
+    }
+  }
+`;
+
+export const UPDATE_VENUE_STAFF_TITLE = gql`
+  mutation UpdateVenueStaffTitle(
+    $venueId: ID!
+    $userId: ID!
+    $customTitle: String!
+  ) {
+    updateVenueStaffTitle(
+      venueId: $venueId
+      userId: $userId
+      customTitle: $customTitle
+    ) {
+      _id
+      customTitle
+      permissions
+      status
     }
   }
 `;

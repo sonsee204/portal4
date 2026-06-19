@@ -44,14 +44,18 @@ export function RegistrationsDialogsSection({
     categoryMatchTypeMap,
     rejectingReg,
     setRejectingReg,
+    approvingReg,
+    setApprovingReg,
     deletingReg,
     setDeletingReg,
   } = data;
   const {
     onSuccess,
+    handleApproveConfirm,
     handleRejectConfirm,
     handleDeleteConfirm,
     rejecting,
+    approving,
     deleting,
   } = actions;
 
@@ -93,6 +97,20 @@ export function RegistrationsDialogsSection({
         onConfirm={handleRejectConfirm}
         athleteName={rejectingReg?.athleteName}
         loading={rejecting}
+      />
+
+      <ConfirmDialog
+        open={!!approvingReg}
+        onClose={() => setApprovingReg(null)}
+        onConfirm={handleApproveConfirm}
+        title="Duyệt đăng ký"
+        description={
+          approvingReg ? `Duyệt đăng ký của ${approvingReg.athleteName}?` : ''
+        }
+        confirmLabel="Duyệt"
+        cancelLabel="Huỷ"
+        variant="default"
+        loading={approving}
       />
 
       <ConfirmDialog

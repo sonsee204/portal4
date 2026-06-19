@@ -33,8 +33,6 @@ export function RegistrationsHeaderSection({
   const {
     tournamentId,
     total,
-    totalPages,
-    currentPage,
     canImport,
     isSuperAdmin,
     setImportOpen,
@@ -42,10 +40,7 @@ export function RegistrationsHeaderSection({
   } = data;
 
   return (
-    <PageHeader
-      title="Quản lý đăng ký"
-      description={`${total} đăng ký${totalPages > 1 ? ` • Trang ${currentPage}/${totalPages}` : ''}`}
-    >
+    <PageHeader title="Quản lý đăng ký" description={`${total} đăng ký`}>
       <ExportButton tournamentId={tournamentId} />
       <Button
         variant="outline"

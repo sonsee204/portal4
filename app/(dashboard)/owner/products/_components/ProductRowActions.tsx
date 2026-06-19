@@ -39,8 +39,7 @@ export function ProductRowActions({
     openEditProduct,
     openImportStock,
     setDeleteProductId,
-    handlePublishProduct,
-    handleUnpublishProduct,
+    openStatusToggleDialog,
     mutationLoading,
   } = actions;
 
@@ -77,7 +76,7 @@ export function ProductRowActions({
             aria-label="Ngừng bán"
             disabled={mutationLoading}
             className={toneClassName.primary}
-            onClick={() => void handleUnpublishProduct(product._id)}
+            onClick={() => openStatusToggleDialog(product)}
           />
         ) : (
           <IconButton
@@ -87,7 +86,7 @@ export function ProductRowActions({
             aria-label="Đăng bán"
             disabled={mutationLoading}
             className={toneClassName.primary}
-            onClick={() => void handlePublishProduct(product._id)}
+            onClick={() => openStatusToggleDialog(product)}
           />
         )}
         <IconButton

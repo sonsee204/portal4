@@ -37,12 +37,13 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     registrations,
     refetch,
     setStatusFilter,
-    setPage,
     setSelectedIds,
     selectedIds,
     setRejectingReg,
     rejectingReg,
     deletingReg,
+    approvingReg,
+    setApprovingReg,
     setDeletingReg,
     setEditingBibId,
     bibInputValue,
@@ -55,7 +56,10 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   }, [refetch, setSelectedIds]);
 
   const { approve, loading: approving } = useApproveRegistration(tournamentId, {
-    onSuccess,
+    onSuccess: () => {
+      setApprovingReg(null);
+      onSuccess();
+    },
   });
   const { reject, loading: rejecting } = useRejectRegistration(tournamentId, {
     onSuccess: () => {
@@ -95,17 +99,9 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   const handleStatusFilterChange = useCallback(
     (value: StatusFilterValue) => {
       setStatusFilter(value);
-      setPage(1);
-    },
-    [setPage, setStatusFilter],
-  );
-
-  const handlePageChange = useCallback(
-    (newPage: number) => {
-      setPage(newPage);
       setSelectedIds(new Set());
     },
-    [setPage, setSelectedIds],
+    [setSelectedIds, setStatusFilter],
   );
 
   const handleBibEdit = useCallback(
@@ -154,6 +150,19 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     [setRejectingReg],
   );
 
+  const handleApprove = useCallback(
+    (reg: TournamentRegistration) => {
+      setApprovingReg(reg);
+    },
+    [setApprovingReg],
+  );
+
+  const handleApproveConfirm = useCallback(() => {
+    if (approvingReg) {
+      void approve(approvingReg._id);
+    }
+  }, [approve, approvingReg]);
+
   const handleRejectConfirm = useCallback(
     (reason?: string) => {
       if (rejectingReg) {
@@ -191,13 +200,14 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     bibUpdating,
     onSuccess,
     handleStatusFilterChange,
-    handlePageChange,
     handleBibEdit,
     handleBibSave,
     handleBibCancel,
     toggleSelect,
     toggleSelectAll,
     handleReject,
+    handleApprove,
+    handleApproveConfirm,
     handleRejectConfirm,
     handleDelete,
     handleDeleteConfirm,

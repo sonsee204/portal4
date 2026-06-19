@@ -36,8 +36,10 @@ import {
 import type {
   CreateProductCategoryInput,
   CreateProductInput,
+  CursorSortInput,
   ImportStockInput,
   LowStockProductsQuery,
+  ProductSortInput,
   ProductStatsQuery,
   ProductStatus,
   UpdateProductCategoryInput,
@@ -48,11 +50,14 @@ import type {
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
 import { createMutationOptions, createSilentMutationOptions } from '@/hooks/shared/mutation-helpers';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 
 const PRODUCT_MUTATION_REFETCH_QUERIES = [
   'VenueProductsConnection',
@@ -85,10 +90,10 @@ export function useVenueProducts(
     status?: ProductStatus;
     searchQuery?: string;
   },
+  sort?: ProductSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
   const trimmedSearch = filter?.searchQuery?.trim();
   const graphFilter = filter
     ? {
@@ -99,29 +104,32 @@ export function useVenueProducts(
     }
     : { includeAllStatuses: true };
 
+  const baseVariables = {
+    venueId: venueId ?? '',
+    filter: graphFilter,
+  };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueProductsConnectionQuery>(VENUE_PRODUCTS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        filter: graphFilter,
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueProductsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      filter: graphFilter,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueProductsConnection: {
@@ -139,6 +147,7 @@ export function useVenueProducts(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -147,31 +156,33 @@ export function useVenueProducts(
 
 export function useVenueCategories(
   venueId: string | null,
+  sort?: CursorSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { venueId: venueId ?? '' };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueCategoriesConnectionQuery>(VENUE_CATEGORIES_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueCategoriesConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueCategoriesConnection: {
@@ -189,6 +200,7 @@ export function useVenueCategories(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -206,12 +218,15 @@ export function useProductStats(venueId: string | null) {
   return { stats: data?.productStats, loading, error, refetch };
 }
 
-export function useLowStockProducts(venueId: string | null) {
+export function useLowStockProducts(
+  venueId: string | null,
+  options?: { skip?: boolean },
+) {
   const { data, loading, error, refetch } = useQuery<LowStockProductsQuery>(
     LOW_STOCK_PRODUCTS,
     {
       variables: { venueId: venueId ?? '' },
-      skip: !venueId,
+      skip: !venueId || options?.skip,
     },
   );
   return {

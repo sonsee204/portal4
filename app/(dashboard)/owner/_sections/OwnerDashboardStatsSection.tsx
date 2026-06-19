@@ -13,6 +13,8 @@
 
 'use client';
 
+import { VenueAction } from '@/graphql/generated';
+import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { StatCard } from '@/components/molecules/StatCard';
 import { formatCurrency } from '@/lib/utils';
 import type { OwnerDashboardData } from '../_hooks/useOwnerDashboardData';
@@ -35,18 +37,22 @@ export function OwnerDashboardStatsSection({
         label="Sân quản lý"
         value={String(stats.totalVenues)}
       />
-      <StatCard
-        icon="calendar-outline"
-        iconColor="text-emerald-400"
-        label="Đặt sân hôm nay"
-        value={String(stats.todayBookings)}
-      />
-      <StatCard
-        icon="cash-outline"
-        iconColor="text-amber-400"
-        label="Doanh thu"
-        value={formatCurrency(stats.totalRevenue)}
-      />
+      <VenueActionGate action={VenueAction.ViewBookings}>
+        <StatCard
+          icon="calendar-outline"
+          iconColor="text-emerald-400"
+          label="Đặt sân hôm nay"
+          value={String(stats.todayBookings)}
+        />
+      </VenueActionGate>
+      <VenueActionGate action={VenueAction.ViewSensitiveData}>
+        <StatCard
+          icon="cash-outline"
+          iconColor="text-amber-400"
+          label="Doanh thu"
+          value={formatCurrency(stats.totalRevenue)}
+        />
+      </VenueActionGate>
     </div>
   );
 }

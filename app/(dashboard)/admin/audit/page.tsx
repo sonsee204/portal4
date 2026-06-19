@@ -15,9 +15,11 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { PageHeader } from '@/components/organisms/PageHeader';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { QueryState } from '@/components/molecules/QueryState';
 import { useAuditLogs, useAuditStats, type AuditLogEntry } from '@/hooks/audit';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type { AuditCategory, AuditStatus } from '@/types';
 import { AuditStatsCards } from './_components/AuditStatsCards';
 import { AuditFilters } from './_components/AuditFilters';
@@ -27,12 +29,24 @@ import { AuditExportButton } from './_components/AuditExportButton';
 import { AUDIT } from '@/lib/strings';
 
 const PAGE_SIZE = 20;
+const AUDIT_SORT_FIELDS = ['createdAt', 'action', 'category'] as const;
 
 export default function AuditPage() {
   // Filter state
   const [category, setCategory] = useState<AuditCategory | undefined>();
   const [status, setStatus] = useState<AuditStatus | undefined>();
   const [search, setSearch] = useState('');
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: AUDIT_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   // Detail drawer
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
@@ -46,8 +60,9 @@ export default function AuditPage() {
     return {
       filter: Object.keys(filter).length > 0 ? filter : undefined,
       pagination: { limit: PAGE_SIZE },
+      sort,
     };
-  }, [category, status, search]);
+  }, [category, status, search, sort]);
 
   const {
     logs,
@@ -55,6 +70,7 @@ export default function AuditPage() {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading: logsLoading,
     error: logsError,
     refetch: refetchLogs,
@@ -143,16 +159,20 @@ export default function AuditPage() {
             logs={logs}
             loading={logsLoading}
             onViewDetail={handleViewDetail}
+            sortKey={sortField}
+            sortDir={sortDir}
+            onSort={handleSort}
           />
         </QueryState>
       </div>
 
-      <ConnectionPager
+      <ConnectionInfiniteScroll
         loadedCount={logs.length}
         totalCount={totalCount ?? totalItems}
         hasNextPage={hasNextPage}
-        onNext={() => void loadMore()}
-        loading={logsLoading}
+        onLoadMore={() => void loadMore()}
+        loading={logsLoading && logs.length === 0}
+        loadingMore={isLoadingMore}
         className="mt-4"
       />
 

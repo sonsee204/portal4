@@ -13,6 +13,7 @@
 
 'use client';
 
+import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import { Modal } from '@/components/molecules/Modal';
 import { Button } from '@/components/atoms/Button';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
@@ -33,10 +34,42 @@ export function DeleteConfirmModals({ actions }: DeleteConfirmModalsProps) {
     handleDeleteCategory,
     productDeleting,
     categoryDeleting,
+    statusToggleTarget,
+    closeStatusToggleDialog,
+    handleStatusToggleConfirm,
+    productPublishing,
+    productUnpublishing,
   } = actions;
+
+  const statusToggleLoading = productPublishing || productUnpublishing;
 
   return (
     <>
+      <ConfirmDialog
+        open={!!statusToggleTarget}
+        onClose={closeStatusToggleDialog}
+        onConfirm={() => void handleStatusToggleConfirm()}
+        title={
+          statusToggleTarget?.action === 'publish'
+            ? 'Đăng bán sản phẩm'
+            : 'Ngừng bán sản phẩm'
+        }
+        description={
+          statusToggleTarget
+            ? statusToggleTarget.action === 'publish'
+              ? `Đăng bán lại "${statusToggleTarget.productName}"?`
+              : `Ngừng bán "${statusToggleTarget.productName}"? Sản phẩm sẽ không hiển thị cho khách đặt.`
+            : ''
+        }
+        confirmLabel={
+          statusToggleTarget?.action === 'publish' ? 'Đăng bán' : 'Ngừng bán'
+        }
+        variant={
+          statusToggleTarget?.action === 'publish' ? 'default' : 'warning'
+        }
+        loading={statusToggleLoading}
+      />
+
       <Modal
         open={!!deleteProductId}
         onClose={() => setDeleteProductId(null)}

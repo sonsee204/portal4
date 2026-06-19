@@ -17,8 +17,13 @@ export const GET_OTP_TEST_PHONES = gql`
   query GetOtpTestPhones(
     $pagination: CursorPageInput
     $filter: OtpTestPhoneFilterInput
+    $sort: CursorSortInput
   ) {
-    otpTestPhonesConnection(pagination: $pagination, filter: $filter) {
+    otpTestPhonesConnection(
+      pagination: $pagination
+      filter: $filter
+      sort: $sort
+    ) {
       edges {
         cursor
         node {

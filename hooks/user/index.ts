@@ -14,3 +14,4 @@
 export * from './useUserProfile';
 export * from './useUpdateProfile';
 export * from './useUploadAvatar';
+export * from './useSearchUserByPhone';

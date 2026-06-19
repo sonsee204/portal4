@@ -55,12 +55,12 @@ describe('resolveCalendarSegmentKind', () => {
 });
 
 describe('isCalendarSegmentClickable', () => {
-  it('allows interaction only for confirmed calendar bookings', () => {
+  it('allows interaction for confirmed, completed, hold, and expired bookings', () => {
     expect(isCalendarSegmentClickable('CONFIRMED')).toBe(true);
     expect(isCalendarSegmentClickable('COMPLETED')).toBe(true);
-    expect(isCalendarSegmentClickable('HOLD_ACTIVE')).toBe(false);
+    expect(isCalendarSegmentClickable('HOLD_ACTIVE')).toBe(true);
+    expect(isCalendarSegmentClickable('EXPIRED')).toBe(true);
     expect(isCalendarSegmentClickable('REJECTED')).toBe(false);
-    expect(isCalendarSegmentClickable('EXPIRED')).toBe(false);
   });
 });
 

@@ -26,7 +26,7 @@ import {
   UPDATE_COURT,
   DELETE_COURT,
 } from '@/graphql/owner/mutations';
-import type { CreateCourtInput, UpdateCourtInput, UpdateVenueInput } from '@/graphql/generated';
+import type { CreateCourtInput, UpdateCourtInput, UpdateVenueInput, CursorSortInput } from '@/graphql/generated';
 import {
   createMutationOptions,
   strictMutationErrorPolicy,
@@ -34,10 +34,13 @@ import {
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 import type { VenueCourtNode, VenueDetailNode } from './owner-venue.types';
 
 export function useVenueDetail(venueId: string | null) {
@@ -52,9 +55,11 @@ export function useVenueDetail(venueId: string | null) {
 
 export function useVenueCourts(
   venueId: string | null,
+  sort?: CursorSortInput,
   pagination?: LegacyPagePagination,
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { venueId: venueId ?? '' };
+
   const { data, loading, error, refetch, fetchMore } = useQuery<{
     venueCourtsConnection: {
       totalCount: number;
@@ -62,22 +67,25 @@ export function useVenueCourts(
       pageInfo: { hasNextPage: boolean; endCursor?: string | null };
     };
   }>(VENUE_COURTS_CONNECTION, {
-    variables: { venueId: venueId ?? '', pagination: { first } },
+    variables: buildSortedConnectionVariables(
+      baseVariables,
+      sort,
+      pagination,
+    ),
     skip: !venueId,
+    fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
   });
 
   const connection = data?.venueCourtsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueCourtsConnection: {
@@ -95,6 +103,7 @@ export function useVenueCourts(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

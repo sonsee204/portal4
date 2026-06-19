@@ -9,10 +9,8 @@
 
 'use client';
 
-import { organizerSidebarNav, withProfileSection } from '@/config/navigation';
+import { organizerSidebarNav } from '@/config/navigation';
 import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboardShell';
-
-const organizerNavWithProfile = withProfileSection(organizerSidebarNav);
 
 export default function OrganizerLayout({
   children,
@@ -20,7 +18,7 @@ export default function OrganizerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <WorkspaceDashboardShell workspace="organizer" nav={organizerNavWithProfile}>
+    <WorkspaceDashboardShell workspace="organizer" nav={organizerSidebarNav}>
       {children}
     </WorkspaceDashboardShell>
   );

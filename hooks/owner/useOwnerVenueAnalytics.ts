@@ -56,12 +56,13 @@ export function useBookingStats(
   venueId: string | null,
   fromDate?: string,
   toDate?: string,
+  options?: { skip?: boolean },
 ) {
   const { data, loading, error, refetch } = useQuery<{
     bookingStats: BookingStatsResult;
   }>(BOOKING_STATS, {
     variables: { venueId: venueId ?? '', fromDate, toDate },
-    skip: !venueId,
+    skip: !venueId || options?.skip,
   });
   return { stats: data?.bookingStats, loading, error, refetch };
 }
@@ -92,6 +93,7 @@ export function useOrderStats(
   venueId: string | null,
   fromDate?: string,
   toDate?: string,
+  options?: { skip?: boolean },
 ) {
   const { data, loading, error, refetch } = useQuery<{
     orderStats: {
@@ -105,7 +107,7 @@ export function useOrderStats(
     };
   }>(ORDER_STATS, {
     variables: { venueId: venueId ?? '', fromDate, toDate },
-    skip: !venueId,
+    skip: !venueId || options?.skip,
   });
   return { stats: data?.orderStats, loading, error, refetch };
 }
