@@ -236,6 +236,17 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     },
   },
   {
+    path: '/owner/inventory/history',
+    workspace: 'owner',
+    permission: 'products.venue',
+    status: 'live',
+    nav: {
+      label: 'Lịch sử kho',
+      icon: 'swap-vertical-outline',
+      section: 'Vận hành',
+    },
+  },
+  {
     path: '/owner/orders',
     workspace: 'owner',
     permission: 'orders.venue',
@@ -299,6 +310,17 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     nav: {
       label: 'Thống kê sân',
       icon: 'football-outline',
+      section: 'Thống kê',
+    },
+  },
+  {
+    path: '/owner/stats/products',
+    workspace: 'owner',
+    permission: 'finance.venue',
+    status: 'live',
+    nav: {
+      label: 'Thống kê sản phẩm',
+      icon: 'cube-outline',
       section: 'Thống kê',
     },
   },

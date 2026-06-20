@@ -7119,6 +7119,11 @@ input OperationsFilterInput {
   """Start date (YYYY-MM-DD) in filter timezone"""
   from: String!
 
+  """
+  Trend bucket size; auto-inferred from date range when omitted (day ≤31d, week ≤90d, else month)
+  """
+  granularity: FinanceGranularity
+
   """Filter bookings that used this promotion"""
   promotionId: ID
 
@@ -9300,6 +9305,47 @@ type ProductPerformance {
   unitPrice: Int!
 }
 
+type ProductPerformanceReport {
+  importHistory: [StockMovement!]!
+  period: ProductReportPeriodInfo!
+  product: ProductPerformanceSnapshot!
+  recentMovements: [StockMovement!]!
+  summary: ProductPerformanceReportSummary!
+  trend: [ProductSalesDataPoint!]!
+}
+
+type ProductPerformanceReportSummary {
+  cogs: Int!
+  grossProfit: Int!
+  orderCount: Int!
+  previousRevenue: Int!
+  previousSoldQuantity: Int!
+  profitMargin: Float!
+  rank: Int
+  revenue: Int!
+  revenuePercentage: Float!
+  soldQuantity: Int!
+}
+
+type ProductPerformanceSnapshot {
+  averageCost: Int
+  categoryId: String!
+  categoryName: String!
+  hasVariants: Boolean!
+  imageUrl: String
+  productId: String!
+  productName: String!
+  sku: String
+  status: ProductStatus!
+  stockQuantity: Int!
+  trackInventory: Boolean!
+  unit: String!
+  unitPrice: Int!
+  variantCount: Int!
+  venueId: String
+  venueName: String
+}
+
 type ProductProfitItem {
   """Cost of goods sold"""
   cogs: Float!
@@ -9317,6 +9363,132 @@ type ProductProfitItem {
 
   """Total quantity sold"""
   soldQuantity: Int!
+}
+
+input ProductReportFilterInput {
+  categoryId: ID
+  compareMode: FinanceCompareMode = PREVIOUS_PERIOD
+
+  """Include period-to-date comparison with previous period"""
+  compareToPrevious: Boolean = true
+
+  """Start date (YYYY-MM-DD) in filter timezone"""
+  from: String!
+
+  """Only low-stock or out-of-stock products"""
+  lowStockOnly: Boolean
+
+  """Search product name or SKU"""
+  searchQuery: String
+
+  """Only products with sales in the selected period"""
+  soldInPeriodOnly: Boolean
+  status: ProductStatus
+
+  """Pagination for the products table section"""
+  tablePagination: CursorPageInput
+
+  """IANA timezone for date boundaries"""
+  timezone: String = "Asia/Ho_Chi_Minh"
+
+  """End date (YYYY-MM-DD) in filter timezone"""
+  to: String!
+
+  """
+  Venue IDs to include. Empty/null = all venues user can view analytics for.
+  """
+  venueIds: [ID!]
+}
+
+type ProductReportPeriodInfo {
+  from: String!
+  timezone: String!
+  to: String!
+}
+
+type ProductReportRow {
+  averageCost: Int
+  categoryId: String!
+  categoryName: String!
+  cogs: Int!
+  grossProfit: Int!
+  imageUrl: String
+  previousRevenue: Int!
+  previousSoldQuantity: Int!
+  productId: String!
+  productName: String!
+  profitMargin: Float!
+  rank: Int
+  revenue: Int!
+  revenueGrowth: Float!
+  revenuePercentage: Float!
+  sku: String
+  soldQuantity: Int!
+  status: ProductStatus!
+  stockQuantity: Int!
+  trackInventory: Boolean!
+  unitPrice: Int!
+  venueId: String
+  venueName: String
+}
+
+"""A Relay-style connection for ProductReportRow items."""
+type ProductReportRowConnection {
+  """List of edges (each contains a node + cursor)."""
+  edges: [ProductReportRowEdge!]!
+
+  """Pagination metadata (next/prev page, start/end cursor)."""
+  pageInfo: PageInfo!
+
+  """
+  Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
+  """
+  totalCount: Int!
+}
+
+"""An edge in the ProductReportRowConnection."""
+type ProductReportRowEdge {
+  """Opaque cursor pointing to this node."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: ProductReportRow!
+}
+
+type ProductReportScope {
+  mode: ProductReportScopeMode!
+  venueCount: Int!
+  venueIds: [String!]
+  venueNames: [String!]!
+}
+
+enum ProductReportScopeMode {
+  PORTFOLIO
+  SINGLE
+}
+
+type ProductReportSummary {
+  bestSellingCategory: String!
+  bestSellingProduct: String!
+  grossProfit: Int!
+  grossProfitChangePercent: Float!
+  grossProfitMarginPercent: Float!
+  itemsChangePercent: Float!
+  ordersChangePercent: Float!
+  peakDay: String!
+  peakHour: String!
+  previousCogs: Int!
+  previousGrossProfit: Int!
+  previousItemsSold: Int!
+  previousOrders: Int!
+  previousRevenue: Int!
+  previousUniqueProductsSold: Int!
+  revenueChangePercent: Float!
+  totalCogs: Int!
+  totalItemsSold: Int!
+  totalOrders: Int!
+  totalRevenue: Int!
+  uniqueProductsSold: Int!
 }
 
 type ProductSalesAnalytics {
@@ -10065,7 +10237,7 @@ type Query {
   """
   Check availability for recurring booking. Supports single-day and multi-day bookings.
   """
-  checkRecurringAvailability(daySchedules: [DayScheduleInput!], daysOfWeek: [Int!], durationMonths: Int!, isStaffMode: Boolean = false, slots: [BookedSlotInput!], startDate: String!, venueId: ID!): RecurringAvailabilityCheck!
+  checkRecurringAvailability(customerId: ID, daySchedules: [DayScheduleInput!], daysOfWeek: [Int!], discountCode: String, durationMonths: Int!, excludeDates: [String!], isStaffMode: Boolean = false, slots: [BookedSlotInput!], startDate: String!, venueId: ID!): RecurringAvailabilityCheck!
 
   """Check if SKU is available"""
   checkSkuAvailability(excludeProductId: ID, shopId: ID, sku: String!, venueId: ID): SkuAvailabilityResult!
@@ -10473,6 +10645,9 @@ type Query {
   """Get product by slug"""
   productBySlug(shopId: ID, slug: String!, venueId: ID): Product
 
+  """Single-product performance drill-down report"""
+  productPerformanceReport(filter: ProductReportFilterInput!, productId: ID!): ProductPerformanceReport!
+
   """Get comprehensive product sales analytics for a venue"""
   productSalesAnalytics(period: String = "week", venueId: ID!): ProductSalesAnalytics! @deprecated(reason: "Use venueFinanceReport (byRevenueStream.product) instead.")
 
@@ -10540,7 +10715,7 @@ type Query {
   staffedVenuesConnection(pagination: CursorPageInput): VenueConnection!
 
   """Get stock movements (cursor)"""
-  stockMovementsConnection(filter: StockMovementFilterInput, pagination: CursorPageInput, venueId: ID!): StockMovementConnection!
+  stockMovementsConnection(filter: StockMovementFilterInput, pagination: CursorPageInput, sort: StockMovementSortInput, venueId: ID!): StockMovementConnection!
 
   """Giá pass đề xuất (median) dựa trên các pass COMPLETED 90 ngày qua."""
   suggestedPrice(filter: SuggestedPriceFilterInput): SuggestedPrice!
@@ -10678,6 +10853,9 @@ type Query {
   """Get pending invitations for a venue (owner only)"""
   venuePendingInvitations(venueId: ID!): [VenueStaff!]!
 
+  """Unified venue product analytics report"""
+  venueProductReport(filter: ProductReportFilterInput!): VenueProductReport!
+
   """Get venue products (menu, cursor)"""
   venueProductsConnection(filter: ProductFilterInput, pagination: CursorPageInput, sort: ProductSortInput, venueId: ID!): ProductConnection!
 
@@ -10770,6 +10948,12 @@ type RecurringAvailabilityCheck {
   """List of all booking dates"""
   allDates: [String!]!
 
+  """Applied auto-promotion breakdown (staff preview)"""
+  appliedPromotions: [AppliedPromotion!]
+
+  """Total auto-promo discount (staff preview)"""
+  autoPromoDiscount: Int
+
   """List of available dates"""
   availableDates: [String!]!
 
@@ -10785,14 +10969,32 @@ type RecurringAvailabilityCheck {
   """Discount percentage"""
   discountPercent: Int!
 
+  """Effective sessions after staff exclude dates"""
+  effectiveSessions: Int
+
+  """Number of excluded sessions in staff preview"""
+  excludedSessionCount: Int
+
   """Final amount after discount"""
   finalAmount: Int!
+
+  """Package final amount plus auto promo (staff preview)"""
+  finalAmountWithPromo: Int
+
+  """Minimum sessions required for RECURRING category promo"""
+  minRecurringPromoSessions: Int
 
   """Average price per session (for display, actual may vary by day)"""
   pricePerSession: Int!
 
+  """RECURRING category auto-promo discount amount"""
+  recurringCategoryDiscount: Int
+
   """Is recurring booking enabled for this venue"""
   recurringEnabled: Boolean!
+
+  """Whether RECURRING category promo applies at effectiveSessions"""
+  recurringPromoEligible: Boolean
 
   """Sessions per week (number of days booked)"""
   sessionsPerWeek: Int!
@@ -11541,6 +11743,30 @@ input ScheduleConfigInput {
   Khoảng nghỉ trong ngày (HH:mm). Tự động xếp lịch bỏ qua, không đặt trận trùng.
   """
   restBreakWindows: [ScheduleRestBreakWindowInput!]
+}
+
+type ScheduleCoveragePoint {
+  availableSlots: Int!
+  bookingCount: Int!
+
+  """Bucket start date (YYYY-MM-DD)"""
+  date: String!
+
+  """Display label for chart axis"""
+  label: String!
+
+  """Occupancy rate 0–100"""
+  occupancyRate: Float!
+  occupiedSlots: Int!
+
+  """Occupancy rate in the aligned previous-period bucket"""
+  previousOccupancyRate: Float
+
+  """Revenue in the aligned previous-period bucket"""
+  previousRevenue: Int
+
+  """Court revenue on schedule date(s) in bucket"""
+  revenue: Int!
 }
 
 input ScheduleMatchInput {
@@ -12504,6 +12730,14 @@ input StockMovementFilterInput {
 
   """Filter by movement types"""
   types: [StockMovementType!]
+}
+
+input StockMovementSortInput {
+  """Sort by field"""
+  sortBy: String
+
+  """Sort order"""
+  sortOrder: String
 }
 
 """Type of stock movement"""
@@ -14710,6 +14944,11 @@ input ValidatePromoCodeInput {
   """Court IDs being booked (for scope validation)"""
   courtIds: [ID!]
 
+  """
+  Effective session count after staff exclude dates (for RECURRING promo validation)
+  """
+  effectiveSessionCount: Int
+
   """Is first booking at this venue"""
   isFirstBooking: Boolean
 
@@ -15364,6 +15603,11 @@ type VenueOperationsReport {
   heatMapData: [HeatMapCell!]!
   occupancy: OperationsOccupancySummary!
   period: FinancePeriodInfo!
+
+  """
+  Daily/weekly/monthly court revenue and occupancy by schedule date (booking.date)
+  """
+  scheduleCoverageTrend: [ScheduleCoveragePoint!]!
   totalBookings: Int!
 }
 
@@ -15405,6 +15649,24 @@ input VenueOrderTypeConfigInput {
 
   """Order type enum value"""
   orderType: OrderType!
+}
+
+type VenueProductReport {
+  comparePeriod: ProductReportPeriodInfo
+  decliningProducts: [ProductPerformance!]!
+  hourlySales: [ProductHourlySales!]!
+  inventory: InventoryReport!
+  inventoryStatus: InventoryStatus!
+  period: ProductReportPeriodInfo!
+  productsTable: ProductReportRowConnection!
+  profitByProduct: [ProductProfitItem!]!
+  salesByCategory: [CategorySalesPerformance!]!
+  salesTrend: [ProductSalesDataPoint!]!
+  scope: ProductReportScope!
+  stockAlerts: [StockAlertProduct!]!
+  summary: ProductReportSummary!
+  topProducts: [ProductPerformance!]!
+  trend: [ProductSalesDataPoint!]!
 }
 
 """Compact promotion info for venue cards"""

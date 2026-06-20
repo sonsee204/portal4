@@ -118,6 +118,8 @@ export const GET_VENUE_DETAIL = gql`
         warningMargin
         dangerMargin
       }
+      recurringBookingEnabled
+      slotDurationMinutes
     }
   }
 `;
@@ -808,6 +810,7 @@ export const MY_VENUES_FOR_PRODUCT_TRANSFER = gql`
     myVenuesForProductTransfer {
       _id
       name
+      coverImageUrl
     }
   }
 `;
@@ -871,3 +874,9 @@ export const GET_VENUE_ENABLED_ORDER_TYPES = gql`
 `;
 
 export { VALIDATE_ORDER_PROMO_CODE } from './promotions/queries';
+export {
+  VALIDATE_PROMO_CODE,
+  CALCULATE_BOOKING_DISCOUNT,
+  GET_AVAILABLE_PROMOTIONS_FOR_BOOKING,
+  CHECK_RECURRING_AVAILABILITY,
+} from './booking/queries';

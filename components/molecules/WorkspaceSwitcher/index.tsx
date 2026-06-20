@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
@@ -57,6 +57,8 @@ export function WorkspaceSwitcher({
 }: WorkspaceSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const role = user?.role ?? null;
   const portalCapabilities = user?.portalCapabilities;
@@ -72,6 +74,33 @@ export function WorkspaceSwitcher({
   );
 
   const currentWorkspace = resolveCurrentWorkspace(pathname);
+  const triggerLabel = currentWorkspace
+    ? WORKSPACE_LABELS[currentWorkspace]
+    : 'Chọn không gian';
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
 
   if (workspaces.length < 2) {
     return null;
@@ -79,34 +108,44 @@ export function WorkspaceSwitcher({
 
   const isSidebar = variant === 'sidebar';
 
+  const handleSelect = (ws: PortalWorkspace) => {
+    setOpen(false);
+    router.push(WORKSPACE_HOME[ws]);
+  };
+
   return (
-    <div className={cn('relative', className)}>
-      <details className="group">
-        <summary
-          className={cn(
-            'text-secondary hover:text-primary flex cursor-pointer list-none items-center gap-2 rounded-xl transition-colors',
-            isSidebar
-              ? 'border-surface-border bg-surface/60 hover:bg-surface-hover w-full border px-3 py-2.5 text-sm font-medium'
-              : 'px-2 py-1 text-sm font-medium'
-          )}
-        >
-          <IonIcon name="swap-horizontal-outline" size="sm" />
-          <span className="min-w-0 flex-1 truncate">Không gian làm việc</span>
-          {currentWorkspace ? (
-            <span className="text-faint hidden truncate text-xs sm:inline">
-              {WORKSPACE_LABELS[currentWorkspace]}
-            </span>
-          ) : null}
-          <IonIcon
-            name="chevron-down-outline"
-            size="sm"
-            className={cn(
-              'shrink-0 transition-transform group-open:rotate-180',
-              isSidebar && 'group-open:-rotate-180'
-            )}
-          />
-        </summary>
+    <div ref={containerRef} className={cn('relative', className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className={cn(
+          'text-secondary hover:text-primary flex cursor-pointer items-center gap-2 rounded-xl transition-colors',
+          isSidebar
+            ? 'border-surface-border bg-surface/60 hover:bg-surface-hover w-full border px-3 py-2.5 text-sm font-medium'
+            : 'px-2 py-1 text-sm font-medium',
+          open && 'ring-primary/40 ring-2'
+        )}
+      >
+        <IonIcon
+          name="swap-horizontal-outline"
+          size="sm"
+          className="shrink-0"
+        />
+        <span className="text-heading min-w-0 flex-1 truncate text-left font-medium">
+          {triggerLabel}
+        </span>
+        <IonIcon
+          name="chevron-down-outline"
+          size="sm"
+          className={cn('shrink-0 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+
+      {open ? (
         <div
+          role="listbox"
           className={cn(
             'border-surface-border bg-surface absolute z-50 min-w-[220px] rounded-xl border p-1 shadow-2xl',
             isSidebar
@@ -123,7 +162,9 @@ export function WorkspaceSwitcher({
               <button
                 key={ws}
                 type="button"
-                onClick={() => router.push(WORKSPACE_HOME[ws])}
+                role="option"
+                aria-selected={isActive}
+                onClick={() => handleSelect(ws)}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                   isActive
@@ -144,7 +185,7 @@ export function WorkspaceSwitcher({
             );
           })}
         </div>
-      </details>
+      ) : null}
     </div>
   );
 }

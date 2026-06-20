@@ -14,6 +14,7 @@
 import { ownerSidebarNav } from '@/config/navigation';
 import { WorkspaceDashboardShell } from '@/components/templates/WorkspaceDashboardShell';
 import { VenueContextProvider } from '@/components/providers/VenueContextProvider';
+import { OwnerDateRangeProvider } from '@/components/providers/OwnerDateRangeProvider';
 import { VenueRouteGuard } from '@/components/atoms/VenueRouteGuard';
 
 export default function OwnerLayout({
@@ -23,11 +24,13 @@ export default function OwnerLayout({
 }) {
   return (
     <VenueContextProvider>
-      <VenueRouteGuard>
-        <WorkspaceDashboardShell workspace="owner" nav={ownerSidebarNav}>
-          {children}
-        </WorkspaceDashboardShell>
-      </VenueRouteGuard>
+      <OwnerDateRangeProvider>
+        <VenueRouteGuard>
+          <WorkspaceDashboardShell workspace="owner" nav={ownerSidebarNav}>
+            {children}
+          </WorkspaceDashboardShell>
+        </VenueRouteGuard>
+      </OwnerDateRangeProvider>
     </VenueContextProvider>
   );
 }

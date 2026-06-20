@@ -16,6 +16,12 @@ import {
   TournamentStatus,
   type TournamentCategory,
 } from '@/graphql/generated';
+import {
+  toggleSelectAllIds,
+  toggleSelectionSet,
+} from '@/hooks/shared/selection-set';
+
+export { toggleSelectAllIds, toggleSelectionSet };
 
 export function formatRegistrationDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -75,22 +81,3 @@ export function parseBibNumberInput(value: string): number | undefined {
   return num;
 }
 
-export function toggleSelectionSet(
-  prev: Set<string>,
-  id: string,
-): Set<string> {
-  const next = new Set(prev);
-  if (next.has(id)) next.delete(id);
-  else next.add(id);
-  return next;
-}
-
-export function toggleSelectAllIds(
-  selectedIds: Set<string>,
-  registrationIds: string[],
-): Set<string> {
-  if (selectedIds.size === registrationIds.length) {
-    return new Set();
-  }
-  return new Set(registrationIds);
-}

@@ -16,6 +16,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerDateRange } from '@/components/providers/OwnerDateRangeProvider';
 import { toFinanceSortVariables, toSortByOrder } from '@/hooks/shared/useDataTableSort';
 import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import {
@@ -27,15 +28,12 @@ import {
 } from '@/hooks/owner';
 import {
   BookingScheduleType,
-  FinanceCompareMode,
   FinanceGranularity,
   FinanceOrderTypeCategory,
   PaymentMethod,
   type VenuePromotionsConnectionQuery,
 } from '@/graphql/generated';
 import { VENUE_PROMOTIONS_FOR_FILTER } from '@/graphql/owner/finance/queries';
-import type { DateRangePreset } from '@/lib/finance/stat-card-trend';
-import { resolveDateRangePreset } from '@/lib/finance/stat-card-trend';
 import {
   FINANCE_PAGE_SIZE,
   type OwnerFinancePageTab,
@@ -61,13 +59,14 @@ export function useOwnerFinancePageData(pageTab: OwnerFinancePageTab) {
     setFinanceAllVenues,
   } = useVenueContext();
   const allVenues = financeAllVenues;
-  const [datePreset, setDatePreset] = useState<DateRangePreset>('month');
-  const [dateRange, setDateRange] = useState(() =>
-    resolveDateRangePreset('month'),
-  );
-  const [compareMode, setCompareMode] = useState<FinanceCompareMode>(
-    FinanceCompareMode.PreviousPeriod,
-  );
+  const {
+    datePreset,
+    setDatePreset,
+    dateRange,
+    setDateRange,
+    compareMode,
+    setCompareMode,
+  } = useOwnerDateRange();
   const [orderTypeFilter, setOrderTypeFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [scheduleTypeFilter, setScheduleTypeFilter] = useState('');
