@@ -47,6 +47,12 @@ export const BULK_REJECT_REGISTRATIONS = gql`
   }
 `;
 
+export const BULK_DELETE_REGISTRATIONS = gql`
+  mutation BulkDeleteRegistrations($input: BulkRegistrationActionInput!) {
+    bulkDeleteRegistrations(input: $input)
+  }
+`;
+
 export const UPDATE_PAYMENT_STATUS = gql`
   mutation UpdatePaymentStatus($input: UpdatePaymentStatusInput!) {
     updatePaymentStatus(input: $input) {

@@ -15,18 +15,29 @@
 
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
+import { TournamentFormat } from '@/graphql/generated';
 import { TOURNAMENT } from '@/lib/strings';
 import { DrawGroupKnockoutSection } from './DrawGroupKnockoutSection';
 import { DrawStandardFormatSection } from './DrawStandardFormatSection';
+import { DrawBracketTreeSection } from './DrawBracketTreeSection';
+import { DrawManualSection } from './DrawManualSection';
+import type { ManualDrawState } from '../_hooks/useManualDrawState';
 import type { DrawPageActions } from '../_hooks/useDrawActions';
 import type { DrawPageData } from '../_hooks/useDrawData';
 
 interface DrawMainSectionProps {
   data: DrawPageData;
+  manual: ManualDrawState;
 }
 
-export function DrawMainSection({ data }: DrawMainSectionProps) {
-  const { bLoading, matches, isGroupKnockout, isRoundRobin } = data;
+export function DrawMainSection({ data, manual }: DrawMainSectionProps) {
+  const { bLoading, matches, isGroupKnockout, isRoundRobin, activeCategory } = data;
+  const isSingleElimination =
+    activeCategory?.format === TournamentFormat.SingleElimination;
+  const showManualEditor =
+    manual.canManualDraw &&
+    manual.drawMode === 'manual' &&
+    matches.length === 0;
 
   if (bLoading) {
     return (
@@ -34,6 +45,14 @@ export function DrawMainSection({ data }: DrawMainSectionProps) {
         <div className="flex items-center justify-center py-12">
           <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
         </div>
+      </GlassPanel>
+    );
+  }
+
+  if (showManualEditor) {
+    return (
+      <GlassPanel card>
+        <DrawManualSection data={data} manual={manual} />
       </GlassPanel>
     );
   }
@@ -47,7 +66,9 @@ export function DrawMainSection({ data }: DrawMainSectionProps) {
               ? 'Chưa có bảng đấu. Hãy tạo bảng đấu để bắt đầu.'
               : isRoundRobin
                 ? 'Chưa có lịch đấu. Hãy tạo lịch đấu vòng tròn để bắt đầu.'
-                : 'Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.'}
+                : manual.drawMode === 'manual'
+                  ? 'Chuyển sang chế độ xếp thủ công ở trên để bắt đầu.'
+                  : 'Chưa có nhánh đấu. Hãy tạo nhánh đấu để bắt đầu.'}
           </p>
         </div>
       </GlassPanel>
@@ -56,6 +77,10 @@ export function DrawMainSection({ data }: DrawMainSectionProps) {
 
   if (isGroupKnockout) {
     return <DrawGroupKnockoutSection data={data} />;
+  }
+
+  if (isSingleElimination) {
+    return <DrawBracketTreeSection data={data} />;
   }
 
   return <DrawStandardFormatSection data={data} />;

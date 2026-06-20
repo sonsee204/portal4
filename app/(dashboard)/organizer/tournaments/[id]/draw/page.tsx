@@ -20,15 +20,12 @@ import {
   DrawCategoryTabsSection,
   DrawLoadingSection,
 } from './_sections/DrawCategoryTabsSection';
+import { DrawCategoryWorkspace } from './_sections/DrawCategoryWorkspace';
 import { DrawHeaderSection } from './_sections/DrawHeaderSection';
-import {
-  DrawMainSection,
-  DrawResetDialogSection,
-} from './_sections/DrawMainSection';
+import { DrawResetDialogSection } from './_sections/DrawMainSection';
 import {
   DrawPendingWarningSection,
   DrawStatsSection,
-  DrawToolbarSection,
 } from './_sections/DrawToolbarSection';
 
 export default function DrawPage({
@@ -44,17 +41,20 @@ export default function DrawPage({
     return <DrawLoadingSection />;
   }
 
+  const workspaceKey = `${data.activeCategoryId}:${data.effectiveBracketSize}`;
+
   return (
     <>
       <DrawHeaderSection tournamentId={tournamentId} />
       <DrawCategoryTabsSection data={data} />
       <DrawStatsSection data={data} />
       <DrawPendingWarningSection data={data} />
-      <DrawToolbarSection data={data} actions={actions} />
 
-      <div className="mt-6 space-y-6">
-        <DrawMainSection data={data} />
-      </div>
+      <DrawCategoryWorkspace
+        key={workspaceKey}
+        data={data}
+        actions={actions}
+      />
 
       <DrawResetDialogSection data={data} actions={actions} />
     </>
