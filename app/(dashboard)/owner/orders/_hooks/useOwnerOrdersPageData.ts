@@ -15,12 +15,12 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerDateRange } from '@/components/providers/OwnerDateRangeProvider';
 import type { DateRangeValue } from '@/components/molecules/DateRangePicker';
 import { useVenueOrders, type VenueOrderNode } from '@/hooks/owner';
 import { OrderPaymentStatus, OrderStatus, OrderType } from '@/graphql/generated';
 import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
 import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
-import { resolveDateRangePreset } from '@/lib/finance/stat-card-trend';
 import {
   NON_BOOKING_ORDER_TYPES,
   PAGE_SIZE,
@@ -31,17 +31,18 @@ const ORDER_SORT_FIELDS = ['createdAt', 'totalAmount', 'status'] as const;
 
 export function useOwnerOrdersPageData() {
   const { selectedVenueId, loading: venueLoading } = useVenueContext();
+  const { dateRange, setDateRange } = useOwnerDateRange();
   const [viewTab, setViewTab] = useState<OrderViewTab>('all');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateRange, setDateRange] = useState<DateRangeValue>(() =>
-    resolveDateRangePreset('month'),
-  );
 
-  const handleDateRangeChange = useCallback((range: DateRangeValue) => {
-    setDateRange(range);
-  }, []);
+  const handleDateRangeChange = useCallback(
+    (range: DateRangeValue) => {
+      setDateRange(range);
+    },
+    [setDateRange],
+  );
 
   const { sortField, sortDir, handleSort } = useDataTableSortUrl({
     allowedFields: ORDER_SORT_FIELDS,

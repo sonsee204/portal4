@@ -316,6 +316,15 @@ export const IMPORT_STOCK = gql`
   }
 `;
 
+export const MOVE_PRODUCTS_TO_VENUE = gql`
+  mutation MoveProductsToVenue($input: TransferProductsInput!) {
+    moveProductsToVenue(input: $input) {
+      success
+      failed
+    }
+  }
+`;
+
 export const CREATE_PRODUCT_CATEGORY = gql`
   mutation CreateProductCategory($input: CreateProductCategoryInput!) {
     createProductCategory(input: $input) {
@@ -348,6 +357,11 @@ export const CREATE_STAFF_BOOKING = gql`
         date
         status
         finalAmount
+        totalPrice
+        discount
+        discountCode
+        isManualPrice
+        manualFinalAmount
         slots {
           courtId
           courtName

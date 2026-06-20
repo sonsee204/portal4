@@ -108,6 +108,17 @@ export const VENUE_OPERATIONS_REPORT = gql`
         intensity
         bookings
       }
+      scheduleCoverageTrend {
+        date
+        label
+        revenue
+        bookingCount
+        occupiedSlots
+        availableSlots
+        occupancyRate
+        previousRevenue
+        previousOccupancyRate
+      }
     }
   }
 `;

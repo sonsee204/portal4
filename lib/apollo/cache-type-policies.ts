@@ -304,6 +304,10 @@ export const apolloTypePolicies: TypePolicies = {
         keyArgs: ['filter', 'sort'],
         merge: relayMergeFn,
       },
+      stockMovementsConnection: {
+        keyArgs: ['venueId', 'filter', 'sort'],
+        merge: relayMergeFn,
+      },
     },
   },
 };

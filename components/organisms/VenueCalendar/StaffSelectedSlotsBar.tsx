@@ -25,17 +25,21 @@ import { parseTimeToMinutes } from '@/lib/venue/calendar-booking-segments';
 interface StaffSelectedSlotsBarProps {
   selectedSlots: StaffSelectedSlot[];
   totalPrice: number;
+  recurringEnabled?: boolean;
   onRemoveSlot: (slotKey: string) => void;
   onClear: () => void;
   onBook: () => void;
+  onRecurring?: () => void;
 }
 
 export function StaffSelectedSlotsBar({
   selectedSlots,
   totalPrice,
+  recurringEnabled = false,
   onRemoveSlot,
   onClear,
   onBook,
+  onRecurring,
 }: StaffSelectedSlotsBarProps) {
   if (selectedSlots.length === 0) {
     return null;
@@ -90,8 +94,15 @@ export function StaffSelectedSlotsBar({
           <Button variant="ghost" size="sm" onClick={onClear}>
             Bỏ chọn
           </Button>
+          {recurringEnabled && onRecurring ? (
+            <Button size="sm" onClick={onRecurring}>
+              <IonIcon name="repeat-outline" size="sm" className="mr-1" />
+              Lịch cố định
+            </Button>
+          ) : null}
           <Button size="sm" onClick={onBook}>
-            Đặt lịch cho khách
+            <IonIcon name="calendar-outline" size="sm" className="mr-1" />
+            Đặt lịch lẻ
           </Button>
         </div>
       </div>

@@ -7494,6 +7494,8 @@ export type OperatingHoursInput = {
 export type OperationsFilterInput = {
   /** Start date (YYYY-MM-DD) in filter timezone */
   from: Scalars['String']['input'];
+  /** Trend bucket size; auto-inferred from date range when omitted (day ≤31d, week ≤90d, else month) */
+  granularity?: InputMaybe<FinanceGranularity>;
   /** Filter bookings that used this promotion */
   promotionId?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by schedule type (fixed / single) */
@@ -9218,6 +9220,50 @@ export type ProductPerformance = {
   unitPrice: Scalars['Int']['output'];
 };
 
+export type ProductPerformanceReport = {
+  __typename?: 'ProductPerformanceReport';
+  importHistory: Array<StockMovement>;
+  period: ProductReportPeriodInfo;
+  product: ProductPerformanceSnapshot;
+  recentMovements: Array<StockMovement>;
+  summary: ProductPerformanceReportSummary;
+  trend: Array<ProductSalesDataPoint>;
+};
+
+export type ProductPerformanceReportSummary = {
+  __typename?: 'ProductPerformanceReportSummary';
+  cogs: Scalars['Int']['output'];
+  grossProfit: Scalars['Int']['output'];
+  orderCount: Scalars['Int']['output'];
+  previousRevenue: Scalars['Int']['output'];
+  previousSoldQuantity: Scalars['Int']['output'];
+  profitMargin: Scalars['Float']['output'];
+  rank?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
+  revenuePercentage: Scalars['Float']['output'];
+  soldQuantity: Scalars['Int']['output'];
+};
+
+export type ProductPerformanceSnapshot = {
+  __typename?: 'ProductPerformanceSnapshot';
+  averageCost?: Maybe<Scalars['Int']['output']>;
+  categoryId: Scalars['String']['output'];
+  categoryName: Scalars['String']['output'];
+  hasVariants: Scalars['Boolean']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  productId: Scalars['String']['output'];
+  productName: Scalars['String']['output'];
+  sku?: Maybe<Scalars['String']['output']>;
+  status: ProductStatus;
+  stockQuantity: Scalars['Int']['output'];
+  trackInventory: Scalars['Boolean']['output'];
+  unit: Scalars['String']['output'];
+  unitPrice: Scalars['Int']['output'];
+  variantCount: Scalars['Int']['output'];
+  venueId?: Maybe<Scalars['String']['output']>;
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
 export type ProductProfitItem = {
   __typename?: 'ProductProfitItem';
   /** Cost of goods sold */
@@ -9232,6 +9278,122 @@ export type ProductProfitItem = {
   revenue: Scalars['Float']['output'];
   /** Total quantity sold */
   soldQuantity: Scalars['Int']['output'];
+};
+
+export type ProductReportFilterInput = {
+  categoryId?: InputMaybe<Scalars['ID']['input']>;
+  compareMode?: InputMaybe<FinanceCompareMode>;
+  /** Include period-to-date comparison with previous period */
+  compareToPrevious?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Start date (YYYY-MM-DD) in filter timezone */
+  from: Scalars['String']['input'];
+  /** Only low-stock or out-of-stock products */
+  lowStockOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search product name or SKU */
+  searchQuery?: InputMaybe<Scalars['String']['input']>;
+  /** Only products with sales in the selected period */
+  soldInPeriodOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  status?: InputMaybe<ProductStatus>;
+  /** Pagination for the products table section */
+  tablePagination?: InputMaybe<CursorPageInput>;
+  /** IANA timezone for date boundaries */
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  /** End date (YYYY-MM-DD) in filter timezone */
+  to: Scalars['String']['input'];
+  /** Venue IDs to include. Empty/null = all venues user can view analytics for. */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type ProductReportPeriodInfo = {
+  __typename?: 'ProductReportPeriodInfo';
+  from: Scalars['String']['output'];
+  timezone: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type ProductReportRow = {
+  __typename?: 'ProductReportRow';
+  averageCost?: Maybe<Scalars['Int']['output']>;
+  categoryId: Scalars['String']['output'];
+  categoryName: Scalars['String']['output'];
+  cogs: Scalars['Int']['output'];
+  grossProfit: Scalars['Int']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  previousRevenue: Scalars['Int']['output'];
+  previousSoldQuantity: Scalars['Int']['output'];
+  productId: Scalars['String']['output'];
+  productName: Scalars['String']['output'];
+  profitMargin: Scalars['Float']['output'];
+  rank?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
+  revenueGrowth: Scalars['Float']['output'];
+  revenuePercentage: Scalars['Float']['output'];
+  sku?: Maybe<Scalars['String']['output']>;
+  soldQuantity: Scalars['Int']['output'];
+  status: ProductStatus;
+  stockQuantity: Scalars['Int']['output'];
+  trackInventory: Scalars['Boolean']['output'];
+  unitPrice: Scalars['Int']['output'];
+  venueId?: Maybe<Scalars['String']['output']>;
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
+/** A Relay-style connection for ProductReportRow items. */
+export type ProductReportRowConnection = {
+  __typename?: 'ProductReportRowConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ProductReportRowEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ProductReportRowConnection. */
+export type ProductReportRowEdge = {
+  __typename?: 'ProductReportRowEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: ProductReportRow;
+};
+
+export type ProductReportScope = {
+  __typename?: 'ProductReportScope';
+  mode: ProductReportScopeMode;
+  venueCount: Scalars['Int']['output'];
+  venueIds?: Maybe<Array<Scalars['String']['output']>>;
+  venueNames: Array<Scalars['String']['output']>;
+};
+
+export enum ProductReportScopeMode {
+  Portfolio = 'PORTFOLIO',
+  Single = 'SINGLE'
+}
+
+export type ProductReportSummary = {
+  __typename?: 'ProductReportSummary';
+  bestSellingCategory: Scalars['String']['output'];
+  bestSellingProduct: Scalars['String']['output'];
+  grossProfit: Scalars['Int']['output'];
+  grossProfitChangePercent: Scalars['Float']['output'];
+  grossProfitMarginPercent: Scalars['Float']['output'];
+  itemsChangePercent: Scalars['Float']['output'];
+  ordersChangePercent: Scalars['Float']['output'];
+  peakDay: Scalars['String']['output'];
+  peakHour: Scalars['String']['output'];
+  previousCogs: Scalars['Int']['output'];
+  previousGrossProfit: Scalars['Int']['output'];
+  previousItemsSold: Scalars['Int']['output'];
+  previousOrders: Scalars['Int']['output'];
+  previousRevenue: Scalars['Int']['output'];
+  previousUniqueProductsSold: Scalars['Int']['output'];
+  revenueChangePercent: Scalars['Float']['output'];
+  totalCogs: Scalars['Int']['output'];
+  totalItemsSold: Scalars['Int']['output'];
+  totalOrders: Scalars['Int']['output'];
+  totalRevenue: Scalars['Int']['output'];
+  uniqueProductsSold: Scalars['Int']['output'];
 };
 
 export type ProductSalesAnalytics = {
@@ -10076,6 +10238,8 @@ export type Query = {
   product: Product;
   /** Get product by slug */
   productBySlug?: Maybe<Product>;
+  /** Single-product performance drill-down report */
+  productPerformanceReport: ProductPerformanceReport;
   /**
    * Get comprehensive product sales analytics for a venue
    * @deprecated Use venueFinanceReport (byRevenueStream.product) instead.
@@ -10210,6 +10374,8 @@ export type Query = {
   venueOrdersConnection: OrderConnection;
   /** Get pending invitations for a venue (owner only) */
   venuePendingInvitations: Array<VenueStaff>;
+  /** Unified venue product analytics report */
+  venueProductReport: VenueProductReport;
   /** Get venue products (menu, cursor) */
   venueProductsConnection: ProductConnection;
   /** Get venue promotion summary for display */
@@ -10395,9 +10561,12 @@ export type QueryCheckPhoneExistsArgs = {
 
 
 export type QueryCheckRecurringAvailabilityArgs = {
+  customerId?: InputMaybe<Scalars['ID']['input']>;
   daySchedules?: InputMaybe<Array<DayScheduleInput>>;
   daysOfWeek?: InputMaybe<Array<Scalars['Int']['input']>>;
+  discountCode?: InputMaybe<Scalars['String']['input']>;
   durationMonths: Scalars['Int']['input'];
+  excludeDates?: InputMaybe<Array<Scalars['String']['input']>>;
   isStaffMode?: InputMaybe<Scalars['Boolean']['input']>;
   slots?: InputMaybe<Array<BookedSlotInput>>;
   startDate: Scalars['String']['input'];
@@ -11042,6 +11211,12 @@ export type QueryProductBySlugArgs = {
 };
 
 
+export type QueryProductPerformanceReportArgs = {
+  filter: ProductReportFilterInput;
+  productId: Scalars['ID']['input'];
+};
+
+
 export type QueryProductSalesAnalyticsArgs = {
   period?: InputMaybe<Scalars['String']['input']>;
   venueId: Scalars['ID']['input'];
@@ -11150,6 +11325,7 @@ export type QueryStaffedVenuesConnectionArgs = {
 export type QueryStockMovementsConnectionArgs = {
   filter?: InputMaybe<StockMovementFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<StockMovementSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11383,6 +11559,11 @@ export type QueryVenuePendingInvitationsArgs = {
 };
 
 
+export type QueryVenueProductReportArgs = {
+  filter: ProductReportFilterInput;
+};
+
+
 export type QueryVenueProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
@@ -11491,6 +11672,10 @@ export type RecurringAvailabilityCheck = {
   allAvailable: Scalars['Boolean']['output'];
   /** List of all booking dates */
   allDates: Array<Scalars['String']['output']>;
+  /** Applied auto-promotion breakdown (staff preview) */
+  appliedPromotions?: Maybe<Array<AppliedPromotion>>;
+  /** Total auto-promo discount (staff preview) */
+  autoPromoDiscount?: Maybe<Scalars['Int']['output']>;
   /** List of available dates */
   availableDates: Array<Scalars['String']['output']>;
   /** Price breakdown per day (when prices differ by day) */
@@ -11501,12 +11686,24 @@ export type RecurringAvailabilityCheck = {
   discountAmount: Scalars['Int']['output'];
   /** Discount percentage */
   discountPercent: Scalars['Int']['output'];
+  /** Effective sessions after staff exclude dates */
+  effectiveSessions?: Maybe<Scalars['Int']['output']>;
+  /** Number of excluded sessions in staff preview */
+  excludedSessionCount?: Maybe<Scalars['Int']['output']>;
   /** Final amount after discount */
   finalAmount: Scalars['Int']['output'];
+  /** Package final amount plus auto promo (staff preview) */
+  finalAmountWithPromo?: Maybe<Scalars['Int']['output']>;
+  /** Minimum sessions required for RECURRING category promo */
+  minRecurringPromoSessions?: Maybe<Scalars['Int']['output']>;
   /** Average price per session (for display, actual may vary by day) */
   pricePerSession: Scalars['Int']['output'];
+  /** RECURRING category auto-promo discount amount */
+  recurringCategoryDiscount?: Maybe<Scalars['Int']['output']>;
   /** Is recurring booking enabled for this venue */
   recurringEnabled: Scalars['Boolean']['output'];
+  /** Whether RECURRING category promo applies at effectiveSessions */
+  recurringPromoEligible?: Maybe<Scalars['Boolean']['output']>;
   /** Sessions per week (number of days booked) */
   sessionsPerWeek: Scalars['Int']['output'];
   /** Total price before discount */
@@ -12131,6 +12328,25 @@ export type ScheduleConfigInput = {
   minRestMinutes?: InputMaybe<Scalars['Int']['input']>;
   /** Khoảng nghỉ trong ngày (HH:mm). Tự động xếp lịch bỏ qua, không đặt trận trùng. */
   restBreakWindows?: InputMaybe<Array<ScheduleRestBreakWindowInput>>;
+};
+
+export type ScheduleCoveragePoint = {
+  __typename?: 'ScheduleCoveragePoint';
+  availableSlots: Scalars['Int']['output'];
+  bookingCount: Scalars['Int']['output'];
+  /** Bucket start date (YYYY-MM-DD) */
+  date: Scalars['String']['output'];
+  /** Display label for chart axis */
+  label: Scalars['String']['output'];
+  /** Occupancy rate 0–100 */
+  occupancyRate: Scalars['Float']['output'];
+  occupiedSlots: Scalars['Int']['output'];
+  /** Occupancy rate in the aligned previous-period bucket */
+  previousOccupancyRate?: Maybe<Scalars['Float']['output']>;
+  /** Revenue in the aligned previous-period bucket */
+  previousRevenue?: Maybe<Scalars['Int']['output']>;
+  /** Court revenue on schedule date(s) in bucket */
+  revenue: Scalars['Int']['output'];
 };
 
 export type ScheduleMatchInput = {
@@ -12972,6 +13188,13 @@ export type StockMovementFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by movement types */
   types?: InputMaybe<Array<StockMovementType>>;
+};
+
+export type StockMovementSortInput = {
+  /** Sort by field */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Sort order */
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Type of stock movement */
@@ -14862,6 +15085,8 @@ export type ValidatePromoCodeInput = {
   code: Scalars['String']['input'];
   /** Court IDs being booked (for scope validation) */
   courtIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Effective session count after staff exclude dates (for RECURRING promo validation) */
+  effectiveSessionCount?: InputMaybe<Scalars['Int']['input']>;
   /** Is first booking at this venue */
   isFirstBooking?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this a recurring booking */
@@ -15400,6 +15625,8 @@ export type VenueOperationsReport = {
   heatMapData: Array<HeatMapCell>;
   occupancy: OperationsOccupancySummary;
   period: FinancePeriodInfo;
+  /** Daily/weekly/monthly court revenue and occupancy by schedule date (booking.date) */
+  scheduleCoverageTrend: Array<ScheduleCoveragePoint>;
   totalBookings: Scalars['Int']['output'];
 };
 
@@ -15432,6 +15659,25 @@ export type VenueOrderTypeConfigInput = {
   label?: InputMaybe<Scalars['String']['input']>;
   /** Order type enum value */
   orderType: OrderType;
+};
+
+export type VenueProductReport = {
+  __typename?: 'VenueProductReport';
+  comparePeriod?: Maybe<ProductReportPeriodInfo>;
+  decliningProducts: Array<ProductPerformance>;
+  hourlySales: Array<ProductHourlySales>;
+  inventory: InventoryReport;
+  inventoryStatus: InventoryStatus;
+  period: ProductReportPeriodInfo;
+  productsTable: ProductReportRowConnection;
+  profitByProduct: Array<ProductProfitItem>;
+  salesByCategory: Array<CategorySalesPerformance>;
+  salesTrend: Array<ProductSalesDataPoint>;
+  scope: ProductReportScope;
+  stockAlerts: Array<StockAlertProduct>;
+  summary: ProductReportSummary;
+  topProducts: Array<ProductPerformance>;
+  trend: Array<ProductSalesDataPoint>;
 };
 
 /** Compact promotion info for venue cards */
@@ -16098,6 +16344,49 @@ export type GetOtpTestUserGrantsQueryVariables = Exact<{
 
 export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
+export type CreateStaffRecurringBookingMutationVariables = Exact<{
+  input: CreateStaffRecurringBookingInput;
+}>;
+
+
+export type CreateStaffRecurringBookingMutation = { __typename?: 'Mutation', createStaffRecurringBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, isRecurring: boolean, discount?: number | null, discountCode?: string | null, isManualPrice: boolean, manualFinalAmount?: number | null, recurringConfig?: { __typename?: 'RecurringConfig', totalSessions: number, endDate: string, durationMonths: number, frequency: RecurringFrequency } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
+
+export type ValidatePromoCodeQueryVariables = Exact<{
+  input: ValidatePromoCodeInput;
+}>;
+
+
+export type ValidatePromoCodeQuery = { __typename?: 'Query', validatePromoCode: { __typename?: 'PromoCodeValidationResult', isValid: boolean, errorMessage?: string | null, estimatedDiscount?: number | null, promotion?: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } | null } };
+
+export type CalculateBookingDiscountQueryVariables = Exact<{
+  input: ApplyPromotionInput;
+}>;
+
+
+export type CalculateBookingDiscountQuery = { __typename?: 'Query', calculateBookingDiscount: { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null } };
+
+export type GetAvailablePromotionsForBookingQueryVariables = Exact<{
+  input: ApplyPromotionInput;
+}>;
+
+
+export type GetAvailablePromotionsForBookingQuery = { __typename?: 'Query', availablePromotionsForBooking: { __typename?: 'AvailablePromotionsForBooking', hasPromotions: boolean, autoApplied: Array<{ __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null }>, codePromotions: Array<{ __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null }>, preCalculatedDiscount?: { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null } | null } };
+
+export type CheckRecurringAvailabilityQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  startDate: Scalars['String']['input'];
+  durationMonths: Scalars['Int']['input'];
+  slots?: InputMaybe<Array<BookedSlotInput> | BookedSlotInput>;
+  daySchedules?: InputMaybe<Array<DayScheduleInput> | DayScheduleInput>;
+  isStaffMode?: InputMaybe<Scalars['Boolean']['input']>;
+  excludeDates?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  customerId?: InputMaybe<Scalars['ID']['input']>;
+  discountCode?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CheckRecurringAvailabilityQuery = { __typename?: 'Query', checkRecurringAvailability: { __typename?: 'RecurringAvailabilityCheck', allAvailable: boolean, allDates: Array<string>, unavailableDates: Array<string>, availableDates: Array<string>, totalSessions: number, sessionsPerWeek: number, daysOfWeek: Array<number>, pricePerSession: number, totalPrice: number, discountPercent: number, discountAmount: number, finalAmount: number, recurringEnabled: boolean, effectiveSessions?: number | null, excludedSessionCount?: number | null, recurringPromoEligible?: boolean | null, minRecurringPromoSessions?: number | null, recurringCategoryDiscount?: number | null, autoPromoDiscount?: number | null, finalAmountWithPromo?: number | null, appliedPromotions?: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, category: PromotionCategory, discountAmount: number, code?: string | null, type: PromotionType, value: number }> | null, dayPriceBreakdown?: Array<{ __typename?: 'DayPriceBreakdown', dayOfWeek: number, pricePerSession: number, sessionCount: number, totalPrice: number }> | null } };
+
 export type FinancePnlMetricFieldsFragment = { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number };
 
 export type FinancePnlRateMetricFieldsFragment = { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number };
@@ -16164,7 +16453,19 @@ export type VenueOperationsReportQueryVariables = Exact<{
 }>;
 
 
-export type VenueOperationsReportQuery = { __typename?: 'Query', venueOperationsReport: { __typename?: 'VenueOperationsReport', totalBookings: number, courtRevenue: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, occupancy: { __typename?: 'OperationsOccupancySummary', availableSlots: number, occupiedSlots: number, occupancyRate: number }, byScheduleType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPromotion: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, heatMapData: Array<{ __typename?: 'HeatMapCell', hour: string, day: string, intensity: number, bookings: number }> } };
+export type VenueOperationsReportQuery = { __typename?: 'Query', venueOperationsReport: { __typename?: 'VenueOperationsReport', totalBookings: number, courtRevenue: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, occupancy: { __typename?: 'OperationsOccupancySummary', availableSlots: number, occupiedSlots: number, occupancyRate: number }, byScheduleType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPromotion: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, heatMapData: Array<{ __typename?: 'HeatMapCell', hour: string, day: string, intensity: number, bookings: number }>, scheduleCoverageTrend: Array<{ __typename?: 'ScheduleCoveragePoint', date: string, label: string, revenue: number, bookingCount: number, occupiedSlots: number, availableSlots: number, occupancyRate: number, previousRevenue?: number | null, previousOccupancyRate?: number | null }> } };
+
+export type StockMovementListFieldsFragment = { __typename?: 'StockMovement', _id: string, productId: string, venueId: string, variantId?: string | null, type: StockMovementType, quantity: number, importPrice?: number | null, totalCost?: number | null, supplierName?: string | null, supplierContact?: string | null, invoiceNumber?: string | null, orderId?: string | null, salePrice?: number | null, costAtSale?: number | null, adjustmentReason?: StockAdjustmentReason | null, relatedVenueId?: string | null, relatedProductId?: string | null, previousStock: number, newStock: number, note?: string | null, createdBy: string, createdAt: string, updatedAt: string, product?: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, costPrice?: number | null, averageCost?: number | null, lastImportPrice?: number | null, stockQuantity: number, images: Array<{ __typename?: 'ProductImage', url: string, isPrimary: boolean }> } | null, createdByUser?: { __typename?: 'User', _id: string, displayName: string, photoURL?: string | null } | null };
+
+export type StockMovementsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<StockMovementFilterInput>;
+  sort?: InputMaybe<StockMovementSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type StockMovementsConnectionQuery = { __typename?: 'Query', stockMovementsConnection: { __typename?: 'StockMovementConnection', totalCount: number, edges: Array<{ __typename?: 'StockMovementEdge', cursor: string, node: { __typename?: 'StockMovement', _id: string, productId: string, venueId: string, variantId?: string | null, type: StockMovementType, quantity: number, importPrice?: number | null, totalCost?: number | null, supplierName?: string | null, supplierContact?: string | null, invoiceNumber?: string | null, orderId?: string | null, salePrice?: number | null, costAtSale?: number | null, adjustmentReason?: StockAdjustmentReason | null, relatedVenueId?: string | null, relatedProductId?: string | null, previousStock: number, newStock: number, note?: string | null, createdBy: string, createdAt: string, updatedAt: string, product?: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, costPrice?: number | null, averageCost?: number | null, lastImportPrice?: number | null, stockQuantity: number, images: Array<{ __typename?: 'ProductImage', url: string, isPrimary: boolean }> } | null, createdByUser?: { __typename?: 'User', _id: string, displayName: string, photoURL?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type UpdateVenueMutationVariables = Exact<{
   input: UpdateVenueInput;
@@ -16386,6 +16687,13 @@ export type ImportStockMutationVariables = Exact<{
 
 export type ImportStockMutation = { __typename?: 'Mutation', importStock: { __typename?: 'StockMovement', _id: string, productId: string, quantity: number, importPrice?: number | null, totalCost?: number | null, previousStock: number, newStock: number, createdAt: string } };
 
+export type MoveProductsToVenueMutationVariables = Exact<{
+  input: TransferProductsInput;
+}>;
+
+
+export type MoveProductsToVenueMutation = { __typename?: 'Mutation', moveProductsToVenue: { __typename?: 'BulkOperationResult', success: number, failed: Array<string> } };
+
 export type CreateProductCategoryMutationVariables = Exact<{
   input: CreateProductCategoryInput;
 }>;
@@ -16412,7 +16720,7 @@ export type CreateStaffBookingMutationVariables = Exact<{
 }>;
 
 
-export type CreateStaffBookingMutation = { __typename?: 'Mutation', createStaffBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
+export type CreateStaffBookingMutation = { __typename?: 'Mutation', createStaffBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, totalPrice: number, discount?: number | null, discountCode?: string | null, isManualPrice: boolean, manualFinalAmount?: number | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
 
 export type AddVenueStaffMutationVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -16450,9 +16758,40 @@ export type RemoveVenueStaffMutationVariables = Exact<{
 
 export type RemoveVenueStaffMutation = { __typename?: 'Mutation', removeVenueStaff: boolean };
 
+export type ProductReportPeriodFieldsFragment = { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string };
+
+export type ProductReportSummaryFieldsFragment = { __typename?: 'ProductReportSummary', totalRevenue: number, previousRevenue: number, revenueChangePercent: number, totalItemsSold: number, previousItemsSold: number, itemsChangePercent: number, totalOrders: number, previousOrders: number, ordersChangePercent: number, totalCogs: number, previousCogs: number, grossProfit: number, previousGrossProfit: number, grossProfitChangePercent: number, grossProfitMarginPercent: number, uniqueProductsSold: number, previousUniqueProductsSold: number, bestSellingProduct: string, bestSellingCategory: string, peakHour: string, peakDay: string };
+
+export type ProductSalesDataPointFieldsFragment = { __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null };
+
+export type ProductPerformanceFieldsFragment = { __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null };
+
+export type ProductReportRowFieldsFragment = { __typename?: 'ProductReportRow', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, stockQuantity: number, trackInventory: boolean, unitPrice: number, averageCost?: number | null, venueId?: string | null, venueName?: string | null, soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, revenuePercentage: number, revenueGrowth: number, rank?: number | null };
+
+export type StockMovementSummaryFieldsFragment = { __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string };
+
+export type VenueProductReportQueryVariables = Exact<{
+  filter: ProductReportFilterInput;
+}>;
+
+
+export type VenueProductReportQuery = { __typename?: 'Query', venueProductReport: { __typename?: 'VenueProductReport', scope: { __typename?: 'ProductReportScope', mode: ProductReportScopeMode, venueCount: number, venueNames: Array<string>, venueIds?: Array<string> | null }, period: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string }, comparePeriod?: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string } | null, summary: { __typename?: 'ProductReportSummary', totalRevenue: number, previousRevenue: number, revenueChangePercent: number, totalItemsSold: number, previousItemsSold: number, itemsChangePercent: number, totalOrders: number, previousOrders: number, ordersChangePercent: number, totalCogs: number, previousCogs: number, grossProfit: number, previousGrossProfit: number, grossProfitChangePercent: number, grossProfitMarginPercent: number, uniqueProductsSold: number, previousUniqueProductsSold: number, bestSellingProduct: string, bestSellingCategory: string, peakHour: string, peakDay: string }, trend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, salesTrend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, topProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null }>, decliningProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null }>, salesByCategory: Array<{ __typename?: 'CategorySalesPerformance', categoryId: string, categoryName: string, revenue: number, quantitySold: number, orderCount: number, percentage: number, growth: number }>, hourlySales: Array<{ __typename?: 'ProductHourlySales', hour: string, revenue: number, quantitySold: number, intensity: number }>, inventory: { __typename?: 'InventoryReport', totalProducts: number, totalStockValue: number, totalCostValue: number, lowStockCount: number, outOfStockCount: number }, inventoryStatus: { __typename?: 'InventoryStatus', activeProducts: number, lowStockProducts: number, outOfStockProducts: number, stockTurnoverRate: number, totalInventoryValue: number, totalProducts: number, totalRetailValue: number }, stockAlerts: Array<{ __typename?: 'StockAlertProduct', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, currentStock: number, lowStockThreshold?: number | null, alertType: string, recentSales: number }>, profitByProduct: Array<{ __typename?: 'ProductProfitItem', productId: string, productName: string, soldQuantity: number, revenue: number, cogs: number, grossProfit: number, profitMargin: number }>, productsTable: { __typename?: 'ProductReportRowConnection', totalCount: number, edges: Array<{ __typename?: 'ProductReportRowEdge', cursor: string, node: { __typename?: 'ProductReportRow', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, stockQuantity: number, trackInventory: boolean, unitPrice: number, averageCost?: number | null, venueId?: string | null, venueName?: string | null, soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, revenuePercentage: number, revenueGrowth: number, rank?: number | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, endCursor?: string | null } } } };
+
+export type ProductPerformanceReportQueryVariables = Exact<{
+  productId: Scalars['ID']['input'];
+  filter: ProductReportFilterInput;
+}>;
+
+
+export type ProductPerformanceReportQuery = { __typename?: 'Query', productPerformanceReport: { __typename?: 'ProductPerformanceReport', period: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string }, product: { __typename?: 'ProductPerformanceSnapshot', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, unit: string, unitPrice: number, averageCost?: number | null, stockQuantity: number, trackInventory: boolean, venueId?: string | null, venueName?: string | null, hasVariants: boolean, variantCount: number }, summary: { __typename?: 'ProductPerformanceReportSummary', soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, orderCount: number, revenuePercentage: number, rank?: number | null }, trend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, recentMovements: Array<{ __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string }>, importHistory: Array<{ __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string }> } };
+
 export type PromotionCoreFragment = { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null };
 
 export type PromotionUserBriefFragment = { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string };
+
+export type AppliedPromotionFragment = { __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null };
+
+export type DiscountCalculationFragment = { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null };
 
 export type PromotionDetailExtraFragment = { __typename?: 'Promotion', shortDescription?: string | null, productCategoryIds?: Array<string> | null, displayOrder: number, createdBy: string, reviewedBy?: string | null, reviewedAt?: string | null, rejectionReason?: string | null, isWithinDateRange: boolean, isUsageLimitReached: boolean, remainingUsage?: number | null, createdByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, reviewedByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, stackingRules?: { __typename?: 'StackingRules', canStack: boolean, maxStackDiscountPercent?: number | null, maxStackDiscountAmount?: number | null, stackableWithIds?: Array<string> | null, stackableWithCategories?: Array<PromotionCategory> | null } | null };
 
@@ -16569,7 +16908,7 @@ export type GetVenueDetailQueryVariables = Exact<{
 }>;
 
 
-export type GetVenueDetailQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, description?: string | null, status: VenueStatus, phoneNumber?: string | null, email?: string | null, courtCount: number, coverImageUrl?: string | null, images?: Array<string> | null, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, operatingHours: Array<{ __typename?: 'OperatingHours', dayOfWeek: number, openTime: string, closeTime: string, isClosed: boolean, is24Hours?: boolean | null }>, location: { __typename?: 'VenueLocation', address: string, city?: string | null, district?: string | null, latitude?: number | null, longitude?: number | null }, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> | null, marginThresholds?: { __typename?: 'VenueMarginThresholds', warningMargin: number, dangerMargin: number } | null } };
+export type GetVenueDetailQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, description?: string | null, status: VenueStatus, phoneNumber?: string | null, email?: string | null, courtCount: number, coverImageUrl?: string | null, images?: Array<string> | null, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, recurringBookingEnabled: boolean, slotDurationMinutes: number, operatingHours: Array<{ __typename?: 'OperatingHours', dayOfWeek: number, openTime: string, closeTime: string, isClosed: boolean, is24Hours?: boolean | null }>, location: { __typename?: 'VenueLocation', address: string, city?: string | null, district?: string | null, latitude?: number | null, longitude?: number | null }, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> | null, marginThresholds?: { __typename?: 'VenueMarginThresholds', warningMargin: number, dangerMargin: number } | null } };
 
 export type VenuesConnectionQueryVariables = Exact<{
   filter?: InputMaybe<VenueFilterInput>;
@@ -16751,7 +17090,7 @@ export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __ty
 export type MyVenuesForProductTransferQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyVenuesForProductTransferQuery = { __typename?: 'Query', myVenuesForProductTransfer: Array<{ __typename?: 'Venue', _id: string, name: string }> };
+export type MyVenuesForProductTransferQuery = { __typename?: 'Query', myVenuesForProductTransfer: Array<{ __typename?: 'Venue', _id: string, name: string, coverImageUrl?: string | null }> };
 
 export type GetMyVenueAvailabilityQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];

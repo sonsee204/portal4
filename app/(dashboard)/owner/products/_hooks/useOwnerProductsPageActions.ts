@@ -26,6 +26,7 @@ import {
   EMPTY_IMPORT_STOCK_FORM,
   EMPTY_PRODUCT_FORM,
 } from './owner-products-page.constants';
+import { useOwnerProductsSelectionActions } from './useOwnerProductsSelectionActions';
 import type { OwnerProductsPageData } from './useOwnerProductsPageData';
 
 export type ProductFormState = typeof EMPTY_PRODUCT_FORM;
@@ -48,6 +49,7 @@ export interface ProductStatusToggleTarget {
 export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
   const {
     venueId,
+    products,
     setViewTab,
     setStatusFilter,
     setSearchQuery,
@@ -55,6 +57,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     categoriesLoadMore,
     refetchAll,
   } = data;
+
+  const selectionActions = useOwnerProductsSelectionActions(venueId, products);
 
   const productMutations = useOwnerProductMutations();
   const categoryMutations = useOwnerCategoryMutations();
@@ -89,13 +93,21 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
   const [importMarginAnalysis, setImportMarginAnalysis] =
     useState<ImportStockMarginAnalysis | null>(null);
 
+  const handleTransferSuccess = useCallback(() => {
+    selectionActions.exitSelectionMode();
+    void refetchAll();
+  }, [selectionActions, refetchAll]);
+
   const handleViewTabChange = useCallback(
     (value: string) => {
+      if (value === 'categories') {
+        selectionActions.exitSelectionMode();
+      }
       setViewTab(value as 'products' | 'categories');
       setStatusFilter('ALL');
       setSearchQuery('');
     },
-    [setViewTab, setStatusFilter, setSearchQuery],
+    [selectionActions, setViewTab, setStatusFilter, setSearchQuery],
   );
 
   const handleStatusFilterChange = useCallback(
@@ -360,6 +372,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     deleteCategoryId,
     setDeleteCategoryId,
     handleDeleteCategory,
+    ...selectionActions,
+    handleTransferSuccess,
   };
 }
 

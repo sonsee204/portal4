@@ -5,79 +5,64 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
- *
- * This source code is the intellectual property of Lê Trung Hiếu.
- * Unauthorized copying, modification, distribution, or use of this code
- * is strictly prohibited without prior written consent.
  */
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
-import { Select } from '@/components/atoms/Select';
 import { Modal } from '@/components/molecules/Modal';
+import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { UserPhoneLookupField } from '@/components/molecules/UserPhoneLookupField';
 import {
-  UserPhoneLookupField,
-  type UserPhoneLookupResult,
-} from '@/components/molecules/UserPhoneLookupField';
-import { PaymentMethod } from '@/graphql/generated';
-import { formatCurrency, formatDate } from '@/lib/utils';
+  BookingManualPricePanel,
+  BookingPaymentMethodChips,
+  BookingPriceSummary,
+  BookingPromoSection,
+} from '@/components/molecules/booking';
+import { formatDate } from '@/lib/utils';
 import { formatCompactBookingSlots } from '@/lib/venue/booking-slots-display';
 import type { StaffSelectedSlot } from '@/lib/venue/calendar-staff-booking';
-import { PHONE_REGEX } from '@/lib/validation/constants';
+import {
+  useStaffBookingFormModal,
+  type StaffBookingFormSubmitPayload,
+} from './useStaffBookingFormModal';
 
-const PAYMENT_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
-  { value: PaymentMethod.Cash, label: 'Tiền mặt' },
-  { value: PaymentMethod.BankTransfer, label: 'Chuyển khoản' },
-];
+export type { StaffBookingFormSubmitPayload };
 
 export interface StaffBookingFormModalProps {
   open: boolean;
   onClose: () => void;
+  venueId: string;
   bookingDate: Date;
   selectedSlots: StaffSelectedSlot[];
+  slotDurationMinutes?: number;
   loading?: boolean;
-  onConfirm: (payload: {
-    customerId?: string;
-    customerName: string;
-    customerPhone: string;
-    internalNote?: string;
-    paymentMethod: PaymentMethod;
-  }) => void | Promise<void>;
+  onConfirm: (payload: StaffBookingFormSubmitPayload) => void | Promise<void>;
 }
 
-interface StaffBookingFormContentProps {
-  bookingDate: Date;
-  selectedSlots: StaffSelectedSlot[];
-  loading: boolean;
-  onClose: () => void;
-  onConfirm: StaffBookingFormModalProps['onConfirm'];
+interface StaffBookingFormContentProps extends StaffBookingFormModalProps {
+  slotDurationMinutes: number;
 }
 
 function StaffBookingFormContent({
+  onClose,
+  venueId,
   bookingDate,
   selectedSlots,
-  loading,
-  onClose,
+  slotDurationMinutes,
+  loading = false,
   onConfirm,
 }: StaffBookingFormContentProps) {
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [selectedUser, setSelectedUser] =
-    useState<UserPhoneLookupResult | null>(null);
-  const [internalNote, setInternalNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    PaymentMethod.Cash
-  );
-
-  const normalizedPhone = customerPhone.trim().replace(/\s/g, '');
-
-  const totalPrice = useMemo(
-    () => selectedSlots.reduce((sum, slot) => sum + slot.price, 0),
-    [selectedSlots]
-  );
+  const form = useStaffBookingFormModal({
+    open: true,
+    venueId,
+    bookingDate,
+    selectedSlots,
+    slotDurationMinutes,
+    onConfirm,
+  });
 
   const slotsLabel = useMemo(
     () =>
@@ -91,35 +76,20 @@ function StaffBookingFormContent({
     [selectedSlots]
   );
 
-  const isValid =
-    customerName.trim().length > 0 &&
-    PHONE_REGEX.test(normalizedPhone) &&
-    selectedSlots.length > 0;
-
   return (
     <Modal
       open
       onClose={onClose}
       title="Đặt lịch cho khách"
-      size="md"
+      size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             Hủy
           </Button>
           <Button
-            disabled={!isValid || loading}
-            onClick={() =>
-              void onConfirm({
-                ...(selectedUser?._id ? { customerId: selectedUser._id } : {}),
-                customerName: customerName.trim(),
-                customerPhone: normalizedPhone,
-                ...(internalNote.trim()
-                  ? { internalNote: internalNote.trim() }
-                  : {}),
-                paymentMethod,
-              })
-            }
+            disabled={!form.canSubmit || loading}
+            onClick={() => void onConfirm(form.buildSubmitPayload())}
           >
             {loading ? 'Đang đặt…' : 'Xác nhận đặt lịch'}
           </Button>
@@ -138,43 +108,74 @@ function StaffBookingFormContent({
             Khung giờ:{' '}
             <span className="text-heading font-medium">{slotsLabel}</span>
           </p>
-          <p className="text-primary mt-2 text-base font-semibold">
-            Tổng: {formatCurrency(totalPrice)}
-          </p>
         </div>
 
         <UserPhoneLookupField
-          phone={customerPhone}
+          phone={form.customerPhone}
           onPhoneChange={(value) => {
-            setCustomerPhone(value);
-            setSelectedUser(null);
+            form.setCustomerPhone(value);
+            form.setSelectedUser(null);
           }}
-          selectedUser={selectedUser}
-          onUserChange={setSelectedUser}
-          customerName={customerName}
-          onCustomerNameChange={setCustomerName}
+          selectedUser={form.selectedUser}
+          onUserChange={form.setSelectedUser}
+          customerName={form.customerName}
+          onCustomerNameChange={form.setCustomerName}
           showNameInput
           showWalkInHint
           autoApply
           autoFillName
         />
 
-        <Select
-          label="Phương thức thanh toán"
-          value={paymentMethod}
-          onChange={(event) =>
-            setPaymentMethod(event.target.value as PaymentMethod)
-          }
-          options={PAYMENT_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-        />
+        <GlassPanel card className="space-y-4 p-4">
+          <BookingPaymentMethodChips
+            value={form.paymentMethod}
+            onChange={form.setPaymentMethod}
+          />
+
+          {!form.isManualPrice ? (
+            <div>
+              <p className="text-muted mb-2 text-xs font-medium tracking-wide uppercase">
+                Khuyến mãi
+              </p>
+              <BookingPromoSection
+                promoCode={form.promoCodeInput}
+                onPromoCodeChange={(value) => {
+                  form.setPromoCodeInput(value);
+                  form.setPromoError(null);
+                }}
+                appliedPromotion={form.appliedPromotion}
+                promoError={form.promoError}
+                promoLoading={form.promoLoading}
+                onApply={() => void form.handleApplyPromoCode()}
+                onRemove={form.handleRemovePromotion}
+                autoDiscountAmount={form.autoDiscountAmount}
+                autoPromotionNames={form.autoPromotionNames}
+              />
+            </div>
+          ) : null}
+
+          <BookingManualPricePanel
+            enabled={form.isManualPrice}
+            manualAmount={form.manualAmount}
+            note={form.manualPriceNote}
+            onToggle={form.handleManualPriceToggle}
+            onManualAmountChange={form.setManualAmount}
+            onNoteChange={form.setManualPriceNote}
+            error={form.pricing.manualParseError ?? null}
+          />
+
+          <BookingPriceSummary
+            subtotal={form.subtotal}
+            discountAmount={form.pricing.discountAmount}
+            finalAmount={form.pricing.finalAmount}
+            isManualPrice={form.isManualPrice}
+          />
+        </GlassPanel>
 
         <Input
           label="Ghi chú nội bộ"
-          value={internalNote}
-          onChange={(event) => setInternalNote(event.target.value)}
+          value={form.internalNote}
+          onChange={(event) => form.setInternalNote(event.target.value)}
           placeholder="Tuỳ chọn"
         />
       </div>
@@ -185,20 +186,23 @@ function StaffBookingFormContent({
 export function StaffBookingFormModal({
   open,
   onClose,
+  venueId,
   bookingDate,
   selectedSlots,
+  slotDurationMinutes = 60,
   loading = false,
   onConfirm,
 }: StaffBookingFormModalProps) {
   const formKey = useMemo(
     () =>
       [
+        venueId,
         formatDate(bookingDate),
         ...selectedSlots.map(
           (slot) => `${slot.courtId}:${slot.startTime}-${slot.endTime}`
         ),
       ].join('|'),
-    [bookingDate, selectedSlots]
+    [venueId, bookingDate, selectedSlots]
   );
 
   if (!open) {
@@ -208,10 +212,13 @@ export function StaffBookingFormModal({
   return (
     <StaffBookingFormContent
       key={formKey}
+      open={open}
+      onClose={onClose}
+      venueId={venueId}
       bookingDate={bookingDate}
       selectedSlots={selectedSlots}
+      slotDurationMinutes={slotDurationMinutes}
       loading={loading}
-      onClose={onClose}
       onConfirm={onConfirm}
     />
   );

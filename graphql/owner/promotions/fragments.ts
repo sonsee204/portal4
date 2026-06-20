@@ -61,6 +61,44 @@ const PROMOTION_USER_BRIEF_FRAGMENT = gql`
   }
 `;
 
+const APPLIED_PROMOTION_FRAGMENT = gql`
+  fragment AppliedPromotion on AppliedPromotion {
+    promotionId
+    name
+    type
+    category
+    value
+    maxDiscountAmount
+    discountAmount
+    code
+    badgeText
+    applyLevel
+  }
+`;
+
+export const DISCOUNT_CALCULATION_FRAGMENT = gql`
+  fragment DiscountCalculation on DiscountCalculationResult {
+    originalTotal
+    totalDiscount
+    finalAmount
+    discountPercentage
+    appliedPromotions {
+      ...AppliedPromotion
+    }
+    isStacked
+    stackingMessage
+    slotDiscounts {
+      courtId
+      startTime
+      endTime
+      originalPrice
+      discountAmount
+      finalPrice
+    }
+  }
+  ${APPLIED_PROMOTION_FRAGMENT}
+`;
+
 export const PROMOTION_DETAIL_EXTRA_FRAGMENT = gql`
   fragment PromotionDetailExtra on Promotion {
     shortDescription

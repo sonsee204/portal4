@@ -77,6 +77,7 @@ export const OWNER_ROUTE_VENUE_ACTIONS: Record<string, VenueAction[]> = {
   '/owner/bookings': [VenueAction.ViewBookings],
   '/owner/orders': [VenueAction.ViewOrders],
   '/owner/products': [VenueAction.ManageProducts],
+  '/owner/inventory': [VenueAction.ViewAnalytics, VenueAction.ManageProducts],
   '/owner/promotions': [VenueAction.ManagePromotions],
   '/owner/stats': [VenueAction.ViewAnalytics],
   '/owner/finance': [VenueAction.ViewAnalytics],

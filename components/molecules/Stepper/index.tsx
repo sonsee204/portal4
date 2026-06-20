@@ -47,10 +47,10 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                 className={cn(
                   'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors',
                   isCompleted
-                    ? 'bg-primary text-heading'
+                    ? 'bg-primary text-white'
                     : isCurrent
                       ? 'bg-primary/20 text-primary border-primary border-2'
-                      : 'bg-surface border-surface-border border text-faint'
+                      : 'bg-surface border-surface-border text-faint border'
                 )}
               >
                 {isCompleted ? (

@@ -39,6 +39,7 @@ import type {
   CursorSortInput,
   ImportStockInput,
   LowStockProductsQuery,
+  MyVenuesForProductTransferQuery,
   ProductSortInput,
   ProductStatsQuery,
   ProductStatus,
@@ -63,6 +64,7 @@ const PRODUCT_MUTATION_REFETCH_QUERIES = [
   'VenueProductsConnection',
   'ProductStats',
   'LowStockProducts',
+  'StockMovementsConnection',
 ] as const;
 
 const CATEGORY_MUTATION_REFETCH_QUERIES = [
@@ -405,10 +407,11 @@ export function useOwnerCategoryMutations() {
   };
 }
 
-export function useMyVenuesForProductTransfer() {
-  const { data, loading, error, refetch } = useQuery<{
-    myVenuesForProductTransfer: Array<{ _id: string; name: string }>;
-  }>(MY_VENUES_FOR_PRODUCT_TRANSFER);
+export function useMyVenuesForProductTransfer(options?: { skip?: boolean }) {
+  const { data, loading, error, refetch } = useQuery<MyVenuesForProductTransferQuery>(
+    MY_VENUES_FOR_PRODUCT_TRANSFER,
+    { skip: options?.skip },
+  );
 
   return {
     venues: data?.myVenuesForProductTransfer ?? [],

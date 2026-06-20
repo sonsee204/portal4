@@ -15,3 +15,7 @@ export { PortalAreaChart } from './PortalAreaChart';
 export { PortalBarChart } from './PortalBarChart';
 export { PortalDonutChart } from './PortalDonutChart';
 export { PortalLineChart } from './PortalLineChart';
+export {
+  ScheduleCoverageComboChart,
+  type ScheduleCoveragePoint,
+} from './ScheduleCoverageComboChart';

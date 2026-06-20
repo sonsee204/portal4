@@ -77,6 +77,8 @@ export {
   type VenueCategoryNode,
 } from './useOwnerProducts';
 
+export { useMoveProductsToVenue } from './useMoveProductsToVenue';
+
 export { useOwnerStaff, useVenuePendingInvitations } from './useOwnerStaff';
 export type { VenueStaffNode } from './useOwnerStaff';
 
@@ -101,6 +103,25 @@ export {
   useMyVenueAvailability,
   useCreateStaffBooking,
 } from './useVenueStaffBooking';
+export { useValidatePromoCode } from './useValidatePromoCode';
+export { useCalculateBookingDiscount } from './useCalculateBookingDiscount';
+export { useAvailablePromotionsForBooking } from './useAvailablePromotionsForBooking';
+export { useCheckRecurringAvailability } from './useCheckRecurringAvailability';
+export { useCreateStaffRecurringBooking } from './useCreateStaffRecurringBooking';
+
+export {
+  useVenueProductReport,
+  useProductPerformanceReport,
+  type VenueProductReportData,
+  type ProductReportRowNode,
+  type ProductPerformanceReportData,
+} from './useOwnerProductStats';
+
+export {
+  useStockMovementsConnection,
+  STOCK_MOVEMENTS_PAGE_SIZE,
+  type StockMovementNode,
+} from './useStockMovementsConnection';
 
 export {
   useVenueFinanceReport,

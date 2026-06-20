@@ -14,20 +14,31 @@
 'use client';
 
 import { QueryState } from '@/components/molecules/QueryState';
-import { DataTable } from '@/components/organisms/DataTable';
-import { Badge } from '@/components/atoms/Badge';
-import { formatCurrency } from '@/lib/utils';
 import {
-  PRODUCT_STATUS_LABEL,
-  PRODUCT_STATUS_VARIANT,
-} from '@/lib/constants/product-status';
+  DataTable,
+  type DataTableColumn,
+} from '@/components/organisms/DataTable';
 import type { VenueProductNode } from '@/hooks/owner';
-import { ProductRowActions } from '../_components/ProductRowActions';
+import { OwnerProductsTableRow } from '../_components/OwnerProductsTableRow';
 import type { OwnerProductsPageActions } from '../_hooks/useOwnerProductsPageActions';
 import type { OwnerProductsPageData } from '../_hooks/useOwnerProductsPageData';
 
 const TABLE_SCROLL_CLASS_NAME =
   'max-h-[min(70vh,calc(100dvh-15rem))] min-h-[240px]';
+
+const BASE_COLUMNS: DataTableColumn[] = [
+  { key: 'name', label: 'Tên', sortable: true },
+  { key: 'sku', label: 'SKU' },
+  { key: 'category', label: 'Danh mục' },
+  {
+    key: 'stock',
+    label: 'Tồn kho',
+    sortable: true,
+    sortField: 'stockQuantity',
+  },
+  { key: 'status', label: 'Trạng thái', align: 'center', sortable: true },
+  { key: 'price', label: 'Giá', align: 'right', sortable: true },
+];
 
 interface OwnerProductsTableSectionProps {
   data: OwnerProductsPageData;
@@ -54,7 +65,11 @@ export function OwnerProductsTableSection({
     refetchAll,
   } = data;
 
-  const { handleProductsLoadMore } = actions;
+  const { handleProductsLoadMore, selectionMode, selectedProductIds } = actions;
+
+  const columns: DataTableColumn[] = selectionMode
+    ? [{ key: 'select', label: '', align: 'center' }, ...BASE_COLUMNS]
+    : [...BASE_COLUMNS, { key: 'actions', label: 'Thao tác', align: 'right' }];
 
   return (
     <>
@@ -66,20 +81,7 @@ export function OwnerProductsTableSection({
         onRetry={() => void refetchAll()}
       >
         <DataTable
-          columns={[
-            { key: 'name', label: 'Tên', sortable: true },
-            { key: 'sku', label: 'SKU' },
-            { key: 'category', label: 'Danh mục' },
-            {
-              key: 'stock',
-              label: 'Tồn kho',
-              sortable: true,
-              sortField: 'stockQuantity',
-            },
-            { key: 'status', label: 'Trạng thái', align: 'center', sortable: true },
-            { key: 'price', label: 'Giá', align: 'right', sortable: true },
-            { key: 'actions', label: 'Thao tác', align: 'right' },
-          ]}
+          columns={columns}
           stickyHeader
           className={TABLE_SCROLL_CLASS_NAME}
           data={products}
@@ -96,49 +98,15 @@ export function OwnerProductsTableSection({
             loading: productsLoading && products.length === 0,
             loadingMore: productsIsLoadingMore,
           }}
-          renderRow={(product: VenueProductNode) => {
-            const isLowStock =
-              product.stockQuantity != null &&
-              product.lowStockThreshold != null &&
-              product.stockQuantity <= product.lowStockThreshold;
-
-            return (
-              <tr
-                key={product._id}
-                className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-              >
-                <td className="text-body px-4 py-3 text-sm font-medium">
-                  {product.name}
-                </td>
-                <td className="text-faint px-4 py-3 font-mono text-xs">
-                  {product.sku ?? '—'}
-                </td>
-                <td className="text-muted px-4 py-3 text-sm">
-                  {product.category?.name ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <span className={isLowStock ? 'text-amber-400' : 'text-body'}>
-                    {product.stockQuantity ?? 0}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <Badge
-                    variant={
-                      PRODUCT_STATUS_VARIANT[product.status] ?? 'neutral'
-                    }
-                  >
-                    {PRODUCT_STATUS_LABEL[product.status] ?? product.status}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
-                  {formatCurrency(product.price)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <ProductRowActions product={product} actions={actions} />
-                </td>
-              </tr>
-            );
-          }}
+          renderRow={(product: VenueProductNode) => (
+            <OwnerProductsTableRow
+              key={product._id}
+              product={product}
+              actions={actions}
+              selectionMode={selectionMode}
+              selected={selectedProductIds.has(product._id)}
+            />
+          )}
         />
       </QueryState>
     </>
