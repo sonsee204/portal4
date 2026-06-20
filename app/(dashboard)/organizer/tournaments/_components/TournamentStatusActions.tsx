@@ -130,7 +130,7 @@ export function TournamentStatusActions({
       <div className="flex flex-wrap items-center gap-2">
         <Link href={routes.registrations(tournamentId)}>
           <Button size="sm" variant="outline" iconLeft="people-outline">
-            Quản lý đăng ký
+            {TOURNAMENT.LABEL_MANAGE_REGISTRATIONS}
           </Button>
         </Link>
 

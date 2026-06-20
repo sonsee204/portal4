@@ -23,6 +23,7 @@ export const TOURNAMENT = {
   EDIT_BLOCKED_IN_PROGRESS:
     'Không thể chỉnh sửa giải đấu khi đang diễn ra hoặc đã kết thúc.',
   LABEL_MANAGE_COURTS: 'Quản lý sân',
+  LABEL_MANAGE_REGISTRATIONS: 'Quản lý đăng ký',
   LABEL_ADD_COURTS_LINK: 'Thêm sân',
   SUCCESS_PUBLISH: 'Đăng giải đấu thành công.',
   SUCCESS_OPEN_REG: 'Mở đăng ký thành công.',
@@ -41,10 +42,12 @@ export const TOURNAMENT = {
   SUCCESS_REJECT: 'Từ chối đăng ký thành công.',
   SUCCESS_BULK_APPROVE: 'Duyệt hàng loạt thành công.',
   SUCCESS_BULK_REJECT: 'Từ chối hàng loạt thành công.',
+  SUCCESS_BULK_DELETE: 'Xoá hàng loạt thành công.',
   SUCCESS_PAYMENT_UPDATE: 'Cập nhật thanh toán thành công.',
   SUCCESS_DELETE_REGISTRATION: 'Xoá đăng ký thành công.',
 
   SUCCESS_GENERATE_BRACKET: 'Tạo nhánh đấu thành công.',
+  SUCCESS_MANUAL_DRAW: 'Lưu bố cục xếp thủ công thành công.',
   SUCCESS_RESET_BRACKET: 'Xoá nhánh đấu thành công.',
   SUCCESS_SEED_PLAYERS: 'Xếp hạt giống thành công.',
 

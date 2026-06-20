@@ -89,9 +89,9 @@ export function TournamentDetailContentSection({
             href={routes.registrations(tournamentId)}
             className="text-secondary hover:text-primary flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-colors hover:border-white/20 hover:bg-white/5"
           >
-            <IonIcon name="person-add-outline" size="md" />
+            <IonIcon name="people-outline" size="md" />
             <span className="font-medium">
-              {TOURNAMENT.LABEL_REGISTRATIONS}
+              {TOURNAMENT.LABEL_MANAGE_REGISTRATIONS}
             </span>
           </Link>
           <Link

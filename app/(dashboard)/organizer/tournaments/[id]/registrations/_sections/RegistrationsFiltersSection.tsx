@@ -33,6 +33,7 @@ export function RegistrationsFiltersSection({
     handleStatusFilterChange,
     bulkApprove,
     bulkReject,
+    handleBulkDeleteOpen,
   } = actions;
 
   return (
@@ -74,6 +75,15 @@ export function RegistrationsFiltersSection({
             className="text-red-400"
           >
             Từ chối tất cả
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={isActionLoading}
+            onClick={handleBulkDeleteOpen}
+            className="text-red-400"
+          >
+            Xoá tất cả
           </Button>
         </div>
       )}

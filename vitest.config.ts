@@ -19,6 +19,8 @@ export default defineConfig({
     include: [
       '**/schedule-page.derived.test.ts',
       '**/draw-page.derived.test.ts',
+      '**/lib/tournament/draw/manual-draw.test.ts',
+      '**/lib/tournament/draw/bracket-topology.test.ts',
       '**/registrations-page.derived.test.ts',
       '**/moderation-page.derived.test.ts',
       '**/lib/permissions/access.test.ts',

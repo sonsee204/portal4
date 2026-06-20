@@ -48,15 +48,20 @@ export function RegistrationsDialogsSection({
     setApprovingReg,
     deletingReg,
     setDeletingReg,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
+    selectedIds,
   } = data;
   const {
     onSuccess,
     handleApproveConfirm,
     handleRejectConfirm,
     handleDeleteConfirm,
+    handleBulkDeleteConfirm,
     rejecting,
     approving,
     deleting,
+    bulkLoading,
   } = actions;
 
   return (
@@ -127,6 +132,22 @@ export function RegistrationsDialogsSection({
         cancelLabel="Huỷ"
         variant="danger"
         loading={deleting}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Xoá đăng ký hàng loạt"
+        description={
+          selectedIds.size > 0
+            ? `Bạn có chắc muốn xoá ${selectedIds.size} đăng ký đã chọn? Hành động này không thể hoàn tác.`
+            : ''
+        }
+        confirmLabel="Xoá tất cả"
+        cancelLabel="Huỷ"
+        variant="danger"
+        loading={bulkLoading}
       />
     </>
   );

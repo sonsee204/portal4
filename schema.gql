@@ -4481,6 +4481,14 @@ input GenerateBracketInput {
   categoryId: ID!
 }
 
+"""Manual draw layout for single elimination"""
+input GenerateManualDrawInput {
+  categoryId: ID!
+
+  """Single elimination winners bracket slots"""
+  knockoutSlots: [ManualBracketSlotInput!]!
+}
+
 input GrantPortalCapabilityInput {
   capability: PortalCapability!
 
@@ -5233,6 +5241,52 @@ type LotAllocationRecord {
   unitCost: Float!
 }
 
+input ManualBracketSlotInput {
+  """Registration ID; null/omit = BYE"""
+  registrationId: ID
+
+  """Bracket slot index (0-based)"""
+  slotIndex: Int!
+}
+
+type ManualKnockoutDrawPreview {
+  bracketSize: Int!
+  errors: [ManualKnockoutPreviewError!]!
+  layoutHints: ManualKnockoutLayoutHints!
+  matchupRows: [ManualKnockoutMatchupPreviewRow!]!
+  maxR1TvT: Int!
+  r1TvTCount: Int!
+  totalByes: Int!
+  valid: Boolean!
+}
+
+type ManualKnockoutLayoutHints {
+  approvedCount: Int!
+  minR1TvT: Int!
+  r1PairCount: Int!
+  r1TvTCount: Int!
+  r1WalkoverCount: Int!
+  r2TvTCount: Int!
+  r2WalkoverCount: Int!
+  structuralEmptyPairs: Int!
+}
+
+type ManualKnockoutMatchupPreviewRow {
+  isR1ByeWalkover: Boolean!
+  meetingRound: Int!
+  meetingRoundLabel: String!
+  player1Name: String!
+  player2Name: String!
+  r1PairIndex: Int
+}
+
+type ManualKnockoutPreviewError {
+  code: String!
+  message: String!
+  pairIndex: Int
+  slotIndex: Int
+}
+
 input ManualMatchResultInput {
   matchId: ID!
 
@@ -5880,6 +5934,9 @@ type Mutation {
   """Bulk delete products"""
   bulkDeleteProducts(input: BulkDeleteProductsInput!): BulkOperationResult!
 
+  """Bulk delete registrations"""
+  bulkDeleteRegistrations(input: BulkRegistrationActionInput!): Int!
+
   """Bulk import registrations from file (organizer only)"""
   bulkImportRegistrations(input: BulkImportRegistrationsInput!): BulkImportResult!
 
@@ -6245,6 +6302,9 @@ type Mutation {
 
   """Generate bracket for category"""
   generateBracket(input: GenerateBracketInput!): [TournamentMatch!]!
+
+  """Generate bracket from manual slot assignments (Single Elimination)"""
+  generateManualDraw(input: GenerateManualDrawInput!): [TournamentMatch!]!
 
   """Grant portal capability to user (SUPER_ADMIN only)"""
   grantPortalCapability(input: GrantPortalCapabilityInput!): PortalCapabilityGrant!
@@ -8852,6 +8912,11 @@ type PreviewBulkImportResult {
   adjustmentsNeeded: [BracketSizeAdjustment!]!
 }
 
+input PreviewManualKnockoutDrawInput {
+  categoryId: ID!
+  knockoutSlots: [ManualBracketSlotInput!]!
+}
+
 type PriceRange {
   """Currency (VND, USD, etc.)"""
   currency: String
@@ -10630,6 +10695,9 @@ type Query {
 
   """Super Admin: preview eligible R1 BYE slots for late entry placement"""
   previewLateEntryPlacement(categoryId: ID!): LateEntryPlacementPreview!
+
+  """Preview manual knockout draw layout before saving (organizer only)"""
+  previewManualKnockoutDraw(input: PreviewManualKnockoutDrawInput!): ManualKnockoutDrawPreview!
 
   """Preview drag-move without persisting"""
   previewMoveMatch(input: MoveMatchInput!): MoveMatchPreviewResult!

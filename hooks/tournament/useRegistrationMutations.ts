@@ -21,6 +21,7 @@ import {
   REJECT_REGISTRATION,
   BULK_APPROVE_REGISTRATIONS,
   BULK_REJECT_REGISTRATIONS,
+  BULK_DELETE_REGISTRATIONS,
   UPDATE_PAYMENT_STATUS,
   DELETE_REGISTRATION,
   BULK_IMPORT_REGISTRATIONS,
@@ -108,6 +109,14 @@ export function useBulkRegistrationActions(tournamentId: string, options?: { onS
     onCompleted: () => options?.onSuccess?.(),
   });
 
+  const [deleteMutation, { loading: deleting }] = useMutation<{
+    bulkDeleteRegistrations: number;
+  }>(BULK_DELETE_REGISTRATIONS, {
+    refetchQueries: [{ query: GET_TOURNAMENT_REGISTRATIONS, variables: { tournamentId } }],
+    ...createMutationOptions('BulkDelete', TOURNAMENT.SUCCESS_BULK_DELETE),
+    onCompleted: () => options?.onSuccess?.(),
+  });
+
   const bulkApprove = useCallback(
     (registrationIds: string[]) =>
       approveMutation({ variables: { input: { registrationIds } } }),
@@ -120,7 +129,13 @@ export function useBulkRegistrationActions(tournamentId: string, options?: { onS
     [rejectMutation],
   );
 
-  return { bulkApprove, bulkReject, loading: approving || rejecting };
+  const bulkDelete = useCallback(
+    (registrationIds: string[]) =>
+      deleteMutation({ variables: { input: { registrationIds } } }),
+    [deleteMutation],
+  );
+
+  return { bulkApprove, bulkReject, bulkDelete, loading: approving || rejecting || deleting };
 }
 
 export function useUpdatePaymentStatus(tournamentId: string, options?: { onSuccess?: () => void }) {

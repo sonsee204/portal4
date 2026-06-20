@@ -45,6 +45,7 @@ export function useRegistrationsPageData(tournamentId: string) {
   const [approvingReg, setApprovingReg] = useState<TournamentRegistration | null>(
     null,
   );
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editingBibId, setEditingBibId] = useState<string | null>(null);
   const [bibInputValue, setBibInputValue] = useState('');
 
@@ -93,6 +94,8 @@ export function useRegistrationsPageData(tournamentId: string) {
     setDeletingReg,
     approvingReg,
     setApprovingReg,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
     editingBibId,
     setEditingBibId,
     bibInputValue,

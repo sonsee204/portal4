@@ -3646,6 +3646,13 @@ export type GenerateBracketInput = {
   categoryId: Scalars['ID']['input'];
 };
 
+/** Manual draw layout for single elimination */
+export type GenerateManualDrawInput = {
+  categoryId: Scalars['ID']['input'];
+  /** Single elimination winners bracket slots */
+  knockoutSlots: Array<ManualBracketSlotInput>;
+};
+
 export type GrantPortalCapabilityInput = {
   capability: PortalCapability;
   /** Reason / ticket reference (min 10 chars) */
@@ -4276,6 +4283,55 @@ export type LotAllocationRecord = {
   unitCost: Scalars['Float']['output'];
 };
 
+export type ManualBracketSlotInput = {
+  /** Registration ID; null/omit = BYE */
+  registrationId?: InputMaybe<Scalars['ID']['input']>;
+  /** Bracket slot index (0-based) */
+  slotIndex: Scalars['Int']['input'];
+};
+
+export type ManualKnockoutDrawPreview = {
+  __typename?: 'ManualKnockoutDrawPreview';
+  bracketSize: Scalars['Int']['output'];
+  errors: Array<ManualKnockoutPreviewError>;
+  layoutHints: ManualKnockoutLayoutHints;
+  matchupRows: Array<ManualKnockoutMatchupPreviewRow>;
+  maxR1TvT: Scalars['Int']['output'];
+  r1TvTCount: Scalars['Int']['output'];
+  totalByes: Scalars['Int']['output'];
+  valid: Scalars['Boolean']['output'];
+};
+
+export type ManualKnockoutLayoutHints = {
+  __typename?: 'ManualKnockoutLayoutHints';
+  approvedCount: Scalars['Int']['output'];
+  minR1TvT: Scalars['Int']['output'];
+  r1PairCount: Scalars['Int']['output'];
+  r1TvTCount: Scalars['Int']['output'];
+  r1WalkoverCount: Scalars['Int']['output'];
+  r2TvTCount: Scalars['Int']['output'];
+  r2WalkoverCount: Scalars['Int']['output'];
+  structuralEmptyPairs: Scalars['Int']['output'];
+};
+
+export type ManualKnockoutMatchupPreviewRow = {
+  __typename?: 'ManualKnockoutMatchupPreviewRow';
+  isR1ByeWalkover: Scalars['Boolean']['output'];
+  meetingRound: Scalars['Int']['output'];
+  meetingRoundLabel: Scalars['String']['output'];
+  player1Name: Scalars['String']['output'];
+  player2Name: Scalars['String']['output'];
+  r1PairIndex?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ManualKnockoutPreviewError = {
+  __typename?: 'ManualKnockoutPreviewError';
+  code: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+  pairIndex?: Maybe<Scalars['Int']['output']>;
+  slotIndex?: Maybe<Scalars['Int']['output']>;
+};
+
 export type ManualMatchResultInput = {
   matchId: Scalars['ID']['input'];
   /** Lý do ghi đè kết quả (audit bắt buộc) */
@@ -4822,6 +4878,8 @@ export type Mutation = {
   bulkCheckIn: Array<PickupGameParticipant>;
   /** Bulk delete products */
   bulkDeleteProducts: BulkOperationResult;
+  /** Bulk delete registrations */
+  bulkDeleteRegistrations: Scalars['Int']['output'];
   /** Bulk import registrations from file (organizer only) */
   bulkImportRegistrations: BulkImportResult;
   /** Bulk reject registrations */
@@ -5050,6 +5108,8 @@ export type Mutation = {
   forwardMessage: Array<Message>;
   /** Generate bracket for category */
   generateBracket: Array<TournamentMatch>;
+  /** Generate bracket from manual slot assignments (Single Elimination) */
+  generateManualDraw: Array<TournamentMatch>;
   /** Grant portal capability to user (SUPER_ADMIN only) */
   grantPortalCapability: PortalCapabilityGrant;
   /** Import stock for a product */
@@ -5665,6 +5725,11 @@ export type MutationBulkDeleteProductsArgs = {
 };
 
 
+export type MutationBulkDeleteRegistrationsArgs = {
+  input: BulkRegistrationActionInput;
+};
+
+
 export type MutationBulkImportRegistrationsArgs = {
   input: BulkImportRegistrationsInput;
 };
@@ -6250,6 +6315,11 @@ export type MutationForwardMessageArgs = {
 
 export type MutationGenerateBracketArgs = {
   input: GenerateBracketInput;
+};
+
+
+export type MutationGenerateManualDrawArgs = {
+  input: GenerateManualDrawInput;
 };
 
 
@@ -8886,6 +8956,11 @@ export type PreviewBulkImportResult = {
   adjustmentsNeeded: Array<BracketSizeAdjustment>;
 };
 
+export type PreviewManualKnockoutDrawInput = {
+  categoryId: Scalars['ID']['input'];
+  knockoutSlots: Array<ManualBracketSlotInput>;
+};
+
 export type PriceRange = {
   __typename?: 'PriceRange';
   /** Currency (VND, USD, etc.) */
@@ -10230,6 +10305,8 @@ export type Query = {
   previewBulkImport: PreviewBulkImportResult;
   /** Super Admin: preview eligible R1 BYE slots for late entry placement */
   previewLateEntryPlacement: LateEntryPlacementPreview;
+  /** Preview manual knockout draw layout before saving (organizer only) */
+  previewManualKnockoutDraw: ManualKnockoutDrawPreview;
   /** Preview drag-move without persisting */
   previewMoveMatch: MoveMatchPreviewResult;
   /** Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB) */
@@ -11186,6 +11263,11 @@ export type QueryPreviewBulkImportArgs = {
 
 export type QueryPreviewLateEntryPlacementArgs = {
   categoryId: Scalars['ID']['input'];
+};
+
+
+export type QueryPreviewManualKnockoutDrawArgs = {
+  input: PreviewManualKnockoutDrawInput;
 };
 
 
@@ -17421,6 +17503,13 @@ export type DuplicateTournamentMutationVariables = Exact<{
 
 export type DuplicateTournamentMutation = { __typename?: 'Mutation', duplicateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
+export type GenerateManualDrawMutationVariables = Exact<{
+  input: GenerateManualDrawInput;
+}>;
+
+
+export type GenerateManualDrawMutation = { __typename?: 'Mutation', generateManualDraw: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+
 export type ApproveRegistrationMutationVariables = Exact<{
   input: ApproveRegistrationInput;
 }>;
@@ -17448,6 +17537,13 @@ export type BulkRejectRegistrationsMutationVariables = Exact<{
 
 
 export type BulkRejectRegistrationsMutation = { __typename?: 'Mutation', bulkRejectRegistrations: number };
+
+export type BulkDeleteRegistrationsMutationVariables = Exact<{
+  input: BulkRegistrationActionInput;
+}>;
+
+
+export type BulkDeleteRegistrationsMutation = { __typename?: 'Mutation', bulkDeleteRegistrations: number };
 
 export type UpdatePaymentStatusMutationVariables = Exact<{
   input: UpdatePaymentStatusInput;
@@ -17686,6 +17782,13 @@ export type PreviewRepackCourtScheduleQueryVariables = Exact<{
 
 
 export type PreviewRepackCourtScheduleQuery = { __typename?: 'Query', previewRepackCourtSchedule: { __typename?: 'RepackCourtSchedulePreviewResult', anchorMatchId: string, courtName: string, calendarDate: string, totalAffected: number, overdueCount: number, backlogCount: number, warnings: Array<string>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
+
+export type PreviewManualKnockoutDrawQueryVariables = Exact<{
+  input: PreviewManualKnockoutDrawInput;
+}>;
+
+
+export type PreviewManualKnockoutDrawQuery = { __typename?: 'Query', previewManualKnockoutDraw: { __typename?: 'ManualKnockoutDrawPreview', valid: boolean, bracketSize: number, totalByes: number, r1TvTCount: number, maxR1TvT: number, layoutHints: { __typename?: 'ManualKnockoutLayoutHints', approvedCount: number, r1PairCount: number, minR1TvT: number, structuralEmptyPairs: number, r1WalkoverCount: number, r1TvTCount: number, r2TvTCount: number, r2WalkoverCount: number }, errors: Array<{ __typename?: 'ManualKnockoutPreviewError', code: string, message: string, pairIndex?: number | null, slotIndex?: number | null }>, matchupRows: Array<{ __typename?: 'ManualKnockoutMatchupPreviewRow', player1Name: string, player2Name: string, isR1ByeWalkover: boolean, meetingRound: number, meetingRoundLabel: string, r1PairIndex?: number | null }> } };
 
 export type MatchScoreUpdatedSubscriptionVariables = Exact<{
   _matchId: Scalars['ID']['input'];

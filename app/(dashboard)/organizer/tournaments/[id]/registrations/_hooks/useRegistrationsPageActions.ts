@@ -45,6 +45,7 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     approvingReg,
     setApprovingReg,
     setDeletingReg,
+    setBulkDeleteOpen,
     setEditingBibId,
     bibInputValue,
     setBibInputValue,
@@ -79,8 +80,14 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   const {
     bulkApprove,
     bulkReject,
+    bulkDelete,
     loading: bulkLoading,
-  } = useBulkRegistrationActions(tournamentId, { onSuccess });
+  } = useBulkRegistrationActions(tournamentId, {
+    onSuccess: () => {
+      setBulkDeleteOpen(false);
+      onSuccess();
+    },
+  });
   const { updatePayment, loading: paymentUpdating } = useUpdatePaymentStatus(
     tournamentId,
     { onSuccess },
@@ -185,6 +192,16 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     }
   }, [deleteRegistration, deletingReg]);
 
+  const handleBulkDeleteOpen = useCallback(() => {
+    setBulkDeleteOpen(true);
+  }, [setBulkDeleteOpen]);
+
+  const handleBulkDeleteConfirm = useCallback(() => {
+    if (selectedIds.size > 0) {
+      void bulkDelete([...selectedIds]);
+    }
+  }, [bulkDelete, selectedIds]);
+
   const handlePaymentUpdate = useCallback(
     (regId: string, status: TournamentPaymentStatus) => {
       void updatePayment(regId, status);
@@ -197,6 +214,7 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     approving,
     rejecting,
     deleting,
+    bulkLoading,
     bibUpdating,
     onSuccess,
     handleStatusFilterChange,
@@ -211,10 +229,13 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     handleRejectConfirm,
     handleDelete,
     handleDeleteConfirm,
+    handleBulkDeleteOpen,
+    handleBulkDeleteConfirm,
     handlePaymentUpdate,
     approve,
     bulkApprove,
     bulkReject,
+    bulkDelete,
   };
 }
 
