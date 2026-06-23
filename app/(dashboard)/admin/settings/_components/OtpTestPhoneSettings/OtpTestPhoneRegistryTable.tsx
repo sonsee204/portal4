@@ -17,6 +17,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { DataTable } from '@/components/organisms/DataTable';
 import type { OtpTestPhone } from '@/lib/api/otp-test-phones';
+import { formatDateTime } from '@/lib/utils';
 import { OTP_TEST_PHONES } from '@/lib/strings';
 
 import {
@@ -30,6 +31,9 @@ type OtpTestPhoneRegistryTableProps = {
   onEdit: (row: OtpTestPhone) => void;
   onCopyFirebase: (row: OtpTestPhone) => void;
   onToggle: (row: OtpTestPhone) => void;
+  sortKey?: string;
+  sortDir?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 };
 
 export function OtpTestPhoneRegistryTable({
@@ -37,6 +41,9 @@ export function OtpTestPhoneRegistryTable({
   onEdit,
   onCopyFirebase,
   onToggle,
+  sortKey,
+  sortDir,
+  onSort,
 }: OtpTestPhoneRegistryTableProps) {
   const renderRow = (row: OtpTestPhone) => (
     <tr key={row._id} className="hover:bg-surface-hover transition-colors">
@@ -59,11 +66,14 @@ export function OtpTestPhoneRegistryTable({
       </td>
       <td className="text-muted px-4 py-3 text-xs">
         {row.expiresAt
-          ? new Date(row.expiresAt).toLocaleString('vi-VN')
+          ? formatDateTime(row.expiresAt)
           : OTP_TEST_PHONES.NO_EXPIRY}
       </td>
-      <td className="px-4 py-3 text-center">
-        <div className="flex items-center justify-center gap-1">
+      <td className="text-muted px-4 py-3 text-xs">
+        {formatDateTime(row.createdAt)}
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             onClick={() => onEdit(row)}
@@ -112,6 +122,9 @@ export function OtpTestPhoneRegistryTable({
     <DataTable
       columns={OTP_TEST_PHONE_REGISTRY_COLUMNS}
       data={items}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={onSort}
       renderRow={renderRow}
       emptyTitle={OTP_TEST_PHONES.EMPTY_TITLE}
       emptyDescription={OTP_TEST_PHONES.EMPTY_DESCRIPTION}

@@ -28,10 +28,9 @@ import type {
 } from '@/graphql/generated';
 import type { BulkImportItem } from '@/lib/utils/registration-import';
 import {
-  resolveConnectionFirst,
-  totalPagesFromCount,
+  mergeConnectionEdges,
 } from '@/hooks/shared/useCursorConnection';
-import { usePagedConnectionQuery } from '@/hooks/shared/usePagedConnectionQuery';
+import { useInfiniteConnectionQuery } from '@/hooks/shared/useInfiniteConnectionQuery';
 import type { LegacyPagePagination } from '@/hooks/shared/useCursorConnection';
 
 interface UseRegistrationsOptions {
@@ -43,10 +42,9 @@ interface UseRegistrationsOptions {
 
 export function useRegistrations(options: UseRegistrationsOptions) {
   const { tournamentId, filter, pagination, skip } = options;
-  const first = resolveConnectionFirst(pagination);
 
-  const result = usePagedConnectionQuery<
-    { tournamentRegistrationsConnection: GetTournamentRegistrationsQuery['tournamentRegistrationsConnection'] },
+  const result = useInfiniteConnectionQuery<
+    GetTournamentRegistrationsQuery,
     TournamentRegistration,
     { tournamentId: string; filter?: RegistrationFilterInput }
   >({
@@ -55,14 +53,25 @@ export function useRegistrations(options: UseRegistrationsOptions) {
     resetKey: JSON.stringify({ tournamentId, filter }),
     variables: { tournamentId, filter },
     getConnection: (data) => data?.tournamentRegistrationsConnection,
+    mergeConnection: (prev, next) => ({
+      ...next,
+      tournamentRegistrationsConnection: {
+        ...next.tournamentRegistrationsConnection!,
+        edges: mergeConnectionEdges(
+          prev.tournamentRegistrationsConnection?.edges ?? [],
+          next.tournamentRegistrationsConnection?.edges ?? [],
+        ),
+      },
+    }),
     skip: skip || !tournamentId,
   });
 
   return {
     registrations: result.items,
     total: result.total,
-    page: pagination?.page ?? 1,
-    totalPages: totalPagesFromCount(result.total, first),
+    hasNextPage: result.hasNextPage,
+    loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,
@@ -71,13 +80,15 @@ export function useRegistrations(options: UseRegistrationsOptions) {
 
 export function usePreviewBulkImport(tournamentId: string) {
   const [runQuery, { loading }] = useLazyQuery<{
-    previewBulkImport: { adjustmentsNeeded: Array<{
-      categoryId: string;
-      categoryTitle: string;
-      currentBracketSize: number;
-      newRegistrationCount: number;
-      suggestedBracketSize: number;
-    }> };
+    previewBulkImport: {
+      adjustmentsNeeded: Array<{
+        categoryId: string;
+        categoryTitle: string;
+        currentBracketSize: number;
+        newRegistrationCount: number;
+        suggestedBracketSize: number;
+      }>
+    };
   }>(PREVIEW_BULK_IMPORT);
 
   const preview = useCallback(

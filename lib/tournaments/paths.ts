@@ -11,18 +11,10 @@
  * is strictly prohibited without prior written consent.
  */
 
-export type TournamentWorkspace = 'admin' | 'organizer';
+export const TOURNAMENT_BASE_PATH = '/organizer/tournaments';
 
-export function getTournamentBasePath(
-  workspace: TournamentWorkspace = 'admin',
-): string {
-  return workspace === 'organizer'
-    ? '/organizer/tournaments'
-    : '/admin/tournaments';
-}
-
-export function detectTournamentWorkspace(pathname: string): TournamentWorkspace {
-  return pathname.startsWith('/organizer') ? 'organizer' : 'admin';
+export function getTournamentBasePath(): string {
+  return TOURNAMENT_BASE_PATH;
 }
 
 export interface TournamentRoutePaths {
@@ -37,7 +29,9 @@ export interface TournamentRoutePaths {
   scoring: (id: string, matchId: string) => string;
 }
 
-export function tournamentRoutes(base: string): TournamentRoutePaths {
+export function tournamentRoutes(
+  base: string = TOURNAMENT_BASE_PATH,
+): TournamentRoutePaths {
   return {
     list: base,
     create: `${base}/create`,
@@ -50,3 +44,11 @@ export function tournamentRoutes(base: string): TournamentRoutePaths {
     scoring: (id: string, matchId: string) => `${base}/${id}/scoring/${matchId}`,
   };
 }
+
+/** @deprecated Admin tournament routes removed — always organizer workspace. */
+export function detectTournamentWorkspace(_pathname: string): 'organizer' {
+  return 'organizer';
+}
+
+/** @deprecated Use TOURNAMENT_BASE_PATH or tournamentRoutes() instead. */
+export type TournamentWorkspace = 'organizer';

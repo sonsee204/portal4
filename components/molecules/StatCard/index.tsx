@@ -17,12 +17,15 @@ import { cn } from '@/lib/utils';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Badge } from '@/components/atoms/Badge';
 import type { BadgeVariant } from '@/config/theme';
+import { getSignedValueClassName } from '@/lib/finance/stat-card-trend';
 
 export interface StatCardProps {
   icon: string;
   iconColor?: string;
   label: string;
   value: string | number;
+  /** Raw number for signed value coloring (negative red, positive green). */
+  signedValue?: number | null;
   trend?: {
     value: string;
     direction: 'up' | 'down' | 'neutral';
@@ -31,6 +34,7 @@ export interface StatCardProps {
     text: string;
     variant: BadgeVariant;
   };
+  hint?: string;
   className?: string;
 }
 
@@ -51,8 +55,10 @@ export function StatCard({
   iconColor = 'text-primary',
   label,
   value,
+  signedValue,
   trend,
   badge,
+  hint,
   className,
 }: StatCardProps) {
   return (
@@ -88,7 +94,19 @@ export function StatCard({
         {badge && <Badge variant={badge.variant}>{badge.text}</Badge>}
       </div>
       <p className="text-muted mb-1 text-sm font-medium">{label}</p>
-      <h3 className="text-heading text-3xl font-bold">{value}</h3>
+      {hint ? (
+        <p className="text-faint mb-2 text-xs leading-snug">{hint}</p>
+      ) : null}
+      <h3
+        className={cn(
+          'text-3xl font-bold',
+          signedValue != null
+            ? getSignedValueClassName(signedValue)
+            : 'text-heading'
+        )}
+      >
+        {value}
+      </h3>
     </div>
   );
 }

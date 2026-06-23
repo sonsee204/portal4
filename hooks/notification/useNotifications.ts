@@ -68,7 +68,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const unreadCount = unreadData?.getUnreadNotificationCount ?? 0;
   const hasMore = pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage: hasMore,
     endCursor: pageInfo?.endCursor,
@@ -97,6 +97,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     loading,
     error,
     loadMore,
+    isLoadingMore,
     refetch,
   };
 }

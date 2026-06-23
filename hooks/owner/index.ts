@@ -11,195 +11,135 @@
  * is strictly prohibited without prior written consent.
  */
 
-'use client';
+export type {
+  BookingStatsResult,
+  LowStockProductNode,
+  MyVenueNode,
+  VenueBookingNode,
+  VenueCourtNode,
+  VenueDetailNode,
+} from './owner-venue.types';
 
-import { useQuery } from '@apollo/client/react';
-import {
-  GET_MY_VENUES_STATS,
-  MY_VENUES_CONNECTION,
-  VENUE_BOOKINGS_CONNECTION,
-  VENUE_REVENUE_STATS,
-  BOOKING_STATS,
-  VENUE_ANALYTICS,
-} from '@/graphql/owner/queries';
-import type {
-  GetMyVenuesStatsQuery,
-  MyVenuesConnectionQuery,
-  VenueBookingsConnectionQuery,
-  VenueRevenueStatsQuery,
-  BookingStatsQuery,
-  VenueAnalyticsQuery,
-} from '@/graphql/generated';
-import {
-  connectionNodes,
-  mergeConnectionEdges,
-  resolveConnectionFirst,
-  useConnectionLoadMore,
-  type LegacyPagePagination,
-} from '@/hooks/shared/useCursorConnection';
+export { useMyVenues, useMyVenuesStats, useOwnerManagedVenues } from './useOwnerMyVenues';
+export { useVenueBookings } from './useOwnerVenueBookingsConnection';
+export {
+  useBookingStats,
+  useOrderAnalytics,
+  useOrderStats,
+  useProductSalesAnalytics,
+  useVenueAnalytics,
+  useVenueRevenueStats,
+} from './useOwnerVenueAnalytics';
+export {
+  useCreateCourt,
+  useDeleteCourt,
+  useUpdateCourt,
+  useUpdateVenue,
+  useUpdateVenueOrderTypeConfigs,
+  useVenueCourts,
+  useVenueDetail,
+} from './useOwnerVenueCourts';
 
-type MyVenueNode = NonNullable<
-  NonNullable<MyVenuesConnectionQuery['myVenuesConnection']>['edges'][number]['node']
->;
+export {
+  useVenueOrders,
+  useOrdersPendingRefund,
+  useOwnerOrderMutations,
+  useLookupCustomerByPhone,
+  useCreateStaffOrder,
+  type VenueOrderNode,
+  type PendingRefundOrderNode,
+} from './useOwnerOrders';
 
-type VenueBookingNode = NonNullable<
-  NonNullable<
-    VenueBookingsConnectionQuery['venueBookingsConnection']
-  >['edges'][number]['node']
->;
+export {
+  useVenueEnabledOrderTypes,
+  type VenueEnabledOrderTypeConfig,
+} from './useVenueOrderTypes';
+export { useValidateOrderPromoCode } from './useValidateOrderPromoCode';
 
-export function useMyVenuesStats() {
-  const { data, loading, error, refetch } = useQuery<GetMyVenuesStatsQuery>(
-    GET_MY_VENUES_STATS,
-  );
-  return { stats: data?.myVenuesStats, loading, error, refetch };
-}
+export {
+  useVenuePromotions,
+  type VenuePromotionNode,
+} from './useVenuePromotions';
+export { usePromotionStats } from './usePromotionStats';
+export { usePromotion, type PromotionDetailNode } from './usePromotion';
+export { usePromotionMutations } from './usePromotionMutations';
 
-export function useMyVenues(pagination?: LegacyPagePagination) {
-  const first = resolveConnectionFirst(pagination);
-  const { data, loading, error, refetch, fetchMore } =
-    useQuery<MyVenuesConnectionQuery>(MY_VENUES_CONNECTION, {
-      variables: { pagination: { first } },
-    });
+export {
+  useVenueProducts,
+  useVenueCategories,
+  useProductStats,
+  useLowStockProducts,
+  useOwnerProductMutations,
+  useOwnerCategoryMutations,
+  useImportStock,
+  useMyVenuesForProductTransfer,
+  type VenueProductNode,
+  type VenueCategoryNode,
+} from './useOwnerProducts';
 
-  const connection = data?.myVenuesConnection;
-  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+export { useMoveProductsToVenue } from './useMoveProductsToVenue';
 
-  const { loadMore } = useConnectionLoadMore({
-    data,
-    hasNextPage,
-    endCursor: connection?.pageInfo?.endCursor,
-    fetchMore,
-    buildVariables: (after) => ({
-      pagination: { first, after },
-    }),
-    mergeResults: (prev, next) => ({
-      ...next,
-      myVenuesConnection: {
-        ...next.myVenuesConnection!,
-        edges: mergeConnectionEdges(
-          prev.myVenuesConnection?.edges ?? [],
-          next.myVenuesConnection?.edges ?? [],
-        ),
-      },
-    }),
-  });
+export { useOwnerStaff, useVenuePendingInvitations } from './useOwnerStaff';
+export type { VenueStaffNode } from './useOwnerStaff';
 
-  return {
-    venues: (connectionNodes(connection?.edges) ?? []) as MyVenueNode[],
-    totalCount: connection?.totalCount ?? 0,
-    hasNextPage,
-    loadMore,
-    loading,
-    error,
-    refetch,
-  };
-}
+export {
+  useVenueHoldBookings,
+  useVenueRecurringBookings,
+  useOwnerBookingMutations,
+} from './useOwnerBookings';
+export type {
+  OwnerBookingNode,
+  OwnerHoldBookingNode,
+  OwnerRecurringBookingNode,
+} from './useOwnerBookings';
 
-export function useVenueBookings(
-  venueId: string | null,
-  filter?: { statuses?: string[]; fromDate?: string; toDate?: string },
-  pagination?: LegacyPagePagination,
-  options?: { skip?: boolean },
-) {
-  const first = resolveConnectionFirst(pagination);
-  const { data, loading, error, refetch, fetchMore } =
-    useQuery<VenueBookingsConnectionQuery>(VENUE_BOOKINGS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        filter: filter
-          ? {
-            statuses: filter.statuses,
-            fromDate: filter.fromDate,
-            toDate: filter.toDate,
-          }
-          : undefined,
-        pagination: { first },
-      },
-      skip: !venueId || options?.skip,
-    });
+export { useBookingDetail, type BookingDetailNode } from './useBookingDetail';
+export { useOrderDetail, type OrderDetailNode } from './useOrderDetail';
+export {
+  useBookingDetailActions,
+  type BookingDetailActions,
+} from './useBookingDetailActions';
+export {
+  useMyVenueAvailability,
+  useCreateStaffBooking,
+} from './useVenueStaffBooking';
+export { useValidatePromoCode } from './useValidatePromoCode';
+export { useCalculateBookingDiscount } from './useCalculateBookingDiscount';
+export { useAvailablePromotionsForBooking } from './useAvailablePromotionsForBooking';
+export { useCheckRecurringAvailability } from './useCheckRecurringAvailability';
+export { useCreateStaffRecurringBooking } from './useCreateStaffRecurringBooking';
 
-  const connection = data?.venueBookingsConnection;
-  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
+export {
+  useVenueProductReport,
+  useProductPerformanceReport,
+  type VenueProductReportData,
+  type ProductReportRowNode,
+  type ProductPerformanceReportData,
+} from './useOwnerProductStats';
 
-  const { loadMore } = useConnectionLoadMore({
-    data,
-    hasNextPage,
-    endCursor: connection?.pageInfo?.endCursor,
-    fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      filter: filter
-        ? {
-          statuses: filter.statuses,
-          fromDate: filter.fromDate,
-          toDate: filter.toDate,
-        }
-        : undefined,
-      pagination: { first, after },
-    }),
-    mergeResults: (prev, next) => ({
-      ...next,
-      venueBookingsConnection: {
-        ...next.venueBookingsConnection!,
-        edges: mergeConnectionEdges(
-          prev.venueBookingsConnection?.edges ?? [],
-          next.venueBookingsConnection?.edges ?? [],
-        ),
-      },
-    }),
-  });
+export {
+  useStockMovementsConnection,
+  STOCK_MOVEMENTS_PAGE_SIZE,
+  type StockMovementNode,
+} from './useStockMovementsConnection';
 
-  return {
-    bookings: (connectionNodes(connection?.edges) ?? []) as VenueBookingNode[],
-    totalCount: connection?.totalCount ?? 0,
-    hasNextPage,
-    loadMore,
-    loading,
-    error,
-    refetch,
-  };
-}
+export {
+  useVenueFinanceReport,
+  useFinanceTransactions,
+  useVenueExpenses,
+  useExpenseMutations,
+  type FinanceReport,
+  type FinanceTransactionNode,
+  type VenueExpenseNode,
+} from './useOwnerFinance';
 
-export function useVenueRevenueStats(
-  venueId: string | null,
-  period?: string,
-) {
-  const { data, loading, error, refetch } = useQuery<VenueRevenueStatsQuery>(
-    VENUE_REVENUE_STATS,
-    {
-      variables: { venueId: venueId ?? '', period },
-      skip: !venueId,
-    },
-  );
-  return { stats: data?.venueRevenueStats, loading, error, refetch };
-}
+export {
+  useOwnerFinancePortfolio,
+  type VenueFinancePortfolioReport,
+  type VenueFinancePortfolioRow,
+} from './useOwnerFinancePortfolio';
 
-export function useBookingStats(
-  venueId: string | null,
-  fromDate?: string,
-  toDate?: string,
-) {
-  const { data, loading, error, refetch } = useQuery<BookingStatsQuery>(
-    BOOKING_STATS,
-    {
-      variables: { venueId: venueId ?? '', fromDate, toDate },
-      skip: !venueId,
-    },
-  );
-  return { stats: data?.bookingStats, loading, error, refetch };
-}
-
-export function useVenueAnalytics(
-  venueId: string | null,
-  period?: string,
-) {
-  const { data, loading, error, refetch } = useQuery<VenueAnalyticsQuery>(
-    VENUE_ANALYTICS,
-    {
-      variables: { venueId: venueId ?? '', period },
-      skip: !venueId,
-    },
-  );
-  return { analytics: data?.venueAnalytics, loading, error, refetch };
-}
+export {
+  useOwnerOperationsReport,
+  type VenueOperationsReportData,
+} from './useOwnerOperationsReport';

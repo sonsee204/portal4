@@ -54,6 +54,10 @@ export interface AuthUser {
   dateOfBirth?: string | null;
   location?: AuthUserLocation | null;
   portalCapabilities?: import('@/lib/permissions/portal-permissions').PortalCapability[];
+  /** Platform owner account (admin access-control), not venue owner. */
+  isOwner?: boolean;
+  /** User owns or staffs at least one venue (VenueStaff / claim). */
+  hasVenueAccess?: boolean;
 }
 
 /**

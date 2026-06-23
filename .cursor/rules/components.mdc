@@ -9,6 +9,7 @@ alwaysApply: false
 Atomic: `atoms/` → `molecules/` → `organisms/` → `templates/` (+ `components/tournament/` domain)
 
 - `QueryState` (`molecules/QueryState`) cho loading/error/empty
+- Cursor lists/tables: `ConnectionInfiniteScroll` + `useConnectionLoadMore` — không nút Tiếp/Xem thêm
 - `PermissionGate` (`atoms/PermissionGate`) — không render admin action khi thiếu quyền
 - `Modal`, `ConfirmDialog`, `GlassPanel`, `StatCard` — tái dùng thay markup lặp
 - Tailwind + `ThemeProvider` + `config/theme.ts` — không hardcode `#hex` / `rgb()`
@@ -23,12 +24,25 @@ type ModerationActionBarProps = {
   disabled?: boolean;
 };
 
-export function ModerationActionBar({ selectedCount, onApprove, onReject, disabled }: ModerationActionBarProps) {
+export function ModerationActionBar({
+  selectedCount,
+  onApprove,
+  onReject,
+  disabled,
+}: ModerationActionBarProps) {
   return (
     <PermissionGate permission="moderation:write">
       <div className="border-border flex items-center gap-2">
-        <Button onClick={onApprove} disabled={disabled || selectedCount === 0}>Duyệt</Button>
-        <Button variant="danger" onClick={onReject} disabled={disabled || selectedCount === 0}>Từ chối</Button>
+        <Button onClick={onApprove} disabled={disabled || selectedCount === 0}>
+          Duyệt
+        </Button>
+        <Button
+          variant="danger"
+          onClick={onReject}
+          disabled={disabled || selectedCount === 0}
+        >
+          Từ chối
+        </Button>
       </div>
     </PermissionGate>
   );

@@ -56,7 +56,7 @@ export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
   const pageInfo = connection?.pageInfo;
   const total = connection?.totalCount ?? 0;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage: pageInfo?.hasNextPage ?? false,
     endCursor: pageInfo?.endCursor,
@@ -91,5 +91,6 @@ export function useMyTournaments(options: UseMyTournamentsOptions = {}) {
     refetch,
     subscribeToMore,
     loadMore,
+    isLoadingMore,
   };
 }

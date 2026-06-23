@@ -13,16 +13,35 @@
 
 'use client';
 
+import { useMemo } from 'react';
+import Link from 'next/link';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { DataTable } from '@/components/organisms/DataTable';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Badge } from '@/components/atoms/Badge';
+import { Button } from '@/components/atoms/Button';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
-import { useMyVenues } from '@/hooks/owner';
+import { useOwnerManagedVenues } from '@/hooks/owner';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+
+const VENUE_SORT_FIELDS = ['name', 'newest', 'rating', 'popularity'] as const;
+
 export default function OwnerVenuesPage() {
-  const { venues, totalCount, hasNextPage, loadMore, loading, error, refetch } =
-    useMyVenues({ limit: 20 });
+  const sort = useDataTableSortUrl({
+    allowedFields: VENUE_SORT_FIELDS,
+    defaultField: 'name',
+    defaultDir: 'asc',
+  });
+
+  const sortInput = useMemo(
+    () => toSortByOrder(sort.sortField, sort.sortDir),
+    [sort.sortField, sort.sortDir]
+  );
+
+  const { venues, loading, error, refetch } = useOwnerManagedVenues(sortInput, {
+    limit: 50,
+  });
 
   return (
     <>
@@ -37,17 +56,22 @@ export default function OwnerVenuesPage() {
           error={error}
           empty={!loading && venues.length === 0}
           emptyMessage="Bạn chưa quản lý sân nào."
-          onRetry={() => void refetch()}
+          onRetry={() => refetch()}
         >
           <DataTable
             columns={[
-              { key: 'name', label: 'Tên sân' },
+              { key: 'name', label: 'Tên sân', sortable: true },
               { key: 'address', label: 'Địa chỉ' },
               { key: 'courts', label: 'Số sân' },
               { key: 'role', label: 'Vai trò' },
               { key: 'status', label: 'Trạng thái' },
+              { key: 'actions', label: '', align: 'right' },
             ]}
             data={venues}
+            sortKey={sort.sortField}
+            sortDir={sort.sortDir}
+            onSort={sort.handleSort}
+            sortLoading={loading && venues.length > 0}
             renderRow={(v) => (
               <tr
                 key={v._id}
@@ -68,17 +92,21 @@ export default function OwnerVenuesPage() {
                 <td className="px-4 py-3">
                   <Badge variant="neutral">{v.status}</Badge>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <Link href={`/owner/venues/${v._id}`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconLeft="chevron-forward-outline"
+                    >
+                      Chi tiết
+                    </Button>
+                  </Link>
+                </td>
               </tr>
             )}
           />
         </QueryState>
-        <ConnectionPager
-          loadedCount={venues.length}
-          totalCount={totalCount}
-          hasNextPage={hasNextPage}
-          onNext={() => void loadMore()}
-          loading={loading}
-        />
       </GlassPanel>
     </>
   );

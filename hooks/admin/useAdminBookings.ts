@@ -13,14 +13,11 @@
 
 'use client';
 
-import { useMemo } from 'react';
 import { useQuery } from '@apollo/client/react';
 import {
-  ADMIN_GET_ALL_BOOKINGS,
   ADMIN_GET_USER_BOOKINGS,
 } from '@/graphql/admin/queries';
 import type {
-  AdminGetAllBookingsQuery,
   AdminGetUserBookingsQuery,
 } from '@/graphql/generated';
 import {
@@ -42,81 +39,9 @@ export interface AdminBooking {
   courtName: string;
 }
 
-interface AllBookingsVariables {
+interface UserBookingsVariables {
   statuses?: string[];
-  fromDate?: string;
-  toDate?: string;
   pagination?: LegacyPagePagination;
-}
-
-export function useAdminAllBookings(
-  variables: AllBookingsVariables,
-  options?: { skip?: boolean },
-) {
-  const first = resolveConnectionFirst(variables.pagination);
-
-  const { data, loading, error, refetch, fetchMore } = useQuery<AdminGetAllBookingsQuery>(
-    ADMIN_GET_ALL_BOOKINGS,
-    {
-      variables: {
-        statuses: variables.statuses,
-        fromDate: variables.fromDate,
-        toDate: variables.toDate,
-        pagination: { first, after: variables.pagination?.after ?? null },
-      },
-      skip: options?.skip,
-    },
-  );
-
-  const connection = data?.adminAllBookingsConnection;
-  const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
-  const totalCount = connection?.totalCount ?? 0;
-
-  const { loadMore } = useConnectionLoadMore({
-    data,
-    hasNextPage,
-    endCursor: connection?.pageInfo?.endCursor,
-    fetchMore,
-    buildVariables: (after) => ({
-      statuses: variables.statuses,
-      fromDate: variables.fromDate,
-      toDate: variables.toDate,
-      pagination: { first, after },
-    }),
-    mergeResults: (prev, next) => ({
-      ...next,
-      adminAllBookingsConnection: {
-        ...next.adminAllBookingsConnection!,
-        edges: mergeConnectionEdges(
-          prev.adminAllBookingsConnection?.edges ?? [],
-          next.adminAllBookingsConnection?.edges ?? [],
-        ),
-      },
-    }),
-  });
-
-  const customerNames: Record<string, string> = useMemo(() => {
-    try {
-      return connection?.customerNamesJson
-        ? JSON.parse(connection.customerNamesJson)
-        : {};
-    } catch {
-      return {};
-    }
-  }, [connection?.customerNamesJson]);
-
-  return {
-    bookings: connectionNodes(connection?.edges) ?? [],
-    customerNames,
-    total: totalCount,
-    totalCount,
-    hasMore: hasNextPage,
-    hasNextPage,
-    loadMore,
-    loading,
-    error,
-    refetch,
-  };
 }
 
 export function useAdminUserBookings(
@@ -145,7 +70,7 @@ export function useAdminUserBookings(
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
   const totalCount = connection?.totalCount ?? 0;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
@@ -174,6 +99,7 @@ export function useAdminUserBookings(
     hasMore: hasNextPage,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

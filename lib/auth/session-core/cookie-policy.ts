@@ -26,6 +26,9 @@ export interface SessionCookieNames {
   ACCESS_TOKEN: string;
   REFRESH_TOKEN: string;
   USER_ROLE: string;
+  IS_OWNER?: string;
+  PORTAL_CAPABILITIES?: string;
+  HAS_VENUE_ACCESS?: string;
 }
 
 export interface BaseCookieOptions {

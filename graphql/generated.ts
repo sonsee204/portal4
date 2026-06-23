@@ -482,6 +482,8 @@ export enum AuditAction {
   UserUnsuspend = 'USER_UNSUSPEND',
   VenueApprove = 'VENUE_APPROVE',
   VenueReject = 'VENUE_REJECT',
+  VenueStaffAccepted = 'VENUE_STAFF_ACCEPTED',
+  VenueStaffRemoved = 'VENUE_STAFF_REMOVED',
   VenueSuspend = 'VENUE_SUSPEND'
 }
 
@@ -756,6 +758,8 @@ export type BookedSlotInput = {
 export type Booking = {
   __typename?: 'Booking';
   _id: Scalars['ID']['output'];
+  /** Promotions applied to this booking (for analytics attribution) */
+  appliedPromotions?: Maybe<Array<BookingAppliedPromotion>>;
   /** Cancellation reason */
   cancellationReason?: Maybe<Scalars['String']['output']>;
   /** Cancelled at */
@@ -785,6 +789,10 @@ export type Booking = {
   createdByStaffId?: Maybe<Scalars['ID']['output']>;
   /** Customer user */
   customer?: Maybe<User>;
+  /** Resolved customer name for lists/calendar (user, walk-in snapshot, recurring parent fallback) */
+  customerDisplayName?: Maybe<Scalars['String']['output']>;
+  /** Resolved customer phone for lists/calendar */
+  customerDisplayPhone?: Maybe<Scalars['String']['output']>;
   /** Customer user ID (null for walk-in) */
   customerId?: Maybe<Scalars['ID']['output']>;
   /** Customer info (for staff/walk-in bookings) */
@@ -837,6 +845,8 @@ export type Booking = {
   recurringConfig?: Maybe<RecurringConfig>;
   /** Requested hold duration in minutes (set by customer) */
   requestedHoldDurationMinutes?: Maybe<Scalars['Int']['output']>;
+  /** Schedule type: fixed / single / LEAD promo */
+  scheduleType: BookingScheduleType;
   /** Service fee */
   serviceFee?: Maybe<Scalars['Int']['output']>;
   /** Session number in recurring series (1, 2, 3...) */
@@ -854,6 +864,14 @@ export type Booking = {
   venue?: Maybe<Venue>;
   /** Venue ID */
   venueId: Scalars['ID']['output'];
+};
+
+export type BookingAppliedPromotion = {
+  __typename?: 'BookingAppliedPromotion';
+  /** Discount amount from this promotion */
+  discountAmount: Scalars['Int']['output'];
+  /** Promotion ID */
+  promotionId: Scalars['ID']['output'];
 };
 
 /** A Relay-style connection for Booking items. */
@@ -1139,6 +1157,13 @@ export enum BookingPassStatus {
 export enum BookingPassVisibility {
   Private = 'PRIVATE',
   Public = 'PUBLIC'
+}
+
+/** Schedule classification: fixed recurring, single, or LEAD promo */
+export enum BookingScheduleType {
+  Fixed = 'FIXED',
+  Lead = 'LEAD',
+  Single = 'SINGLE'
 }
 
 export type BookingSortInput = {
@@ -1663,6 +1688,15 @@ export enum ClaimRequestStatus {
   Expired = 'EXPIRED',
   Pending = 'PENDING',
   Rejected = 'REJECTED'
+}
+
+/** Identifies which client app made the request */
+export enum ClientSource {
+  LandingPage = 'LANDING_PAGE',
+  Mobile = 'MOBILE',
+  Portal = 'PORTAL',
+  Unknown = 'UNKNOWN',
+  WebApp = 'WEB_APP'
 }
 
 /** What the coin-toss winner chose: serve or court side */
@@ -2495,6 +2529,8 @@ export type CreateProductInput = {
   stockQuantity?: InputMaybe<Scalars['Int']['input']>;
   /** Track inventory */
   trackInventory?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Unit of measure (lon, chai, thùng…) */
+  unit?: InputMaybe<Scalars['String']['input']>;
   /** Variant option names */
   variantOptions?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Product variants */
@@ -2647,6 +2683,8 @@ export type CreateStaffBookingInput = {
   manualPriceNote?: InputMaybe<Scalars['String']['input']>;
   /** Selected payment method */
   paymentMethod?: InputMaybe<PaymentMethod>;
+  /** Schedule type override (fixed / single / LEAD promo) */
+  scheduleType?: InputMaybe<BookingScheduleType>;
   /** Slots to book */
   slots: Array<BookedSlotInput>;
   /** Booking source */
@@ -2766,6 +2804,21 @@ export type CreateUserSubmittedVenueInput = {
   ward?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CreateVenueExpenseInput = {
+  amount: Scalars['Int']['input'];
+  category: ExpenseCategory;
+  /** Coverage start (YYYY-MM-DD); defaults to payment date */
+  coverageFrom?: InputMaybe<Scalars['String']['input']>;
+  /** Coverage end (YYYY-MM-DD); defaults to coverageFrom */
+  coverageTo?: InputMaybe<Scalars['String']['input']>;
+  /** Payment date (YYYY-MM-DD) */
+  date: Scalars['String']['input'];
+  isRecurring?: InputMaybe<Scalars['Boolean']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  venueId: Scalars['ID']['input'];
+};
+
 export type CreateVenueInput = {
   /** Advance booking days */
   advanceBookingDays?: InputMaybe<Scalars['Int']['input']>;
@@ -2861,6 +2914,13 @@ export type CursorPageInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   /** Reserved for backwards pagination (1..50). */
   last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type CursorSortInput = {
+  /** Mongo field to sort by (domain whitelist) */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Sort direction */
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomLocation = {
@@ -3117,6 +3177,25 @@ export type ExecuteDrawInput = {
   seeds?: Array<SeedPlayerInput>;
 };
 
+/** Category of venue operating expense */
+export enum ExpenseCategory {
+  Maintenance = 'MAINTENANCE',
+  Marketing = 'MARKETING',
+  Other = 'OTHER',
+  Rent = 'RENT',
+  Salary = 'SALARY',
+  Supplies = 'SUPPLIES',
+  Tax = 'TAX',
+  Utilities = 'UTILITIES'
+}
+
+export type ExpenseFilterInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  to?: InputMaybe<Scalars['String']['input']>;
+  /** Venue ID */
+  venueId: Scalars['ID']['input'];
+};
+
 export type ExternalBookingInput = {
   /** Ngày đặt (ISO 8601 date) */
   bookingDate: Scalars['String']['input'];
@@ -3168,6 +3247,178 @@ export type FavoriteResult = {
   __typename?: 'FavoriteResult';
   /** Whether venue is now favorited */
   isFavorite: Scalars['Boolean']['output'];
+};
+
+export type FinanceBreakdownItem = {
+  __typename?: 'FinanceBreakdownItem';
+  count: Scalars['Int']['output'];
+  key?: Maybe<Scalars['String']['output']>;
+  label: Scalars['String']['output'];
+  percentage: Scalars['Float']['output'];
+  revenue: Scalars['Int']['output'];
+};
+
+/** How to derive the comparison period: immediately before or same dates last year */
+export enum FinanceCompareMode {
+  PreviousPeriod = 'PREVIOUS_PERIOD',
+  SamePeriodLastYear = 'SAME_PERIOD_LAST_YEAR'
+}
+
+/** Export format for finance reports */
+export enum FinanceExportFormat {
+  Csv = 'CSV',
+  Xlsx = 'XLSX'
+}
+
+export type FinanceFilterInput = {
+  /** How to derive the comparison period */
+  compareMode?: InputMaybe<FinanceCompareMode>;
+  /** Include period-to-date comparison with previous period */
+  compareToPrevious?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by court ID */
+  courtId?: InputMaybe<Scalars['ID']['input']>;
+  /** Start date (YYYY-MM-DD) in filter timezone */
+  from: Scalars['String']['input'];
+  granularity?: InputMaybe<FinanceGranularity>;
+  orderType?: InputMaybe<OrderType>;
+  /** Coarse filter: booking orders vs non-booking (retail, F&B, etc.) */
+  orderTypeCategory?: InputMaybe<FinanceOrderTypeCategory>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  /** Filter orders linked to bookings that used this promotion */
+  promotionId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter orders linked to bookings with this schedule type */
+  scheduleType?: InputMaybe<BookingScheduleType>;
+  /** Filter by order status (default: exclude cancelled) */
+  status?: InputMaybe<OrderStatus>;
+  /** IANA timezone for date boundaries */
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  /** End date (YYYY-MM-DD) in filter timezone */
+  to: Scalars['String']['input'];
+  /** Venue IDs to include. Empty/null = all venues user can view analytics for. */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+/** Time bucket granularity for finance trend charts */
+export enum FinanceGranularity {
+  Day = 'DAY',
+  Month = 'MONTH',
+  Week = 'WEEK'
+}
+
+/** Coarse order-type filter for finance reports */
+export enum FinanceOrderTypeCategory {
+  Booking = 'BOOKING',
+  NonBooking = 'NON_BOOKING'
+}
+
+export type FinancePeriodInfo = {
+  __typename?: 'FinancePeriodInfo';
+  from: Scalars['String']['output'];
+  previousFrom: Scalars['String']['output'];
+  previousTo: Scalars['String']['output'];
+  timezone: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type FinancePnlMetric = {
+  __typename?: 'FinancePnlMetric';
+  changePercent: Scalars['Float']['output'];
+  previousValue: Scalars['Int']['output'];
+  value: Scalars['Int']['output'];
+};
+
+export type FinancePnlRateMetric = {
+  __typename?: 'FinancePnlRateMetric';
+  changePercent: Scalars['Float']['output'];
+  previousValue: Scalars['Float']['output'];
+  value: Scalars['Float']['output'];
+};
+
+export type FinancePnlSummary = {
+  __typename?: 'FinancePnlSummary';
+  cogs: FinancePnlMetric;
+  collected: FinancePnlMetric;
+  grossProfit: FinancePnlMetric;
+  grossRevenue: FinancePnlMetric;
+  netMarginPercent: FinancePnlRateMetric;
+  netProfit: FinancePnlMetric;
+  netRevenue: FinancePnlMetric;
+  operatingExpenses: FinancePnlMetric;
+  outstanding: FinancePnlMetric;
+  refunds: FinancePnlMetric;
+};
+
+export type FinanceTransaction = {
+  __typename?: 'FinanceTransaction';
+  /** Giá vốn hàng bán (COGS) gắn với đơn */
+  cogsAmount: Scalars['Int']['output'];
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  courtLabel?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
+  customerName?: Maybe<Scalars['String']['output']>;
+  grossAmount: Scalars['Int']['output'];
+  netAmount: Scalars['Int']['output'];
+  orderCode: Scalars['String']['output'];
+  orderId: Scalars['ID']['output'];
+  orderType: OrderType;
+  paidAmount: Scalars['Int']['output'];
+  paidAt?: Maybe<Scalars['DateTime']['output']>;
+  paymentMethod?: Maybe<PaymentMethod>;
+  paymentStatus: OrderPaymentStatus;
+  /** Lợi nhuận gộp = doanh thu gộp − giá vốn */
+  profitAmount: Scalars['Int']['output'];
+  /** Biên lợi nhuận gộp = lãi / doanh thu gộp × 100 */
+  profitMarginPercent: Scalars['Float']['output'];
+  refundAmount: Scalars['Int']['output'];
+  status: OrderStatus;
+  venueId: Scalars['ID']['output'];
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
+export type FinanceTransactionConnection = {
+  __typename?: 'FinanceTransactionConnection';
+  edges: Array<FinanceTransactionEdge>;
+  pageInfo: FinanceTransactionPageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type FinanceTransactionEdge = {
+  __typename?: 'FinanceTransactionEdge';
+  cursor: Scalars['String']['output'];
+  node: FinanceTransaction;
+};
+
+export type FinanceTransactionFilterInput = {
+  courtId?: InputMaybe<Scalars['ID']['input']>;
+  from: Scalars['String']['input'];
+  orderType?: InputMaybe<OrderType>;
+  orderTypeCategory?: InputMaybe<FinanceOrderTypeCategory>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
+  /** Search order code, customer name, or phone */
+  search?: InputMaybe<Scalars['String']['input']>;
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  to: Scalars['String']['input'];
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type FinanceTransactionPageInfo = {
+  __typename?: 'FinanceTransactionPageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+};
+
+export type FinanceTransactionSortInput = {
+  field?: InputMaybe<Scalars['String']['input']>;
+  order?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type FinanceTrendPoint = {
+  __typename?: 'FinanceTrendPoint';
+  expenses: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
+  netProfit: Scalars['Int']['output'];
+  previousRevenue?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
 };
 
 export type FinishMatchEarlyInput = {
@@ -3393,6 +3644,13 @@ export enum GenderRestriction {
 
 export type GenerateBracketInput = {
   categoryId: Scalars['ID']['input'];
+};
+
+/** Manual draw layout for single elimination */
+export type GenerateManualDrawInput = {
+  categoryId: Scalars['ID']['input'];
+  /** Single elimination winners bracket slots */
+  knockoutSlots: Array<ManualBracketSlotInput>;
 };
 
 export type GrantPortalCapabilityInput = {
@@ -3804,6 +4062,10 @@ export type ImageMedia = {
 };
 
 export type ImportStockInput = {
+  /** Batch/lot number for this import */
+  batchNumber?: InputMaybe<Scalars['String']['input']>;
+  /** Expiry date (YYYY-MM-DD) */
+  expiryDate?: InputMaybe<Scalars['String']['input']>;
   /** Import price per unit */
   importPrice: Scalars['Float']['input'];
   /** Invoice/receipt number */
@@ -4012,6 +4274,62 @@ export type LocationInput = {
   coordinates?: InputMaybe<CoordinatesInput>;
   country?: InputMaybe<Scalars['String']['input']>;
   displayText?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type LotAllocationRecord = {
+  __typename?: 'LotAllocationRecord';
+  lotId: Scalars['ID']['output'];
+  quantity: Scalars['Int']['output'];
+  unitCost: Scalars['Float']['output'];
+};
+
+export type ManualBracketSlotInput = {
+  /** Registration ID; null/omit = BYE */
+  registrationId?: InputMaybe<Scalars['ID']['input']>;
+  /** Bracket slot index (0-based) */
+  slotIndex: Scalars['Int']['input'];
+};
+
+export type ManualKnockoutDrawPreview = {
+  __typename?: 'ManualKnockoutDrawPreview';
+  bracketSize: Scalars['Int']['output'];
+  errors: Array<ManualKnockoutPreviewError>;
+  layoutHints: ManualKnockoutLayoutHints;
+  matchupRows: Array<ManualKnockoutMatchupPreviewRow>;
+  maxR1TvT: Scalars['Int']['output'];
+  r1TvTCount: Scalars['Int']['output'];
+  totalByes: Scalars['Int']['output'];
+  valid: Scalars['Boolean']['output'];
+};
+
+export type ManualKnockoutLayoutHints = {
+  __typename?: 'ManualKnockoutLayoutHints';
+  approvedCount: Scalars['Int']['output'];
+  minR1TvT: Scalars['Int']['output'];
+  r1PairCount: Scalars['Int']['output'];
+  r1TvTCount: Scalars['Int']['output'];
+  r1WalkoverCount: Scalars['Int']['output'];
+  r2TvTCount: Scalars['Int']['output'];
+  r2WalkoverCount: Scalars['Int']['output'];
+  structuralEmptyPairs: Scalars['Int']['output'];
+};
+
+export type ManualKnockoutMatchupPreviewRow = {
+  __typename?: 'ManualKnockoutMatchupPreviewRow';
+  isR1ByeWalkover: Scalars['Boolean']['output'];
+  meetingRound: Scalars['Int']['output'];
+  meetingRoundLabel: Scalars['String']['output'];
+  player1Name: Scalars['String']['output'];
+  player2Name: Scalars['String']['output'];
+  r1PairIndex?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ManualKnockoutPreviewError = {
+  __typename?: 'ManualKnockoutPreviewError';
+  code: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+  pairIndex?: Maybe<Scalars['Int']['output']>;
+  slotIndex?: Maybe<Scalars['Int']['output']>;
 };
 
 export type ManualMatchResultInput = {
@@ -4508,7 +4826,7 @@ export type Mutation = {
   adjustStock: StockMovement;
   /** Approve venue request (Admin only) */
   adminApproveVenue: Venue;
-  /** Change user role (Super Admin only) */
+  /** Change user role (Owner only — centralized access control) */
   adminChangeUserRole: User;
   /** Create a new user account (Super Admin only: ADMIN or FACILITY_OWNER) */
   adminCreateUser: User;
@@ -4560,6 +4878,8 @@ export type Mutation = {
   bulkCheckIn: Array<PickupGameParticipant>;
   /** Bulk delete products */
   bulkDeleteProducts: BulkOperationResult;
+  /** Bulk delete registrations */
+  bulkDeleteRegistrations: Scalars['Int']['output'];
   /** Bulk import registrations from file (organizer only) */
   bulkImportRegistrations: BulkImportResult;
   /** Bulk reject registrations */
@@ -4715,6 +5035,8 @@ export type Mutation = {
   createUserSubmittedVenue: Venue;
   /** Create a new venue (request) */
   createVenue: Venue;
+  /** Create a venue expense */
+  createVenueExpense: VenueExpense;
   /** Create a new venue request */
   createVenueRequest: VenueRequest;
   /** Create venue review */
@@ -4762,6 +5084,8 @@ export type Mutation = {
   deleteTournament: SuccessResponse;
   /** Delete venue */
   deleteVenue: Scalars['Boolean']['output'];
+  /** Delete a venue expense */
+  deleteVenueExpense: Scalars['Boolean']['output'];
   /** Delete venue review */
   deleteVenueReview: Scalars['Boolean']['output'];
   /** Duplicate product */
@@ -4784,6 +5108,8 @@ export type Mutation = {
   forwardMessage: Array<Message>;
   /** Generate bracket for category */
   generateBracket: Array<TournamentMatch>;
+  /** Generate bracket from manual slot assignments (Single Elimination) */
+  generateManualDraw: Array<TournamentMatch>;
   /** Grant portal capability to user (SUPER_ADMIN only) */
   grantPortalCapability: PortalCapabilityGrant;
   /** Import stock for a product */
@@ -4944,10 +5270,14 @@ export type Mutation = {
   reviewClaimRequest: VenueClaimRequest;
   /** Review promotion (owner approves/rejects) */
   reviewPromotion: Promotion;
+  /** Revoke all login sessions except the current one */
+  revokeOtherSessions: Scalars['Boolean']['output'];
   /** Revoke OTP test user login grant (SUPER_ADMIN only) */
   revokeOtpTestUserGrant: OtpTestUserGrant;
   /** Revoke portal capability grant (SUPER_ADMIN only) */
   revokePortalCapability: PortalCapabilityGrant;
+  /** Revoke a specific login session (not the current one) */
+  revokeSession: Scalars['Boolean']['output'];
   /** Save FCM token */
   saveFcmToken: Scalars['Boolean']['output'];
   /** Lưu kèo */
@@ -5134,6 +5464,8 @@ export type Mutation = {
   updateUserReportStatus: UserReport;
   /** Update venue */
   updateVenue: Venue;
+  /** Update a venue expense */
+  updateVenueExpense: VenueExpense;
   /** Update venue order type configurations */
   updateVenueOrderTypeConfigs: Venue;
   /** Update venue review */
@@ -5390,6 +5722,11 @@ export type MutationBulkCheckInArgs = {
 
 export type MutationBulkDeleteProductsArgs = {
   input: BulkDeleteProductsInput;
+};
+
+
+export type MutationBulkDeleteRegistrationsArgs = {
+  input: BulkRegistrationActionInput;
 };
 
 
@@ -5789,6 +6126,11 @@ export type MutationCreateVenueArgs = {
 };
 
 
+export type MutationCreateVenueExpenseArgs = {
+  input: CreateVenueExpenseInput;
+};
+
+
 export type MutationCreateVenueRequestArgs = {
   input: CreateVenueRequestInput;
 };
@@ -5914,6 +6256,11 @@ export type MutationDeleteVenueArgs = {
 };
 
 
+export type MutationDeleteVenueExpenseArgs = {
+  expenseId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteVenueReviewArgs = {
   reviewId: Scalars['ID']['input'];
 };
@@ -5968,6 +6315,11 @@ export type MutationForwardMessageArgs = {
 
 export type MutationGenerateBracketArgs = {
   input: GenerateBracketInput;
+};
+
+
+export type MutationGenerateManualDrawArgs = {
+  input: GenerateManualDrawInput;
 };
 
 
@@ -6392,6 +6744,11 @@ export type MutationRevokeOtpTestUserGrantArgs = {
 
 export type MutationRevokePortalCapabilityArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationRevokeSessionArgs = {
+  sessionId: Scalars['ID']['input'];
 };
 
 
@@ -6888,6 +7245,11 @@ export type MutationUpdateVenueArgs = {
 };
 
 
+export type MutationUpdateVenueExpenseArgs = {
+  input: UpdateVenueExpenseInput;
+};
+
+
 export type MutationUpdateVenueOrderTypeConfigsArgs = {
   input: UpdateVenueOrderTypeConfigsInput;
 };
@@ -7197,6 +7559,33 @@ export type OperatingHoursInput = {
   isClosed: Scalars['Boolean']['input'];
   /** Opening time (HH:mm) */
   openTime: Scalars['String']['input'];
+};
+
+export type OperationsFilterInput = {
+  /** Start date (YYYY-MM-DD) in filter timezone */
+  from: Scalars['String']['input'];
+  /** Trend bucket size; auto-inferred from date range when omitted (day ≤31d, week ≤90d, else month) */
+  granularity?: InputMaybe<FinanceGranularity>;
+  /** Filter bookings that used this promotion */
+  promotionId?: InputMaybe<Scalars['ID']['input']>;
+  /** Filter by schedule type (fixed / single) */
+  scheduleType?: InputMaybe<BookingScheduleType>;
+  /** IANA timezone for date boundaries */
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  /** End date (YYYY-MM-DD) in filter timezone */
+  to: Scalars['String']['input'];
+  /** Venue IDs. Empty = all venues user can view. */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type OperationsOccupancySummary = {
+  __typename?: 'OperationsOccupancySummary';
+  /** Total bookable slots in period */
+  availableSlots: Scalars['Int']['output'];
+  /** Occupancy rate 0–100 */
+  occupancyRate: Scalars['Float']['output'];
+  /** Booked slots in period */
+  occupiedSlots: Scalars['Int']['output'];
 };
 
 export type Order = {
@@ -8567,6 +8956,11 @@ export type PreviewBulkImportResult = {
   adjustmentsNeeded: Array<BracketSizeAdjustment>;
 };
 
+export type PreviewManualKnockoutDrawInput = {
+  categoryId: Scalars['ID']['input'];
+  knockoutSlots: Array<ManualBracketSlotInput>;
+};
+
 export type PriceRange = {
   __typename?: 'PriceRange';
   /** Currency (VND, USD, etc.) */
@@ -8587,7 +8981,7 @@ export type Product = {
   /** Average rating (0-5) */
   averageRating: Scalars['Float']['output'];
   /** Product category */
-  category: ProductCategory;
+  category?: Maybe<ProductCategory>;
   /** Category ID */
   categoryId: Scalars['ID']['output'];
   /** Compare at price (original price for sale display) */
@@ -8653,6 +9047,8 @@ export type Product = {
   totalImportValue?: Maybe<Scalars['Float']['output']>;
   /** Track inventory for this product */
   trackInventory: Scalars['Boolean']['output'];
+  /** Unit of measure (e.g. lon, chai, thùng, kg) */
+  unit?: Maybe<Scalars['String']['output']>;
   /** When product was unpublished */
   unpublishedAt?: Maybe<Scalars['DateTime']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -8899,6 +9295,50 @@ export type ProductPerformance = {
   unitPrice: Scalars['Int']['output'];
 };
 
+export type ProductPerformanceReport = {
+  __typename?: 'ProductPerformanceReport';
+  importHistory: Array<StockMovement>;
+  period: ProductReportPeriodInfo;
+  product: ProductPerformanceSnapshot;
+  recentMovements: Array<StockMovement>;
+  summary: ProductPerformanceReportSummary;
+  trend: Array<ProductSalesDataPoint>;
+};
+
+export type ProductPerformanceReportSummary = {
+  __typename?: 'ProductPerformanceReportSummary';
+  cogs: Scalars['Int']['output'];
+  grossProfit: Scalars['Int']['output'];
+  orderCount: Scalars['Int']['output'];
+  previousRevenue: Scalars['Int']['output'];
+  previousSoldQuantity: Scalars['Int']['output'];
+  profitMargin: Scalars['Float']['output'];
+  rank?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
+  revenuePercentage: Scalars['Float']['output'];
+  soldQuantity: Scalars['Int']['output'];
+};
+
+export type ProductPerformanceSnapshot = {
+  __typename?: 'ProductPerformanceSnapshot';
+  averageCost?: Maybe<Scalars['Int']['output']>;
+  categoryId: Scalars['String']['output'];
+  categoryName: Scalars['String']['output'];
+  hasVariants: Scalars['Boolean']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  productId: Scalars['String']['output'];
+  productName: Scalars['String']['output'];
+  sku?: Maybe<Scalars['String']['output']>;
+  status: ProductStatus;
+  stockQuantity: Scalars['Int']['output'];
+  trackInventory: Scalars['Boolean']['output'];
+  unit: Scalars['String']['output'];
+  unitPrice: Scalars['Int']['output'];
+  variantCount: Scalars['Int']['output'];
+  venueId?: Maybe<Scalars['String']['output']>;
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
 export type ProductProfitItem = {
   __typename?: 'ProductProfitItem';
   /** Cost of goods sold */
@@ -8913,6 +9353,122 @@ export type ProductProfitItem = {
   revenue: Scalars['Float']['output'];
   /** Total quantity sold */
   soldQuantity: Scalars['Int']['output'];
+};
+
+export type ProductReportFilterInput = {
+  categoryId?: InputMaybe<Scalars['ID']['input']>;
+  compareMode?: InputMaybe<FinanceCompareMode>;
+  /** Include period-to-date comparison with previous period */
+  compareToPrevious?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Start date (YYYY-MM-DD) in filter timezone */
+  from: Scalars['String']['input'];
+  /** Only low-stock or out-of-stock products */
+  lowStockOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Search product name or SKU */
+  searchQuery?: InputMaybe<Scalars['String']['input']>;
+  /** Only products with sales in the selected period */
+  soldInPeriodOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  status?: InputMaybe<ProductStatus>;
+  /** Pagination for the products table section */
+  tablePagination?: InputMaybe<CursorPageInput>;
+  /** IANA timezone for date boundaries */
+  timezone?: InputMaybe<Scalars['String']['input']>;
+  /** End date (YYYY-MM-DD) in filter timezone */
+  to: Scalars['String']['input'];
+  /** Venue IDs to include. Empty/null = all venues user can view analytics for. */
+  venueIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type ProductReportPeriodInfo = {
+  __typename?: 'ProductReportPeriodInfo';
+  from: Scalars['String']['output'];
+  timezone: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type ProductReportRow = {
+  __typename?: 'ProductReportRow';
+  averageCost?: Maybe<Scalars['Int']['output']>;
+  categoryId: Scalars['String']['output'];
+  categoryName: Scalars['String']['output'];
+  cogs: Scalars['Int']['output'];
+  grossProfit: Scalars['Int']['output'];
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  previousRevenue: Scalars['Int']['output'];
+  previousSoldQuantity: Scalars['Int']['output'];
+  productId: Scalars['String']['output'];
+  productName: Scalars['String']['output'];
+  profitMargin: Scalars['Float']['output'];
+  rank?: Maybe<Scalars['Int']['output']>;
+  revenue: Scalars['Int']['output'];
+  revenueGrowth: Scalars['Float']['output'];
+  revenuePercentage: Scalars['Float']['output'];
+  sku?: Maybe<Scalars['String']['output']>;
+  soldQuantity: Scalars['Int']['output'];
+  status: ProductStatus;
+  stockQuantity: Scalars['Int']['output'];
+  trackInventory: Scalars['Boolean']['output'];
+  unitPrice: Scalars['Int']['output'];
+  venueId?: Maybe<Scalars['String']['output']>;
+  venueName?: Maybe<Scalars['String']['output']>;
+};
+
+/** A Relay-style connection for ProductReportRow items. */
+export type ProductReportRowConnection = {
+  __typename?: 'ProductReportRowConnection';
+  /** List of edges (each contains a node + cursor). */
+  edges: Array<ProductReportRowEdge>;
+  /** Pagination metadata (next/prev page, start/end cursor). */
+  pageInfo: PageInfo;
+  /** Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive. */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in the ProductReportRowConnection. */
+export type ProductReportRowEdge = {
+  __typename?: 'ProductReportRowEdge';
+  /** Opaque cursor pointing to this node. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: ProductReportRow;
+};
+
+export type ProductReportScope = {
+  __typename?: 'ProductReportScope';
+  mode: ProductReportScopeMode;
+  venueCount: Scalars['Int']['output'];
+  venueIds?: Maybe<Array<Scalars['String']['output']>>;
+  venueNames: Array<Scalars['String']['output']>;
+};
+
+export enum ProductReportScopeMode {
+  Portfolio = 'PORTFOLIO',
+  Single = 'SINGLE'
+}
+
+export type ProductReportSummary = {
+  __typename?: 'ProductReportSummary';
+  bestSellingCategory: Scalars['String']['output'];
+  bestSellingProduct: Scalars['String']['output'];
+  grossProfit: Scalars['Int']['output'];
+  grossProfitChangePercent: Scalars['Float']['output'];
+  grossProfitMarginPercent: Scalars['Float']['output'];
+  itemsChangePercent: Scalars['Float']['output'];
+  ordersChangePercent: Scalars['Float']['output'];
+  peakDay: Scalars['String']['output'];
+  peakHour: Scalars['String']['output'];
+  previousCogs: Scalars['Int']['output'];
+  previousGrossProfit: Scalars['Int']['output'];
+  previousItemsSold: Scalars['Int']['output'];
+  previousOrders: Scalars['Int']['output'];
+  previousRevenue: Scalars['Int']['output'];
+  previousUniqueProductsSold: Scalars['Int']['output'];
+  revenueChangePercent: Scalars['Float']['output'];
+  totalCogs: Scalars['Int']['output'];
+  totalItemsSold: Scalars['Int']['output'];
+  totalOrders: Scalars['Int']['output'];
+  totalRevenue: Scalars['Int']['output'];
+  uniqueProductsSold: Scalars['Int']['output'];
 };
 
 export type ProductSalesAnalytics = {
@@ -9680,6 +10236,8 @@ export type Query = {
   myRegistrationsConnection: TournamentRegistrationConnection;
   /** Kèo đã lưu (cursor) */
   mySavedGamesConnection: SavedGameConnection;
+  /** List active login sessions for the current user */
+  mySessions: Array<SessionInfo>;
   /** Cursor-paginated tournaments organized by current user */
   myTournamentsConnection: TournamentConnection;
   /** Get venue availability with user pending slots info */
@@ -9702,7 +10260,10 @@ export type Query = {
   notificationsConnection: NotificationConnection;
   /** Get order by ID */
   order: Order;
-  /** Get comprehensive order analytics */
+  /**
+   * Get comprehensive order analytics
+   * @deprecated Use venueFinanceReport instead.
+   */
   orderAnalytics: OrderAnalytics;
   /** Get order by booking ID */
   orderByBookingId?: Maybe<Order>;
@@ -9744,6 +10305,8 @@ export type Query = {
   previewBulkImport: PreviewBulkImportResult;
   /** Super Admin: preview eligible R1 BYE slots for late entry placement */
   previewLateEntryPlacement: LateEntryPlacementPreview;
+  /** Preview manual knockout draw layout before saving (organizer only) */
+  previewManualKnockoutDraw: ManualKnockoutDrawPreview;
   /** Preview drag-move without persisting */
   previewMoveMatch: MoveMatchPreviewResult;
   /** Dry-run preview: dồn liên tiếp các trận NOT_STARTED trên cùng sân/ngày (không ghi DB) */
@@ -9752,7 +10315,12 @@ export type Query = {
   product: Product;
   /** Get product by slug */
   productBySlug?: Maybe<Product>;
-  /** Get comprehensive product sales analytics for a venue */
+  /** Single-product performance drill-down report */
+  productPerformanceReport: ProductPerformanceReport;
+  /**
+   * Get comprehensive product sales analytics for a venue
+   * @deprecated Use venueFinanceReport (byRevenueStream.product) instead.
+   */
   productSalesAnalytics: ProductSalesAnalytics;
   /** Get product statistics */
   productStats: ProductStats;
@@ -9850,7 +10418,10 @@ export type Query = {
   venue: Venue;
   /** Get venue activities (cursor) */
   venueActivitiesConnection: ActivityConnection;
-  /** Get comprehensive venue analytics */
+  /**
+   * Get comprehensive venue analytics
+   * @deprecated Use venueFinanceReport (money) and venueOperationsReport (courts/occupancy) instead.
+   */
   venueAnalytics: VenueAnalytics;
   /** Get venue availability */
   venueAvailability: VenueAvailability;
@@ -9860,12 +10431,28 @@ export type Query = {
   venueCategoriesConnection: ProductCategoryConnection;
   /** Cursor-paginated courts for a venue. Sort: displayOrder ASC, name ASC. */
   venueCourtsConnection: CourtConnection;
+  /** Permission-aware venue dashboard payload — field resolvers return null or empty shapes when staff lacks tier access */
+  venueDashboardSummary: VenueDashboardSummary;
+  /** Cursor-paginated venue operating expenses */
+  venueExpensesConnection: VenueExpenseConnection;
+  /** Export finance report as CSV content */
+  venueFinanceExport: VenueFinanceExportResult;
+  /** Multi-venue P&L portfolio summary */
+  venueFinancePortfolio: VenueFinancePortfolio;
+  /** Unified P&L finance report for one or more venues */
+  venueFinanceReport: VenueFinanceReport;
+  /** Cursor-paginated financial transactions (completed orders) */
+  venueFinanceTransactionsConnection: FinanceTransactionConnection;
   /** Cursor-paginated hold bookings for a venue (staff) */
   venueHoldBookingsConnection: BookingConnection;
+  /** Court operations report (schedule date axis) */
+  venueOperationsReport: VenueOperationsReport;
   /** Cursor-paginated venue orders (for staff) */
   venueOrdersConnection: OrderConnection;
   /** Get pending invitations for a venue (owner only) */
   venuePendingInvitations: Array<VenueStaff>;
+  /** Unified venue product analytics report */
+  venueProductReport: VenueProductReport;
   /** Get venue products (menu, cursor) */
   venueProductsConnection: ProductConnection;
   /** Get venue promotion summary for display */
@@ -9925,11 +10512,13 @@ export type QueryAdminUsersConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
   role?: InputMaybe<UserRole>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
 export type QueryAllVenueRequestsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   status?: InputMaybe<VenueRequestStatus>;
 };
 
@@ -9942,6 +10531,7 @@ export type QueryAuditLogDetailArgs = {
 export type QueryAuditLogsConnectionArgs = {
   filter?: InputMaybe<AuditFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10048,9 +10638,12 @@ export type QueryCheckPhoneExistsArgs = {
 
 
 export type QueryCheckRecurringAvailabilityArgs = {
+  customerId?: InputMaybe<Scalars['ID']['input']>;
   daySchedules?: InputMaybe<Array<DayScheduleInput>>;
   daysOfWeek?: InputMaybe<Array<Scalars['Int']['input']>>;
+  discountCode?: InputMaybe<Scalars['String']['input']>;
   durationMonths: Scalars['Int']['input'];
+  excludeDates?: InputMaybe<Array<Scalars['String']['input']>>;
   isStaffMode?: InputMaybe<Scalars['Boolean']['input']>;
   slots?: InputMaybe<Array<BookedSlotInput>>;
   startDate: Scalars['String']['input'];
@@ -10079,6 +10672,7 @@ export type QueryClaimRequestArgs = {
 export type QueryClaimRequestsConnectionArgs = {
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10216,6 +10810,7 @@ export type QueryGetPostReportByIdArgs = {
 export type QueryGetPostReportsForAdminConnectionArgs = {
   filter?: InputMaybe<PostReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10276,6 +10871,7 @@ export type QueryGetUserReportByIdArgs = {
 export type QueryGetUserReportsForAdminConnectionArgs = {
   filter?: InputMaybe<UserReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10399,6 +10995,7 @@ export type QueryMatchScorecardArgs = {
 export type QueryMessageReportsConnectionArgs = {
   filter?: InputMaybe<MessageReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10591,6 +11188,7 @@ export type QueryOtpTestPhoneArgs = {
 export type QueryOtpTestPhonesConnectionArgs = {
   filter?: InputMaybe<OtpTestPhoneFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10602,6 +11200,7 @@ export type QueryOtpTestUserGrantArgs = {
 export type QueryOtpTestUserGrantsConnectionArgs = {
   filter?: InputMaybe<OtpTestUserGrantFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10612,6 +11211,7 @@ export type QueryPendingClaimRequestsConnectionArgs = {
 
 export type QueryPendingVenueRequestsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10634,6 +11234,7 @@ export type QueryPickupGamesConnectionArgs = {
 export type QueryPortalCapabilityGrantsConnectionArgs = {
   filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 };
 
 
@@ -10665,6 +11266,11 @@ export type QueryPreviewLateEntryPlacementArgs = {
 };
 
 
+export type QueryPreviewManualKnockoutDrawArgs = {
+  input: PreviewManualKnockoutDrawInput;
+};
+
+
 export type QueryPreviewMoveMatchArgs = {
   input: MoveMatchInput;
 };
@@ -10684,6 +11290,12 @@ export type QueryProductBySlugArgs = {
   shopId?: InputMaybe<Scalars['ID']['input']>;
   slug: Scalars['String']['input'];
   venueId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryProductPerformanceReportArgs = {
+  filter: ProductReportFilterInput;
+  productId: Scalars['ID']['input'];
 };
 
 
@@ -10795,6 +11407,7 @@ export type QueryStaffedVenuesConnectionArgs = {
 export type QueryStockMovementsConnectionArgs = {
   filter?: InputMaybe<StockMovementFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<StockMovementSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -10954,19 +11567,64 @@ export type QueryVenueBookingsConnectionArgs = {
 
 export type QueryVenueCategoriesConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
 export type QueryVenueCourtsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryVenueDashboardSummaryArgs = {
+  period?: InputMaybe<Scalars['String']['input']>;
+  revenuePeriod?: InputMaybe<Scalars['String']['input']>;
+  venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryVenueExpensesConnectionArgs = {
+  filter: ExpenseFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
+};
+
+
+export type QueryVenueFinanceExportArgs = {
+  filter: FinanceFilterInput;
+  format: FinanceExportFormat;
+};
+
+
+export type QueryVenueFinancePortfolioArgs = {
+  filter: FinanceFilterInput;
+};
+
+
+export type QueryVenueFinanceReportArgs = {
+  filter: FinanceFilterInput;
+};
+
+
+export type QueryVenueFinanceTransactionsConnectionArgs = {
+  filter: FinanceTransactionFilterInput;
+  pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<FinanceTransactionSortInput>;
 };
 
 
 export type QueryVenueHoldBookingsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<BookingSortInput>;
   venueId: Scalars['ID']['input'];
+};
+
+
+export type QueryVenueOperationsReportArgs = {
+  filter: OperationsFilterInput;
 };
 
 
@@ -10983,9 +11641,15 @@ export type QueryVenuePendingInvitationsArgs = {
 };
 
 
+export type QueryVenueProductReportArgs = {
+  filter: ProductReportFilterInput;
+};
+
+
 export type QueryVenueProductsConnectionArgs = {
   filter?: InputMaybe<ProductFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<ProductSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -10998,12 +11662,14 @@ export type QueryVenuePromotionSummaryArgs = {
 export type QueryVenuePromotionsConnectionArgs = {
   filter?: InputMaybe<PromotionFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<PromotionSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
 
 export type QueryVenueRecurringBookingsConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<BookingSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11027,6 +11693,7 @@ export type QueryVenueReviewsConnectionArgs = {
 
 export type QueryVenueStaffConnectionArgs = {
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
   venueId: Scalars['ID']['input'];
 };
 
@@ -11087,6 +11754,10 @@ export type RecurringAvailabilityCheck = {
   allAvailable: Scalars['Boolean']['output'];
   /** List of all booking dates */
   allDates: Array<Scalars['String']['output']>;
+  /** Applied auto-promotion breakdown (staff preview) */
+  appliedPromotions?: Maybe<Array<AppliedPromotion>>;
+  /** Total auto-promo discount (staff preview) */
+  autoPromoDiscount?: Maybe<Scalars['Int']['output']>;
   /** List of available dates */
   availableDates: Array<Scalars['String']['output']>;
   /** Price breakdown per day (when prices differ by day) */
@@ -11097,12 +11768,24 @@ export type RecurringAvailabilityCheck = {
   discountAmount: Scalars['Int']['output'];
   /** Discount percentage */
   discountPercent: Scalars['Int']['output'];
+  /** Effective sessions after staff exclude dates */
+  effectiveSessions?: Maybe<Scalars['Int']['output']>;
+  /** Number of excluded sessions in staff preview */
+  excludedSessionCount?: Maybe<Scalars['Int']['output']>;
   /** Final amount after discount */
   finalAmount: Scalars['Int']['output'];
+  /** Package final amount plus auto promo (staff preview) */
+  finalAmountWithPromo?: Maybe<Scalars['Int']['output']>;
+  /** Minimum sessions required for RECURRING category promo */
+  minRecurringPromoSessions?: Maybe<Scalars['Int']['output']>;
   /** Average price per session (for display, actual may vary by day) */
   pricePerSession: Scalars['Int']['output'];
+  /** RECURRING category auto-promo discount amount */
+  recurringCategoryDiscount?: Maybe<Scalars['Int']['output']>;
   /** Is recurring booking enabled for this venue */
   recurringEnabled: Scalars['Boolean']['output'];
+  /** Whether RECURRING category promo applies at effectiveSessions */
+  recurringPromoEligible?: Maybe<Scalars['Boolean']['output']>;
   /** Sessions per week (number of days booked) */
   sessionsPerWeek: Scalars['Int']['output'];
   /** Total price before discount */
@@ -11729,6 +12412,25 @@ export type ScheduleConfigInput = {
   restBreakWindows?: InputMaybe<Array<ScheduleRestBreakWindowInput>>;
 };
 
+export type ScheduleCoveragePoint = {
+  __typename?: 'ScheduleCoveragePoint';
+  availableSlots: Scalars['Int']['output'];
+  bookingCount: Scalars['Int']['output'];
+  /** Bucket start date (YYYY-MM-DD) */
+  date: Scalars['String']['output'];
+  /** Display label for chart axis */
+  label: Scalars['String']['output'];
+  /** Occupancy rate 0–100 */
+  occupancyRate: Scalars['Float']['output'];
+  occupiedSlots: Scalars['Int']['output'];
+  /** Occupancy rate in the aligned previous-period bucket */
+  previousOccupancyRate?: Maybe<Scalars['Float']['output']>;
+  /** Revenue in the aligned previous-period bucket */
+  previousRevenue?: Maybe<Scalars['Int']['output']>;
+  /** Court revenue on schedule date(s) in bucket */
+  revenue: Scalars['Int']['output'];
+};
+
 export type ScheduleMatchInput = {
   courtName?: InputMaybe<Scalars['String']['input']>;
   estimatedDurationMinutes?: InputMaybe<Scalars['Int']['input']>;
@@ -12199,6 +12901,21 @@ export type ServicePerformance = {
   trend: Scalars['Float']['output'];
 };
 
+export type SessionInfo = {
+  __typename?: 'SessionInfo';
+  clientSource?: Maybe<ClientSource>;
+  createdAt: Scalars['DateTime']['output'];
+  deviceInfo?: Maybe<DeviceInfo>;
+  deviceName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  ipAddress?: Maybe<Scalars['String']['output']>;
+  isCurrent: Scalars['Boolean']['output'];
+  lastUsedAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Approximate login location resolved from IP (city, country) */
+  loginLocation?: Maybe<Scalars['String']['output']>;
+  platform?: Maybe<Scalars['String']['output']>;
+};
+
 export type SetMatchWalkoverInput = {
   matchId: Scalars['ID']['input'];
   /** Lý do walkover (audit bắt buộc) */
@@ -12485,6 +13202,8 @@ export type StockMovement = {
   importPrice?: Maybe<Scalars['Float']['output']>;
   /** Invoice/receipt number */
   invoiceNumber?: Maybe<Scalars['String']['output']>;
+  /** FIFO lot allocations for this sale */
+  lotAllocations?: Maybe<Array<LotAllocationRecord>>;
   /** Stock after this movement */
   newStock: Scalars['Int']['output'];
   /** Additional notes */
@@ -12551,6 +13270,13 @@ export type StockMovementFilterInput = {
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Filter by movement types */
   types?: InputMaybe<Array<StockMovementType>>;
+};
+
+export type StockMovementSortInput = {
+  /** Sort by field */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Sort order */
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Type of stock movement */
@@ -13825,6 +14551,8 @@ export type UpdateProductInput = {
   stockQuantity?: InputMaybe<Scalars['Int']['input']>;
   /** Track inventory */
   trackInventory?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Unit of measure (lon, chai, thùng…) */
+  unit?: InputMaybe<Scalars['String']['input']>;
   /** Variant option names */
   variantOptions?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Product variants */
@@ -14007,6 +14735,18 @@ export type UpdateUserReportStatusInput = {
   reportId: Scalars['ID']['input'];
   /** New status */
   status: UserReportStatus;
+};
+
+export type UpdateVenueExpenseInput = {
+  amount?: InputMaybe<Scalars['Int']['input']>;
+  category?: InputMaybe<ExpenseCategory>;
+  coverageFrom?: InputMaybe<Scalars['String']['input']>;
+  coverageTo?: InputMaybe<Scalars['String']['input']>;
+  date?: InputMaybe<Scalars['String']['input']>;
+  expenseId: Scalars['ID']['input'];
+  isRecurring?: InputMaybe<Scalars['Boolean']['input']>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<PaymentMethod>;
 };
 
 export type UpdateVenueInput = {
@@ -14230,7 +14970,10 @@ export type User = {
   followingCount: Scalars['Float']['output'];
   fullName: Scalars['String']['output'];
   gender?: Maybe<Gender>;
+  /** Whether user can access portal owner workspace (active venue staff or owned venues) */
+  hasVenuePortalAccess: Scalars['Boolean']['output'];
   isActive: Scalars['Boolean']['output'];
+  isOwner: Scalars['Boolean']['output'];
   /** Is user suspended */
   isSuspended: Scalars['Boolean']['output'];
   lastLoginAt?: Maybe<Scalars['DateTime']['output']>;
@@ -14424,6 +15167,8 @@ export type ValidatePromoCodeInput = {
   code: Scalars['String']['input'];
   /** Court IDs being booked (for scope validation) */
   courtIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Effective session count after staff exclude dates (for RECURRING promo validation) */
+  effectiveSessionCount?: InputMaybe<Scalars['Int']['input']>;
   /** Is first booking at this venue */
   isFirstBooking?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this a recurring booking */
@@ -14601,6 +15346,7 @@ export enum VenueAction {
   CreateBooking = 'CREATE_BOOKING',
   CreateOrder = 'CREATE_ORDER',
   Edit = 'EDIT',
+  ManageExpenses = 'MANAGE_EXPENSES',
   ManageProducts = 'MANAGE_PRODUCTS',
   ManagePromotions = 'MANAGE_PROMOTIONS',
   OverridePrice = 'OVERRIDE_PRICE',
@@ -14652,6 +15398,11 @@ export type VenueAnalytics = {
   venueId: Scalars['String']['output'];
   /** Venue name */
   venueName: Scalars['String']['output'];
+};
+
+export type VenueAnalyticsPreview = {
+  __typename?: 'VenueAnalyticsPreview';
+  venueAnalytics: VenueAnalytics;
 };
 
 export type VenueAvailability = {
@@ -14734,6 +15485,18 @@ export type VenueConnection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type VenueDashboardSummary = {
+  __typename?: 'VenueDashboardSummary';
+  /** Analytics preview when staff has VIEW_ANALYTICS */
+  analyticsPreview?: Maybe<VenueAnalyticsPreview>;
+  /** Counts when staff has VIEW_BOOKINGS and/or VIEW_ORDERS */
+  operational?: Maybe<VenueOperationalStats>;
+  /** Revenue when staff has VIEW_SENSITIVE_DATA */
+  sensitive?: Maybe<VenueSensitiveStats>;
+  /** Venue with myPermissions */
+  venue: Venue;
+};
+
 /** An edge in the VenueConnection. */
 export type VenueEdge = {
   __typename?: 'VenueEdge';
@@ -14741,6 +15504,47 @@ export type VenueEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge. */
   node: Venue;
+};
+
+export type VenueExpense = {
+  __typename?: 'VenueExpense';
+  _id: Scalars['ID']['output'];
+  /** Accrual amount allocated to the list filter period */
+  allocatedAmountInPeriod?: Maybe<Scalars['Int']['output']>;
+  amount: Scalars['Int']['output'];
+  category: ExpenseCategory;
+  /** Coverage start (YYYY-MM-DD) */
+  coverageFrom: Scalars['String']['output'];
+  /** Coverage end (YYYY-MM-DD) */
+  coverageTo: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Scalars['ID']['output'];
+  /** Payment date (YYYY-MM-DD) */
+  date: Scalars['String']['output'];
+  isRecurring: Scalars['Boolean']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  paymentMethod?: Maybe<PaymentMethod>;
+  updatedAt: Scalars['DateTime']['output'];
+  venueId: Scalars['ID']['output'];
+};
+
+export type VenueExpenseConnection = {
+  __typename?: 'VenueExpenseConnection';
+  edges: Array<VenueExpenseEdge>;
+  pageInfo: VenueExpensePageInfo;
+  totalCount: Scalars['Float']['output'];
+};
+
+export type VenueExpenseEdge = {
+  __typename?: 'VenueExpenseEdge';
+  cursor: Scalars['String']['output'];
+  node: VenueExpense;
+};
+
+export type VenueExpensePageInfo = {
+  __typename?: 'VenueExpensePageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
 };
 
 /** External source of imported venue data */
@@ -14794,6 +15598,58 @@ export type VenueFilterInput = {
   venueTypes?: InputMaybe<Array<VenueType>>;
 };
 
+export type VenueFinanceExportResult = {
+  __typename?: 'VenueFinanceExportResult';
+  /** CSV content (UTF-8) */
+  content: Scalars['String']['output'];
+  filename: Scalars['String']['output'];
+  mimeType: Scalars['String']['output'];
+  /** Approximate size in bytes */
+  sizeBytes: Scalars['Float']['output'];
+};
+
+export type VenueFinancePortfolio = {
+  __typename?: 'VenueFinancePortfolio';
+  totalVenues: Scalars['Int']['output'];
+  venues: Array<VenueFinancePortfolioItem>;
+};
+
+export type VenueFinancePortfolioItem = {
+  __typename?: 'VenueFinancePortfolioItem';
+  completedOrders: Scalars['Int']['output'];
+  grossProfit: FinancePnlMetric;
+  grossRevenue: FinancePnlMetric;
+  netMarginPercent: FinancePnlRateMetric;
+  netProfit: FinancePnlMetric;
+  netRevenue: FinancePnlMetric;
+  venueId: Scalars['ID']['output'];
+  venueName: Scalars['String']['output'];
+};
+
+export type VenueFinanceReport = {
+  __typename?: 'VenueFinanceReport';
+  averageOrderValue: Scalars['Int']['output'];
+  byCourt: Array<FinanceBreakdownItem>;
+  byOrderType: Array<FinanceBreakdownItem>;
+  byPaymentMethod: Array<FinanceBreakdownItem>;
+  /** Item-level revenue streams (court / product / other) */
+  byRevenueStream: Array<FinanceBreakdownItem>;
+  byStatus: Array<FinanceBreakdownItem>;
+  completedOrders: Scalars['Int']['output'];
+  completionRate: Scalars['Float']['output'];
+  expenseByCategory: Array<FinanceBreakdownItem>;
+  /** Expected revenue from pending bookings (no order yet) */
+  pendingBookingRevenue: Scalars['Int']['output'];
+  period: FinancePeriodInfo;
+  /** Total order value of pipeline orders created in the period */
+  pipelineGrossValue: Scalars['Int']['output'];
+  /** Orders still in pipeline (not completed) created in the selected period */
+  pipelineOrders: Scalars['Int']['output'];
+  pnl: FinancePnlSummary;
+  totalOrders: Scalars['Int']['output'];
+  trend: Array<FinanceTrendPoint>;
+};
+
 export type VenueLocation = {
   __typename?: 'VenueLocation';
   /** Full address */
@@ -14833,6 +15689,29 @@ export type VenueMarginThresholds = {
   warningMargin: Scalars['Float']['output'];
 };
 
+export type VenueOperationalStats = {
+  __typename?: 'VenueOperationalStats';
+  bookingStats: BookingStats;
+  orderStats: OrderStats;
+};
+
+export type VenueOperationsReport = {
+  __typename?: 'VenueOperationsReport';
+  /** Breakdown by venue promotion in the selected period */
+  byPromotion: Array<FinanceBreakdownItem>;
+  /** Breakdown by BookingScheduleType (fixed / single) */
+  byScheduleType: Array<FinanceBreakdownItem>;
+  /** Court revenue by schedule date (confirmed/completed bookings) */
+  courtRevenue: Scalars['Int']['output'];
+  /** Booking heatmap by day/hour */
+  heatMapData: Array<HeatMapCell>;
+  occupancy: OperationsOccupancySummary;
+  period: FinancePeriodInfo;
+  /** Daily/weekly/monthly court revenue and occupancy by schedule date (booking.date) */
+  scheduleCoverageTrend: Array<ScheduleCoveragePoint>;
+  totalBookings: Scalars['Int']['output'];
+};
+
 export type VenueOrderTypeConfig = {
   __typename?: 'VenueOrderTypeConfig';
   /** Custom color (hex) */
@@ -14862,6 +15741,25 @@ export type VenueOrderTypeConfigInput = {
   label?: InputMaybe<Scalars['String']['input']>;
   /** Order type enum value */
   orderType: OrderType;
+};
+
+export type VenueProductReport = {
+  __typename?: 'VenueProductReport';
+  comparePeriod?: Maybe<ProductReportPeriodInfo>;
+  decliningProducts: Array<ProductPerformance>;
+  hourlySales: Array<ProductHourlySales>;
+  inventory: InventoryReport;
+  inventoryStatus: InventoryStatus;
+  period: ProductReportPeriodInfo;
+  productsTable: ProductReportRowConnection;
+  profitByProduct: Array<ProductProfitItem>;
+  salesByCategory: Array<CategorySalesPerformance>;
+  salesTrend: Array<ProductSalesDataPoint>;
+  scope: ProductReportScope;
+  stockAlerts: Array<StockAlertProduct>;
+  summary: ProductReportSummary;
+  topProducts: Array<ProductPerformance>;
+  trend: Array<ProductSalesDataPoint>;
 };
 
 /** Compact promotion info for venue cards */
@@ -15104,6 +16002,11 @@ export type VenueReviewEdge = {
   node: VenueReview;
 };
 
+export type VenueSensitiveStats = {
+  __typename?: 'VenueSensitiveStats';
+  revenueStats: VenueRevenueStats;
+};
+
 export type VenueSortInput = {
   /** Sort by field */
   sortBy?: InputMaybe<Scalars['String']['input']>;
@@ -15237,31 +16140,30 @@ export type AdminResetUserPasswordMutationVariables = Exact<{
 
 export type AdminResetUserPasswordMutation = { __typename?: 'Mutation', adminResetUserPassword: { __typename?: 'AdminResetUserPasswordResponse', success: boolean, generatedPassword?: string | null, message: string } };
 
+export type AdminChangeUserRoleMutationVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  role: UserRole;
+}>;
+
+
+export type AdminChangeUserRoleMutation = { __typename?: 'Mutation', adminChangeUserRole: { __typename?: 'User', _id: string, role: UserRole, fullName: string, email?: string | null, phone?: string | null, isOwner: boolean } };
+
 export type AdminGetUsersQueryVariables = Exact<{
   role?: InputMaybe<UserRole>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isSuspended?: InputMaybe<Scalars['Boolean']['input']>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
-export type AdminGetUsersQuery = { __typename?: 'Query', adminUsersConnection: { __typename?: 'UserConnection', totalCount: number, edges: Array<{ __typename?: 'UserEdge', cursor: string, node: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type AdminGetUsersQuery = { __typename?: 'Query', adminUsersConnection: { __typename?: 'UserConnection', totalCount: number, edges: Array<{ __typename?: 'UserEdge', cursor: string, node: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isOwner: boolean, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type AdminGetSystemStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AdminGetSystemStatsQuery = { __typename?: 'Query', adminGetSystemStats: { __typename?: 'SystemStats', totalUsers: number, activeUsers: number, suspendedUsers: number, totalVenues: number, activeVenues: number, pendingVenues: number, totalBookings: number, totalRevenue: number } };
-
-export type AdminGetAllBookingsQueryVariables = Exact<{
-  statuses?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-  fromDate?: InputMaybe<Scalars['String']['input']>;
-  toDate?: InputMaybe<Scalars['String']['input']>;
-  pagination?: InputMaybe<CursorPageInput>;
-}>;
-
-
-export type AdminGetAllBookingsQuery = { __typename?: 'Query', adminAllBookingsConnection: { __typename?: 'AdminAllBookingConnection', customerNamesJson: string, totalCount: number, edges: Array<{ __typename?: 'AdminAllBookingEdge', cursor: string, node: { __typename?: 'AdminBookingItem', _id: string, venueName: string, venueAddress: string, date: string, timeSlots: string, status: string, totalPrice: number, courtName: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type AdminGetUserBookingsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -15275,6 +16177,7 @@ export type AdminGetUserBookingsQuery = { __typename?: 'Query', adminUserBooking
 export type AuditGetLogsQueryVariables = Exact<{
   filter?: InputMaybe<AuditFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15302,6 +16205,7 @@ export type ReviewClaimRequestMutation = { __typename?: 'Mutation', reviewClaimR
 export type GetClaimRequestsQueryVariables = Exact<{
   filter?: InputMaybe<ClaimRequestFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15371,6 +16275,7 @@ export type DeleteMessageByAdminMutation = { __typename?: 'Mutation', deleteMess
 export type GetPostReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<PostReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15384,6 +16289,7 @@ export type GetPostReportStatsQuery = { __typename?: 'Query', getPostReportStats
 export type GetUserReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<UserReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15397,6 +16303,7 @@ export type GetUserReportStatsQuery = { __typename?: 'Query', getUserReportStats
 export type GetMessageReportsForAdminQueryVariables = Exact<{
   filter?: InputMaybe<MessageReportFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15490,6 +16397,7 @@ export type SetOtpTestPhoneEnabledMutation = { __typename?: 'Mutation', setOtpTe
 export type GetOtpTestPhonesQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<OtpTestPhoneFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15512,10 +16420,551 @@ export type RevokeOtpTestUserGrantMutation = { __typename?: 'Mutation', revokeOt
 export type GetOtpTestUserGrantsQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<OtpTestUserGrantFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
 export type GetOtpTestUserGrantsQuery = { __typename?: 'Query', otpTestUserGrantsConnection: { __typename?: 'OtpTestUserGrantConnection', totalCount: number, edges: Array<{ __typename?: 'OtpTestUserGrantEdge', cursor: string, node: { __typename?: 'OtpTestUserGrant', _id: string, userId: string, userDisplayName: string, userRole: UserRole, phone: string, testCode: string, reason: string, enabled: boolean, allowedPurposes: Array<OtpPurpose>, expiresAt: string, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type CreateStaffRecurringBookingMutationVariables = Exact<{
+  input: CreateStaffRecurringBookingInput;
+}>;
+
+
+export type CreateStaffRecurringBookingMutation = { __typename?: 'Mutation', createStaffRecurringBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, isRecurring: boolean, discount?: number | null, discountCode?: string | null, isManualPrice: boolean, manualFinalAmount?: number | null, recurringConfig?: { __typename?: 'RecurringConfig', totalSessions: number, endDate: string, durationMonths: number, frequency: RecurringFrequency } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
+
+export type ValidatePromoCodeQueryVariables = Exact<{
+  input: ValidatePromoCodeInput;
+}>;
+
+
+export type ValidatePromoCodeQuery = { __typename?: 'Query', validatePromoCode: { __typename?: 'PromoCodeValidationResult', isValid: boolean, errorMessage?: string | null, estimatedDiscount?: number | null, promotion?: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } | null } };
+
+export type CalculateBookingDiscountQueryVariables = Exact<{
+  input: ApplyPromotionInput;
+}>;
+
+
+export type CalculateBookingDiscountQuery = { __typename?: 'Query', calculateBookingDiscount: { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null } };
+
+export type GetAvailablePromotionsForBookingQueryVariables = Exact<{
+  input: ApplyPromotionInput;
+}>;
+
+
+export type GetAvailablePromotionsForBookingQuery = { __typename?: 'Query', availablePromotionsForBooking: { __typename?: 'AvailablePromotionsForBooking', hasPromotions: boolean, autoApplied: Array<{ __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null }>, codePromotions: Array<{ __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null }>, preCalculatedDiscount?: { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null } | null } };
+
+export type CheckRecurringAvailabilityQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  startDate: Scalars['String']['input'];
+  durationMonths: Scalars['Int']['input'];
+  slots?: InputMaybe<Array<BookedSlotInput> | BookedSlotInput>;
+  daySchedules?: InputMaybe<Array<DayScheduleInput> | DayScheduleInput>;
+  isStaffMode?: InputMaybe<Scalars['Boolean']['input']>;
+  excludeDates?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  customerId?: InputMaybe<Scalars['ID']['input']>;
+  discountCode?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CheckRecurringAvailabilityQuery = { __typename?: 'Query', checkRecurringAvailability: { __typename?: 'RecurringAvailabilityCheck', allAvailable: boolean, allDates: Array<string>, unavailableDates: Array<string>, availableDates: Array<string>, totalSessions: number, sessionsPerWeek: number, daysOfWeek: Array<number>, pricePerSession: number, totalPrice: number, discountPercent: number, discountAmount: number, finalAmount: number, recurringEnabled: boolean, effectiveSessions?: number | null, excludedSessionCount?: number | null, recurringPromoEligible?: boolean | null, minRecurringPromoSessions?: number | null, recurringCategoryDiscount?: number | null, autoPromoDiscount?: number | null, finalAmountWithPromo?: number | null, appliedPromotions?: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, category: PromotionCategory, discountAmount: number, code?: string | null, type: PromotionType, value: number }> | null, dayPriceBreakdown?: Array<{ __typename?: 'DayPriceBreakdown', dayOfWeek: number, pricePerSession: number, sessionCount: number, totalPrice: number }> | null } };
+
+export type FinancePnlMetricFieldsFragment = { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number };
+
+export type FinancePnlRateMetricFieldsFragment = { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number };
+
+export type VenueFinanceReportQueryVariables = Exact<{
+  filter: FinanceFilterInput;
+}>;
+
+
+export type VenueFinanceReportQuery = { __typename?: 'Query', venueFinanceReport: { __typename?: 'VenueFinanceReport', pendingBookingRevenue: number, totalOrders: number, completedOrders: number, pipelineOrders: number, pipelineGrossValue: number, averageOrderValue: number, completionRate: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, pnl: { __typename?: 'FinancePnlSummary', grossRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, collected: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, outstanding: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, refunds: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, cogs: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, grossProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, operatingExpenses: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netMarginPercent: { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number } }, byStatus: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPaymentMethod: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byOrderType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byCourt: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byRevenueStream: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, expenseByCategory: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, trend: Array<{ __typename?: 'FinanceTrendPoint', label: string, revenue: number, netProfit: number, expenses: number, previousRevenue?: number | null }> } };
+
+export type VenueFinanceTransactionsConnectionQueryVariables = Exact<{
+  filter: FinanceTransactionFilterInput;
+  sort?: InputMaybe<FinanceTransactionSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueFinanceTransactionsConnectionQuery = { __typename?: 'Query', venueFinanceTransactionsConnection: { __typename?: 'FinanceTransactionConnection', totalCount: number, edges: Array<{ __typename?: 'FinanceTransactionEdge', cursor: string, node: { __typename?: 'FinanceTransaction', orderId: string, orderCode: string, venueId: string, venueName?: string | null, createdAt: string, completedAt?: string | null, paidAt?: string | null, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, courtLabel?: string | null, customerName?: string | null, grossAmount: number, paidAmount: number, refundAmount: number, netAmount: number, cogsAmount: number, profitAmount: number, profitMarginPercent: number } }>, pageInfo: { __typename?: 'FinanceTransactionPageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueExpensesConnectionQueryVariables = Exact<{
+  filter: ExpenseFilterInput;
+  sort?: InputMaybe<CursorSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueExpensesConnectionQuery = { __typename?: 'Query', venueExpensesConnection: { __typename?: 'VenueExpenseConnection', totalCount: number, edges: Array<{ __typename?: 'VenueExpenseEdge', cursor: string, node: { __typename?: 'VenueExpense', _id: string, venueId: string, category: ExpenseCategory, amount: number, date: string, coverageFrom: string, coverageTo: string, allocatedAmountInPeriod?: number | null, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean, createdAt: string } }>, pageInfo: { __typename?: 'VenueExpensePageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type CreateVenueExpenseMutationVariables = Exact<{
+  input: CreateVenueExpenseInput;
+}>;
+
+
+export type CreateVenueExpenseMutation = { __typename?: 'Mutation', createVenueExpense: { __typename?: 'VenueExpense', _id: string, category: ExpenseCategory, amount: number, date: string, coverageFrom: string, coverageTo: string, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean } };
+
+export type UpdateVenueExpenseMutationVariables = Exact<{
+  input: UpdateVenueExpenseInput;
+}>;
+
+
+export type UpdateVenueExpenseMutation = { __typename?: 'Mutation', updateVenueExpense: { __typename?: 'VenueExpense', _id: string, category: ExpenseCategory, amount: number, date: string, coverageFrom: string, coverageTo: string, note?: string | null, paymentMethod?: PaymentMethod | null, isRecurring: boolean } };
+
+export type DeleteVenueExpenseMutationVariables = Exact<{
+  expenseId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteVenueExpenseMutation = { __typename?: 'Mutation', deleteVenueExpense: boolean };
+
+export type FinancePeriodFieldsFragment = { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string };
+
+export type FinanceBreakdownItemFieldsFragment = { __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number };
+
+export type VenueFinancePortfolioQueryVariables = Exact<{
+  filter: FinanceFilterInput;
+}>;
+
+
+export type VenueFinancePortfolioQuery = { __typename?: 'Query', venueFinancePortfolio: { __typename?: 'VenueFinancePortfolio', totalVenues: number, venues: Array<{ __typename?: 'VenueFinancePortfolioItem', venueId: string, venueName: string, completedOrders: number, grossRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netMarginPercent: { __typename?: 'FinancePnlRateMetric', value: number, previousValue: number, changePercent: number }, grossProfit: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number }, netRevenue: { __typename?: 'FinancePnlMetric', value: number, previousValue: number, changePercent: number } }> } };
+
+export type VenueOperationsReportQueryVariables = Exact<{
+  filter: OperationsFilterInput;
+}>;
+
+
+export type VenueOperationsReportQuery = { __typename?: 'Query', venueOperationsReport: { __typename?: 'VenueOperationsReport', totalBookings: number, courtRevenue: number, period: { __typename?: 'FinancePeriodInfo', from: string, to: string, previousFrom: string, previousTo: string, timezone: string }, occupancy: { __typename?: 'OperationsOccupancySummary', availableSlots: number, occupiedSlots: number, occupancyRate: number }, byScheduleType: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, byPromotion: Array<{ __typename?: 'FinanceBreakdownItem', label: string, key?: string | null, revenue: number, count: number, percentage: number }>, heatMapData: Array<{ __typename?: 'HeatMapCell', hour: string, day: string, intensity: number, bookings: number }>, scheduleCoverageTrend: Array<{ __typename?: 'ScheduleCoveragePoint', date: string, label: string, revenue: number, bookingCount: number, occupiedSlots: number, availableSlots: number, occupancyRate: number, previousRevenue?: number | null, previousOccupancyRate?: number | null }> } };
+
+export type StockMovementListFieldsFragment = { __typename?: 'StockMovement', _id: string, productId: string, venueId: string, variantId?: string | null, type: StockMovementType, quantity: number, importPrice?: number | null, totalCost?: number | null, supplierName?: string | null, supplierContact?: string | null, invoiceNumber?: string | null, orderId?: string | null, salePrice?: number | null, costAtSale?: number | null, adjustmentReason?: StockAdjustmentReason | null, relatedVenueId?: string | null, relatedProductId?: string | null, previousStock: number, newStock: number, note?: string | null, createdBy: string, createdAt: string, updatedAt: string, product?: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, costPrice?: number | null, averageCost?: number | null, lastImportPrice?: number | null, stockQuantity: number, images: Array<{ __typename?: 'ProductImage', url: string, isPrimary: boolean }> } | null, createdByUser?: { __typename?: 'User', _id: string, displayName: string, photoURL?: string | null } | null };
+
+export type StockMovementsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<StockMovementFilterInput>;
+  sort?: InputMaybe<StockMovementSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type StockMovementsConnectionQuery = { __typename?: 'Query', stockMovementsConnection: { __typename?: 'StockMovementConnection', totalCount: number, edges: Array<{ __typename?: 'StockMovementEdge', cursor: string, node: { __typename?: 'StockMovement', _id: string, productId: string, venueId: string, variantId?: string | null, type: StockMovementType, quantity: number, importPrice?: number | null, totalCost?: number | null, supplierName?: string | null, supplierContact?: string | null, invoiceNumber?: string | null, orderId?: string | null, salePrice?: number | null, costAtSale?: number | null, adjustmentReason?: StockAdjustmentReason | null, relatedVenueId?: string | null, relatedProductId?: string | null, previousStock: number, newStock: number, note?: string | null, createdBy: string, createdAt: string, updatedAt: string, product?: { __typename?: 'Product', _id: string, name: string, sku?: string | null, price: number, costPrice?: number | null, averageCost?: number | null, lastImportPrice?: number | null, stockQuantity: number, images: Array<{ __typename?: 'ProductImage', url: string, isPrimary: boolean }> } | null, createdByUser?: { __typename?: 'User', _id: string, displayName: string, photoURL?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type UpdateVenueMutationVariables = Exact<{
+  input: UpdateVenueInput;
+}>;
+
+
+export type UpdateVenueMutation = { __typename?: 'Mutation', updateVenue: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus } };
+
+export type UpdateVenueOrderTypeConfigsMutationVariables = Exact<{
+  input: UpdateVenueOrderTypeConfigsInput;
+}>;
+
+
+export type UpdateVenueOrderTypeConfigsMutation = { __typename?: 'Mutation', updateVenueOrderTypeConfigs: { __typename?: 'Venue', _id: string, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null }> | null } };
+
+export type CreateCourtMutationVariables = Exact<{
+  input: CreateCourtInput;
+}>;
+
+
+export type CreateCourtMutation = { __typename?: 'Mutation', createCourt: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus } };
+
+export type UpdateCourtMutationVariables = Exact<{
+  input: UpdateCourtInput;
+}>;
+
+
+export type UpdateCourtMutation = { __typename?: 'Mutation', updateCourt: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus, defaultPricePerHour: number, peakPricePerHour: number } };
+
+export type DeleteCourtMutationVariables = Exact<{
+  courtId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCourtMutation = { __typename?: 'Mutation', deleteCourt: boolean };
+
+export type ConfirmBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type ConfirmBookingMutation = { __typename?: 'Mutation', confirmBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, status: BookingStatus } } };
+
+export type RejectBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RejectBookingMutation = { __typename?: 'Mutation', rejectBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CancelBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelBookingMutation = { __typename?: 'Mutation', cancelBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CompleteBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteBookingMutation = { __typename?: 'Mutation', completeBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CheckInBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type CheckInBookingMutation = { __typename?: 'Mutation', checkIn: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type MarkNoShowMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkNoShowMutation = { __typename?: 'Mutation', markNoShow: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type ApproveHoldBookingMutationVariables = Exact<{
+  input: ApproveHoldBookingInput;
+}>;
+
+
+export type ApproveHoldBookingMutation = { __typename?: 'Mutation', approveHoldBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type ConfirmHoldBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  paymentMethod?: InputMaybe<PaymentMethod>;
+}>;
+
+
+export type ConfirmHoldBookingMutation = { __typename?: 'Mutation', confirmHoldBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, status: BookingStatus } } };
+
+export type RejectHoldBookingMutationVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type RejectHoldBookingMutation = { __typename?: 'Mutation', rejectHoldBooking: { __typename?: 'Booking', _id: string, status: BookingStatus } };
+
+export type CreateStaffOrderMutationVariables = Exact<{
+  input: CreateOrderInput;
+}>;
+
+
+export type CreateStaffOrderMutation = { __typename?: 'Mutation', createStaffOrder: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } };
+
+export type ConfirmOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type ConfirmOrderMutation = { __typename?: 'Mutation', confirmOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type MarkOrderPreparingMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderPreparingMutation = { __typename?: 'Mutation', markOrderPreparing: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type MarkOrderReadyMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderReadyMutation = { __typename?: 'Mutation', markOrderReady: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type MarkOrderDeliveredMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type MarkOrderDeliveredMutation = { __typename?: 'Mutation', markOrderDelivered: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type CompleteOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type CompleteOrderMutation = { __typename?: 'Mutation', completeOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type UploadPaymentProofMutationVariables = Exact<{
+  input: UploadPaymentProofInput;
+}>;
+
+
+export type UploadPaymentProofMutation = { __typename?: 'Mutation', uploadPaymentProof: { __typename?: 'Order', _id: string, paymentProofImages?: Array<string> | null } };
+
+export type RemovePaymentProofImageMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  imageUrl: Scalars['String']['input'];
+}>;
+
+
+export type RemovePaymentProofImageMutation = { __typename?: 'Mutation', removePaymentProofImage: { __typename?: 'Order', _id: string, paymentProofImages?: Array<string> | null } };
+
+export type CancelOrderMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelOrderMutation = { __typename?: 'Mutation', cancelOrder: { __typename?: 'Order', _id: string, status: OrderStatus } };
+
+export type CancelOrderWithRefundMutationVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+  reason: Scalars['String']['input'];
+  refundPercent?: InputMaybe<Scalars['Int']['input']>;
+  refundNote?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CancelOrderWithRefundMutation = { __typename?: 'Mutation', cancelOrderWithRefund: { __typename?: 'Order', _id: string, status: OrderStatus, paymentStatus: OrderPaymentStatus } };
+
+export type CreateProductMutationVariables = Exact<{
+  input: CreateProductInput;
+}>;
+
+
+export type CreateProductMutation = { __typename?: 'Mutation', createProduct: { __typename?: 'Product', _id: string, name: string, price: number, status: ProductStatus } };
+
+export type UpdateProductMutationVariables = Exact<{
+  input: UpdateProductInput;
+}>;
+
+
+export type UpdateProductMutation = { __typename?: 'Mutation', updateProduct: { __typename?: 'Product', _id: string, name: string, price: number, status: ProductStatus, stockQuantity: number } };
+
+export type DeleteProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProductMutation = { __typename?: 'Mutation', deleteProduct: boolean };
+
+export type PublishProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type PublishProductMutation = { __typename?: 'Mutation', publishProduct: { __typename?: 'Product', _id: string, status: ProductStatus } };
+
+export type UnpublishProductMutationVariables = Exact<{
+  productId: Scalars['ID']['input'];
+}>;
+
+
+export type UnpublishProductMutation = { __typename?: 'Mutation', unpublishProduct: { __typename?: 'Product', _id: string, status: ProductStatus } };
+
+export type ImportStockMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  input: ImportStockInput;
+}>;
+
+
+export type ImportStockMutation = { __typename?: 'Mutation', importStock: { __typename?: 'StockMovement', _id: string, productId: string, quantity: number, importPrice?: number | null, totalCost?: number | null, previousStock: number, newStock: number, createdAt: string } };
+
+export type MoveProductsToVenueMutationVariables = Exact<{
+  input: TransferProductsInput;
+}>;
+
+
+export type MoveProductsToVenueMutation = { __typename?: 'Mutation', moveProductsToVenue: { __typename?: 'BulkOperationResult', success: number, failed: Array<string> } };
+
+export type CreateProductCategoryMutationVariables = Exact<{
+  input: CreateProductCategoryInput;
+}>;
+
+
+export type CreateProductCategoryMutation = { __typename?: 'Mutation', createProductCategory: { __typename?: 'ProductCategory', _id: string, name: string } };
+
+export type UpdateProductCategoryMutationVariables = Exact<{
+  input: UpdateProductCategoryInput;
+}>;
+
+
+export type UpdateProductCategoryMutation = { __typename?: 'Mutation', updateProductCategory: { __typename?: 'ProductCategory', _id: string, name: string } };
+
+export type DeleteProductCategoryMutationVariables = Exact<{
+  categoryId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProductCategoryMutation = { __typename?: 'Mutation', deleteProductCategory: boolean };
+
+export type CreateStaffBookingMutationVariables = Exact<{
+  input: CreateStaffBookingInput;
+}>;
+
+
+export type CreateStaffBookingMutation = { __typename?: 'Mutation', createStaffBooking: { __typename?: 'BookingWithOrderPayload', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, finalAmount: number, totalPrice: number, discount?: number | null, discountCode?: string | null, isManualPrice: boolean, manualFinalAmount?: number | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null }, order: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, totalAmount: number } } };
+
+export type AddVenueStaffMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  permissions: Array<VenueAction> | VenueAction;
+  customTitle?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type AddVenueStaffMutation = { __typename?: 'Mutation', addVenueStaff: { __typename?: 'VenueStaff', _id: string, permissions: Array<VenueAction>, status: VenueStaffStatus } };
+
+export type UpdateVenueStaffPermissionsMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  permissions: Array<VenueAction> | VenueAction;
+}>;
+
+
+export type UpdateVenueStaffPermissionsMutation = { __typename?: 'Mutation', updateVenueStaffPermissions: { __typename?: 'VenueStaff', _id: string, permissions: Array<VenueAction> } };
+
+export type UpdateVenueStaffTitleMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+  customTitle: Scalars['String']['input'];
+}>;
+
+
+export type UpdateVenueStaffTitleMutation = { __typename?: 'Mutation', updateVenueStaffTitle: { __typename?: 'VenueStaff', _id: string, customTitle?: string | null, permissions: Array<VenueAction>, status: VenueStaffStatus } };
+
+export type RemoveVenueStaffMutationVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveVenueStaffMutation = { __typename?: 'Mutation', removeVenueStaff: boolean };
+
+export type ProductReportPeriodFieldsFragment = { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string };
+
+export type ProductReportSummaryFieldsFragment = { __typename?: 'ProductReportSummary', totalRevenue: number, previousRevenue: number, revenueChangePercent: number, totalItemsSold: number, previousItemsSold: number, itemsChangePercent: number, totalOrders: number, previousOrders: number, ordersChangePercent: number, totalCogs: number, previousCogs: number, grossProfit: number, previousGrossProfit: number, grossProfitChangePercent: number, grossProfitMarginPercent: number, uniqueProductsSold: number, previousUniqueProductsSold: number, bestSellingProduct: string, bestSellingCategory: string, peakHour: string, peakDay: string };
+
+export type ProductSalesDataPointFieldsFragment = { __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null };
+
+export type ProductPerformanceFieldsFragment = { __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null };
+
+export type ProductReportRowFieldsFragment = { __typename?: 'ProductReportRow', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, stockQuantity: number, trackInventory: boolean, unitPrice: number, averageCost?: number | null, venueId?: string | null, venueName?: string | null, soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, revenuePercentage: number, revenueGrowth: number, rank?: number | null };
+
+export type StockMovementSummaryFieldsFragment = { __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string };
+
+export type VenueProductReportQueryVariables = Exact<{
+  filter: ProductReportFilterInput;
+}>;
+
+
+export type VenueProductReportQuery = { __typename?: 'Query', venueProductReport: { __typename?: 'VenueProductReport', scope: { __typename?: 'ProductReportScope', mode: ProductReportScopeMode, venueCount: number, venueNames: Array<string>, venueIds?: Array<string> | null }, period: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string }, comparePeriod?: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string } | null, summary: { __typename?: 'ProductReportSummary', totalRevenue: number, previousRevenue: number, revenueChangePercent: number, totalItemsSold: number, previousItemsSold: number, itemsChangePercent: number, totalOrders: number, previousOrders: number, ordersChangePercent: number, totalCogs: number, previousCogs: number, grossProfit: number, previousGrossProfit: number, grossProfitChangePercent: number, grossProfitMarginPercent: number, uniqueProductsSold: number, previousUniqueProductsSold: number, bestSellingProduct: string, bestSellingCategory: string, peakHour: string, peakDay: string }, trend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, salesTrend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, topProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null }>, decliningProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, sku?: string | null, categoryName: string, categoryId: string, quantitySold: number, previousQuantitySold: number, revenue: number, previousRevenue: number, orderCount: number, unitPrice: number, revenuePercentage: number, revenueGrowth: number, quantityGrowth: number, rank: number, imageUrl?: string | null }>, salesByCategory: Array<{ __typename?: 'CategorySalesPerformance', categoryId: string, categoryName: string, revenue: number, quantitySold: number, orderCount: number, percentage: number, growth: number }>, hourlySales: Array<{ __typename?: 'ProductHourlySales', hour: string, revenue: number, quantitySold: number, intensity: number }>, inventory: { __typename?: 'InventoryReport', totalProducts: number, totalStockValue: number, totalCostValue: number, lowStockCount: number, outOfStockCount: number }, inventoryStatus: { __typename?: 'InventoryStatus', activeProducts: number, lowStockProducts: number, outOfStockProducts: number, stockTurnoverRate: number, totalInventoryValue: number, totalProducts: number, totalRetailValue: number }, stockAlerts: Array<{ __typename?: 'StockAlertProduct', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, currentStock: number, lowStockThreshold?: number | null, alertType: string, recentSales: number }>, profitByProduct: Array<{ __typename?: 'ProductProfitItem', productId: string, productName: string, soldQuantity: number, revenue: number, cogs: number, grossProfit: number, profitMargin: number }>, productsTable: { __typename?: 'ProductReportRowConnection', totalCount: number, edges: Array<{ __typename?: 'ProductReportRowEdge', cursor: string, node: { __typename?: 'ProductReportRow', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, stockQuantity: number, trackInventory: boolean, unitPrice: number, averageCost?: number | null, venueId?: string | null, venueName?: string | null, soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, revenuePercentage: number, revenueGrowth: number, rank?: number | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, endCursor?: string | null } } } };
+
+export type ProductPerformanceReportQueryVariables = Exact<{
+  productId: Scalars['ID']['input'];
+  filter: ProductReportFilterInput;
+}>;
+
+
+export type ProductPerformanceReportQuery = { __typename?: 'Query', productPerformanceReport: { __typename?: 'ProductPerformanceReport', period: { __typename?: 'ProductReportPeriodInfo', from: string, to: string, timezone: string }, product: { __typename?: 'ProductPerformanceSnapshot', productId: string, productName: string, sku?: string | null, imageUrl?: string | null, categoryName: string, categoryId: string, status: ProductStatus, unit: string, unitPrice: number, averageCost?: number | null, stockQuantity: number, trackInventory: boolean, venueId?: string | null, venueName?: string | null, hasVariants: boolean, variantCount: number }, summary: { __typename?: 'ProductPerformanceReportSummary', soldQuantity: number, previousSoldQuantity: number, revenue: number, previousRevenue: number, cogs: number, grossProfit: number, profitMargin: number, orderCount: number, revenuePercentage: number, rank?: number | null }, trend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number, previousRevenue?: number | null }>, recentMovements: Array<{ __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string }>, importHistory: Array<{ __typename?: 'StockMovement', _id: string, type: StockMovementType, quantity: number, importPrice?: number | null, costAtSale?: number | null, newStock: number, supplierName?: string | null, invoiceNumber?: string | null, note?: string | null, createdAt: string }> } };
+
+export type PromotionCoreFragment = { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null };
+
+export type PromotionUserBriefFragment = { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string };
+
+export type AppliedPromotionFragment = { __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null };
+
+export type DiscountCalculationFragment = { __typename?: 'DiscountCalculationResult', originalTotal: number, totalDiscount: number, finalAmount: number, discountPercentage: number, isStacked: boolean, stackingMessage?: string | null, appliedPromotions: Array<{ __typename?: 'AppliedPromotion', promotionId: string, name: string, type: PromotionType, category: PromotionCategory, value: number, maxDiscountAmount?: number | null, discountAmount: number, code?: string | null, badgeText?: string | null, applyLevel?: PromotionApplyLevel | null }>, slotDiscounts?: Array<{ __typename?: 'SlotDiscount', courtId: string, startTime: string, endTime: string, originalPrice: number, discountAmount: number, finalPrice: number }> | null };
+
+export type PromotionDetailExtraFragment = { __typename?: 'Promotion', shortDescription?: string | null, productCategoryIds?: Array<string> | null, displayOrder: number, createdBy: string, reviewedBy?: string | null, reviewedAt?: string | null, rejectionReason?: string | null, isWithinDateRange: boolean, isUsageLimitReached: boolean, remainingUsage?: number | null, createdByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, reviewedByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, stackingRules?: { __typename?: 'StackingRules', canStack: boolean, maxStackDiscountPercent?: number | null, maxStackDiscountAmount?: number | null, stackableWithIds?: Array<string> | null, stackableWithCategories?: Array<PromotionCategory> | null } | null };
+
+export type CreatePromotionMutationVariables = Exact<{
+  input: CreatePromotionInput;
+}>;
+
+
+export type CreatePromotionMutation = { __typename?: 'Mutation', createPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type UpdatePromotionMutationVariables = Exact<{
+  input: UpdatePromotionInput;
+}>;
+
+
+export type UpdatePromotionMutation = { __typename?: 'Mutation', updatePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type SubmitPromotionForApprovalMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type SubmitPromotionForApprovalMutation = { __typename?: 'Mutation', submitPromotionForApproval: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type ReviewPromotionMutationVariables = Exact<{
+  input: ReviewPromotionInput;
+}>;
+
+
+export type ReviewPromotionMutation = { __typename?: 'Mutation', reviewPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type ActivatePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type ActivatePromotionMutation = { __typename?: 'Mutation', activatePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type PausePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type PausePromotionMutation = { __typename?: 'Mutation', pausePromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type CancelPromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type CancelPromotionMutation = { __typename?: 'Mutation', cancelPromotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } };
+
+export type DeletePromotionMutationVariables = Exact<{
+  promotionId: Scalars['ID']['input'];
+}>;
+
+
+export type DeletePromotionMutation = { __typename?: 'Mutation', deletePromotion: boolean };
+
+export type VenuePromotionsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<PromotionFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<PromotionSortInput>;
+}>;
+
+
+export type VenuePromotionsConnectionQuery = { __typename?: 'Query', venuePromotionsConnection: { __typename?: 'PromotionConnection', totalCount: number, edges: Array<{ __typename?: 'PromotionEdge', cursor: string, node: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetPromotionQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPromotionQuery = { __typename?: 'Query', promotion: { __typename?: 'Promotion', _id: string, venueId: string, name: string, description?: string | null, type: PromotionType, value: number, maxDiscountAmount?: number | null, scope: PromotionScope, courtIds?: Array<string> | null, sportTypes?: Array<SportType> | null, category: PromotionCategory, trigger: PromotionTrigger, code?: string | null, startDate: string, endDate: string, status: PromotionStatus, priority: number, minBookingAmount?: number | null, applyLevel: PromotionApplyLevel, isStackable: boolean, showOnVenueCard: boolean, showAsBanner: boolean, badgeText?: string | null, badgeColor?: string | null, bannerImageUrl?: string | null, usageCount: number, totalUsageLimit?: number | null, perUserLimit?: number | null, createdAt: string, updatedAt: string, shortDescription?: string | null, productCategoryIds?: Array<string> | null, displayOrder: number, createdBy: string, reviewedBy?: string | null, reviewedAt?: string | null, rejectionReason?: string | null, isWithinDateRange: boolean, isUsageLimitReached: boolean, remainingUsage?: number | null, applicableTimeRanges?: Array<{ __typename?: 'TimeRange', startTime: string, endTime: string }> | null, createdByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, reviewedByUser?: { __typename?: 'User', _id: string, fullName: string, displayName: string, userName: string } | null, stackingRules?: { __typename?: 'StackingRules', canStack: boolean, maxStackDiscountPercent?: number | null, maxStackDiscountAmount?: number | null, stackableWithIds?: Array<string> | null, stackableWithCategories?: Array<PromotionCategory> | null } | null } };
+
+export type GetPromotionStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetPromotionStatsQuery = { __typename?: 'Query', promotionStats: { __typename?: 'PromotionStats', total: number, active: number, pendingApproval: number, draft: number, paused: number, expired: number, cancelled: number, totalUsage: number, totalDiscountGiven: number } };
+
+export type ValidateOrderPromoCodeQueryVariables = Exact<{
+  input: ValidateOrderPromoCodeInput;
+}>;
+
+
+export type ValidateOrderPromoCodeQuery = { __typename?: 'Query', validateOrderPromoCode: { __typename?: 'PromoCodeValidationResult', isValid: boolean, errorMessage?: string | null, estimatedDiscount?: number | null, promotion?: { __typename?: 'Promotion', _id: string, code?: string | null, name: string, type: PromotionType, value: number, maxDiscountAmount?: number | null } | null } };
+
+export type VenueSummaryFieldsFragment = { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } };
 
 export type GetMyVenuesStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -15527,16 +16976,156 @@ export type MyVenuesConnectionQueryVariables = Exact<{
 }>;
 
 
-export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type MyVenuesConnectionQuery = { __typename?: 'Query', myVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
-export type VenueBookingsConnectionQueryVariables = Exact<{
-  venueId: Scalars['ID']['input'];
-  filter?: InputMaybe<BookingFilterInput>;
+export type StaffedVenuesConnectionQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
 }>;
 
 
-export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, totalPrice: number, finalAmount: number, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customer?: { __typename?: 'User', displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+export type StaffedVenuesConnectionQuery = { __typename?: 'Query', staffedVenuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetVenueDetailQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetVenueDetailQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, description?: string | null, status: VenueStatus, phoneNumber?: string | null, email?: string | null, courtCount: number, coverImageUrl?: string | null, images?: Array<string> | null, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, recurringBookingEnabled: boolean, slotDurationMinutes: number, operatingHours: Array<{ __typename?: 'OperatingHours', dayOfWeek: number, openTime: string, closeTime: string, isClosed: boolean, is24Hours?: boolean | null }>, location: { __typename?: 'VenueLocation', address: string, city?: string | null, district?: string | null, latitude?: number | null, longitude?: number | null }, orderTypeConfigs?: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> | null, marginThresholds?: { __typename?: 'VenueMarginThresholds', warningMargin: number, dangerMargin: number } | null } };
+
+export type VenuesConnectionQueryVariables = Exact<{
+  filter?: InputMaybe<VenueFilterInput>;
+  sort?: InputMaybe<VenueSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenuesConnectionQuery = { __typename?: 'Query', venuesConnection: { __typename?: 'VenueConnection', totalCount: number, edges: Array<{ __typename?: 'VenueEdge', cursor: string, node: { __typename?: 'Venue', _id: string, name: string, status: VenueStatus, courtCount: number, isOwner: boolean, isStaff: boolean, myPermissions?: Array<VenueAction> | null, location: { __typename?: 'VenueLocation', address: string, city?: string | null } } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueCourtsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueCourtsConnectionQuery = { __typename?: 'Query', venueCourtsConnection: { __typename?: 'CourtConnection', totalCount: number, edges: Array<{ __typename?: 'CourtEdge', cursor: string, node: { __typename?: 'Court', _id: string, name: string, sportType: SportType, status: CourtStatus, defaultPricePerHour: number, peakPricePerHour: number, displayOrder: number } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<BookingFilterInput>;
+  sort?: InputMaybe<BookingSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueBookingsConnectionQuery = { __typename?: 'Query', venueBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, totalPrice: number, finalAmount: number, paymentMethod?: PaymentMethod | null, internalNote?: string | null, holdExpiresAt?: string | null, customerDisplayName?: string | null, customerDisplayPhone?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number }>, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetBookingQueryVariables = Exact<{
+  bookingId: Scalars['ID']['input'];
+}>;
+
+
+export type GetBookingQuery = { __typename?: 'Query', booking: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, source: BookingSource, isRecurring: boolean, parentBookingId?: string | null, sessionNumber?: number | null, totalPrice: number, serviceFee?: number | null, discount?: number | null, finalAmount: number, isManualPrice: boolean, manualPriceNote?: string | null, paymentMethod?: PaymentMethod | null, customerNote?: string | null, internalNote?: string | null, discountCode?: string | null, confirmedAt?: string | null, checkedInAt?: string | null, checkedOutAt?: string | null, cancelledAt?: string | null, cancellationReason?: string | null, holdExpiresAt?: string | null, createdAt: string, slots: Array<{ __typename?: 'BookedSlot', courtId: string, courtName: string, startTime: string, endTime: string, price: number, isPeakHour: boolean }>, customer?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string, email?: string | null } | null, venue?: { __typename?: 'Venue', _id: string, name: string } | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, totalSessions: number, endDate: string } | null, parentBooking?: { __typename?: 'Booking', _id: string, date: string } | null } };
+
+export type VenueHoldBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<BookingSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueHoldBookingsConnectionQuery = { __typename?: 'Query', venueHoldBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, holdExpiresAt?: string | null, customerDisplayName?: string | null, customerDisplayPhone?: string | null, slots: Array<{ __typename?: 'BookedSlot', courtName: string, startTime: string, endTime: string }>, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueRecurringBookingsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<BookingSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueRecurringBookingsConnectionQuery = { __typename?: 'Query', venueRecurringBookingsConnection: { __typename?: 'BookingConnection', totalCount: number, edges: Array<{ __typename?: 'BookingEdge', cursor: string, node: { __typename?: 'Booking', _id: string, date: string, status: BookingStatus, customerDisplayName?: string | null, customerDisplayPhone?: string | null, recurringConfig?: { __typename?: 'RecurringConfig', frequency: RecurringFrequency, endDate: string, totalSessions: number, durationMonths: number } | null, customerInfo?: { __typename?: 'CustomerInfo', name: string, phone: string } | null, customer?: { __typename?: 'User', _id: string, displayName: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueOrdersConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<OrderFilterInput>;
+  sort?: InputMaybe<OrderSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueOrdersConnectionQuery = { __typename?: 'Query', venueOrdersConnection: { __typename?: 'OrderConnection', totalCount: number, edges: Array<{ __typename?: 'OrderEdge', cursor: string, node: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, paymentStatus: OrderPaymentStatus, orderType: OrderType, totalAmount: number, customerName?: string | null, customerPhone?: string | null, createdAt: string, items: Array<{ __typename?: 'OrderItem', itemType: OrderItemType, quantity: number, unitPrice: number, productName: string }> } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type GetOrderQueryVariables = Exact<{
+  orderId: Scalars['ID']['input'];
+}>;
+
+
+export type GetOrderQuery = { __typename?: 'Query', order: { __typename?: 'Order', _id: string, orderCode: string, orderType: OrderType, status: OrderStatus, paymentStatus: OrderPaymentStatus, paymentMethod?: PaymentMethod | null, customerName?: string | null, customerPhone?: string | null, courtNumber?: string | null, tableNumber?: string | null, subtotal: number, discount?: number | null, discountCode?: string | null, serviceFee?: number | null, tax?: number | null, totalAmount: number, paidAmount?: number | null, paymentProofImages?: Array<string> | null, note?: string | null, internalNote?: string | null, isManualPrice: boolean, manualPriceNote?: string | null, cancellationReason?: string | null, cancelledAt?: string | null, confirmedAt?: string | null, inProgressAt?: string | null, readyAt?: string | null, deliveredAt?: string | null, completedAt?: string | null, paidAt?: string | null, createdAt: string, customerInfo?: { __typename?: 'OrderCustomerInfo', name: string, phone?: string | null, email?: string | null } | null, items: Array<{ __typename?: 'OrderItem', productName: string, itemType: OrderItemType, quantity: number, unitPrice: number, totalPrice: number, note?: string | null }>, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number, refundPercent: number, refundReason: string, refundNote?: string | null, refundRequestedAt: string, refundCompletedAt?: string | null } | null } };
+
+export type OrdersPendingRefundConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type OrdersPendingRefundConnectionQuery = { __typename?: 'Query', ordersPendingRefundConnection: { __typename?: 'OrderConnection', totalCount: number, edges: Array<{ __typename?: 'OrderEdge', cursor: string, node: { __typename?: 'Order', _id: string, orderCode: string, status: OrderStatus, paymentStatus: OrderPaymentStatus, totalAmount: number, customerName?: string | null, createdAt: string, refundInfo?: { __typename?: 'RefundInfo', refundAmount: number } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueProductsConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  filter?: InputMaybe<ProductFilterInput>;
+  sort?: InputMaybe<ProductSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueProductsConnectionQuery = { __typename?: 'Query', venueProductsConnection: { __typename?: 'ProductConnection', totalCount: number, edges: Array<{ __typename?: 'ProductEdge', cursor: string, node: { __typename?: 'Product', _id: string, name: string, sku?: string | null, unit?: string | null, price: number, averageCost?: number | null, status: ProductStatus, stockQuantity: number, trackInventory: boolean, lowStockThreshold?: number | null, lastImportPrice?: number | null, totalImportValue?: number | null, totalImportQuantity?: number | null, category?: { __typename?: 'ProductCategory', _id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type LowStockProductsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type LowStockProductsQuery = { __typename?: 'Query', lowStockProducts: Array<{ __typename?: 'Product', _id: string, name: string, stockQuantity: number, lowStockThreshold?: number | null }> };
+
+export type ProductStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type ProductStatsQuery = { __typename?: 'Query', productStats: { __typename?: 'ProductStats', totalProducts: number, activeProducts: number, outOfStockProducts: number, lowStockProducts: number } };
+
+export type ProductSalesAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ProductSalesAnalyticsQuery = { __typename?: 'Query', productSalesAnalytics: { __typename?: 'ProductSalesAnalytics', period: string, summary: { __typename?: 'ProductAnalyticsSummary', totalRevenue: number, totalItemsSold: number, totalOrders: number, bestSellingProduct: string, revenueChangePercent: number, itemsChangePercent: number }, salesTrend: Array<{ __typename?: 'ProductSalesDataPoint', label: string, revenue: number, quantitySold: number, orderCount: number }>, topProducts: Array<{ __typename?: 'ProductPerformance', productId: string, productName: string, categoryName: string, quantitySold: number, revenue: number, revenuePercentage: number }> } };
+
+export type VenueCategoriesConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueCategoriesConnectionQuery = { __typename?: 'Query', venueCategoriesConnection: { __typename?: 'ProductCategoryConnection', totalCount: number, edges: Array<{ __typename?: 'ProductCategoryEdge', cursor: string, node: { __typename?: 'ProductCategory', _id: string, name: string, slug: string, displayOrder: number, productCount: number } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenueStaffConnectionQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  sort?: InputMaybe<CursorSortInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type VenueStaffConnectionQuery = { __typename?: 'Query', venueStaffConnection: { __typename?: 'VenueStaffConnection', totalCount: number, edges: Array<{ __typename?: 'VenueStaffEdge', cursor: string, node: { __typename?: 'VenueStaff', _id: string, isOwner: boolean, permissions: Array<VenueAction>, status: VenueStaffStatus, customTitle?: string | null, joinedAt?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, endCursor?: string | null } } };
+
+export type VenuePendingInvitationsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type VenuePendingInvitationsQuery = { __typename?: 'Query', venuePendingInvitations: Array<{ __typename?: 'VenueStaff', _id: string, isOwner: boolean, permissions: Array<VenueAction>, status: VenueStaffStatus, customTitle?: string | null, user?: { __typename?: 'User', _id: string, displayName: string, phone?: string | null, email?: string | null } | null }> };
 
 export type VenueRevenueStatsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15544,7 +17133,7 @@ export type VenueRevenueStatsQueryVariables = Exact<{
 }>;
 
 
-export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
+export type VenueRevenueStatsQuery = { __typename?: 'Query', venueRevenueStats: { __typename?: 'VenueRevenueStats', period: string, startDate: string, endDate: string, growthPercentage: number, totalCollectedRevenue: number, totalExpectedRevenue: number, bookingRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number }, orderRevenue: { __typename?: 'RevenueBreakdown', collectedRevenue: number, expectedRevenue: number } } };
 
 export type BookingStatsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15553,7 +17142,24 @@ export type BookingStatsQueryVariables = Exact<{
 }>;
 
 
-export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, confirmedBookings: number, cancelledBookings: number, todayBookings: number } };
+export type BookingStatsQuery = { __typename?: 'Query', bookingStats: { __typename?: 'BookingStats', totalBookings: number, pendingBookings: number, confirmedBookings: number, completedBookings: number, cancelledBookings: number, todayBookings: number } };
+
+export type OrderStatsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  fromDate?: InputMaybe<Scalars['String']['input']>;
+  toDate?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type OrderStatsQuery = { __typename?: 'Query', orderStats: { __typename?: 'OrderStats', totalOrders: number, pendingOrders: number, completedOrders: number, cancelledOrders: number, todayOrders: number, totalRevenue: number, todayRevenue: number } };
+
+export type OrderAnalyticsQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  period?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type OrderAnalyticsQuery = { __typename?: 'Query', orderAnalytics: { __typename?: 'OrderAnalytics', period: string, summary: { __typename?: 'OrderAnalyticsSummary', totalOrders: number, totalRevenue: number, averageOrderValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'OrderRevenueDataPoint', label: string, value: number }>, topProducts: Array<{ __typename?: 'TopSellingProduct', productName: string, revenue: number, quantitySold: number }> } };
 
 export type VenueAnalyticsQueryVariables = Exact<{
   venueId: Scalars['ID']['input'];
@@ -15561,7 +17167,34 @@ export type VenueAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }> } };
+export type VenueAnalyticsQuery = { __typename?: 'Query', venueAnalytics: { __typename?: 'VenueAnalytics', period: string, summary: { __typename?: 'AnalyticsSummary', totalBookings: number, totalRevenue: number, averageBookingValue: number, revenueChangePercent: number, peakDay: string, peakHour: string }, revenueTrend: Array<{ __typename?: 'RevenueDataPoint', label: string, value: number }>, bookingDistribution: Array<{ __typename?: 'BookingDistribution', label: string, value: number }>, heatMapData: Array<{ __typename?: 'HeatMapCell', hour: string, day: string, bookings: number, intensity: number }> } };
+
+export type MyVenuesForProductTransferQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyVenuesForProductTransferQuery = { __typename?: 'Query', myVenuesForProductTransfer: Array<{ __typename?: 'Venue', _id: string, name: string, coverImageUrl?: string | null }> };
+
+export type GetMyVenueAvailabilityQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+  date: Scalars['String']['input'];
+}>;
+
+
+export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null, customerName?: string | null, customerPhone?: string | null, isRecurring?: boolean | null }> }> } };
+
+export type LookupCustomerByPhoneQueryVariables = Exact<{
+  phone: Scalars['String']['input'];
+}>;
+
+
+export type LookupCustomerByPhoneQuery = { __typename?: 'Query', lookupCustomerByPhone?: { __typename?: 'CustomerLookup', _id: string, displayName?: string | null, phone?: string | null, email?: string | null } | null };
+
+export type GetVenueEnabledOrderTypesQueryVariables = Exact<{
+  venueId: Scalars['ID']['input'];
+}>;
+
+
+export type GetVenueEnabledOrderTypesQuery = { __typename?: 'Query', venue: { __typename?: 'Venue', _id: string, name: string, hasOrderService: boolean, enabledOrderTypes: Array<{ __typename?: 'VenueOrderTypeConfig', orderType: OrderType, isEnabled: boolean, label?: string | null, icon?: string | null, color?: string | null, displayOrder: number }> } };
 
 export type CampaignFieldsFragment = { __typename?: 'PickupGameCampaign', _id: string, name: string, description?: string | null, hostId: string, venueIds?: Array<string> | null, sportTypes?: Array<string> | null, targetSkillLevels?: Array<string> | null, gameIds?: Array<string> | null, startDate?: string | null, endDate?: string | null, isActive: boolean, createdAt: string, updatedAt: string, goals?: { __typename?: 'CampaignGoals', targetCheckIns?: number | null, targetUniqueUsers?: number | null, targetFillRate?: number | null } | null };
 
@@ -15632,6 +17265,7 @@ export type RevokePortalCapabilityMutation = { __typename?: 'Mutation', revokePo
 export type PortalCapabilityGrantsConnectionQueryVariables = Exact<{
   pagination?: InputMaybe<CursorPageInput>;
   filter?: InputMaybe<PortalCapabilityGrantFilterInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 
@@ -15744,7 +17378,7 @@ export type TournamentDetailFragment = { __typename?: 'Tournament', highlights?:
 
 export type TournamentCategoryCoreFragment = { __typename?: 'TournamentCategory', _id: string, tournamentId: string, title: string, format: TournamentFormat, matchType: MatchType, gender: TournamentGender, ageLabel?: string | null, description?: string | null, icon?: string | null, popular?: boolean | null, maxRegistrations?: number | null, registeredCount: number, matchCount: number, completedMatchCount: number, status: CategoryStatus, displayOrder?: number | null, seedCount?: number | null, groupCount?: number | null, advancingPerGroup?: number | null, bracketSize?: number | null, defaultMatchDurationMinutes?: number | null, sharedThirdPlace?: boolean | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, scoringConfig: { __typename?: 'ScoringConfig', scoringSystem: ScoringSystem, bestOf: number, setsToWin: number, pointsPerSet: number, deuceEnabled: boolean, deuceAt: number, tiebreakEnabled: boolean, tiebreakPoints: number, winByMargin: number, maxPoints: number, periodsCount: number, periodDurationMinutes: number } };
 
-export type MatchCoreFragment = { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null };
+export type MatchCoreFragment = { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null };
 
 export type RegistrationCoreFragment = { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null };
 
@@ -15755,7 +17389,7 @@ export type GenerateBracketMutationVariables = Exact<{
 }>;
 
 
-export type GenerateBracketMutation = { __typename?: 'Mutation', generateBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type GenerateBracketMutation = { __typename?: 'Mutation', generateBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type ResetBracketMutationVariables = Exact<{
   categoryId: Scalars['ID']['input'];
@@ -15776,7 +17410,7 @@ export type SeedKnockoutBracketMutationVariables = Exact<{
 }>;
 
 
-export type SeedKnockoutBracketMutation = { __typename?: 'Mutation', seedKnockoutBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type SeedKnockoutBracketMutation = { __typename?: 'Mutation', seedKnockoutBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type CreateCategoryMutationVariables = Exact<{
   input: CreateCategoryInput;
@@ -15869,6 +17503,13 @@ export type DuplicateTournamentMutationVariables = Exact<{
 
 export type DuplicateTournamentMutation = { __typename?: 'Mutation', duplicateTournament: { __typename?: 'Tournament', highlights?: Array<string> | null, _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, prizes?: Array<{ __typename?: 'TournamentPrize', rank: string, title: string, amount?: string | null, perks?: Array<string> | null }> | null, contacts?: Array<{ __typename?: 'TournamentContact', label: string, value: string, icon?: string | null }> | null, courts?: Array<{ __typename?: 'TournamentCourt', name: string, notes?: string | null, status?: string | null }> | null, rules?: Array<{ __typename?: 'TournamentRule', title: string, content?: string | null }> | null, paymentInfo?: { __typename?: 'TournamentPaymentInfo', bank?: string | null, accountNumber?: string | null, accountName?: string | null, qrImage?: string | null, fees?: Array<{ __typename?: 'TournamentFee', label: string, amount: string }> | null } | null, facilities?: Array<{ __typename?: 'TournamentFacility', label: string, icon?: string | null }> | null, schedule?: Array<{ __typename?: 'TournamentSchedulePhase', label: string, date?: string | null, startTime?: string | null, endTime?: string | null, status?: string | null }> | null, scheduleConfig?: { __typename?: 'ScheduleConfig', minRestMinutes: number, courtBufferMinutes: number, restBreakWindows?: Array<{ __typename?: 'ScheduleRestBreakWindow', startTime: string, endTime: string }> | null } | null, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } };
 
+export type GenerateManualDrawMutationVariables = Exact<{
+  input: GenerateManualDrawInput;
+}>;
+
+
+export type GenerateManualDrawMutation = { __typename?: 'Mutation', generateManualDraw: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+
 export type ApproveRegistrationMutationVariables = Exact<{
   input: ApproveRegistrationInput;
 }>;
@@ -15897,6 +17538,13 @@ export type BulkRejectRegistrationsMutationVariables = Exact<{
 
 export type BulkRejectRegistrationsMutation = { __typename?: 'Mutation', bulkRejectRegistrations: number };
 
+export type BulkDeleteRegistrationsMutationVariables = Exact<{
+  input: BulkRegistrationActionInput;
+}>;
+
+
+export type BulkDeleteRegistrationsMutation = { __typename?: 'Mutation', bulkDeleteRegistrations: number };
+
 export type UpdatePaymentStatusMutationVariables = Exact<{
   input: UpdatePaymentStatusInput;
 }>;
@@ -15923,7 +17571,7 @@ export type AddLateEntryToByeSlotMutationVariables = Exact<{
 }>;
 
 
-export type AddLateEntryToByeSlotMutation = { __typename?: 'Mutation', addLateEntryToByeSlot: { __typename?: 'AddLateEntryResult', action: LateEntryAction, message: string, opponentName?: string | null, selectedFromCount: number, scheduleNeedsUpdate?: boolean | null, registration?: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } | null, match?: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } | null } };
+export type AddLateEntryToByeSlotMutation = { __typename?: 'Mutation', addLateEntryToByeSlot: { __typename?: 'AddLateEntryResult', action: LateEntryAction, message: string, opponentName?: string | null, selectedFromCount: number, scheduleNeedsUpdate?: boolean | null, registration?: { __typename?: 'TournamentRegistration', _id: string, tournamentId: string, categoryId: string, userId?: string | null, registeredByUserId: string, athleteName: string, avatarUrl?: string | null, dateOfBirth?: string | null, school?: string | null, club?: string | null, guardianName?: string | null, guardianPhone?: string | null, email?: string | null, phone?: string | null, notes?: string | null, seed?: number | null, bibNumber?: number | null, paymentAmount?: number | null, paymentProofUrl?: string | null, identityProofUrl?: string | null, registrationStatus: RegistrationStatus, paymentStatus: TournamentPaymentStatus, rejectionReason?: string | null, reviewedBy?: string | null, reviewedAt?: string | null, createdAt: string, updatedAt: string, members?: Array<{ __typename?: 'EntryMember', userId?: string | null, name: string, avatarUrl?: string | null, phone?: string | null, email?: string | null, dateOfBirth?: string | null, club?: string | null, school?: string | null }> | null } | null, match?: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } | null } };
 
 export type UpdateRegistrationBibNumberMutationVariables = Exact<{
   input: UpdateBibNumberInput;
@@ -15937,42 +17585,42 @@ export type ScheduleMatchMutationVariables = Exact<{
 }>;
 
 
-export type ScheduleMatchMutation = { __typename?: 'Mutation', scheduleMatch: { __typename?: 'ScheduleMatchResult', warnings: Array<string>, match: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } } };
+export type ScheduleMatchMutation = { __typename?: 'Mutation', scheduleMatch: { __typename?: 'ScheduleMatchResult', warnings: Array<string>, match: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } } };
 
 export type BulkScheduleMatchesMutationVariables = Exact<{
   input: BulkScheduleMatchInput;
 }>;
 
 
-export type BulkScheduleMatchesMutation = { __typename?: 'Mutation', bulkScheduleMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type BulkScheduleMatchesMutation = { __typename?: 'Mutation', bulkScheduleMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type UnscheduleMatchMutationVariables = Exact<{
   matchId: Scalars['ID']['input'];
 }>;
 
 
-export type UnscheduleMatchMutation = { __typename?: 'Mutation', unscheduleMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type UnscheduleMatchMutation = { __typename?: 'Mutation', unscheduleMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type CascadeRescheduleMutationVariables = Exact<{
   input: CascadeRescheduleInput;
 }>;
 
 
-export type CascadeRescheduleMutation = { __typename?: 'Mutation', cascadeReschedule: { __typename?: 'CascadeRescheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
+export type CascadeRescheduleMutation = { __typename?: 'Mutation', cascadeReschedule: { __typename?: 'CascadeRescheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> } };
 
 export type RepackCourtScheduleMutationVariables = Exact<{
   input: RepackCourtScheduleInput;
 }>;
 
 
-export type RepackCourtScheduleMutation = { __typename?: 'Mutation', repackCourtSchedule: { __typename?: 'RepackCourtScheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
+export type RepackCourtScheduleMutation = { __typename?: 'Mutation', repackCourtSchedule: { __typename?: 'RepackCourtScheduleResult', totalAffected: number, warnings: Array<string>, affectedMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
 
 export type AssignRefereeMutationVariables = Exact<{
   input: AssignRefereeInput;
 }>;
 
 
-export type AssignRefereeMutation = { __typename?: 'Mutation', assignReferee: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type AssignRefereeMutation = { __typename?: 'Mutation', assignReferee: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type StartMatchMutationVariables = Exact<{
   input: StartMatchInput;
@@ -16014,21 +17662,21 @@ export type OrganizerAbortLiveMatchMutationVariables = Exact<{
 }>;
 
 
-export type OrganizerAbortLiveMatchMutation = { __typename?: 'Mutation', organizerAbortLiveMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type OrganizerAbortLiveMatchMutation = { __typename?: 'Mutation', organizerAbortLiveMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type SetMatchWalkoverMutationVariables = Exact<{
   input: SetMatchWalkoverInput;
 }>;
 
 
-export type SetMatchWalkoverMutation = { __typename?: 'Mutation', setMatchWalkover: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type SetMatchWalkoverMutation = { __typename?: 'Mutation', setMatchWalkover: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type CorrectFinishedMatchResultMutationVariables = Exact<{
   input: CorrectFinishedMatchResultInput;
 }>;
 
 
-export type CorrectFinishedMatchResultMutation = { __typename?: 'Mutation', correctFinishedMatchResult: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+export type CorrectFinishedMatchResultMutation = { __typename?: 'Mutation', correctFinishedMatchResult: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type GetMyTournamentsQueryVariables = Exact<{
   filter?: InputMaybe<TournamentFilterInput>;
@@ -16080,7 +17728,7 @@ export type GetTournamentBracketQueryVariables = Exact<{
 }>;
 
 
-export type GetTournamentBracketQuery = { __typename?: 'Query', tournamentBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type GetTournamentBracketQuery = { __typename?: 'Query', tournamentBracket: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type GetTournamentMatchesQueryVariables = Exact<{
   tournamentId: Scalars['ID']['input'];
@@ -16089,7 +17737,7 @@ export type GetTournamentMatchesQueryVariables = Exact<{
 }>;
 
 
-export type GetTournamentMatchesQuery = { __typename?: 'Query', tournamentMatchesConnection: { __typename?: 'TournamentMatchConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentMatchEdge', cursor: string, node: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type GetTournamentMatchesQuery = { __typename?: 'Query', tournamentMatchesConnection: { __typename?: 'TournamentMatchConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentMatchEdge', cursor: string, node: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetMatchScorecardQueryVariables = Exact<{
   matchId: Scalars['ID']['input'];
@@ -16103,7 +17751,7 @@ export type GetRefereeMatchesQueryVariables = Exact<{
 }>;
 
 
-export type GetRefereeMatchesQuery = { __typename?: 'Query', refereeMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, player1SlotLabel?: string | null, player2SlotLabel?: string | null, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
+export type GetRefereeMatchesQuery = { __typename?: 'Query', refereeMatches: Array<{ __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null }> };
 
 export type GetTournamentRankingsQueryVariables = Exact<{
   categoryId: Scalars['ID']['input'];
@@ -16134,6 +17782,13 @@ export type PreviewRepackCourtScheduleQueryVariables = Exact<{
 
 
 export type PreviewRepackCourtScheduleQuery = { __typename?: 'Query', previewRepackCourtSchedule: { __typename?: 'RepackCourtSchedulePreviewResult', anchorMatchId: string, courtName: string, calendarDate: string, totalAffected: number, overdueCount: number, backlogCount: number, warnings: Array<string>, preview: Array<{ __typename?: 'ScheduleShiftPreview', matchId: string, matchNumber: number, oldScheduledAt: string, newScheduledAt: string }> } };
+
+export type PreviewManualKnockoutDrawQueryVariables = Exact<{
+  input: PreviewManualKnockoutDrawInput;
+}>;
+
+
+export type PreviewManualKnockoutDrawQuery = { __typename?: 'Query', previewManualKnockoutDraw: { __typename?: 'ManualKnockoutDrawPreview', valid: boolean, bracketSize: number, totalByes: number, r1TvTCount: number, maxR1TvT: number, layoutHints: { __typename?: 'ManualKnockoutLayoutHints', approvedCount: number, r1PairCount: number, minR1TvT: number, structuralEmptyPairs: number, r1WalkoverCount: number, r1TvTCount: number, r2TvTCount: number, r2WalkoverCount: number }, errors: Array<{ __typename?: 'ManualKnockoutPreviewError', code: string, message: string, pairIndex?: number | null, slotIndex?: number | null }>, matchupRows: Array<{ __typename?: 'ManualKnockoutMatchupPreviewRow', player1Name: string, player2Name: string, isR1ByeWalkover: boolean, meetingRound: number, meetingRoundLabel: string, r1PairIndex?: number | null }> } };
 
 export type MatchScoreUpdatedSubscriptionVariables = Exact<{
   _matchId: Scalars['ID']['input'];
@@ -16180,14 +17835,21 @@ export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isOwner: boolean, portalCapabilities: Array<PortalCapability>, hasVenuePortalAccess: boolean, photoURL?: string | null, bio?: string | null, club?: string | null, gender?: Gender | null, dateOfBirth?: string | null, location?: { __typename?: 'Location', city?: string | null, country?: string | null, displayText?: string | null, coordinates?: { __typename?: 'Coordinates', latitude: number, longitude: number } | null } | null } };
+
+export type SearchUserByPhoneQueryVariables = Exact<{
+  phone: Scalars['String']['input'];
+}>;
+
+
+export type SearchUserByPhoneQuery = { __typename?: 'Query', searchUserByPhone?: { __typename?: 'UserContactLookup', _id: string, fullName: string, displayName: string, phone: string, email?: string | null, photoURL?: string | null } | null };
 
 export type GetUserProfileQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, portalCapabilities: Array<PortalCapability>, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
+export type GetUserProfileQuery = { __typename?: 'Query', getUserProfile: { __typename?: 'User', _id: string, email?: string | null, phone?: string | null, fullName: string, displayName: string, userName: string, role: UserRole, isOwner: boolean, portalCapabilities: Array<PortalCapability>, isActive: boolean, isSuspended: boolean, photoURL?: string | null, accountOrigin?: AccountOrigin | null, lastLoginAt?: string | null, createdAt: string } };
 
 export type ApproveVenueRequestMutationVariables = Exact<{
   requestId: Scalars['ID']['input'];
@@ -16208,6 +17870,7 @@ export type RejectVenueRequestMutation = { __typename?: 'Mutation', rejectVenueR
 export type GetAllVenueRequestsQueryVariables = Exact<{
   status?: InputMaybe<VenueRequestStatus>;
   pagination?: InputMaybe<CursorPageInput>;
+  sort?: InputMaybe<CursorSortInput>;
 }>;
 
 

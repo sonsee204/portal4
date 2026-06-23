@@ -23,6 +23,7 @@ import {
   GET_MESSAGE_REPORT_STATS,
 } from '@/graphql/moderation/queries';
 import type {
+  CursorSortInput,
   GetMessageReportsForAdminQuery,
   GetPostReportsForAdminQuery,
   GetUserReportsForAdminQuery,
@@ -41,6 +42,7 @@ import { mergeConnectionEdges, type LegacyPagePagination } from '@/hooks/shared/
 export function usePostReports(
   filter?: { status?: PostReportStatus },
   pagination?: LegacyPagePagination,
+  sort?: CursorSortInput,
 ) {
   const result = usePagedConnectionQuery<
     GetPostReportsForAdminQuery,
@@ -49,6 +51,7 @@ export function usePostReports(
   >({
     query: GET_POST_REPORTS_FOR_ADMIN,
     pagination,
+    sort,
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.getPostReportsForAdminConnection,
@@ -71,6 +74,7 @@ export function usePostReports(
     hasMore: result.hasMore,
     hasNextPage: result.hasNextPage,
     loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,
@@ -94,6 +98,7 @@ export function usePostReportStats() {
 export function useUserReports(
   filter?: { status?: UserReportStatus },
   pagination?: LegacyPagePagination,
+  sort?: CursorSortInput,
 ) {
   const result = usePagedConnectionQuery<
     GetUserReportsForAdminQuery,
@@ -102,6 +107,7 @@ export function useUserReports(
   >({
     query: GET_USER_REPORTS_FOR_ADMIN,
     pagination,
+    sort,
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.getUserReportsForAdminConnection,
@@ -124,6 +130,7 @@ export function useUserReports(
     hasMore: result.hasMore,
     hasNextPage: result.hasNextPage,
     loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,
@@ -147,6 +154,7 @@ export function useUserReportStats() {
 export function useMessageReports(
   filter?: { status?: MessageReportStatus },
   pagination?: LegacyPagePagination,
+  sort?: CursorSortInput,
 ) {
   const result = usePagedConnectionQuery<
     GetMessageReportsForAdminQuery,
@@ -155,6 +163,7 @@ export function useMessageReports(
   >({
     query: GET_MESSAGE_REPORTS_FOR_ADMIN,
     pagination,
+    sort,
     resetKey: JSON.stringify(filter ?? null),
     variables: { filter },
     getConnection: (data) => data?.messageReportsConnection,
@@ -177,6 +186,7 @@ export function useMessageReports(
     hasMore: result.hasMore,
     hasNextPage: result.hasNextPage,
     loadMore: result.loadMore,
+    isLoadingMore: result.isLoadingMore,
     loading: result.loading,
     error: result.error,
     refetch: result.refetch,

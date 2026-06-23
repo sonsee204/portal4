@@ -17,7 +17,7 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { Badge } from '@/components/atoms/Badge';
 import { cn, formatDateTime } from '@/lib/utils';
 import { FILTER_CHIPS } from '../_hooks/venue-requests-page.constants';
@@ -41,10 +41,14 @@ export function VenueRequestsTableSection({
     total,
     totalCount,
     hasNextPage,
+    isLoadingMore,
     requestsLoading,
     requestsError,
     refetchRequests,
     effectiveId,
+    sortField,
+    sortDir,
+    handleSort,
   } = data;
   const { handleStatusFilterChange, handleLoadMore } = actions;
 
@@ -73,10 +77,13 @@ export function VenueRequestsTableSection({
             { key: 'location', label: 'Địa chỉ' },
             { key: 'requester', label: 'Người đăng ký' },
             { key: 'sports', label: 'Loại sân' },
-            { key: 'status', label: 'Trạng thái' },
-            { key: 'createdAt', label: 'Ngày gửi' },
+            { key: 'status', label: 'Trạng thái', sortable: true },
+            { key: 'createdAt', label: 'Ngày gửi', sortable: true },
           ]}
           data={requests}
+          sortKey={sortField}
+          sortDir={sortDir}
+          onSort={handleSort}
           emptyTitle="Không có yêu cầu nào"
           renderRow={(r: VenueRequestItem) => {
             const isActive = r._id === effectiveId;
@@ -144,12 +151,13 @@ export function VenueRequestsTableSection({
           }}
         />
       </QueryState>
-      <ConnectionPager
+      <ConnectionInfiniteScroll
         loadedCount={requests.length}
         totalCount={totalCount ?? total}
         hasNextPage={hasNextPage}
-        onNext={handleLoadMore}
-        loading={requestsLoading}
+        onLoadMore={handleLoadMore}
+        loading={requestsLoading && requests.length === 0}
+        loadingMore={isLoadingMore}
       />
     </GlassPanel>
   );

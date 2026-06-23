@@ -19,12 +19,16 @@ import { IconButton } from '@/components/atoms/IconButton';
 import type { AuditLogEntry } from '@/hooks/audit';
 import type { AuditAction, AuditCategory } from '@/types';
 import type { BadgeVariant } from '@/config/theme';
+import { formatDateTime } from '@/lib/utils';
 import { AUDIT, COMMON } from '@/lib/strings';
 
 interface AuditTableProps {
   logs: AuditLogEntry[];
   loading: boolean;
   onViewDetail: (log: AuditLogEntry) => void;
+  sortKey?: string;
+  sortDir?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 }
 
 const ACTION_LABELS: Record<AuditAction, string> = AUDIT.ACTIONS;
@@ -53,18 +57,6 @@ const ACTION_VARIANT: Record<AuditAction, BadgeVariant> = {
 
 const CATEGORY_LABELS: Record<AuditCategory, string> = AUDIT.CATEGORIES;
 
-function formatTimestamp(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
 function getInitials(name?: string | null): string {
   if (!name) return '?';
   return name
@@ -77,16 +69,28 @@ function getInitials(name?: string | null): string {
 
 const columns = [
   { key: 'admin', label: AUDIT.COLUMNS.ADMIN },
-  { key: 'category', label: AUDIT.COLUMNS.CATEGORY },
-  { key: 'action', label: AUDIT.COLUMNS.ACTION },
+  { key: 'category', label: AUDIT.COLUMNS.CATEGORY, sortable: true },
+  { key: 'action', label: AUDIT.COLUMNS.ACTION, sortable: true },
   { key: 'target', label: AUDIT.COLUMNS.TARGET },
   { key: 'ip', label: AUDIT.COLUMNS.IP },
-  { key: 'timestamp', label: AUDIT.COLUMNS.TIMESTAMP, sortable: true },
+  {
+    key: 'timestamp',
+    label: AUDIT.COLUMNS.TIMESTAMP,
+    sortable: true,
+    sortField: 'createdAt',
+  },
   { key: 'status', label: AUDIT.COLUMNS.STATUS },
-  { key: 'actions', label: '' },
+  { key: 'actions', label: '', align: 'right' as const },
 ];
 
-export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
+export function AuditTable({
+  logs,
+  loading,
+  onViewDetail,
+  sortKey,
+  sortDir,
+  onSort,
+}: AuditTableProps) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -104,6 +108,9 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
     <DataTable
       columns={columns}
       data={logs}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={onSort}
       emptyTitle={AUDIT.EMPTY.TITLE}
       emptyDescription={AUDIT.EMPTY.DESCRIPTION}
       renderRow={(log) => (
@@ -132,7 +139,9 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
             </span>
           </td>
           <td className="px-4 py-3">
-            <Badge variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}>
+            <Badge
+              variant={ACTION_VARIANT[log.action as AuditAction] ?? 'neutral'}
+            >
               {ACTION_LABELS[log.action as AuditAction] ?? log.action}
             </Badge>
           </td>
@@ -143,7 +152,7 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
             {log.ip || '—'}
           </td>
           <td className="text-muted px-4 py-3 font-mono text-xs">
-            {formatTimestamp(log.createdAt)}
+            {formatDateTime(log.createdAt)}
           </td>
           <td className="px-4 py-3">
             <Badge variant={log.status === 'SUCCESS' ? 'success' : 'danger'}>
@@ -152,13 +161,15 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
                 : AUDIT.STATUS.FAILED}
             </Badge>
           </td>
-          <td className="px-4 py-3">
-            <IconButton
-              icon="eye-outline"
-              size="sm"
-              tooltip={COMMON.VIEW_DETAIL}
-              onClick={() => onViewDetail(log)}
-            />
+          <td className="px-4 py-3 text-right">
+            <div className="flex items-center justify-end">
+              <IconButton
+                icon="eye-outline"
+                size="sm"
+                tooltip={COMMON.VIEW_DETAIL}
+                onClick={() => onViewDetail(log)}
+              />
+            </div>
           </td>
         </tr>
       )}

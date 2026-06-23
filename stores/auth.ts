@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setInitialized: (initialized) => set({ isInitialized: initialized }),
   setLoading: (loading) => set({ isLoading: loading }),
   clearAuth: () =>
-    set({ user: null, isInitialized: true, isLoading: false }),
+    set({ user: null, isInitialized: false, isLoading: true }),
 }));
 
 /**
@@ -57,3 +57,6 @@ export const selectIsAdmin = (state: AuthState) =>
   state.user?.role === 'ADMIN' || state.user?.role === 'SUPER_ADMIN';
 export const selectIsSuperAdmin = (state: AuthState) =>
   state.user?.role === 'SUPER_ADMIN';
+export const selectIsOwner = (state: AuthState) => state.user?.isOwner === true;
+export const selectHasVenueAccess = (state: AuthState) =>
+  state.user?.hasVenueAccess === true;

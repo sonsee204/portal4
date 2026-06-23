@@ -23,6 +23,8 @@ import {
   useUserReports,
   useUserReportStats,
 } from '@/hooks/admin';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type {
   MessageReportStatus,
   UserReportStatus,
@@ -36,6 +38,8 @@ import {
   findReportById,
   resolveEffectiveReportId,
 } from './moderation-page.derived';
+
+const REPORT_SORT_FIELDS = ['createdAt', 'status'] as const;
 
 export function useModerationPageData() {
   const [activeTab, setActiveTab] = useState<ReportTab>('posts');
@@ -59,6 +63,41 @@ export function useModerationPageData() {
     null,
   );
 
+  const postSortState = useDataTableSortUrl({
+    allowedFields: REPORT_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'postSort',
+    dirParam: 'postDir',
+  });
+  const userSortState = useDataTableSortUrl({
+    allowedFields: REPORT_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'userSort',
+    dirParam: 'userDir',
+  });
+  const msgSortState = useDataTableSortUrl({
+    allowedFields: REPORT_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+    sortParam: 'msgSort',
+    dirParam: 'msgDir',
+  });
+
+  const postSort = useMemo(
+    () => toSortByOrder(postSortState.sortField, postSortState.sortDir),
+    [postSortState.sortField, postSortState.sortDir],
+  );
+  const userSort = useMemo(
+    () => toSortByOrder(userSortState.sortField, userSortState.sortDir),
+    [userSortState.sortField, userSortState.sortDir],
+  );
+  const msgSort = useMemo(
+    () => toSortByOrder(msgSortState.sortField, msgSortState.sortDir),
+    [msgSortState.sortField, msgSortState.sortDir],
+  );
+
   const postFilterVar = buildStatusFilter(statusFilter);
   const postPaginationVar = { limit: PAGE_SIZE };
 
@@ -68,10 +107,11 @@ export function useModerationPageData() {
     totalCount: postTotalCount,
     hasNextPage: postHasNextPage,
     loadMore: loadMorePostReports,
+    isLoadingMore: postIsLoadingMore,
     loading: reportsLoading,
     error: reportsError,
     refetch: refetchReports,
-  } = usePostReports(postFilterVar, postPaginationVar);
+  } = usePostReports(postFilterVar, postPaginationVar, postSort);
   const { stats: postStats } = usePostReportStats();
 
   const userFilterVar = buildStatusFilter(userStatusFilter);
@@ -83,10 +123,11 @@ export function useModerationPageData() {
     totalCount: userTotalCount,
     hasNextPage: userHasNextPage,
     loadMore: loadMoreUserReports,
+    isLoadingMore: userIsLoadingMore,
     loading: userReportsLoading,
     error: userReportsError,
     refetch: refetchUserReports,
-  } = useUserReports(userFilterVar, userPaginationVar);
+  } = useUserReports(userFilterVar, userPaginationVar, userSort);
   const { stats: userStats } = useUserReportStats();
 
   const msgFilterVar = buildStatusFilter(msgStatusFilter);
@@ -98,10 +139,11 @@ export function useModerationPageData() {
     totalCount: msgTotalCount,
     hasNextPage: msgHasNextPage,
     loadMore: loadMoreMsgReports,
+    isLoadingMore: msgIsLoadingMore,
     loading: msgReportsLoading,
     error: msgReportsError,
     refetch: refetchMsgReports,
-  } = useMessageReports(msgFilterVar, msgPaginationVar);
+  } = useMessageReports(msgFilterVar, msgPaginationVar, msgSort);
   const { stats: msgStats } = useMessageReportStats();
 
   const effectiveId = resolveEffectiveReportId(reports, selectedId);
@@ -149,33 +191,45 @@ export function useModerationPageData() {
     setSelectedMsgReportId,
     postFilterVar,
     postPaginationVar,
+    postSortField: postSortState.sortField,
+    postSortDir: postSortState.sortDir,
+    handlePostSort: postSortState.handleSort,
     reports,
     postTotal,
     postTotalCount,
     postHasNextPage,
     loadMorePostReports,
+    postIsLoadingMore,
     reportsLoading,
     reportsError,
     refetchReports,
     postStats,
     userFilterVar,
     userPaginationVar,
+    userSortField: userSortState.sortField,
+    userSortDir: userSortState.sortDir,
+    handleUserSort: userSortState.handleSort,
     userReports,
     userTotal,
     userTotalCount,
     userHasNextPage,
     loadMoreUserReports,
+    userIsLoadingMore,
     userReportsLoading,
     userReportsError,
     refetchUserReports,
     userStats,
     msgFilterVar,
     msgPaginationVar,
+    msgSortField: msgSortState.sortField,
+    msgSortDir: msgSortState.sortDir,
+    handleMsgSort: msgSortState.handleSort,
     msgReports,
     msgTotal,
     msgTotalCount,
     msgHasNextPage,
     loadMoreMsgReports,
+    msgIsLoadingMore,
     msgReportsLoading,
     msgReportsError,
     refetchMsgReports,

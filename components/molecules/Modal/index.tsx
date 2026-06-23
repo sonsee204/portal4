@@ -67,7 +67,7 @@ export function Modal({
       {/* Panel */}
       <div
         className={cn(
-          'glass-card relative w-full rounded-2xl shadow-2xl',
+          'border-surface-border relative w-full overflow-hidden rounded-2xl border bg-white shadow-2xl',
           sizeClasses[size],
           className
         )}
@@ -75,10 +75,10 @@ export function Modal({
         {/* Header */}
         {title && (
           <div className="border-surface-border flex items-center justify-between border-b px-6 py-4">
-            <h2 className="text-lg font-bold text-heading">{title}</h2>
+            <h2 className="text-heading text-lg font-bold">{title}</h2>
             <button
               onClick={onClose}
-              className="hover:bg-surface-hover rounded-lg p-1 text-muted transition-colors hover:text-heading"
+              className="hover:bg-surface-hover text-muted hover:text-heading rounded-lg p-1 transition-colors"
             >
               <IonIcon name="close-outline" size="md" />
             </button>
@@ -90,7 +90,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="border-surface-border flex items-center justify-end gap-3 border-t px-6 py-4">
+          <div className="border-surface-border flex flex-wrap items-center justify-end gap-2 border-t px-6 py-4">
             {footer}
           </div>
         )}

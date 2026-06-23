@@ -20,6 +20,7 @@ export const ADMIN_GET_USERS = gql`
     $isSuspended: Boolean
     $searchQuery: String
     $pagination: CursorPageInput
+    $sort: CursorSortInput
   ) {
     adminUsersConnection(
       role: $role
@@ -27,6 +28,7 @@ export const ADMIN_GET_USERS = gql`
       isSuspended: $isSuspended
       searchQuery: $searchQuery
       pagination: $pagination
+      sort: $sort
     ) {
       edges {
         cursor
@@ -38,6 +40,7 @@ export const ADMIN_GET_USERS = gql`
           displayName
           userName
           role
+          isOwner
           isActive
           isSuspended
           photoURL
@@ -68,44 +71,6 @@ export const ADMIN_GET_SYSTEM_STATS = gql`
       pendingVenues
       totalBookings
       totalRevenue
-    }
-  }
-`;
-
-export const ADMIN_GET_ALL_BOOKINGS = gql`
-  query AdminGetAllBookings(
-    $statuses: [String!]
-    $fromDate: String
-    $toDate: String
-    $pagination: CursorPageInput
-  ) {
-    adminAllBookingsConnection(
-      statuses: $statuses
-      fromDate: $fromDate
-      toDate: $toDate
-      pagination: $pagination
-    ) {
-      customerNamesJson
-      edges {
-        cursor
-        node {
-          _id
-          venueName
-          venueAddress
-          date
-          timeSlots
-          status
-          totalPrice
-          courtName
-        }
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
-      totalCount
     }
   }
 `;

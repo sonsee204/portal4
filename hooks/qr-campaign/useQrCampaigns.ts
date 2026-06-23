@@ -65,7 +65,7 @@ export function useQrCampaigns(
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
   const totalCount = connection?.totalCount ?? 0;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
@@ -93,6 +93,7 @@ export function useQrCampaigns(
     hasMore: hasNextPage,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

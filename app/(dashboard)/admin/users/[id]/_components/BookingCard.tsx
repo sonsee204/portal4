@@ -20,6 +20,7 @@ import {
   BOOKING_STATUS_VARIANT,
   BOOKING_STATUS_LABEL,
 } from '@/lib/constants/booking-status';
+import { formatDate } from '@/lib/utils';
 
 interface BookingCardProps {
   booking: {
@@ -55,7 +56,7 @@ export function BookingCard({ booking }: BookingCardProps) {
         <div className="text-muted mt-2 flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1">
             <IonIcon name="calendar-outline" size="xs" />
-            {booking.date}
+            {formatDate(booking.date)}
           </span>
           {booking.time && (
             <span className="flex items-center gap-1">

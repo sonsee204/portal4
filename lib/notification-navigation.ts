@@ -11,6 +11,7 @@
  * is strictly prohibited without prior written consent.
  */
 
+import { TOURNAMENT_BASE_PATH } from '@/lib/tournaments/paths';
 import type { NotificationData } from '@/types/notification';
 
 export function getNotificationHref(
@@ -26,8 +27,8 @@ export function getNotificationHref(
     // Referee response notifications → navigate to tournament schedule
     case 'TournamentSchedule':
       return targetId
-        ? `/admin/tournaments/${targetId}/schedule`
-        : '/admin/tournaments';
+        ? `${TOURNAMENT_BASE_PATH}/${targetId}/schedule`
+        : TOURNAMENT_BASE_PATH;
 
     case 'BookingDetail':
     case 'Booking':
@@ -39,7 +40,9 @@ export function getNotificationHref(
 
     case 'TournamentDetail':
     case 'Tournament':
-      return targetId ? `/admin/tournaments/${targetId}` : '/admin/tournaments';
+      return targetId
+        ? `${TOURNAMENT_BASE_PATH}/${targetId}`
+        : TOURNAMENT_BASE_PATH;
 
     case 'UserDetail':
     case 'UserProfile':

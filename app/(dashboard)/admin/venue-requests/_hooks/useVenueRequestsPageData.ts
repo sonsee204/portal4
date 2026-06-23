@@ -13,14 +13,29 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useVenueRequests, useVenueRequestStats } from '@/hooks/admin';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type { VenueRequestStatus } from '../types';
 import { PAGE_SIZE } from './venue-requests-page.constants';
+
+const VENUE_REQUEST_SORT_FIELDS = ['createdAt', 'status'] as const;
 
 export function useVenueRequestsPageData() {
   const [statusFilter, setStatusFilter] = useState<string>('PENDING');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: VENUE_REQUEST_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const filterVar =
     statusFilter === 'ALL' ? undefined : (statusFilter as VenueRequestStatus);
@@ -33,10 +48,11 @@ export function useVenueRequestsPageData() {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading: requestsLoading,
     error: requestsError,
     refetch: refetchRequests,
-  } = useVenueRequests(filterVar, paginationVar);
+  } = useVenueRequests(filterVar, paginationVar, sort);
 
   const { stats } = useVenueRequestStats();
 
@@ -53,11 +69,15 @@ export function useVenueRequestsPageData() {
     setSelectedId,
     filterVar,
     paginationVar,
+    sortField,
+    sortDir,
+    handleSort,
     requests,
     total,
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     requestsLoading,
     requestsError,
     refetchRequests,

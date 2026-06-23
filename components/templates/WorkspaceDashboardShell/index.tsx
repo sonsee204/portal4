@@ -12,7 +12,7 @@
 import { usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/templates/DashboardLayout';
 import { AccessGuard } from '@/components/atoms/AccessGuard';
-import { WorkspaceSwitcher } from '@/components/molecules/WorkspaceSwitcher';
+import { VenueSwitcher } from '@/components/molecules/VenueSwitcher';
 import { getBreadcrumbLabel } from '@/lib/permissions/navigation';
 import { WORKSPACE_LABELS, type PortalWorkspace } from '@/lib/permissions';
 import type { SidebarNavSection } from '@/lib/permissions/navigation';
@@ -28,12 +28,15 @@ interface WorkspaceDashboardShellProps {
   children: React.ReactNode;
   workspace: PortalWorkspace;
   nav: SidebarNavSection[];
+  /** @deprecated Prefer built-in owner header slot — avoids RSC slot key warnings. */
+  extraHeaderActions?: React.ReactNode;
 }
 
 export function WorkspaceDashboardShell({
   children,
   workspace,
   nav,
+  extraHeaderActions,
 }: WorkspaceDashboardShellProps) {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
@@ -56,7 +59,14 @@ export function WorkspaceDashboardShell({
         nav={nav}
         workspaceLabel={WORKSPACE_LABELS[workspace]}
         breadcrumbs={breadcrumbs}
-        headerActions={<WorkspaceSwitcher />}
+        headerActions={
+          <div className="flex items-center gap-2">
+            {workspace === 'owner' ? (
+              <VenueSwitcher key="venue-switcher" />
+            ) : null}
+            {extraHeaderActions}
+          </div>
+        }
       >
         {children}
       </DashboardLayout>

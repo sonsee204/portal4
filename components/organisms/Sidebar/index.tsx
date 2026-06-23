@@ -13,18 +13,23 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/atoms/Logo';
-import { Avatar } from '@/components/atoms/Avatar';
 import { NavItem } from '@/components/molecules/NavItem';
 import { IonIcon } from '@/components/atoms/IonIcon';
+import { WorkspaceSwitcher } from '@/components/molecules/WorkspaceSwitcher';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import type { UserRole } from '@/types';
-import { can, ROLE_DISPLAY_NAMES } from '@/lib/permissions';
-import { useLogout } from '@/hooks/useLogout';
+import { can, getAccessibleWorkspaces } from '@/lib/permissions';
 import type { SidebarNavSection } from '@/lib/permissions/navigation';
 import type { PortalPermission } from '@/lib/permissions';
+import { useOptionalVenueContext } from '@/components/providers/VenueContextProvider';
+import {
+  canAccessOwnerRoute,
+  type VenuePermissionSet,
+} from '@/lib/venue/permissions';
 
 export type { SidebarNavSection };
 
@@ -40,22 +45,96 @@ interface NavItemConfig {
   label: string;
   icon: string;
   permission?: PortalPermission;
+  platformOwnerOnly?: boolean;
+  venueOwnerOnly?: boolean;
+  ownerOnly?: boolean;
+}
+
+function isOwnerNavHref(href: string): boolean {
+  return href === '/owner' || href.startsWith('/owner/');
+}
+
+function shouldSkipOwnerPortalPermissionCheck(
+  href: string,
+  role: UserRole | null,
+  hasVenueAccess: boolean
+): boolean {
+  return (
+    isOwnerNavHref(href) &&
+    Boolean(role) &&
+    (hasVenueAccess || role === 'FACILITY_OWNER')
+  );
 }
 
 function filterNavByRole(
   nav: SidebarNavSection[],
-  role: UserRole | null
+  role: UserRole | null,
+  isPlatformOwner = false,
+  hasVenueAccess = false,
+  venueFilter?: {
+    venues: Array<{
+      myPermissions?: import('@/graphql/generated').VenueAction[] | null;
+      isOwner?: boolean;
+    }>;
+    permissions: VenuePermissionSet;
+    isVenueOwner: boolean;
+  }
 ): SidebarNavSection[] {
   return nav
     .map((section) => ({
       ...section,
       items: section.items.filter((item: NavItemConfig) => {
-        if (!item.permission) return true;
-        return can(role, item.permission);
+        if (
+          item.venueOwnerOnly ||
+          (item.ownerOnly && item.href.startsWith('/owner/'))
+        ) {
+          const isVenueOwnerOnAnyVenue =
+            venueFilter?.venues.some((venue) => venue.isOwner) ?? false;
+          if (!isVenueOwnerOnAnyVenue && !venueFilter?.isVenueOwner) {
+            return false;
+          }
+        } else if (
+          item.platformOwnerOnly ||
+          (item.ownerOnly && !item.href.startsWith('/owner/'))
+        ) {
+          if (!isPlatformOwner) {
+            return false;
+          }
+        }
+        if (
+          item.permission &&
+          !shouldSkipOwnerPortalPermissionCheck(
+            item.href,
+            role,
+            hasVenueAccess
+          ) &&
+          !can(role, item.permission, [], hasVenueAccess)
+        ) {
+          return false;
+        }
+        if (venueFilter && isOwnerNavHref(item.href)) {
+          const visibleOnSelectedVenue = canAccessOwnerRoute(
+            item.href,
+            venueFilter.permissions,
+            venueFilter.isVenueOwner
+          );
+          if (visibleOnSelectedVenue) return true;
+
+          return venueFilter.venues.some((venue) =>
+            canAccessOwnerRoute(
+              item.href,
+              (venue.myPermissions ?? []) as VenuePermissionSet,
+              venue.isOwner ?? false
+            )
+          );
+        }
+        return true;
       }),
     }))
     .filter((section) => section.items.length > 0);
 }
+
+export { filterNavByRole };
 
 const WORKSPACE_ROOTS = new Set(['/admin', '/owner', '/organizer']);
 
@@ -68,9 +147,33 @@ export function Sidebar({
   const { mobileNavOpen, setMobileNavOpen } = useUIStore();
   const user = useAuthStore((s) => s.user);
   const userRole = user?.role ?? null;
+  const isPlatformOwner = user?.isOwner ?? false;
+  const hasVenueAccess = user?.hasVenueAccess ?? false;
+  const venueContext = useOptionalVenueContext();
 
-  const { logout, isLoggingOut } = useLogout();
-  const filteredNav = filterNavByRole(nav, userRole);
+  const filteredNav = filterNavByRole(
+    nav,
+    userRole,
+    isPlatformOwner,
+    hasVenueAccess,
+    venueContext
+      ? {
+          venues: venueContext.venues,
+          permissions: venueContext.permissions,
+          isVenueOwner: venueContext.isOwner,
+        }
+      : undefined
+  );
+
+  const showWorkspaceSwitcher = useMemo(
+    () =>
+      getAccessibleWorkspaces(
+        userRole,
+        user?.portalCapabilities ?? [],
+        hasVenueAccess
+      ).length >= 2,
+    [userRole, user?.portalCapabilities, hasVenueAccess]
+  );
 
   return (
     <>
@@ -130,48 +233,11 @@ export function Sidebar({
           ))}
         </nav>
 
-        <div className="p-4">
-          <div className="flex items-center gap-3 rounded-xl p-2">
-            <Avatar
-              fallback={
-                user?.displayName
-                  ?.split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase() || 'U'
-              }
-              src={user?.photoURL}
-              status="online"
-              size="sm"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-heading truncate text-sm font-medium">
-                {user?.displayName || user?.fullName || 'User'}
-              </p>
-              <p className="text-faint truncate text-xs">
-                {userRole ? ROLE_DISPLAY_NAMES[userRole] : ''}
-              </p>
-            </div>
-            <button
-              onClick={() => void logout()}
-              disabled={isLoggingOut}
-              title="Đăng xuất"
-              className={cn(
-                'transition-colors',
-                isLoggingOut
-                  ? 'text-faint pointer-events-none'
-                  : 'text-faint hover:text-red-400'
-              )}
-            >
-              <IonIcon
-                name={isLoggingOut ? 'sync-outline' : 'log-out-outline'}
-                size="sm"
-                className={isLoggingOut ? 'animate-spin' : undefined}
-              />
-            </button>
+        {showWorkspaceSwitcher ? (
+          <div className="border-surface-border border-t p-4">
+            <WorkspaceSwitcher variant="sidebar" />
           </div>
-        </div>
+        ) : null}
       </aside>
     </>
   );

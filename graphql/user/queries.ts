@@ -27,7 +27,9 @@ export const ME_QUERY = gql`
       displayName
       userName
       role
+      isOwner
       portalCapabilities
+      hasVenuePortalAccess
       photoURL
       bio
       club
@@ -46,6 +48,19 @@ export const ME_QUERY = gql`
   }
 `;
 
+export const SEARCH_USER_BY_PHONE = gql`
+  query SearchUserByPhone($phone: String!) {
+    searchUserByPhone(phone: $phone) {
+      _id
+      fullName
+      displayName
+      phone
+      email
+      photoURL
+    }
+  }
+`;
+
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($userId: String!) {
     getUserProfile(userId: $userId) {
@@ -56,6 +71,7 @@ export const GET_USER_PROFILE = gql`
       displayName
       userName
       role
+      isOwner
       portalCapabilities
       isActive
       isSuspended

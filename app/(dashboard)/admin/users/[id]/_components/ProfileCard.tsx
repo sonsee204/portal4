@@ -21,6 +21,7 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { PermissionGate } from '@/components/atoms/PermissionGate';
+import { formatDate, formatDateTime } from '@/lib/utils';
 import { ROLE_DISPLAY_NAMES, isSuperAdminRole } from '@/lib/permissions';
 import {
   ADMIN_SUSPEND_USER,
@@ -133,18 +134,14 @@ export function ProfileCard({ user }: ProfileCardProps) {
           <div className="flex items-center gap-3 text-sm">
             <IonIcon name="calendar-outline" className="text-faint" />
             <span className="text-body">
-              Tham gia:{' '}
-              {user.createdAt
-                ? new Date(user.createdAt).toLocaleDateString('vi-VN')
-                : '—'}
+              Tham gia: {user.createdAt ? formatDate(user.createdAt) : '—'}
             </span>
           </div>
           {user.lastLoginAt && (
             <div className="flex items-center gap-3 text-sm">
               <IonIcon name="log-in-outline" className="text-faint" />
               <span className="text-body">
-                Đăng nhập cuối:{' '}
-                {new Date(user.lastLoginAt).toLocaleString('vi-VN')}
+                Đăng nhập cuối: {formatDateTime(user.lastLoginAt)}
               </span>
             </div>
           )}
@@ -180,14 +177,6 @@ export function ProfileCard({ user }: ProfileCardProps) {
             disabled={actionLoading}
           >
             {user.isSuspended ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-red-400 hover:bg-red-500/10"
-            iconLeft="trash-outline"
-          >
-            Xóa tài khoản
           </Button>
         </div>
       </GlassPanel>

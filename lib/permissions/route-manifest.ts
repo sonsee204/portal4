@@ -28,6 +28,12 @@ export interface RouteManifestEntry {
   workspace: PortalWorkspace;
   permission: PortalPermission;
   status: RouteStatus;
+  /** Restrict route to platform super-admin only */
+  platformOwnerOnly?: boolean;
+  /** Restrict route to venue owner (not delegated staff) */
+  venueOwnerOnly?: boolean;
+  /** @deprecated Use platformOwnerOnly or venueOwnerOnly */
+  ownerOnly?: boolean;
   /** When set, shown in sidebar for this workspace. */
   nav?: RouteNavMeta;
   /** Dynamic segment patterns for child routes (no nav). */
@@ -83,83 +89,6 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
       icon: 'hand-left-outline',
       section: 'Vận hành',
     },
-  },
-  {
-    path: '/admin/tournaments',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    nav: { label: 'Giải đấu', icon: 'trophy-outline', section: 'Menu chính' },
-  },
-  {
-    path: '/admin/tournaments/create',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/create',
-  },
-  {
-    path: '/admin/tournaments/:id',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id',
-  },
-  {
-    path: '/admin/tournaments/:id/edit',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/edit',
-  },
-  {
-    path: '/admin/tournaments/:id/registrations',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/registrations',
-  },
-  {
-    path: '/admin/tournaments/:id/draw',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/draw',
-  },
-  {
-    path: '/admin/tournaments/:id/schedule',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/schedule',
-  },
-  {
-    path: '/admin/tournaments/:id/print',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/print',
-  },
-  {
-    path: '/admin/tournaments/:id/scoring/:matchId',
-    workspace: 'admin',
-    permission: 'tournaments.platform',
-    status: 'live',
-    pattern: '/admin/tournaments/:id/scoring/:matchId',
-  },
-  {
-    path: '/admin/finance',
-    workspace: 'admin',
-    permission: 'finance.platform',
-    status: 'live',
-    nav: { label: 'Tài chính', icon: 'cash-outline', section: 'Menu chính' },
-  },
-  {
-    path: '/admin/calendar',
-    workspace: 'admin',
-    permission: 'calendar.platform',
-    status: 'live',
-    nav: { label: 'Lịch sân', icon: 'calendar-outline', section: 'Menu chính' },
   },
   {
     path: '/admin/growth',
@@ -246,11 +175,13 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'admin',
     permission: 'system.settings',
     status: 'live',
-    nav: {
-      label: 'Cài đặt',
-      icon: 'settings-outline',
-      section: 'Hệ thống',
-    },
+  },
+  {
+    path: '/admin/access-control',
+    workspace: 'admin',
+    permission: 'users.manage',
+    status: 'live',
+    platformOwnerOnly: true,
   },
 
   // --- Owner workspace ---
@@ -264,16 +195,23 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   {
     path: '/owner/venues',
     workspace: 'owner',
-    permission: 'owner.dashboard',
+    permission: 'venues.manage',
     status: 'live',
     nav: { label: 'Sân của tôi', icon: 'business-outline', section: 'Menu chính' },
+  },
+  {
+    path: '/owner/venues/:venueId',
+    workspace: 'owner',
+    permission: 'venues.manage',
+    status: 'live',
+    pattern: '/owner/venues/:venueId',
   },
   {
     path: '/owner/calendar',
     workspace: 'owner',
     permission: 'calendar.venue',
     status: 'live',
-    nav: { label: 'Lịch sân', icon: 'calendar-outline', section: 'Menu chính' },
+    nav: { label: 'Lịch sân', icon: 'calendar-outline', section: 'Vận hành' },
   },
   {
     path: '/owner/bookings',
@@ -283,7 +221,107 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     nav: {
       label: 'Đặt sân',
       icon: 'receipt-outline',
-      section: 'Menu chính',
+      section: 'Vận hành',
+    },
+  },
+  {
+    path: '/owner/products',
+    workspace: 'owner',
+    permission: 'products.venue',
+    status: 'live',
+    nav: {
+      label: 'Sản phẩm & F&B',
+      icon: 'fast-food-outline',
+      section: 'Vận hành',
+    },
+  },
+  {
+    path: '/owner/inventory/history',
+    workspace: 'owner',
+    permission: 'products.venue',
+    status: 'live',
+    nav: {
+      label: 'Lịch sử kho',
+      icon: 'swap-vertical-outline',
+      section: 'Vận hành',
+    },
+  },
+  {
+    path: '/owner/orders',
+    workspace: 'owner',
+    permission: 'orders.venue',
+    status: 'live',
+    nav: {
+      label: 'Đơn hàng / POS',
+      icon: 'cart-outline',
+      section: 'Vận hành',
+    },
+  },
+  {
+    path: '/owner/promotions',
+    workspace: 'owner',
+    permission: 'promotions.venue',
+    status: 'live',
+    nav: {
+      label: 'Khuyến mãi',
+      icon: 'pricetag-outline',
+      section: 'Vận hành',
+    },
+  },
+  {
+    path: '/owner/staff',
+    workspace: 'owner',
+    permission: 'staff.venue',
+    status: 'live',
+    venueOwnerOnly: true,
+    nav: {
+      label: 'Nhân viên',
+      icon: 'people-outline',
+      section: 'Quản lý',
+    },
+  },
+  {
+    path: '/owner/stats/overview',
+    workspace: 'owner',
+    permission: 'finance.venue',
+    status: 'live',
+    nav: {
+      label: 'Tổng quan',
+      icon: 'pie-chart-outline',
+      section: 'Thống kê',
+    },
+  },
+  {
+    path: '/owner/stats/finance',
+    workspace: 'owner',
+    permission: 'finance.venue',
+    status: 'live',
+    nav: {
+      label: 'Thống kê tài chính',
+      icon: 'cash-outline',
+      section: 'Thống kê',
+    },
+  },
+  {
+    path: '/owner/stats/operations',
+    workspace: 'owner',
+    permission: 'finance.venue',
+    status: 'live',
+    nav: {
+      label: 'Thống kê sân',
+      icon: 'football-outline',
+      section: 'Thống kê',
+    },
+  },
+  {
+    path: '/owner/stats/products',
+    workspace: 'owner',
+    permission: 'finance.venue',
+    status: 'live',
+    nav: {
+      label: 'Thống kê sản phẩm',
+      icon: 'cube-outline',
+      section: 'Thống kê',
     },
   },
   {
@@ -291,18 +329,12 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'owner',
     permission: 'finance.venue',
     status: 'live',
-    nav: { label: 'Tài chính', icon: 'cash-outline', section: 'Menu chính' },
   },
   {
     path: '/owner/analytics',
     workspace: 'owner',
     permission: 'analytics.venue',
     status: 'live',
-    nav: {
-      label: 'Thống kê',
-      icon: 'analytics-outline',
-      section: 'Menu chính',
-    },
   },
 
   // --- Organizer workspace ---
@@ -383,11 +415,12 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
     workspace: 'shared',
     permission: 'profile.edit',
     status: 'live',
-    nav: {
-      label: 'Hồ sơ cá nhân',
-      icon: 'person-outline',
-      section: 'Hệ thống',
-    },
+  },
+  {
+    path: '/shared/sessions',
+    workspace: 'shared',
+    permission: 'profile.edit',
+    status: 'live',
   },
 
   // --- Utility ---

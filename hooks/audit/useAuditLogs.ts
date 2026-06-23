@@ -17,20 +17,21 @@ import type { AuditFilterInput } from '@/types';
 import type { WatchQueryFetchPolicy } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { AUDIT_GET_LOGS } from '@/graphql/audit/queries';
-import type { AuditGetLogsQuery } from '@/graphql/generated';
+import type { AuditGetLogsQuery, CursorSortInput } from '@/graphql/generated';
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
+import { buildSortedConnectionVariables } from '@/hooks/shared/useSortedConnectionQuery';
 
 export type AuditLogEntry = AuditGetLogsQuery['auditLogsConnection']['edges'][number]['node'];
 
 interface AuditLogsVariables {
   filter?: AuditFilterInput;
   pagination?: LegacyPagePagination;
+  sort?: CursorSortInput;
 }
 
 export function useAuditLogs(
@@ -38,15 +39,16 @@ export function useAuditLogs(
   options?: { skip?: boolean; fetchPolicy?: WatchQueryFetchPolicy },
 ) {
   const filter = variables.filter;
-  const first = resolveConnectionFirst(variables.pagination);
+  const baseVariables = { filter };
 
   const { data, loading, error, refetch, fetchMore } = useQuery<AuditGetLogsQuery>(
     AUDIT_GET_LOGS,
     {
-      variables: {
-        filter,
-        pagination: { first, after: variables.pagination?.after ?? null },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        variables.sort,
+        variables.pagination,
+      ),
       skip: options?.skip,
       fetchPolicy: options?.fetchPolicy,
     },
@@ -56,15 +58,18 @@ export function useAuditLogs(
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
   const totalCount = connection?.totalCount ?? 0;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      filter,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(
+        baseVariables,
+        variables.sort,
+        variables.pagination,
+        after,
+      ),
     mergeResults: (prev, next) => ({
       ...next,
       auditLogsConnection: {
@@ -84,6 +89,7 @@ export function useAuditLogs(
     hasMore: hasNextPage,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

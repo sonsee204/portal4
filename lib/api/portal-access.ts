@@ -20,8 +20,10 @@ import type {
   PortalCapability,
   PortalCapabilityGrantsConnectionQuery,
   RevokePortalCapabilityMutation,
+  CursorSortInput,
 } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { buildSortedConnectionVariables } from '@/hooks/shared/useSortedConnectionQuery';
 import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 export type { PortalCapability };
@@ -44,19 +46,23 @@ export async function fetchPortalCapabilityGrants(options?: {
   capability?: PortalCapability;
   enabled?: boolean;
   limit?: number;
+  sort?: CursorSortInput;
 }): Promise<PortalCapabilityGrant[]> {
   const limit = Math.min(options?.limit ?? CURSOR_PAGE_MAX, CURSOR_PAGE_MAX);
   const client = getApolloClient();
   const result = await client.query<PortalCapabilityGrantsConnectionQuery>({
     query: PORTAL_CAPABILITY_GRANTS_CONNECTION,
-    variables: {
-      pagination: { first: limit },
-      filter: {
-        userId: options?.userId,
-        capability: options?.capability,
-        enabled: options?.enabled,
+    variables: buildSortedConnectionVariables(
+      {
+        filter: {
+          userId: options?.userId,
+          capability: options?.capability,
+          enabled: options?.enabled,
+        },
       },
-    },
+      options?.sort,
+      { limit },
+    ),
     fetchPolicy: 'network-only',
   });
 

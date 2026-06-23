@@ -53,9 +53,8 @@ interface ConnectionShape {
 }
 
 /**
- * Relay-style merge for cursor connections. Edges are deduplicated by
- * `cursor` (or `node.__ref` as fallback) so refetch + paginate combinations
- * never produce duplicate rows.
+ * Relay-style merge for cursor connections. Tracks cursors and node refs
+ * separately so sort changes (new cursors, same Booking ref) never duplicate rows.
  */
 function relayMergeFn(
   existing: ConnectionShape | undefined,
@@ -65,18 +64,23 @@ function relayMergeFn(
   const existingEdges = existing.edges ?? [];
   const incomingEdges = incoming.edges ?? [];
 
-  const seen = new Set<string>();
+  const seenCursors = new Set<string>();
+  const seenRefs = new Set<string>();
   for (const edge of existingEdges) {
-    const key = edge.cursor ?? edge.node?.__ref;
-    if (key) seen.add(key);
+    if (edge.cursor) seenCursors.add(edge.cursor);
+    if (edge.node?.__ref) seenRefs.add(edge.node.__ref);
   }
-  const merged = [
-    ...existingEdges,
-    ...incomingEdges.filter((edge) => {
-      const key = edge.cursor ?? edge.node?.__ref;
-      return key ? !seen.has(key) : true;
-    }),
-  ];
+
+  const merged = [...existingEdges];
+  for (const edge of incomingEdges) {
+    const cursor = edge.cursor;
+    const ref = edge.node?.__ref;
+    if (cursor && seenCursors.has(cursor)) continue;
+    if (ref && seenRefs.has(ref)) continue;
+    merged.push(edge);
+    if (cursor) seenCursors.add(cursor);
+    if (ref) seenRefs.add(ref);
+  }
 
   return {
     ...incoming,
@@ -97,7 +101,6 @@ export const apolloTypePolicies: TypePolicies = {
   Venue: { keyFields: ['_id'] },
   Court: { keyFields: ['_id'] },
   Order: { keyFields: ['_id'] },
-  OrderItem: { keyFields: ['_id'] },
   Product: { keyFields: ['_id'] },
   Promotion: { keyFields: ['_id'] },
   PickupGame: { keyFields: ['_id'] },
@@ -129,6 +132,7 @@ export const apolloTypePolicies: TypePolicies = {
   Reaction: { keyFields: false },
   ReadReceipt: { keyFields: false },
   BookingSlot: { keyFields: false },
+  OrderItem: { keyFields: false },
   RecurringConfig: { keyFields: false },
   GameLocation: { keyFields: false },
   GameSlot: { keyFields: false },
@@ -236,7 +240,7 @@ export const apolloTypePolicies: TypePolicies = {
       postsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
       myBookingsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
       venueBookingsConnection: {
-        keyArgs: ['venueId', 'filter'],
+        keyArgs: ['venueId', 'filter', 'sort'],
         merge: relayMergeFn,
       },
       pickupGamesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
@@ -248,10 +252,10 @@ export const apolloTypePolicies: TypePolicies = {
         keyArgs: ['latitude', 'longitude', 'radiusKm', 'filter'],
         merge: relayMergeFn,
       },
-      auditLogsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+      auditLogsConnection: { keyArgs: ['filter', 'sort'], merge: relayMergeFn },
       contactInquiriesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
       adminUsersConnection: {
-        keyArgs: ['role', 'isActive', 'isSuspended', 'searchQuery'],
+        keyArgs: ['role', 'isActive', 'isSuspended', 'searchQuery', 'sort'],
         merge: relayMergeFn,
       },
       adminAllBookingsConnection: {
@@ -263,17 +267,23 @@ export const apolloTypePolicies: TypePolicies = {
         merge: relayMergeFn,
       },
       getPostReportsForAdminConnection: {
-        keyArgs: ['filter'],
+        keyArgs: ['filter', 'sort'],
         merge: relayMergeFn,
       },
       getUserReportsForAdminConnection: {
-        keyArgs: ['filter'],
+        keyArgs: ['filter', 'sort'],
         merge: relayMergeFn,
       },
-      messageReportsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
-      claimRequestsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+      messageReportsConnection: {
+        keyArgs: ['filter', 'sort'],
+        merge: relayMergeFn,
+      },
+      claimRequestsConnection: {
+        keyArgs: ['filter', 'sort'],
+        merge: relayMergeFn,
+      },
       allVenueRequestsConnection: {
-        keyArgs: ['status'],
+        keyArgs: ['status', 'sort'],
         merge: relayMergeFn,
       },
       qrCampaignsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
@@ -286,8 +296,18 @@ export const apolloTypePolicies: TypePolicies = {
         keyArgs: ['tournamentId', 'filter'],
         merge: relayMergeFn,
       },
-      otpTestPhonesConnection: { keyArgs: ['filter'], merge: relayMergeFn },
-      otpTestUserGrantsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+      otpTestPhonesConnection: {
+        keyArgs: ['filter', 'sort'],
+        merge: relayMergeFn,
+      },
+      otpTestUserGrantsConnection: {
+        keyArgs: ['filter', 'sort'],
+        merge: relayMergeFn,
+      },
+      stockMovementsConnection: {
+        keyArgs: ['venueId', 'filter', 'sort'],
+        merge: relayMergeFn,
+      },
     },
   },
 };
