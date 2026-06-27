@@ -24,8 +24,8 @@ import {
   MatchType,
   TournamentFormat,
   TournamentGender,
-  ScoringSystem,
 } from '@/graphql/generated';
+import { createDefaultScoringForSport } from '@/lib/scoring/scoring-form-defaults';
 
 /* ------------------------------------------------------------------ */
 /* Category helpers                                                    */
@@ -38,35 +38,10 @@ const MATCH_TYPE_MAP: Record<CategoryFormEntry['matchType'], MatchType> = {
 };
 
 const DEFAULT_SCORING_CONFIG: Record<string, ScoringConfigInput> = {
-  badminton: {
-    scoringSystem: ScoringSystem.SetsAndPoints,
-    bestOf: 3, setsToWin: 2, pointsPerSet: 21,
-    deuceEnabled: true, deuceAt: 20,
-    tiebreakEnabled: true, tiebreakPoints: 30,
-    winByMargin: 2, maxPoints: 30,
-  },
-  pickleball: {
-    scoringSystem: ScoringSystem.SetsAndPoints,
-    bestOf: 3, setsToWin: 2, pointsPerSet: 11,
-    deuceEnabled: true, deuceAt: 10,
-    tiebreakEnabled: true, tiebreakPoints: 15,
-    winByMargin: 2, maxPoints: 15,
-  },
-  tennis: {
-    scoringSystem: ScoringSystem.SetsAndPoints,
-    bestOf: 3, setsToWin: 2, pointsPerSet: 6,
-    deuceEnabled: true, deuceAt: 5,
-    tiebreakEnabled: true, tiebreakPoints: 7,
-    winByMargin: 2, maxPoints: 7,
-  },
-  football: {
-    scoringSystem: ScoringSystem.TimedGoals,
-    bestOf: 1, setsToWin: 1, pointsPerSet: 90,
-    periodsCount: 2, periodDurationMinutes: 45,
-    deuceEnabled: false, deuceAt: 0,
-    tiebreakEnabled: false, tiebreakPoints: 0,
-    winByMargin: 1, maxPoints: 99,
-  },
+  badminton: createDefaultScoringForSport('badminton').scoringConfig,
+  pickleball: createDefaultScoringForSport('pickleball').scoringConfig,
+  tennis: createDefaultScoringForSport('tennis').scoringConfig,
+  football: createDefaultScoringForSport('football').scoringConfig,
 };
 
 export function mapCategoryEntryToInput(
@@ -86,7 +61,7 @@ export function mapCategoryEntryToInput(
     matchType: MATCH_TYPE_MAP[entry.matchType] ?? MatchType.Singles,
     format,
     gender: TournamentGender.Open,
-    scoringConfig: DEFAULT_SCORING_CONFIG[sport] ?? DEFAULT_SCORING_CONFIG.badminton,
+    scoringConfig: entry.scoringConfig ?? DEFAULT_SCORING_CONFIG[sport] ?? createDefaultScoringForSport('badminton').scoringConfig,
     popular: entry.popular,
     maxRegistrations: entry.maxRegistrations > 0 ? entry.maxRegistrations : undefined,
     bracketSize: isRoundRobin || isGroupKnockout ? undefined : (entry.bracketSize > 0 ? entry.bracketSize : undefined),

@@ -796,8 +796,8 @@ type BadmintonMatchStateGql {
   endsSwapped: Boolean!
   format: BadmintonFormat!
   gameNumber: Int!
-  intervalTakenAt11: Boolean!
   lastServiceOverAt: String
+  midGameIntervalTaken: Boolean!
   receiverPlayerIndex: Int
   receiverSide: Int!
   rotationIndex: Int
@@ -10761,6 +10761,9 @@ type Query {
   """List scoreboard sessions for hub tabs (cursor)"""
   scoreboardSessionsConnection(filter: ScoreboardSessionsFilterInput!, pagination: CursorPageInput): ScoreboardSessionConnection!
 
+  """Scoring rule templates for a sport (organizer picker)"""
+  scoringTemplates(sportType: SportType!): [ScoringTemplate!]!
+
   """Search messages in a conversation (cursor)"""
   searchMessagesConnection(input: SearchMessagesInput!, pagination: CursorPageInput): MessageConnection!
 
@@ -12115,6 +12118,11 @@ type ScoringConfig {
   """Max points per set (0 = unlimited, win by margin)"""
   maxPoints: Int!
 
+  """
+  Score at which mid-game interval triggers (0 = disabled). Badminton: typically ceil(pointsPerSet/2)
+  """
+  midGameIntervalAt: Int
+
   """Period duration in minutes (timed sports)"""
   periodDurationMinutes: Int!
 
@@ -12150,6 +12158,7 @@ input ScoringConfigInput {
   deuceEnabled: Boolean! = false
   framesToWin: Int
   maxPoints: Int! = 0
+  midGameIntervalAt: Int
   periodDurationMinutes: Int! = 0
   periodsCount: Int! = 0
   pointsPerSet: Int!
@@ -12169,6 +12178,21 @@ enum ScoringSystem {
   SETS_AND_POINTS
   TIMED_GOALS
   TIMED_POINTS
+}
+
+"""Named scoring rule template for a sport"""
+type ScoringTemplate {
+  """Full scoring configuration"""
+  config: ScoringConfig!
+
+  """Short description of the rules"""
+  description: String!
+
+  """Stable template identifier"""
+  id: String!
+
+  """Display label for organizers"""
+  label: String!
 }
 
 input SearchMessagesInput {
@@ -15677,6 +15701,9 @@ type VenueOperationsReport {
   """
   scheduleCoverageTrend: [ScheduleCoveragePoint!]!
   totalBookings: Int!
+
+  """Unpaid balance on booking orders linked to schedule bookings in period"""
+  unpaidAmount: Int!
 }
 
 type VenueOrderTypeConfig {

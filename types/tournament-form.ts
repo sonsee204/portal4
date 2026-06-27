@@ -12,7 +12,11 @@
  */
 
 import { z } from 'zod';
-import { TournamentFormat } from '@/graphql/generated';
+import {
+  TournamentFormat,
+  type ScoringConfigInput,
+} from '@/graphql/generated';
+import { createDefaultScoringForSport } from '@/lib/scoring/scoring-form-defaults';
 
 /* ------------------------------------------------------------------ */
 /* Sport type                                                          */
@@ -45,6 +49,8 @@ export interface CategoryFormEntry {
   groupCount: number;
   advancingPerGroup: number;
   defaultMatchDurationMinutes: number;
+  scoringTemplateId: string;
+  scoringConfig: import('@/graphql/generated').ScoringConfigInput;
   prizes: PrizeEntry[];
 }
 
@@ -140,6 +146,11 @@ const prizeSchema = z.object({
   perks: z.array(z.string()),
 });
 
+const scoringConfigSchema = z.custom<ScoringConfigInput>(
+  (value) => typeof value === 'object' && value != null,
+  'Cấu hình tính điểm không hợp lệ',
+);
+
 const categorySchema = z.object({
   title: z.string().min(1, 'Tên nội dung là bắt buộc'),
   ageLabel: z.string().min(1, 'Nhóm tuổi là bắt buộc'),
@@ -154,6 +165,8 @@ const categorySchema = z.object({
   groupCount: z.number().min(2),
   advancingPerGroup: z.number().min(1),
   defaultMatchDurationMinutes: z.number().min(5),
+  scoringTemplateId: z.string().min(1),
+  scoringConfig: scoringConfigSchema,
   prizes: z.array(prizeSchema),
 });
 
@@ -305,6 +318,7 @@ export const DEFAULT_TOURNAMENT_FORM: TournamentFormData = {
       groupCount: 4,
       advancingPerGroup: 2,
       defaultMatchDurationMinutes: 30,
+      ...createDefaultScoringForSport('badminton'),
       prizes: [
         { rank: 'gold', title: 'Giải Nhất', amount: '', perks: [''] },
         { rank: 'silver', title: 'Giải Nhì', amount: '', perks: [''] },

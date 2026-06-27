@@ -20,6 +20,8 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Select } from '@/components/atoms/Select';
 import { Textarea } from '@/components/atoms/Textarea';
 import { MatchType, TournamentFormat } from '@/graphql/generated';
+import type { SportType } from '@/types/tournament-form';
+import { ScoringConfigEditor } from '../_parts/ScoringConfigEditor';
 
 import type { EditState } from './category-api-card.types';
 import {
@@ -30,6 +32,7 @@ import {
 } from './step-categories.constants';
 
 export interface CategoryApiCardEditFormProps {
+  sport: SportType;
   draft: EditState;
   updating: boolean;
   onUpdate: (partial: Partial<EditState>) => void;
@@ -38,6 +41,7 @@ export interface CategoryApiCardEditFormProps {
 }
 
 export function CategoryApiCardEditForm({
+  sport,
   draft,
   updating,
   onUpdate,
@@ -89,9 +93,7 @@ export function CategoryApiCardEditForm({
           label="Loại thi đấu"
           options={MATCH_TYPE_OPTIONS}
           value={draft.matchType}
-          onChange={(e) =>
-            onUpdate({ matchType: e.target.value as MatchType })
-          }
+          onChange={(e) => onUpdate({ matchType: e.target.value as MatchType })}
         />
         <Select
           label="Thể thức"
@@ -226,6 +228,16 @@ export function CategoryApiCardEditForm({
         rows={2}
         value={draft.description}
         onChange={(e) => onUpdate({ description: e.target.value })}
+      />
+
+      <ScoringConfigEditor
+        sport={sport}
+        templateId={draft.scoringTemplateId}
+        config={draft.scoringConfig}
+        onTemplateIdChange={(scoringTemplateId) =>
+          onUpdate({ scoringTemplateId })
+        }
+        onConfigChange={(scoringConfig) => onUpdate({ scoringConfig })}
       />
 
       <div className="border-surface-border mt-4 rounded-lg border-t pt-4">

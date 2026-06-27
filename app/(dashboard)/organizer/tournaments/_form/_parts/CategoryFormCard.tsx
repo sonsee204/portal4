@@ -20,10 +20,12 @@ import type { TournamentFormData } from '@/types/tournament-form';
 import { accentColors } from './category-form.constants';
 import { CategoryBasicFieldsSection } from './CategoryBasicFieldsSection';
 import { CategoryBracketSettingsSection } from './CategoryBracketSettingsSection';
+import { CategoryScoringSection } from './CategoryScoringSection';
 import { CategoryPrizesSection } from './CategoryPrizesSection';
 
 interface CategoryFormCardProps {
   index: number;
+  sport: TournamentFormData['sport'];
   control: Control<TournamentFormData>;
   onRemove: () => void;
   canRemove: boolean;
@@ -34,6 +36,7 @@ interface CategoryFormCardProps {
 
 export function CategoryFormCard({
   index,
+  sport,
   control,
   onRemove,
   canRemove,
@@ -76,6 +79,7 @@ export function CategoryFormCard({
       <div className="space-y-4">
         <CategoryBasicFieldsSection index={index} control={control} />
         <CategoryBracketSettingsSection index={index} control={control} />
+        <CategoryScoringSection index={index} sport={sport} control={control} />
         <CategoryPrizesSection index={index} control={control} />
       </div>
     </div>

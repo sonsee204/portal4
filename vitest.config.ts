@@ -36,6 +36,7 @@ export default defineConfig({
       '**/lib/venue/booking-slots-display.test.ts',
       '**/lib/venue/permissions.test.ts',
       '**/lib/venue/staff-row-actions.test.ts',
+      '**/lib/venue/venue-selection.test.ts',
       '**/lib/promotion/map-promotion-form.test.ts',
       '**/lib/promotion/promotion-row-actions.test.ts',
       '**/lib/owner/payment-proof.test.ts',

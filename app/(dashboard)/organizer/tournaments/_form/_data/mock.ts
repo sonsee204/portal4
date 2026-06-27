@@ -12,7 +12,10 @@
  */
 
 import { TournamentFormat } from '@/graphql/generated';
+import { createDefaultScoringForSport } from '@/lib/scoring/scoring-form-defaults';
 import type { TournamentFormData } from '@/types/tournament-form';
+
+const mockScoring = createDefaultScoringForSport('badminton');
 
 export const mockTournamentFormData: TournamentFormData = {
   name: 'Giải Cầu Lông Học Sinh THCS Nhị Khê Mở Rộng Lần I - 2026',
@@ -48,6 +51,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
     {
@@ -64,6 +68,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
     {
@@ -80,6 +85,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
     {
@@ -96,6 +102,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
     {
@@ -112,6 +119,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
     {
@@ -128,6 +136,7 @@ export const mockTournamentFormData: TournamentFormData = {
       sharedThirdPlace: false,
       groupCount: 4,
       advancingPerGroup: 2,
+      ...mockScoring,
       prizes: [],
     },
   ],
