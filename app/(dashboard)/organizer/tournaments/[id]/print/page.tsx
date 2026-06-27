@@ -28,6 +28,7 @@ import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
 import { masterScheduleToExcelRows } from '@/lib/tournament/print';
 import { TOURNAMENT } from '@/lib/strings';
 import { useTournamentPrintPageData } from './_hooks/useTournamentPrintPageData';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 import { PrintPreviewFrame } from './_components/PrintPreviewFrame';
 import { PRINT_IFRAME_PAGE_STYLE } from './_components/print-page-style';
 import { MasterScheduleDocument } from './_components/documents/MasterScheduleDocument';
@@ -132,124 +133,126 @@ function TournamentPrintPageInner({ tournamentId }: { tournamentId: string }) {
   };
 
   return (
-    <>
-      <PageHeader
-        title={TOURNAMENT.LABEL_PRINT_DOCUMENTS}
-        description="Xem trước, in hoặc xuất lịch thi đấu và sơ đồ thi đấu."
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          iconLeft="arrow-back-outline"
-          onClick={() => router.push(routes.detail(tournamentId))}
+    <TournamentPageSupportShell tournament={data.tournament}>
+      <>
+        <PageHeader
+          title={TOURNAMENT.LABEL_PRINT_DOCUMENTS}
+          description="Xem trước, in hoặc xuất lịch thi đấu và sơ đồ thi đấu."
         >
-          Quay lại
-        </Button>
-      </PageHeader>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft="arrow-back-outline"
+            onClick={() => router.push(routes.detail(tournamentId))}
+          >
+            Quay lại
+          </Button>
+        </PageHeader>
 
-      <QueryState
-        loading={data.loading && !data.tournament}
-        error={data.error}
-        empty={!data.tournament}
-        emptyMessage="Không tìm thấy giải đấu."
-      >
-        <div className="no-print mt-4 space-y-4">
-          <TabGroup
-            tabs={PRINT_TABS}
-            active={data.activeTab}
-            onChange={(v) => data.setActiveTab(v as 'schedule' | 'bracket')}
-          />
+        <QueryState
+          loading={data.loading && !data.tournament}
+          error={data.error}
+          empty={!data.tournament}
+          emptyMessage="Không tìm thấy giải đấu."
+        >
+          <div className="no-print mt-4 space-y-4">
+            <TabGroup
+              tabs={PRINT_TABS}
+              active={data.activeTab}
+              onChange={(v) => data.setActiveTab(v as 'schedule' | 'bracket')}
+            />
 
-          {data.readiness.unscheduledCount > 0 ? (
-            <GlassPanel card className="border-amber-500/30 bg-amber-500/5">
-              <p className="text-heading text-sm">
-                {TOURNAMENT.PRINT_UNSCHEDULED_WARNING(
-                  data.readiness.unscheduledCount
-                )}{' '}
-                <button
-                  type="button"
-                  className="text-primary font-medium underline"
-                  onClick={() => router.push(routes.schedule(tournamentId))}
-                >
-                  Xếp lịch
-                </button>
-              </p>
-            </GlassPanel>
-          ) : null}
-
-          <GlassPanel card className="flex flex-wrap items-end gap-3">
-            {data.activeTab === 'bracket' ? (
-              <div className="min-w-[200px] flex-1">
-                <Select
-                  label="Nội dung"
-                  value={data.selectedCategoryId}
-                  onChange={(e) => data.setSelectedCategoryId(e.target.value)}
-                  options={categoryOptions}
-                />
-              </div>
+            {data.readiness.unscheduledCount > 0 ? (
+              <GlassPanel card className="border-amber-500/30 bg-amber-500/5">
+                <p className="text-heading text-sm">
+                  {TOURNAMENT.PRINT_UNSCHEDULED_WARNING(
+                    data.readiness.unscheduledCount
+                  )}{' '}
+                  <button
+                    type="button"
+                    className="text-primary font-medium underline"
+                    onClick={() => router.push(routes.schedule(tournamentId))}
+                  >
+                    Xếp lịch
+                  </button>
+                </p>
+              </GlassPanel>
             ) : null}
 
-            <div className="min-w-[120px]">
-              <Select
-                label="Thu phóng"
-                value={zoom}
-                onChange={(e) => setZoom(e.target.value)}
-                options={ZOOM_OPTIONS}
-              />
-            </div>
+            <GlassPanel card className="flex flex-wrap items-end gap-3">
+              {data.activeTab === 'bracket' ? (
+                <div className="min-w-[200px] flex-1">
+                  <Select
+                    label="Nội dung"
+                    value={data.selectedCategoryId}
+                    onChange={(e) => data.setSelectedCategoryId(e.target.value)}
+                    options={categoryOptions}
+                  />
+                </div>
+              ) : null}
 
-            <div className="flex flex-wrap gap-2 pb-1">
-              <Button
-                size="sm"
-                iconLeft="print-outline"
-                onClick={() => triggerPrint('current')}
-                disabled={!canPrintCurrent}
-              >
-                In
-              </Button>
-              {data.activeTab === 'schedule' ? (
+              <div className="min-w-[120px]">
+                <Select
+                  label="Thu phóng"
+                  value={zoom}
+                  onChange={(e) => setZoom(e.target.value)}
+                  options={ZOOM_OPTIONS}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2 pb-1">
                 <Button
                   size="sm"
-                  variant="outline"
-                  iconLeft="download-outline"
-                  onClick={handleExportExcel}
-                  disabled={!data.masterScheduleDoc?.sections.length}
-                >
-                  Tải Excel
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
                   iconLeft="print-outline"
-                  onClick={() => triggerPrint('all-brackets')}
-                  disabled={drawnCategoryCount === 0}
+                  onClick={() => triggerPrint('current')}
+                  disabled={!canPrintCurrent}
                 >
-                  In tất cả nội dung
+                  In
                 </Button>
-              )}
-            </div>
-          </GlassPanel>
-        </div>
-
-        <div className="mt-4">
-          {printContent ? (
-            <PrintPreviewFrame
-              zoom={Number(zoom)}
-              printRef={printRef}
-              wide={data.activeTab === 'bracket'}
-            >
-              {printContent}
-            </PrintPreviewFrame>
-          ) : data.activeTab === 'bracket' ? (
-            <GlassPanel card className="no-print">
-              <p className="text-muted py-8 text-center text-sm">
-                {TOURNAMENT.PRINT_UNDRAWN_CATEGORY}
-              </p>
+                {data.activeTab === 'schedule' ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    iconLeft="download-outline"
+                    onClick={handleExportExcel}
+                    disabled={!data.masterScheduleDoc?.sections.length}
+                  >
+                    Tải Excel
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    iconLeft="print-outline"
+                    onClick={() => triggerPrint('all-brackets')}
+                    disabled={drawnCategoryCount === 0}
+                  >
+                    In tất cả nội dung
+                  </Button>
+                )}
+              </div>
             </GlassPanel>
-          ) : null}
-        </div>
-      </QueryState>
-    </>
+          </div>
+
+          <div className="mt-4">
+            {printContent ? (
+              <PrintPreviewFrame
+                zoom={Number(zoom)}
+                printRef={printRef}
+                wide={data.activeTab === 'bracket'}
+              >
+                {printContent}
+              </PrintPreviewFrame>
+            ) : data.activeTab === 'bracket' ? (
+              <GlassPanel card className="no-print">
+                <p className="text-muted py-8 text-center text-sm">
+                  {TOURNAMENT.PRINT_UNDRAWN_CATEGORY}
+                </p>
+              </GlassPanel>
+            ) : null}
+          </div>
+        </QueryState>
+      </>
+    </TournamentPageSupportShell>
   );
 }
