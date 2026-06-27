@@ -49,6 +49,8 @@ export default defineConfig({
       '**/lib/inventory/product-transfer.test.ts',
       '**/lib/booking/staff-booking.test.ts',
       '**/lib/booking/recurring-exclude-pricing.test.ts',
+      '**/lib/booking/booking-date-filter.test.ts',
+      '**/lib/data-table/amount-summary.test.ts',
     ],
     environment: 'node',
   },

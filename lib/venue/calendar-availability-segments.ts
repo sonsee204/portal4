@@ -143,6 +143,42 @@ export function buildCourtRowSegments(
   return segments;
 }
 
+export function calendarSegmentFromBookingGroup(
+  rowSegment: AvailabilityBookingGroup,
+  courtName: string,
+): CalendarBookingSegment {
+  const groupSlots = rowSegment.slots;
+  const firstSlot = groupSlots[0];
+  const lastSlot = groupSlots[groupSlots.length - 1];
+  if (!firstSlot || !lastSlot) {
+    throw new Error('Booking group must contain at least one slot');
+  }
+
+  const startTime = firstSlot.startTime;
+  const endTime = lastSlot.endTime;
+
+  return {
+    id: `${rowSegment.bookingId}-${courtName}-${startTime}`,
+    bookingId: rowSegment.bookingId,
+    court: courtName,
+    startTime,
+    endTime,
+    startMinutes: parseTimeToMinutes(startTime),
+    endMinutes: parseTimeToMinutes(endTime),
+    slotCount: groupSlots.length,
+    status: rowSegment.bookingStatus ?? 'CONFIRMED',
+    ...(rowSegment.customerName != null
+      ? { customerName: rowSegment.customerName }
+      : {}),
+    ...(rowSegment.customerPhone != null
+      ? { customerPhone: rowSegment.customerPhone }
+      : {}),
+    isRecurring: rowSegment.isRecurring === true,
+    ...(rowSegment.isUnpaid ? { isUnpaid: true } : {}),
+    ...(rowSegment.hasPromotion ? { hasPromotion: true } : {}),
+  };
+}
+
 /** Builds calendar overlay segments from `myVenueAvailability` courts (single source of truth). */
 export function buildCalendarSegmentsFromAvailability(
   courts: StaffAvailabilityCourt[],
@@ -155,36 +191,9 @@ export function buildCalendarSegmentsFromAvailability(
         continue;
       }
 
-      const groupSlots = rowSegment.slots;
-      const firstSlot = groupSlots[0];
-      const lastSlot = groupSlots[groupSlots.length - 1];
-      if (!firstSlot || !lastSlot) {
-        continue;
-      }
-
-      const startTime = firstSlot.startTime;
-      const endTime = lastSlot.endTime;
-
-      segments.push({
-        id: `${rowSegment.bookingId}-${court.courtName}-${startTime}`,
-        bookingId: rowSegment.bookingId,
-        court: court.courtName,
-        startTime,
-        endTime,
-        startMinutes: parseTimeToMinutes(startTime),
-        endMinutes: parseTimeToMinutes(endTime),
-        slotCount: groupSlots.length,
-        status: rowSegment.bookingStatus ?? 'CONFIRMED',
-        ...(rowSegment.customerName != null
-          ? { customerName: rowSegment.customerName }
-          : {}),
-        ...(rowSegment.customerPhone != null
-          ? { customerPhone: rowSegment.customerPhone }
-          : {}),
-        isRecurring: rowSegment.isRecurring === true,
-        ...(rowSegment.isUnpaid ? { isUnpaid: true } : {}),
-        ...(rowSegment.hasPromotion ? { hasPromotion: true } : {}),
-      });
+      segments.push(
+        calendarSegmentFromBookingGroup(rowSegment, court.courtName),
+      );
     }
   }
 

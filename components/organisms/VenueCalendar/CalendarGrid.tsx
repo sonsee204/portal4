@@ -13,9 +13,13 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { isToday, toIsoDateString } from '@/lib/date/calendar';
-import { cn } from '@/lib/utils';
+import {
+  buildCourtRowSegments,
+  calendarSegmentFromBookingGroup,
+} from '@/lib/venue/calendar-availability-segments';
+import { buildAvailabilityPriceTiers } from '@/lib/venue/calendar-price-tiers';
 import { computeCalendarScrollLeftToNow } from '@/lib/venue/calendar-scroll';
 import {
   segmentPositionInHourGrid,
@@ -29,6 +33,7 @@ import {
   type StaffAvailabilityCourt,
   type StaffAvailabilitySlot,
 } from '@/lib/venue/calendar-staff-booking';
+import { CalendarTimeSlotCell } from './CalendarTimeSlotCell';
 import { MergedBookedSlotGroup } from './MergedBookedSlotGroup';
 
 const COURT_LABEL_WIDTH = 120;
@@ -67,6 +72,21 @@ export function CalendarGrid({
 }: CalendarGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrolledDateKeyRef = useRef<string | null>(null);
+
+  const priceTiers = useMemo(
+    () => buildAvailabilityPriceTiers(availabilityCourts),
+    [availabilityCourts]
+  );
+
+  const segmentsByCourt = useMemo(() => {
+    const map = new Map<string, CalendarBookingSegment[]>();
+    for (const segment of segments) {
+      const courtSegments = map.get(segment.court) ?? [];
+      courtSegments.push(segment);
+      map.set(segment.court, courtSegments);
+    }
+    return map;
+  }, [segments]);
 
   useEffect(() => {
     if (!viewDate || !isToday(viewDate)) {
@@ -165,14 +185,12 @@ export function CalendarGrid({
           </div>
 
           {courts.map((court) => {
-            const courtSegments = segments.filter(
-              (segment) => segment.court === court
-            );
             const availabilityCourt = availabilityByCourtName.get(court);
-            const selectableSlots =
-              staffBookingEnabled && availabilityCourt
-                ? availabilityCourt.slots.filter(isStaffSlotSelectable)
-                : [];
+            const courtSegments = segmentsByCourt.get(court) ?? [];
+            const rowSegments =
+              availabilityCourt && availabilityCourt.slots.length > 0
+                ? buildCourtRowSegments(availabilityCourt.slots)
+                : null;
 
             return (
               <div
@@ -207,69 +225,99 @@ export function CalendarGrid({
                     </div>
                   ))}
 
-                  {staffBookingEnabled &&
-                    selectableSlots.map((slot) => {
-                      const slotKey = buildStaffSlotKey(
-                        availabilityCourt!.courtId,
-                        slot.startTime
-                      );
-                      const isSelected =
-                        selectedSlotKeys?.has(slotKey) ?? false;
-                      const { left, width } = slotPositionInHourGrid(
-                        slot.startTime,
-                        slot.endTime,
-                        gridStartHour,
-                        HOUR_CELL_WIDTH
-                      );
+                  {rowSegments
+                    ? rowSegments.map((rowSegment) => {
+                        if (rowSegment.kind === 'bookingGroup') {
+                          const segment = calendarSegmentFromBookingGroup(
+                            rowSegment,
+                            court
+                          );
+                          const { left, width } = segmentPositionInHourGrid(
+                            segment,
+                            gridStartHour,
+                            HOUR_CELL_WIDTH
+                          );
 
-                      return (
-                        <button
-                          key={slotKey}
-                          type="button"
-                          title={`${slot.startTime} – ${slot.endTime}`}
-                          className={cn(
-                            'absolute z-[5] rounded-md border border-dashed transition-colors',
-                            isSelected
-                              ? 'border-primary bg-primary/20 hover:bg-primary/25'
-                              : 'border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/15'
-                          )}
-                          style={{
-                            left,
-                            width,
-                            height: slotHeight,
-                            top: SLOT_INSET_Y,
-                          }}
-                          onClick={() =>
-                            onStaffSlotToggle?.(availabilityCourt!, slot)
-                          }
-                        />
-                      );
-                    })}
-
-                  {courtSegments.map((segment) => {
-                    const { left, width } = segmentPositionInHourGrid(
-                      segment,
-                      gridStartHour,
-                      HOUR_CELL_WIDTH
-                    );
-
-                    return (
-                      <MergedBookedSlotGroup
-                        key={segment.id}
-                        segment={segment}
-                        width={width}
-                        height={slotHeight}
-                        left={left}
-                        className="top-1 z-10"
-                        onClick={
-                          onSegmentClick &&
-                          isCalendarSegmentClickable(segment.status)
-                            ? () => onSegmentClick(segment)
-                            : undefined
+                          return (
+                            <MergedBookedSlotGroup
+                              key={segment.id}
+                              segment={segment}
+                              width={width}
+                              height={slotHeight}
+                              left={left}
+                              className="top-1 z-10"
+                              onClick={
+                                onSegmentClick &&
+                                isCalendarSegmentClickable(segment.status)
+                                  ? () => onSegmentClick(segment)
+                                  : undefined
+                              }
+                            />
+                          );
                         }
-                      />
-                    );
-                  })}
+
+                        const slot = rowSegment.slot;
+                        const slotKey = availabilityCourt
+                          ? buildStaffSlotKey(
+                              availabilityCourt.courtId,
+                              slot.startTime
+                            )
+                          : `${court}-${slot.startTime}`;
+                        const isSelected =
+                          selectedSlotKeys?.has(slotKey) ?? false;
+                        const isSelectable =
+                          staffBookingEnabled && isStaffSlotSelectable(slot);
+                        const { left, width } = slotPositionInHourGrid(
+                          slot.startTime,
+                          slot.endTime,
+                          gridStartHour,
+                          HOUR_CELL_WIDTH
+                        );
+
+                        return (
+                          <CalendarTimeSlotCell
+                            key={slotKey}
+                            slot={slot}
+                            priceTiers={priceTiers}
+                            isSelected={isSelected}
+                            isSelectable={isSelectable}
+                            width={width}
+                            height={slotHeight}
+                            left={left}
+                            top={SLOT_INSET_Y}
+                            onClick={
+                              isSelectable && availabilityCourt
+                                ? () =>
+                                    onStaffSlotToggle?.(availabilityCourt, slot)
+                                : undefined
+                            }
+                          />
+                        );
+                      })
+                    : courtSegments.map((segment) => {
+                        const { left, width } = segmentPositionInHourGrid(
+                          segment,
+                          gridStartHour,
+                          HOUR_CELL_WIDTH
+                        );
+
+                        return (
+                          <MergedBookedSlotGroup
+                            key={segment.id}
+                            segment={segment}
+                            width={width}
+                            height={slotHeight}
+                            left={left}
+                            className="top-1 z-10"
+                            onClick={
+                              onSegmentClick &&
+                              isCalendarSegmentClickable(segment.status)
+                                ? () => onSegmentClick(segment)
+                                : undefined
+                            }
+                          />
+                        );
+                      })}
                 </div>
               </div>
             );

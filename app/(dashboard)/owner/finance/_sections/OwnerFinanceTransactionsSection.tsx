@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
@@ -26,6 +27,7 @@ import {
 } from '@/lib/finance/finance-table';
 import { getSignedValueClassName } from '@/lib/finance/stat-card-trend';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { buildAmountSummariesFromRows } from '@/lib/data-table/amount-summary';
 import { ViewOrderDetailButton } from '../../orders/_components/ViewOrderDetailButton';
 import type { FinanceTransactionNode } from '@/hooks/owner';
 import type { OwnerFinancePageActions } from '../_hooks/useOwnerFinancePageActions';
@@ -40,6 +42,24 @@ export function OwnerFinanceTransactionsSection({
   data,
   actions,
 }: OwnerFinanceTransactionsSectionProps) {
+  const amountSummaries = useMemo(
+    () =>
+      buildAmountSummariesFromRows(data.transactions, [
+        { columnKey: 'grossAmount', getValue: (row) => row.grossAmount },
+        {
+          columnKey: 'netAmount',
+          getValue: (row) => row.netAmount,
+          tone: 'positive',
+        },
+        {
+          columnKey: 'profitAmount',
+          getValue: (row) => row.profitAmount,
+          tone: 'signed',
+        },
+      ]),
+    [data.transactions]
+  );
+
   return (
     <GlassPanel card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -95,6 +115,7 @@ export function OwnerFinanceTransactionsSection({
           sortDir={data.sortDir}
           onSort={data.handleSort}
           sortLoading={data.transactionSortLoading}
+          amountSummaries={amountSummaries}
           infiniteScroll={{
             loadedCount: data.transactions.length,
             totalCount: data.transactionCount,

@@ -23,6 +23,10 @@ import {
   VENUE_CALENDAR_VISIBLE_STATUSES,
 } from './calendar-booking-segments';
 import { computeCalendarScrollLeftToNow } from './calendar-scroll';
+import {
+  buildAvailabilityPriceTiers,
+  getCalendarPriceTier,
+} from './calendar-price-tiers';
 
 describe('VENUE_CALENDAR_VISIBLE_STATUSES', () => {
   it('includes only confirmed and completed bookings', () => {
@@ -182,6 +186,68 @@ describe('segmentPositionInHourGrid', () => {
     );
 
     expect(first.left + first.width).toBeLessThanOrEqual(second.left);
+  });
+});
+
+describe('calendar price tiers', () => {
+  it('builds unique prices from availability courts', () => {
+    const tiers = buildAvailabilityPriceTiers([
+      {
+        courtId: '1',
+        courtName: 'Sân 1',
+        slots: [
+          {
+            startTime: '08:00',
+            endTime: '08:30',
+            price: 70_000,
+            isPeakHour: false,
+            isAvailable: true,
+            isPast: false,
+          },
+          {
+            startTime: '08:30',
+            endTime: '09:00',
+            price: 90_000,
+            isPeakHour: true,
+            isAvailable: true,
+            isPast: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(tiers.uniquePrices).toEqual([70_000, 90_000]);
+    expect(getCalendarPriceTier(70_000, tiers)).toBe('low');
+    expect(getCalendarPriceTier(90_000, tiers)).toBe('high');
+  });
+
+  it('excludes past slots when building tiers like mobile', () => {
+    const tiers = buildAvailabilityPriceTiers([
+      {
+        courtId: '1',
+        courtName: 'Sân 1',
+        slots: [
+          {
+            startTime: '08:00',
+            endTime: '08:30',
+            price: 50_000,
+            isPeakHour: false,
+            isAvailable: false,
+            isPast: true,
+          },
+          {
+            startTime: '09:00',
+            endTime: '09:30',
+            price: 70_000,
+            isPeakHour: false,
+            isAvailable: true,
+            isPast: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(tiers.uniquePrices).toEqual([70_000]);
   });
 });
 

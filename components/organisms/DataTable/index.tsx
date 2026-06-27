@@ -24,6 +24,10 @@ import {
 } from '@/components/molecules/ConnectionInfiniteScroll';
 import { formatConnectionRange } from '@/components/molecules/ConnectionPager/connection-pager.utils';
 import { getInfiniteScrollStatusMessage } from '@/components/molecules/ConnectionInfiniteScroll/connection-infinite-scroll.utils';
+import { DataTableAmountSummaryBar } from './DataTableAmountSummaryBar';
+import type { DataTableAmountSummary } from '@/lib/data-table/amount-summary';
+
+export type { DataTableAmountSummary } from '@/lib/data-table/amount-summary';
 
 /* ------------------------------------------------------------------ */
 /* Column Definition                                                   */
@@ -66,6 +70,10 @@ export interface DataTableProps<T> {
   data: T[];
   /** Render custom row. If omitted, falls back to auto-rendering keys */
   renderRow: (row: T, index: number) => React.ReactNode;
+  /** Footer totals aligned to amount columns */
+  amountSummaries?: DataTableAmountSummary[];
+  /** Override partial-total note (e.g. when paginating) */
+  amountSummaryNote?: string | null;
   /** Currently sorted column key */
   sortKey?: string;
   sortDir?: 'asc' | 'desc';
@@ -116,6 +124,8 @@ export function DataTable<T>({
   columns,
   data,
   renderRow,
+  amountSummaries,
+  amountSummaryNote,
   sortKey,
   sortDir,
   onSort,
@@ -138,6 +148,23 @@ export function DataTable<T>({
     totalCount,
     infiniteScroll?.hasNextPage
   );
+
+  const hasPartialAmountSummary =
+    amountSummaries?.some((summary) => summary.scope !== 'full') ?? false;
+  const partialAmountNote =
+    amountSummaryNote ??
+    (hasPartialAmountSummary && infiniteScroll?.hasNextPage
+      ? 'Theo dòng đã tải — cuộn để tải thêm'
+      : null);
+
+  const amountSummaryBar =
+    data.length > 0 && amountSummaries && amountSummaries.length > 0 ? (
+      <DataTableAmountSummaryBar
+        columns={columns}
+        summaries={amountSummaries}
+        partialNote={partialAmountNote}
+      />
+    ) : null;
 
   const infiniteScrollFooter = infiniteScroll ? (
     <ConnectionInfiniteScroll
@@ -213,6 +240,7 @@ export function DataTable<T>({
           {infiniteScrollFooter}
         </div>
         {countBar}
+        {amountSummaryBar}
       </div>
     );
   }
@@ -225,6 +253,7 @@ export function DataTable<T>({
         <EmptyState title={emptyTitle} description={emptyDescription} />
       )}
       {infiniteScrollFooter}
+      {amountSummaryBar}
       {countBar}
     </div>
   );
