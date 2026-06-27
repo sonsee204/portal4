@@ -25,6 +25,7 @@ import {
   formatScoringSummary,
 } from '@/lib/scoring/scoring-form-defaults';
 import type { SportType } from '@/types/tournament-form';
+import { ScoringConfigSetsAndPointsFields } from './ScoringConfigSetsAndPointsFields';
 
 export interface ScoringConfigEditorProps {
   sport: SportType;
@@ -124,115 +125,7 @@ export function ScoringConfigEditor({
       </div>
 
       {(isCustom || isSetsAndPoints) && isSetsAndPoints && (
-        <div className="bg-surface/60 border-surface-border space-y-3 rounded-xl border p-4">
-          <p className="text-heading text-xs font-semibold">Tùy chỉnh điểm</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Input
-              label="Số ván (best of)"
-              type="number"
-              min={1}
-              value={String(config.bestOf)}
-              onChange={(e) => {
-                const bestOf = parseInt(e.target.value, 10) || 1;
-                patchConfig({
-                  bestOf,
-                  setsToWin: Math.ceil(bestOf / 2),
-                });
-              }}
-            />
-            <Input
-              label="Set cần thắng"
-              type="number"
-              min={1}
-              value={String(config.setsToWin)}
-              onChange={(e) =>
-                patchConfig({ setsToWin: parseInt(e.target.value, 10) || 1 })
-              }
-            />
-            <Input
-              label="Điểm chạm / set"
-              type="number"
-              min={1}
-              value={String(config.pointsPerSet)}
-              onChange={(e) => {
-                const pointsPerSet = parseInt(e.target.value, 10) || 1;
-                patchConfig({
-                  pointsPerSet,
-                  deuceAt: config.deuceEnabled
-                    ? pointsPerSet - 1
-                    : config.deuceAt,
-                  midGameIntervalAt: Math.ceil(pointsPerSet / 2),
-                });
-              }}
-            />
-            <Input
-              label="Điểm deuce"
-              type="number"
-              min={0}
-              value={String(config.deuceAt)}
-              disabled={!config.deuceEnabled}
-              onChange={(e) =>
-                patchConfig({ deuceAt: parseInt(e.target.value, 10) || 0 })
-              }
-            />
-            <Input
-              label="Điểm trần (0 = không)"
-              type="number"
-              min={0}
-              value={String(config.maxPoints)}
-              onChange={(e) =>
-                patchConfig({ maxPoints: parseInt(e.target.value, 10) || 0 })
-              }
-            />
-            <Input
-              label="Thắng cách (điểm)"
-              type="number"
-              min={1}
-              value={String(config.winByMargin)}
-              onChange={(e) =>
-                patchConfig({ winByMargin: parseInt(e.target.value, 10) || 2 })
-              }
-            />
-            <Input
-              label="Nghỉ giữa hiệp tại"
-              type="number"
-              min={0}
-              value={String(config.midGameIntervalAt ?? 0)}
-              onChange={(e) =>
-                patchConfig({
-                  midGameIntervalAt: parseInt(e.target.value, 10) || 0,
-                })
-              }
-            />
-          </div>
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={config.deuceEnabled}
-              onClick={() =>
-                patchConfig({
-                  deuceEnabled: !config.deuceEnabled,
-                  deuceAt: !config.deuceEnabled
-                    ? Math.max(config.pointsPerSet - 1, 1)
-                    : config.deuceAt,
-                })
-              }
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                config.deuceEnabled ? 'bg-primary' : 'bg-surface-border'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                  config.deuceEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className="text-heading text-sm">
-              Bật luật deuce (cân cứ)
-            </span>
-          </label>
-        </div>
+        <ScoringConfigSetsAndPointsFields config={config} onPatch={patchConfig} />
       )}
 
       {(isCustom || isTimed) && isTimed && (
