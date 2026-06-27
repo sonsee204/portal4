@@ -471,6 +471,7 @@ export enum AuditAction {
   TournamentForceDrawReset = 'TOURNAMENT_FORCE_DRAW_RESET',
   TournamentLateEntryByeFill = 'TOURNAMENT_LATE_ENTRY_BYE_FILL',
   TournamentMatchAborted = 'TOURNAMENT_MATCH_ABORTED',
+  TournamentMatchFinishedReset = 'TOURNAMENT_MATCH_FINISHED_RESET',
   TournamentMatchLiveCorrected = 'TOURNAMENT_MATCH_LIVE_CORRECTED',
   TournamentMatchResultCorrected = 'TOURNAMENT_MATCH_RESULT_CORRECTED',
   TournamentMatchResultOverride = 'TOURNAMENT_MATCH_RESULT_OVERRIDE',
@@ -4364,6 +4365,7 @@ export enum MatchCorrectionAction {
   AbortLive = 'ABORT_LIVE',
   CorrectResult = 'CORRECT_RESULT',
   ManualResult = 'MANUAL_RESULT',
+  ResetFinished = 'RESET_FINISHED',
   SetSnapshot = 'SET_SNAPSHOT',
   UndoPoints = 'UNDO_POINTS',
   Walkover = 'WALKOVER'
@@ -5176,6 +5178,8 @@ export type Mutation = {
   organizerAbortLiveMatch: TournamentMatch;
   /** BTC hiệu chỉnh tỉ số trận đang LIVE */
   organizerCorrectLiveScore: MatchScorecard;
+  /** BTC reset trận đã kết thúc về NOT_STARTED để đấu lại (vòng sau chưa đấu) */
+  organizerResetFinishedMatch: TournamentMatch;
   /** Pause a promotion */
   pausePromotion: Promotion;
   /** Pin a message in a conversation */
@@ -6485,6 +6489,11 @@ export type MutationOrganizerAbortLiveMatchArgs = {
 
 export type MutationOrganizerCorrectLiveScoreArgs = {
   input: OrganizerCorrectLiveScoreInput;
+};
+
+
+export type MutationOrganizerResetFinishedMatchArgs = {
+  input: OrganizerResetFinishedMatchInput;
 };
 
 
@@ -7992,6 +8001,14 @@ export enum OrganizerCorrectLiveScoreMode {
   SetSnapshot = 'SET_SNAPSHOT',
   UndoPoints = 'UNDO_POINTS'
 }
+
+export type OrganizerResetFinishedMatchInput = {
+  /** Optimistic concurrency guard */
+  expectedMatchUpdatedAt?: InputMaybe<Scalars['String']['input']>;
+  matchId: Scalars['ID']['input'];
+  /** Lý do reset trận (audit bắt buộc) */
+  reason: Scalars['String']['input'];
+};
 
 /** Transport channel used to deliver an OTP */
 export enum OtpChannelType {
@@ -17729,6 +17746,13 @@ export type CorrectFinishedMatchResultMutationVariables = Exact<{
 
 
 export type CorrectFinishedMatchResultMutation = { __typename?: 'Mutation', correctFinishedMatchResult: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
+
+export type OrganizerResetFinishedMatchMutationVariables = Exact<{
+  input: OrganizerResetFinishedMatchInput;
+}>;
+
+
+export type OrganizerResetFinishedMatchMutation = { __typename?: 'Mutation', organizerResetFinishedMatch: { __typename?: 'TournamentMatch', _id: string, tournamentId: string, categoryId: string, round: number, roundLabel: string, matchNumber: number, bracketPosition?: number | null, groupId?: string | null, status: MatchStatus, isBye: boolean, winner?: number | null, scheduledAt?: string | null, durationSeconds?: number | null, estimatedDurationMinutes?: number | null, refereeId?: string | null, refereeName?: string | null, refereeInviteStatus?: RefereeInviteStatus | null, hasConflictWarning?: boolean | null, matchStartedAt?: string | null, nextMatchId?: string | null, nextMatchSlot?: number | null, losersNextMatchId?: string | null, losersNextMatchSlot?: number | null, createdAt: string, updatedAt: string, player1?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, player2?: { __typename?: 'MatchPlayer', registrationId?: string | null, userId?: string | null, name?: string | null, club?: string | null, avatarUrl?: string | null, seed?: number | null, dateOfBirth?: string | null, bibNumber?: number | null, members?: Array<{ __typename?: 'MatchMember', userId?: string | null, name?: string | null, avatarUrl?: string | null, club?: string | null }> | null } | null, scoreSummary?: { __typename?: 'ScoreSummary', finalScore: Array<number>, sets: Array<{ __typename?: 'SetScoreSummary', player1: number, player2: number }> } | null, court?: { __typename?: 'MatchCourt', courtId?: string | null, name: string } | null } };
 
 export type GetMyTournamentsQueryVariables = Exact<{
   filter?: InputMaybe<TournamentFilterInput>;

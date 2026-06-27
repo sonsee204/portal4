@@ -85,4 +85,5 @@ export {
   useOrganizerAbortLiveMatch,
   useSetMatchWalkover,
   useCorrectFinishedMatchResult,
+  useOrganizerResetFinishedMatch,
 } from './useMatchCorrection';

@@ -20,6 +20,7 @@ import {
   ORGANIZER_ABORT_LIVE_MATCH,
   SET_MATCH_WALKOVER,
   CORRECT_FINISHED_MATCH_RESULT,
+  ORGANIZER_RESET_FINISHED_MATCH,
   UPDATE_MATCH_RESULT,
 } from '@/graphql/tournament/mutations/scoring';
 import {
@@ -34,6 +35,7 @@ import type {
   OrganizerAbortLiveMatchInput,
   SetMatchWalkoverInput,
   CorrectFinishedMatchResultInput,
+  OrganizerResetFinishedMatchInput,
   ManualMatchResultInput,
 } from '@/graphql/generated';
 
@@ -120,6 +122,30 @@ export function useCorrectFinishedMatchResult(options?: {
   return {
     correctFinishedResult: useCallback(
       (input: CorrectFinishedMatchResultInput) =>
+        mutation({ variables: { input } }),
+      [mutation],
+    ),
+    loading,
+  };
+}
+
+export function useOrganizerResetFinishedMatch(options?: {
+  onSuccess?: () => void;
+}) {
+  const [mutation, { loading }] = useMutation<{
+    organizerResetFinishedMatch: TournamentMatch;
+  }>(ORGANIZER_RESET_FINISHED_MATCH, {
+    ...createMutationOptions(
+      'OrganizerResetFinishedMatch',
+      'Đã reset trận đấu',
+    ),
+    ...strictMutationErrorPolicy,
+    onCompleted: () => options?.onSuccess?.(),
+  });
+
+  return {
+    resetFinishedMatch: useCallback(
+      (input: OrganizerResetFinishedMatchInput) =>
         mutation({ variables: { input } }),
       [mutation],
     ),

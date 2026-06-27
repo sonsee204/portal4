@@ -92,3 +92,14 @@ export const CORRECT_FINISHED_MATCH_RESULT = gql`
   }
   ${MATCH_CORE_FRAGMENT}
 `;
+
+export const ORGANIZER_RESET_FINISHED_MATCH = gql`
+  mutation OrganizerResetFinishedMatch(
+    $input: OrganizerResetFinishedMatchInput!
+  ) {
+    organizerResetFinishedMatch(input: $input) {
+      ...MatchCore
+    }
+  }
+  ${MATCH_CORE_FRAGMENT}
+`;
