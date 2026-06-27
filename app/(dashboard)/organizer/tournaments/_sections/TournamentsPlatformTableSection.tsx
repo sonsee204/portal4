@@ -12,10 +12,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/atoms/Badge';
+import { IonIcon } from '@/components/atoms/IonIcon';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
 import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
+import { webTournamentUrl } from '@/lib/tournaments/web-urls';
 import type { Tournament } from '@/graphql/generated';
 import {
   formatTournamentDate,
@@ -72,12 +74,28 @@ export function TournamentsPlatformTableSection({
               onClick={() => router.push(routes.detail(tournament._id))}
             >
               <td className="px-4 py-3">
-                <p className="text-heading font-medium">{tournament.title}</p>
-                {tournament.location?.name ? (
-                  <p className="text-secondary mt-0.5 text-xs">
-                    {tournament.location.name}
-                  </p>
-                ) : null}
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-heading font-medium">
+                      {tournament.title}
+                    </p>
+                    {tournament.location?.name ? (
+                      <p className="text-secondary mt-0.5 text-xs">
+                        {tournament.location.name}
+                      </p>
+                    ) : null}
+                  </div>
+                  <a
+                    href={webTournamentUrl(tournament._id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary mt-0.5 shrink-0 hover:opacity-80"
+                    title="Mở trên Web"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <IonIcon name="open-outline" size="sm" />
+                  </a>
+                </div>
               </td>
               <td className="px-4 py-3">
                 <Badge variant={STATUS_BADGE_VARIANT[tournament.status]}>

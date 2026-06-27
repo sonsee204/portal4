@@ -1,23 +1,22 @@
 /**
  * Ao Trình (NALee Sports)
- * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
- *
  * @copyright 2025-2026 Lê Trung Hiếu
- * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
- * @license Proprietary - All rights reserved
  */
 
 'use client';
 
 import Link from 'next/link';
 import { IonIcon } from '@/components/atoms/IonIcon';
+import { webTournamentManageUrl } from '@/lib/tournaments/web-urls';
 
 interface PlatformSupportBannerProps {
+  tournamentId?: string;
   organizerId: string;
   organizerName?: string | null;
 }
 
 export function PlatformSupportBanner({
+  tournamentId,
   organizerId,
   organizerName,
 }: PlatformSupportBannerProps) {
@@ -43,6 +42,20 @@ export function PlatformSupportBanner({
           >
             Xem hồ sơ BTC
           </Link>
+          {tournamentId ? (
+            <>
+              {' · '}
+              <a
+                href={webTournamentManageUrl(tournamentId, 'schedule')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
+              >
+                Vận hành trên Web
+                <IonIcon name="open-outline" size="xs" />
+              </a>
+            </>
+          ) : null}
         </p>
       </div>
     </div>

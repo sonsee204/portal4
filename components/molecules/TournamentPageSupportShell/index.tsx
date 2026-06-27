@@ -15,6 +15,7 @@ import { useTournamentSupportMode } from '@/hooks/tournament/useTournamentSuppor
 
 interface TournamentPageSupportShellProps {
   tournament?: {
+    _id?: string;
     organizer?: string | null;
     organizerName?: string | null;
   } | null;
@@ -31,6 +32,7 @@ export function TournamentPageSupportShell({
     <>
       {isSupportMode && organizerId ? (
         <PlatformSupportBanner
+          tournamentId={tournament?._id}
           organizerId={organizerId}
           organizerName={tournament?.organizerName}
         />
