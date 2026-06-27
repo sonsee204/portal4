@@ -5458,6 +5458,9 @@ enum MatchSetupMethod {
 }
 
 type MatchSetupSnapshot {
+  """Category default pointsPerSet after sanitize at match start"""
+  categoryPointsPerSet: Int
+
   """What the toss winner chose"""
   coinTossChoice: CoinTossChoice
 
@@ -5466,6 +5469,9 @@ type MatchSetupSnapshot {
 
   """ISO timestamp when setup was finalized"""
   decidedAt: String!
+
+  """Referee override pointsPerSet when different from category"""
+  pointsPerSetOverride: Int
   setupMethod: MatchSetupMethod!
 }
 
@@ -12656,6 +12662,9 @@ input StartMatchInput {
   """Who is on the left side: 1 or 2"""
   leftSidePlayer: Int
   matchId: ID!
+
+  """Referee override: điểm chạm/set (chỉ cầu lông, trước khi có scorecard)"""
+  pointsPerSetOverride: Int
 
   """Initial serving player: 1 or 2"""
   servingPlayer: Int

@@ -4490,12 +4490,16 @@ export enum MatchSetupMethod {
 
 export type MatchSetupSnapshot = {
   __typename?: 'MatchSetupSnapshot';
+  /** Category default pointsPerSet after sanitize at match start */
+  categoryPointsPerSet?: Maybe<Scalars['Int']['output']>;
   /** What the toss winner chose */
   coinTossChoice?: Maybe<CoinTossChoice>;
   /** Coin toss winner: 1 or 2 */
   coinTossWinner?: Maybe<Scalars['Int']['output']>;
   /** ISO timestamp when setup was finalized */
   decidedAt: Scalars['String']['output'];
+  /** Referee override pointsPerSet when different from category */
+  pointsPerSetOverride?: Maybe<Scalars['Int']['output']>;
   setupMethod: MatchSetupMethod;
 };
 
@@ -13171,6 +13175,8 @@ export type StartMatchInput = {
   /** Who is on the left side: 1 or 2 */
   leftSidePlayer?: InputMaybe<Scalars['Int']['input']>;
   matchId: Scalars['ID']['input'];
+  /** Referee override: điểm chạm/set (chỉ cầu lông, trước khi có scorecard) */
+  pointsPerSetOverride?: InputMaybe<Scalars['Int']['input']>;
   /** Initial serving player: 1 or 2 */
   servingPlayer?: InputMaybe<Scalars['Int']['input']>;
   /** How setup was decided: MANUAL or COIN_TOSS */
