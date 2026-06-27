@@ -10601,9 +10601,6 @@ type Query {
   """Cursor-paginated tournaments organized by current user"""
   myTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
 
-  """Cursor-paginated all tournaments (platform owner only)"""
-  platformTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
-
   """Get venue availability with user pending slots info"""
   myVenueAvailability(date: String!, venueId: ID!): VenueAvailability!
 
@@ -10675,6 +10672,9 @@ type Query {
 
   """Lấy danh sách kèo giao lưu (cursor)"""
   pickupGamesConnection(filter: PickupGameFilterInput, pagination: CursorPageInput): PickupGameConnection!
+
+  """Cursor-paginated all tournaments (platform owner only)"""
+  platformTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
 
   """Get popular/featured sports"""
   popularSports: [Sport!]!
