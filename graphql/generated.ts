@@ -13561,6 +13561,8 @@ export type TimeSlotAvailability = {
   endTime: Scalars['String']['output'];
   /** Has active booking pass for this slot */
   hasActivePass?: Maybe<Scalars['Boolean']['output']>;
+  /** Booking has an applied venue promotion or discount code */
+  hasPromotion?: Maybe<Scalars['Boolean']['output']>;
   /** Booking ID of the hold */
   holdBookingId?: Maybe<Scalars['String']['output']>;
   /** Hold expiration time (ISO string) */
@@ -13581,6 +13583,8 @@ export type TimeSlotAvailability = {
   isPeakHour: Scalars['Boolean']['output'];
   /** Whether the booking is a recurring (fixed) schedule */
   isRecurring?: Maybe<Scalars['Boolean']['output']>;
+  /** Booking order linked to this slot still has unpaid balance */
+  isUnpaid?: Maybe<Scalars['Boolean']['output']>;
   /** Booking ID if slot is user hold active booking */
   myHoldActiveBookingId?: Maybe<Scalars['ID']['output']>;
   /** Booking ID if slot is user hold pending booking */
@@ -17205,7 +17209,7 @@ export type GetMyVenueAvailabilityQueryVariables = Exact<{
 }>;
 
 
-export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null, customerName?: string | null, customerPhone?: string | null, isRecurring?: boolean | null }> }> } };
+export type GetMyVenueAvailabilityQuery = { __typename?: 'Query', myVenueAvailability: { __typename?: 'VenueAvailability', date: string, courts: Array<{ __typename?: 'CourtAvailability', courtId: string, courtName: string, sportType: SportType, courtStatus?: CourtStatus | null, slots: Array<{ __typename?: 'TimeSlotAvailability', startTime: string, endTime: string, price: number, isPeakHour: boolean, isAvailable: boolean, isPast: boolean, isHold?: boolean | null, holdBookingId?: string | null, bookingId?: string | null, bookingStatus?: string | null, customerName?: string | null, customerPhone?: string | null, isRecurring?: boolean | null, isUnpaid?: boolean | null, hasPromotion?: boolean | null }> }> } };
 
 export type LookupCustomerByPhoneQueryVariables = Exact<{
   phone: Scalars['String']['input'];

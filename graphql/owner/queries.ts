@@ -838,6 +838,8 @@ export const GET_MY_VENUE_AVAILABILITY = gql`
           customerName
           customerPhone
           isRecurring
+          isUnpaid
+          hasPromotion
         }
       }
     }

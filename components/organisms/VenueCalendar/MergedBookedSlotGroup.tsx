@@ -83,6 +83,18 @@ function BookingKindHeader({
   );
 }
 
+function PromotionBadge() {
+  return (
+    <div
+      className="absolute right-1 bottom-1 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm"
+      title="Có khuyến mãi"
+      aria-label="Có khuyến mãi"
+    >
+      <IonIcon name="pricetag" size="xs" className="h-2.5 w-2.5" />
+    </div>
+  );
+}
+
 export function MergedBookedSlotGroup({
   segment,
   width,
@@ -91,11 +103,11 @@ export function MergedBookedSlotGroup({
   className,
   onClick,
 }: MergedBookedSlotGroupProps) {
-  const scheme = getBookingSlotColorScheme(
-    segment.bookingId,
-    segment.status,
-    segment.isRecurring
-  );
+  const scheme = getBookingSlotColorScheme({
+    bookingStatus: segment.status,
+    isRecurring: segment.isRecurring,
+    isUnpaid: segment.isUnpaid,
+  });
   const segmentKind = resolveCalendarSegmentKind(segment);
   const kindLabel =
     segmentKind === 'recurring'
@@ -142,7 +154,7 @@ export function MergedBookedSlotGroup({
         className
       )}
       style={{ width, height, left }}
-      title={`${kindLabel ? `${kindLabel} • ` : ''}${name ?? 'Khách'}${phone ? ` • ${phone}` : ''} • ${segment.startTime} – ${segment.endTime}`}
+      title={`${kindLabel ? `${kindLabel} • ` : ''}${segment.hasPromotion ? 'Có khuyến mãi • ' : ''}${name ?? 'Khách'}${phone ? ` • ${phone}` : ''} • ${segment.startTime} – ${segment.endTime}`}
     >
       {isRecurring ? (
         <div
@@ -203,6 +215,8 @@ export function MergedBookedSlotGroup({
           <p className={cn('text-xs font-semibold', scheme.textClass)}>Khách</p>
         ) : null}
       </div>
+
+      {segment.hasPromotion ? <PromotionBadge /> : null}
     </div>
   );
 }

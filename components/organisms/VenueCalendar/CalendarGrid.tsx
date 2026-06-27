@@ -13,7 +13,10 @@
 
 'use client';
 
+import { useEffect, useRef } from 'react';
+import { isToday, toIsoDateString } from '@/lib/date/calendar';
 import { cn } from '@/lib/utils';
+import { computeCalendarScrollLeftToNow } from '@/lib/venue/calendar-scroll';
 import {
   segmentPositionInHourGrid,
   isCalendarSegmentClickable,
@@ -39,6 +42,8 @@ interface CalendarGridProps {
   courts: string[];
   segments: CalendarBookingSegment[];
   hours?: number[];
+  /** When set to today, the grid scrolls horizontally to the current time on first render. */
+  viewDate?: Date;
   onSegmentClick?: (segment: CalendarBookingSegment) => void;
   staffBookingEnabled?: boolean;
   availabilityCourts?: StaffAvailabilityCourt[];
@@ -53,12 +58,56 @@ export function CalendarGrid({
   courts,
   segments,
   hours = DEFAULT_HOURS,
+  viewDate,
   onSegmentClick,
   staffBookingEnabled = false,
   availabilityCourts = [],
   selectedSlotKeys,
   onStaffSlotToggle,
 }: CalendarGridProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrolledDateKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!viewDate || !isToday(viewDate)) {
+      scrolledDateKeyRef.current = null;
+    }
+  }, [viewDate]);
+
+  useEffect(() => {
+    if (
+      !viewDate ||
+      !isToday(viewDate) ||
+      hours.length === 0 ||
+      courts.length === 0
+    ) {
+      return;
+    }
+
+    const dateKey = toIsoDateString(viewDate);
+    if (scrolledDateKeyRef.current === dateKey) {
+      return;
+    }
+
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const scrollLeft = computeCalendarScrollLeftToNow(hours, {
+        courtLabelWidth: COURT_LABEL_WIDTH,
+        hourCellWidth: HOUR_CELL_WIDTH,
+        viewportWidth: scrollContainer.clientWidth,
+      });
+
+      scrollContainer.scrollTo({ left: scrollLeft, behavior: 'auto' });
+      scrolledDateKeyRef.current = dateKey;
+    }, 100);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [viewDate, hours, courts.length]);
+
   if (hours.length === 0) {
     return (
       <p className="text-muted py-10 text-center text-sm">
@@ -86,6 +135,7 @@ export function CalendarGrid({
   return (
     <div className="border-surface-border w-full min-w-0 overflow-hidden rounded-lg border">
       <div
+        ref={scrollRef}
         className="max-h-[min(70vh,720px)] w-full min-w-0 overflow-x-auto overflow-y-auto overscroll-x-contain"
         data-venue-calendar-scroll
       >
