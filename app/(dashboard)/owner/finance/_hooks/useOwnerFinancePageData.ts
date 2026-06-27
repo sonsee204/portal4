@@ -28,7 +28,6 @@ import {
 } from '@/hooks/owner';
 import {
   BookingScheduleType,
-  FinanceGranularity,
   FinanceOrderTypeCategory,
   PaymentMethod,
   type VenuePromotionsConnectionQuery,
@@ -111,7 +110,6 @@ export function useOwnerFinancePageData(pageTab: OwnerFinancePageTab) {
       venueIds,
       from: dateRange.from,
       to: dateRange.to,
-      granularity: FinanceGranularity.Day,
       compareToPrevious: true,
       compareMode,
       timezone: 'Asia/Ho_Chi_Minh',
@@ -151,7 +149,6 @@ export function useOwnerFinancePageData(pageTab: OwnerFinancePageTab) {
         : { venueIds: [selectedVenueId] }),
       from: dateRange.from,
       to: dateRange.to,
-      granularity: FinanceGranularity.Day,
       compareToPrevious: true,
       compareMode,
       timezone: 'Asia/Ho_Chi_Minh',

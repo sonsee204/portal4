@@ -35,7 +35,7 @@ export function OwnerFinanceOverviewOpsStripSection({
       emptyMessage=""
       onRetry={() => void data.refetchOperations()}
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon="grid-outline"
           iconColor="text-emerald-400"
@@ -61,6 +61,17 @@ export function OwnerFinanceOverviewOpsStripSection({
           value={formatCurrency(operations?.courtRevenue ?? 0)}
           signedValue={operations?.courtRevenue ?? 0}
           hint="Theo ngày lịch đặt sân"
+        />
+        <StatCard
+          icon="wallet-outline"
+          iconColor={
+            (operations?.unpaidAmount ?? 0) > 0
+              ? 'text-red-400'
+              : 'text-slate-400'
+          }
+          label="Chưa thanh toán"
+          value={formatCurrency(operations?.unpaidAmount ?? 0)}
+          hint="Số dư đơn đặt sân còn lại (theo lịch trong kỳ)"
         />
       </div>
     </QueryState>

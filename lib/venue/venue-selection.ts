@@ -12,14 +12,11 @@ export const ALL_VENUES_SELECTION_ID = '__all_venues__';
 
 export const ALL_VENUES_SELECTION_LABEL = 'Tất cả sân';
 
-const STATS_ALL_VENUES_PATHS = [
-  '/owner/stats/overview',
-  '/owner/stats/finance',
-] as const;
+const STATS_ALL_VENUES_PATH_PREFIX = '/owner/stats/';
 
-/** Stats pages where the header switcher can aggregate all venues. */
+/** Owner stats pages where the header switcher can aggregate all venues. */
 export function isStatsAllVenuesPath(pathname: string): boolean {
-  return (STATS_ALL_VENUES_PATHS as readonly string[]).includes(pathname);
+  return pathname.startsWith(STATS_ALL_VENUES_PATH_PREFIX);
 }
 
 /** @deprecated Use isStatsAllVenuesPath — finance tab only. */
