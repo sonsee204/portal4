@@ -168,7 +168,7 @@ export async function middleware(request: NextRequest) {
   if (
     workspace &&
     role &&
-    !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+    !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess, isPlatformOwner)
   ) {
     return NextResponse.redirect(new URL('/forbidden', request.url));
   }

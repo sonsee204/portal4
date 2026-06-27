@@ -145,6 +145,22 @@ describe('portal access', () => {
     expect(hasOrganizerCapability([])).toBe(false);
   });
 
+  it('platform owner gets organizer tournament permissions and workspace', () => {
+    expect(can('ADMIN', 'tournaments.organize', [], false, true)).toBe(true);
+    expect(
+      canAccessWorkspace('ADMIN', 'organizer', [], false, true),
+    ).toBe(true);
+    expect(
+      canAccessRoute(
+        'ADMIN',
+        '/organizer/tournaments',
+        [],
+        true,
+        false,
+      ),
+    ).toBe(true);
+  });
+
   it('matchRouteManifest resolves dynamic tournament routes', () => {
     const orgEntry = matchRouteManifest('/organizer/tournaments/abc123/schedule');
     expect(orgEntry?.permission).toBe('tournaments.organize');

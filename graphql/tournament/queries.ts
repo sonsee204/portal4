@@ -42,6 +42,30 @@ export const GET_MY_TOURNAMENTS = gql`
   ${TOURNAMENT_CORE_FRAGMENT}
 `;
 
+export const GET_PLATFORM_TOURNAMENTS = gql`
+  query GetPlatformTournaments(
+    $filter: TournamentFilterInput
+    $pagination: CursorPageInput
+  ) {
+    platformTournamentsConnection(filter: $filter, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          ...TournamentCore
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+  }
+  ${TOURNAMENT_CORE_FRAGMENT}
+`;
+
 export const GET_TOURNAMENT = gql`
   query GetTournament($id: ID!) {
     tournament(id: $id) {

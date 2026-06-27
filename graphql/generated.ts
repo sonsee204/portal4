@@ -10291,6 +10291,8 @@ export type Query = {
   pickupGameCampaign?: Maybe<PickupGameCampaign>;
   /** Lấy danh sách kèo giao lưu (cursor) */
   pickupGamesConnection: PickupGameConnection;
+  /** Cursor-paginated all tournaments (platform owner only) */
+  platformTournamentsConnection: TournamentConnection;
   /** Get popular/featured sports */
   popularSports: Array<Sport>;
   /** List portal capability grants (SUPER_ADMIN only, cursor) */
@@ -11229,6 +11231,12 @@ export type QueryPickupGameCampaignArgs = {
 
 export type QueryPickupGamesConnectionArgs = {
   filter?: InputMaybe<PickupGameFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+};
+
+
+export type QueryPlatformTournamentsConnectionArgs = {
+  filter?: InputMaybe<TournamentFilterInput>;
   pagination?: InputMaybe<CursorPageInput>;
 };
 
@@ -13561,7 +13569,7 @@ export type TimeSlotAvailability = {
   endTime: Scalars['String']['output'];
   /** Has active booking pass for this slot */
   hasActivePass?: Maybe<Scalars['Boolean']['output']>;
-  /** Booking has an applied venue promotion or discount code */
+  /** Booking document has a real discount (not inherited from recurring master) */
   hasPromotion?: Maybe<Scalars['Boolean']['output']>;
   /** Booking ID of the hold */
   holdBookingId?: Maybe<Scalars['String']['output']>;
@@ -13843,6 +13851,8 @@ export type TournamentFeeInput = {
 export type TournamentFilterInput = {
   dateFrom?: InputMaybe<Scalars['String']['input']>;
   dateTo?: InputMaybe<Scalars['String']['input']>;
+  /** Filter by organizer user ID (platform owner list) */
+  organizerId?: InputMaybe<Scalars['ID']['input']>;
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   sortBy?: InputMaybe<TournamentSortBy>;
   sortOrder?: InputMaybe<TournamentSortOrder>;
@@ -17721,6 +17731,14 @@ export type GetMyTournamentsQueryVariables = Exact<{
 
 
 export type GetMyTournamentsQuery = { __typename?: 'Query', myTournamentsConnection: { __typename?: 'TournamentConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentEdge', cursor: string, node: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetPlatformTournamentsQueryVariables = Exact<{
+  filter?: InputMaybe<TournamentFilterInput>;
+  pagination?: InputMaybe<CursorPageInput>;
+}>;
+
+
+export type GetPlatformTournamentsQuery = { __typename?: 'Query', platformTournamentsConnection: { __typename?: 'TournamentConnection', totalCount: number, edges: Array<{ __typename?: 'TournamentEdge', cursor: string, node: { __typename?: 'Tournament', _id: string, title: string, sportType: SportType, status: TournamentStatus, coverImage?: string | null, description?: string | null, introduction?: string | null, totalCategories: number, totalRegistrations: number, totalMatches: number, organizer: string, organizerName?: string | null, createdAt: string, updatedAt: string, dates: { __typename?: 'TournamentDates', startDate: string, endDate?: string | null, registrationOpenDate?: string | null, registrationCloseDate?: string | null }, location?: { __typename?: 'TournamentLocation', name?: string | null, address?: string | null, latitude?: number | null, longitude?: number | null } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type GetTournamentQueryVariables = Exact<{
   id: Scalars['ID']['input'];

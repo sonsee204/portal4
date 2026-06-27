@@ -22,6 +22,7 @@ import { ScheduleGridSection } from './_sections/ScheduleGridSection';
 import { ScheduleHeaderSection } from './_sections/ScheduleHeaderSection';
 import { ScheduleListSection } from './_sections/ScheduleListSection';
 import { ScheduleViewTabsSection } from './_sections/ScheduleViewTabsSection';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 
 export default function SchedulePage({
   params,
@@ -33,7 +34,7 @@ export default function SchedulePage({
   const actions = useScheduleActions(data);
 
   return (
-    <>
+    <TournamentPageSupportShell tournament={data.tournament}>
       <ScheduleHeaderSection
         tournamentId={tournamentId}
         matchCount={data.matches.length}
@@ -57,6 +58,6 @@ export default function SchedulePage({
       ) : null}
 
       <ScheduleDialogsSection data={data} actions={actions} />
-    </>
+    </TournamentPageSupportShell>
   );
 }
