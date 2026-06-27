@@ -50,7 +50,13 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
 
     if (
       !role ||
-      !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+      !canAccessWorkspace(
+      role,
+      workspace,
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner,
+    )
     ) {
       router.replace('/forbidden');
       return;
@@ -88,7 +94,13 @@ export function AccessGuard({ children, workspace }: AccessGuardProps) {
 
   if (
     !role ||
-    !canAccessWorkspace(role, workspace, capabilities, hasVenueAccess)
+    !canAccessWorkspace(
+      role,
+      workspace,
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner,
+    )
   ) {
     return null;
   }

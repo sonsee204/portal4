@@ -15,6 +15,7 @@
 
 import { use } from 'react';
 import { useTournamentDetailPageData } from './_hooks/useTournamentDetailPageData';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 import { TournamentDetailContentSection } from './_sections/TournamentDetailContentSection';
 import { TournamentDetailErrorSection } from './_sections/TournamentDetailErrorSection';
 import { TournamentDetailHeaderSection } from './_sections/TournamentDetailHeaderSection';
@@ -37,9 +38,11 @@ export default function TournamentDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      <TournamentDetailHeaderSection data={data} />
-      <TournamentDetailContentSection data={data} />
-    </div>
+    <TournamentPageSupportShell tournament={data.tournament}>
+      <div className="space-y-6">
+        <TournamentDetailHeaderSection data={data} />
+        <TournamentDetailContentSection data={data} />
+      </div>
+    </TournamentPageSupportShell>
   );
 }

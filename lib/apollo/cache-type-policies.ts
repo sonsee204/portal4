@@ -288,6 +288,7 @@ export const apolloTypePolicies: TypePolicies = {
       },
       qrCampaignsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
       myTournamentsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
+      platformTournamentsConnection: { keyArgs: ['filter'], merge: relayMergeFn },
       tournamentRegistrationsConnection: {
         keyArgs: ['tournamentId', 'filter'],
         merge: relayMergeFn,

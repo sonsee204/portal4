@@ -10673,6 +10673,9 @@ type Query {
   """Lấy danh sách kèo giao lưu (cursor)"""
   pickupGamesConnection(filter: PickupGameFilterInput, pagination: CursorPageInput): PickupGameConnection!
 
+  """Cursor-paginated all tournaments (platform owner only)"""
+  platformTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
+
   """Get popular/featured sports"""
   popularSports: [Sport!]!
 
@@ -13034,6 +13037,11 @@ type TimeSlotAvailability {
   """Has active booking pass for this slot"""
   hasActivePass: Boolean
 
+  """
+  Booking document has a real discount (not inherited from recurring master)
+  """
+  hasPromotion: Boolean
+
   """Booking ID of the hold"""
   holdBookingId: String
 
@@ -13066,9 +13074,6 @@ type TimeSlotAvailability {
 
   """Booking order linked to this slot still has unpaid balance"""
   isUnpaid: Boolean
-
-  """Booking has an applied venue promotion or discount code"""
-  hasPromotion: Boolean
 
   """Booking ID if slot is user hold active booking"""
   myHoldActiveBookingId: ID
@@ -13372,6 +13377,9 @@ input TournamentFeeInput {
 input TournamentFilterInput {
   dateFrom: String
   dateTo: String
+
+  """Filter by organizer user ID (platform owner list)"""
+  organizerId: ID
   searchQuery: String
   sortBy: TournamentSortBy = CREATED_AT
   sortOrder: TournamentSortOrder = DESC

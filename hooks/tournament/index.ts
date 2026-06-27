@@ -12,6 +12,8 @@
  */
 
 export { useMyTournaments } from './useTournaments';
+export { usePlatformTournaments } from './usePlatformTournaments';
+export { useTournamentSupportMode } from './useTournamentSupportMode';
 export { useTournament } from './useTournament';
 export { useCreateTournament } from './useCreateTournament';
 export { useUpdateTournament } from './useUpdateTournament';

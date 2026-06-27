@@ -108,7 +108,7 @@ function filterNavByRole(
             role,
             hasVenueAccess
           ) &&
-          !can(role, item.permission, [], hasVenueAccess)
+          !can(role, item.permission, [], hasVenueAccess, isPlatformOwner)
         ) {
           return false;
         }
@@ -170,9 +170,10 @@ export function Sidebar({
       getAccessibleWorkspaces(
         userRole,
         user?.portalCapabilities ?? [],
-        hasVenueAccess
+        hasVenueAccess,
+        isPlatformOwner
       ).length >= 2,
-    [userRole, user?.portalCapabilities, hasVenueAccess]
+    [userRole, user?.portalCapabilities, hasVenueAccess, isPlatformOwner]
   );
 
   return (

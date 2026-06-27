@@ -77,7 +77,7 @@ export function getUserAccountMenuItems(
     if (item.platformOwnerOnly && !isPlatformOwner) return false;
     if (
       item.permission &&
-      !can(role, item.permission, capabilities, hasVenueAccess)
+      !can(role, item.permission, capabilities, hasVenueAccess, isPlatformOwner)
     ) {
       return false;
     }

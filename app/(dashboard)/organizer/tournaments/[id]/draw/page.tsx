@@ -16,6 +16,8 @@
 import { use } from 'react';
 import { useDrawActions } from './_hooks/useDrawActions';
 import { useDrawData } from './_hooks/useDrawData';
+import { useTournament } from '@/hooks/tournament';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 import {
   DrawCategoryTabsSection,
   DrawLoadingSection,
@@ -36,6 +38,7 @@ export default function DrawPage({
   const { id: tournamentId } = use(params);
   const data = useDrawData(tournamentId);
   const actions = useDrawActions(data);
+  const { tournament } = useTournament(tournamentId);
 
   if (data.cLoading) {
     return <DrawLoadingSection />;
@@ -44,19 +47,15 @@ export default function DrawPage({
   const workspaceKey = `${data.activeCategoryId}:${data.effectiveBracketSize}`;
 
   return (
-    <>
+    <TournamentPageSupportShell tournament={tournament}>
       <DrawHeaderSection tournamentId={tournamentId} />
       <DrawCategoryTabsSection data={data} />
       <DrawStatsSection data={data} />
       <DrawPendingWarningSection data={data} />
 
-      <DrawCategoryWorkspace
-        key={workspaceKey}
-        data={data}
-        actions={actions}
-      />
+      <DrawCategoryWorkspace key={workspaceKey} data={data} actions={actions} />
 
       <DrawResetDialogSection data={data} actions={actions} />
-    </>
+    </TournamentPageSupportShell>
   );
 }
