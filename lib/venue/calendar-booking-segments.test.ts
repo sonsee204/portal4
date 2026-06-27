@@ -22,6 +22,7 @@ import {
   segmentPositionInHourGrid,
   VENUE_CALENDAR_VISIBLE_STATUSES,
 } from './calendar-booking-segments';
+import { computeCalendarScrollLeftToNow } from './calendar-scroll';
 
 describe('VENUE_CALENDAR_VISIBLE_STATUSES', () => {
   it('includes only confirmed and completed bookings', () => {
@@ -110,9 +111,21 @@ describe('buildCalendarBookingSegments', () => {
     ]);
 
     expect(segments[0]?.isRecurring).toBe(true);
-    expect(getBookingSlotColorScheme('child-1', 'CONFIRMED', true).variant).toBe(
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: true,
+    }).variant).toBe(
       'recurring',
     );
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: false,
+    }).variant).toBe('single');
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: false,
+      isUnpaid: true,
+    }).variant).toBe('unpaid');
   });
 });
 
@@ -169,5 +182,49 @@ describe('segmentPositionInHourGrid', () => {
     );
 
     expect(first.left + first.width).toBeLessThanOrEqual(second.left);
+  });
+});
+
+describe('computeCalendarScrollLeftToNow', () => {
+  const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+  const base = {
+    courtLabelWidth: 120,
+    hourCellWidth: 144,
+    viewportWidth: 600,
+  };
+
+  it('scrolls to start when current time is before opening hours', () => {
+    expect(
+      computeCalendarScrollLeftToNow(hours, {
+        ...base,
+        now: new Date(2026, 5, 27, 6, 30),
+      }),
+    ).toBe(0);
+  });
+
+  it('scrolls near the current hour during operating hours', () => {
+    const scrollLeft = computeCalendarScrollLeftToNow(hours, {
+      ...base,
+      now: new Date(2026, 5, 27, 14, 30),
+    });
+
+    expect(scrollLeft).toBeGreaterThan(0);
+    expect(scrollLeft).toBeLessThan(
+      base.courtLabelWidth + hours.length * base.hourCellWidth,
+    );
+  });
+
+  it('scrolls to the end when current time is after closing hours', () => {
+    const maxScroll =
+      base.courtLabelWidth +
+      hours.length * base.hourCellWidth -
+      base.viewportWidth;
+
+    expect(
+      computeCalendarScrollLeftToNow(hours, {
+        ...base,
+        now: new Date(2026, 5, 27, 22, 0),
+      }),
+    ).toBe(maxScroll);
   });
 });

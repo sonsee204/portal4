@@ -50,6 +50,8 @@ export type CalendarBookingSegment = {
   customerName?: string;
   customerPhone?: string;
   isRecurring: boolean;
+  isUnpaid?: boolean;
+  hasPromotion?: boolean;
 };
 
 export type BookingSlotColorScheme = {
@@ -59,80 +61,8 @@ export type BookingSlotColorScheme = {
   barClass: string;
   headerBgClass: string;
   headerTextClass: string;
-  variant: 'expired' | 'recurring' | 'single' | 'pending';
+  variant: 'expired' | 'recurring' | 'single' | 'pending' | 'unpaid';
 };
-
-const SINGLE_PALETTE: Array<
-  Pick<
-    BookingSlotColorScheme,
-    'bgClass' | 'textClass' | 'borderClass' | 'barClass' | 'headerBgClass' | 'headerTextClass'
-  >
-> = [
-    {
-      bgClass: 'bg-green-500/20',
-      textClass: 'text-green-700',
-      borderClass: 'border-green-700',
-      barClass: 'bg-green-700',
-      headerBgClass: 'bg-green-700/20',
-      headerTextClass: 'text-green-700',
-    },
-    {
-      bgClass: 'bg-blue-500/20',
-      textClass: 'text-blue-700',
-      borderClass: 'border-blue-700',
-      barClass: 'bg-blue-700',
-      headerBgClass: 'bg-blue-700/20',
-      headerTextClass: 'text-blue-700',
-    },
-    {
-      bgClass: 'bg-purple-500/20',
-      textClass: 'text-purple-700',
-      borderClass: 'border-purple-700',
-      barClass: 'bg-purple-700',
-      headerBgClass: 'bg-purple-700/20',
-      headerTextClass: 'text-purple-700',
-    },
-    {
-      bgClass: 'bg-pink-500/20',
-      textClass: 'text-pink-600',
-      borderClass: 'border-pink-600',
-      barClass: 'bg-pink-600',
-      headerBgClass: 'bg-pink-600/20',
-      headerTextClass: 'text-pink-600',
-    },
-    {
-      bgClass: 'bg-cyan-500/20',
-      textClass: 'text-cyan-600',
-      borderClass: 'border-cyan-600',
-      barClass: 'bg-cyan-600',
-      headerBgClass: 'bg-cyan-600/20',
-      headerTextClass: 'text-cyan-600',
-    },
-    {
-      bgClass: 'bg-orange-500/20',
-      textClass: 'text-orange-600',
-      borderClass: 'border-orange-600',
-      barClass: 'bg-orange-600',
-      headerBgClass: 'bg-orange-600/20',
-      headerTextClass: 'text-orange-600',
-    },
-    {
-      bgClass: 'bg-amber-500/25',
-      textClass: 'text-amber-600',
-      borderClass: 'border-amber-600',
-      barClass: 'bg-amber-600',
-      headerBgClass: 'bg-amber-600/20',
-      headerTextClass: 'text-amber-600',
-    },
-    {
-      bgClass: 'bg-indigo-500/20',
-      textClass: 'text-indigo-600',
-      borderClass: 'border-indigo-600',
-      barClass: 'bg-indigo-600',
-      headerBgClass: 'bg-indigo-600/20',
-      headerTextClass: 'text-indigo-600',
-    },
-  ];
 
 const CLOCK_TIME = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
 
@@ -213,17 +143,12 @@ export function isCalendarSegmentClickable(status: string | undefined): boolean 
   );
 }
 
-function hashBookingId(bookingId: string): number {
-  return bookingId.split('').reduce((acc, char) => {
-    return char.charCodeAt(0) + ((acc << 5) - acc);
-  }, 0);
-}
-
-export function getBookingSlotColorScheme(
-  bookingId: string,
-  bookingStatus: string | undefined,
-  isRecurring?: boolean,
-): BookingSlotColorScheme {
+export function getBookingSlotColorScheme(input: {
+  bookingStatus: string | undefined;
+  isRecurring?: boolean;
+  isUnpaid?: boolean;
+}): BookingSlotColorScheme {
+  const { bookingStatus, isRecurring, isUnpaid } = input;
   const normalized = normalizeBookingStatus(bookingStatus);
 
   if (normalized === 'expired' || normalized === 'cancelled') {
@@ -250,38 +175,51 @@ export function getBookingSlotColorScheme(
     };
   }
 
-  const isConfirmed = isConfirmedBookingStatus(bookingStatus);
-
-  if (isRecurring && isConfirmed) {
+  if (normalized === 'no_show' || normalized === 'rejected') {
     return {
-      bgClass: 'bg-teal-500/15',
-      textClass: 'text-teal-700',
-      borderClass: 'border-teal-600',
-      barClass: 'bg-teal-600',
-      headerBgClass: 'bg-teal-600',
-      headerTextClass: 'text-white',
-      variant: 'recurring',
+      bgClass: 'bg-gray-400/15',
+      textClass: 'text-gray-500',
+      borderClass: 'border-gray-400',
+      barClass: 'bg-gray-400',
+      headerBgClass: 'bg-gray-400/20',
+      headerTextClass: 'text-gray-500',
+      variant: 'expired',
     };
   }
 
-  if (normalized === 'no_show' || normalized === 'rejected') {
+  const isConfirmed = isConfirmedBookingStatus(bookingStatus);
+
+  if (isUnpaid && isConfirmed) {
     return {
       bgClass: 'bg-red-500/15',
       textClass: 'text-red-700',
       borderClass: 'border-red-500',
       barClass: 'bg-red-500',
-      headerBgClass: 'bg-red-500/20',
-      headerTextClass: 'text-red-700',
-      variant: 'expired',
+      headerBgClass: 'bg-red-500',
+      headerTextClass: 'text-white',
+      variant: 'unpaid',
     };
   }
 
-  const palette =
-    SINGLE_PALETTE[Math.abs(hashBookingId(bookingId)) % SINGLE_PALETTE.length] ??
-    SINGLE_PALETTE[0]!;
+  if (isRecurring && isConfirmed) {
+    return {
+      bgClass: 'bg-green-500/15',
+      textClass: 'text-green-700',
+      borderClass: 'border-green-600',
+      barClass: 'bg-green-600',
+      headerBgClass: 'bg-green-600',
+      headerTextClass: 'text-white',
+      variant: 'recurring',
+    };
+  }
 
   return {
-    ...palette,
+    bgClass: 'bg-primary/15',
+    textClass: 'text-primary',
+    borderClass: 'border-primary',
+    barClass: 'bg-primary',
+    headerBgClass: 'bg-primary/20',
+    headerTextClass: 'text-primary',
     variant: isConfirmed ? 'single' : 'expired',
   };
 }

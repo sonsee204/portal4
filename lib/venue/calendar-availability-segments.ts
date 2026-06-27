@@ -27,6 +27,8 @@ export type AvailabilityBookingGroup = {
   customerName?: string;
   customerPhone?: string;
   isRecurring?: boolean;
+  isUnpaid?: boolean;
+  hasPromotion?: boolean;
   slots: StaffAvailabilitySlot[];
   startIndex: number;
 };
@@ -125,6 +127,8 @@ export function buildCourtRowSegments(
           ? { customerPhone: slot.customerPhone }
           : {}),
         ...(slot.isRecurring ? { isRecurring: true } : {}),
+        ...(slot.isUnpaid ? { isUnpaid: true } : {}),
+        ...(slot.hasPromotion ? { hasPromotion: true } : {}),
         slots: groupSlots,
         startIndex: index,
       });
@@ -178,6 +182,8 @@ export function buildCalendarSegmentsFromAvailability(
           ? { customerPhone: rowSegment.customerPhone }
           : {}),
         isRecurring: rowSegment.isRecurring === true,
+        ...(rowSegment.isUnpaid ? { isUnpaid: true } : {}),
+        ...(rowSegment.hasPromotion ? { hasPromotion: true } : {}),
       });
     }
   }

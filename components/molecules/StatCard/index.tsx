@@ -26,6 +26,8 @@ export interface StatCardProps {
   value: string | number;
   /** Raw number for signed value coloring (negative red, positive green). */
   signedValue?: number | null;
+  /** Override value text color (takes precedence over signedValue coloring). */
+  valueClassName?: string;
   trend?: {
     value: string;
     direction: 'up' | 'down' | 'neutral';
@@ -56,6 +58,7 @@ export function StatCard({
   label,
   value,
   signedValue,
+  valueClassName,
   trend,
   badge,
   hint,
@@ -100,9 +103,10 @@ export function StatCard({
       <h3
         className={cn(
           'text-3xl font-bold',
-          signedValue != null
-            ? getSignedValueClassName(signedValue)
-            : 'text-heading'
+          valueClassName ??
+            (signedValue != null
+              ? getSignedValueClassName(signedValue)
+              : 'text-heading')
         )}
       >
         {value}

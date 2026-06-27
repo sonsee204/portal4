@@ -13064,6 +13064,12 @@ type TimeSlotAvailability {
   """Whether the booking is a recurring (fixed) schedule"""
   isRecurring: Boolean
 
+  """Booking order linked to this slot still has unpaid balance"""
+  isUnpaid: Boolean
+
+  """Booking has an applied venue promotion or discount code"""
+  hasPromotion: Boolean
+
   """Booking ID if slot is user hold active booking"""
   myHoldActiveBookingId: ID
 

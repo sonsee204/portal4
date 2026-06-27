@@ -10,6 +10,7 @@
 'use client';
 
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
+import { IonIcon } from '@/components/atoms/IonIcon';
 import { QueryState } from '@/components/molecules/QueryState';
 import {
   CalendarGrid,
@@ -49,10 +50,48 @@ export function OwnerCalendarGridSection({
         />
       </VenueActionGate>
 
+      <div className="border-surface-border flex flex-wrap gap-4 border-b px-4 py-2">
+        {[
+          { swatch: 'bg-primary/30 border-primary', label: 'Lẻ' },
+          {
+            swatch: 'bg-green-500/15 border-green-600 border-dashed',
+            label: 'Cố định',
+          },
+          { swatch: 'bg-red-500/15 border-red-500', label: 'Chưa thanh toán' },
+          {
+            swatch: 'bg-amber-500',
+            label: 'Khuyến mãi',
+            icon: 'pricetag',
+          },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            {'icon' in item && item.icon ? (
+              <span
+                className={`flex h-3 w-3 items-center justify-center rounded-full ${item.swatch}`}
+                aria-hidden
+              >
+                <IonIcon
+                  name={item.icon}
+                  size="xs"
+                  className="h-2 w-2 text-white"
+                />
+              </span>
+            ) : (
+              <span
+                className={`h-3 w-5 rounded border ${item.swatch}`}
+                aria-hidden
+              />
+            )}
+            <span className="text-muted text-xs">{item.label}</span>
+          </div>
+        ))}
+      </div>
+
       <CalendarGrid
         courts={data.courts}
         segments={data.calendarSegments}
         hours={data.hourRange.hours}
+        viewDate={data.currentDate}
         onSegmentClick={(segment) =>
           data.setSelectedBookingId(segment.bookingId)
         }

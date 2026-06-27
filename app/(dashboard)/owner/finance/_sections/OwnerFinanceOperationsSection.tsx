@@ -132,6 +132,11 @@ export function OwnerFinanceOperationsSection({
             }
             label="Chưa thanh toán"
             value={formatCurrency(operations?.unpaidAmount ?? 0)}
+            valueClassName={
+              (operations?.unpaidAmount ?? 0) > 0
+                ? 'text-red-400'
+                : 'text-heading'
+            }
             hint="Số dư đơn đặt sân còn lại (theo lịch trong kỳ)"
           />
         </div>
