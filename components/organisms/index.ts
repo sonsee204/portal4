@@ -21,5 +21,6 @@ export {
   DATA_TABLE_ACTIONS_INNER_CLASS,
   type DataTableColumn,
 } from './DataTable';
+export type { DataTableAmountSummary } from '@/lib/data-table/amount-summary';
 export { Pagination } from './Pagination';
 export { PageHeader } from './PageHeader';

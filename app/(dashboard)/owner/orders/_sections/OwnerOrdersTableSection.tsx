@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { TabGroup } from '@/components/molecules/TabGroup';
 import { FilterChips } from '@/components/molecules/FilterChips';
@@ -39,6 +40,7 @@ import type { OwnerOrdersPageActions } from '../_hooks/useOwnerOrdersPageActions
 import type { OwnerOrdersPageData } from '../_hooks/useOwnerOrdersPageData';
 import { OrderRowActions } from '../_components/OrderRowActions';
 import { OrderItemsCell } from '../_components/OrderItemsCell';
+import { buildAmountSummariesFromRows } from '@/lib/data-table/amount-summary';
 
 interface OwnerOrdersTableSectionProps {
   data: OwnerOrdersPageData;
@@ -64,6 +66,18 @@ function AllOrdersTable({
   sortLoading?: boolean;
   emptyTitle: string;
 }) {
+  const amountSummaries = useMemo(
+    () =>
+      buildAmountSummariesFromRows(orders, [
+        {
+          columnKey: 'total',
+          getValue: (order) => order.totalAmount,
+          tone: 'positive',
+        },
+      ]),
+    [orders]
+  );
+
   return (
     <DataTable
       columns={[
@@ -101,6 +115,7 @@ function AllOrdersTable({
       sortDir={sortDir}
       onSort={onSort}
       sortLoading={sortLoading}
+      amountSummaries={amountSummaries}
       renderRow={(order) => (
         <tr
           key={order._id}

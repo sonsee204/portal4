@@ -13,8 +13,10 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { Badge } from '@/components/atoms/Badge';
 import { Input } from '@/components/atoms/Input';
+import { DateRangePicker } from '@/components/molecules/DateRangePicker';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { QueryState } from '@/components/molecules/QueryState';
@@ -26,6 +28,7 @@ import {
 } from '@/lib/constants/booking-status';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
 import { getBookingCustomerDisplayName } from '@/lib/booking/booking-customer-label';
+import { buildAmountSummariesFromRows } from '@/lib/data-table/amount-summary';
 import type {
   OwnerBookingNode,
   OwnerRecurringBookingNode,
@@ -47,6 +50,11 @@ interface OwnerBookingsTableSectionProps {
 }
 
 type BookingsTableRow = OwnerBookingNode | OwnerRecurringBookingNode;
+
+function getBookingAmountValue(booking: BookingsTableRow): number {
+  const node = booking as OwnerBookingNode;
+  return node.finalAmount ?? node.totalPrice ?? 0;
+}
 
 function getBookingAmountLabel(booking: BookingsTableRow): string {
   const node = booking as OwnerBookingNode;
@@ -74,6 +82,10 @@ export function OwnerBookingsTableSection({
     statusChips,
     searchQuery,
     setSearchQuery,
+    dateRange,
+    datePreset,
+    setDatePreset,
+    handleDateRangeChange,
     activeData,
     sortField,
     sortDir,
@@ -100,6 +112,20 @@ export function OwnerBookingsTableSection({
 
   const tableBookings = bookings as BookingsTableRow[];
 
+  const bookingAmountSummaries = useMemo(
+    () =>
+      activeTab === 'all'
+        ? buildAmountSummariesFromRows(tableBookings, [
+            {
+              columnKey: 'amount',
+              getValue: getBookingAmountValue,
+              tone: 'positive',
+            },
+          ])
+        : undefined,
+    [activeTab, tableBookings]
+  );
+
   const emptyMessage = !selectedVenueId
     ? 'Chọn cơ sở ở thanh trên để xem đặt chỗ.'
     : 'Không có đặt sân nào.';
@@ -125,13 +151,27 @@ export function OwnerBookingsTableSection({
             active={activeTab}
             onChange={handleTabChange}
           />
-          <Input
-            className="max-w-xs"
-            placeholder="Tìm tên khách..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            leftIcon="search-outline"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              className="max-w-xs"
+              placeholder="Tìm tên khách..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              leftIcon="search-outline"
+            />
+            <DateRangePicker
+              compact
+              label=""
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              preset={datePreset}
+              onPresetChange={(preset) => {
+                if (preset !== 'all') {
+                  setDatePreset(preset);
+                }
+              }}
+            />
+          </div>
         </div>
 
         <FilterChips
@@ -182,6 +222,7 @@ export function OwnerBookingsTableSection({
               sortDir={sortDir}
               onSort={handleSort}
               sortLoading={sortLoading}
+              amountSummaries={bookingAmountSummaries}
               renderRow={(booking) => (
                 <tr
                   key={booking._id}

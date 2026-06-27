@@ -15,11 +15,14 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerDateRange } from '@/components/providers/OwnerDateRangeProvider';
+import type { DateRangeValue } from '@/components/molecules/DateRangePicker';
 import {
   useVenueBookings,
   useVenueHoldBookings,
   useVenueRecurringBookings,
 } from '@/hooks/owner';
+import { filterBookingsByDateRange } from '@/lib/booking/booking-date-filter';
 import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
 import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type { OwnerBookingsTab } from '../types';
@@ -60,9 +63,18 @@ function getBookingSortFields(tab: OwnerBookingsTab): readonly string[] {
 export function useOwnerBookingsPageData() {
   const { selectedVenueId, loading: venueLoading, error: venueError } =
     useVenueContext();
+  const { datePreset, setDatePreset, dateRange, setDateRange } =
+    useOwnerDateRange();
   const [activeTab, setActiveTab] = useState<OwnerBookingsTab>('all');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleDateRangeChange = useCallback(
+    (range: DateRangeValue) => {
+      setDateRange(range);
+    },
+    [setDateRange],
+  );
 
   const allowedFields = useMemo(
     () => getBookingSortFields(activeTab),
@@ -86,9 +98,11 @@ export function useOwnerBookingsPageData() {
     const trimmed = searchQuery.trim();
     return {
       ...buildOwnerBookingsFilter(activeTab, statusFilter),
+      fromDate: dateRange.from,
+      toDate: dateRange.to,
       searchQuery: trimmed || undefined,
     };
-  }, [activeTab, statusFilter, searchQuery]);
+  }, [activeTab, dateRange.from, dateRange.to, statusFilter, searchQuery]);
 
   const listData = useVenueBookings(
     selectedVenueId,
@@ -114,7 +128,11 @@ export function useOwnerBookingsPageData() {
 
   const filteredHoldBookings = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
-    let list = holdData.bookings;
+    let list = filterBookingsByDateRange(
+      holdData.bookings,
+      dateRange.from,
+      dateRange.to,
+    );
 
     if (statusFilter !== 'ALL') {
       list = list.filter((booking) => booking.status === statusFilter);
@@ -127,11 +145,15 @@ export function useOwnerBookingsPageData() {
     }
 
     return list;
-  }, [holdData.bookings, statusFilter, searchQuery]);
+  }, [dateRange.from, dateRange.to, holdData.bookings, statusFilter, searchQuery]);
 
   const filteredRecurringBookings = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
-    let list = recurringData.bookings;
+    let list = filterBookingsByDateRange(
+      recurringData.bookings,
+      dateRange.from,
+      dateRange.to,
+    );
 
     if (statusFilter !== 'ALL') {
       list = list.filter((booking) => booking.status === statusFilter);
@@ -144,17 +166,20 @@ export function useOwnerBookingsPageData() {
     }
 
     return list;
-  }, [recurringData.bookings, statusFilter, searchQuery]);
+  }, [
+    dateRange.from,
+    dateRange.to,
+    recurringData.bookings,
+    statusFilter,
+    searchQuery,
+  ]);
 
   const activeData = useMemo(() => {
     if (activeTab === 'hold') {
       return {
         ...holdData,
         bookings: filteredHoldBookings,
-        totalCount:
-          statusFilter === 'ALL' && !searchQuery.trim()
-            ? holdData.totalCount
-            : filteredHoldBookings.length,
+        totalCount: filteredHoldBookings.length,
       };
     }
 
@@ -162,10 +187,7 @@ export function useOwnerBookingsPageData() {
       return {
         ...recurringData,
         bookings: filteredRecurringBookings,
-        totalCount:
-          statusFilter === 'ALL' && !searchQuery.trim()
-            ? recurringData.totalCount
-            : filteredRecurringBookings.length,
+        totalCount: filteredRecurringBookings.length,
       };
     }
 
@@ -177,8 +199,6 @@ export function useOwnerBookingsPageData() {
     holdData,
     listData,
     recurringData,
-    searchQuery,
-    statusFilter,
   ]);
 
   const handleTabChange = useCallback((tab: OwnerBookingsTab) => {
@@ -216,6 +236,10 @@ export function useOwnerBookingsPageData() {
     setStatusFilter: handleStatusFilterChange,
     searchQuery,
     setSearchQuery,
+    dateRange,
+    datePreset,
+    setDatePreset,
+    handleDateRangeChange,
     statusChips: getBookingsStatusChips(activeTab),
     activeData,
     refetchAll,
