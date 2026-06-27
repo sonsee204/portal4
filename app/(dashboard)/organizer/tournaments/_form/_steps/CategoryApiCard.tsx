@@ -18,6 +18,7 @@ import { useCallback, useState } from 'react';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { useUpdateCategory } from '@/hooks/tournament';
 import type { TournamentCategory } from '@/graphql/generated';
+import type { SportType } from '@/types/tournament-form';
 
 import {
   buildCategoryUpdateInput,
@@ -29,6 +30,7 @@ import { FORMAT_LABEL, MATCH_LABEL } from './step-categories.constants';
 
 export interface CategoryApiCardProps {
   category: TournamentCategory;
+  sport: SportType;
   tournamentId: string;
   onDelete: (id: string) => void;
   deleting: boolean;
@@ -36,6 +38,7 @@ export interface CategoryApiCardProps {
 
 export function CategoryApiCard({
   category,
+  sport,
   tournamentId,
   onDelete,
   deleting,
@@ -69,6 +72,7 @@ export function CategoryApiCard({
   if (editing) {
     return (
       <CategoryApiCardEditForm
+        sport={sport}
         draft={draft}
         updating={updating}
         onUpdate={handleUpdate}

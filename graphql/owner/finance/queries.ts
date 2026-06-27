@@ -91,6 +91,7 @@ export const VENUE_OPERATIONS_REPORT = gql`
       }
       totalBookings
       courtRevenue
+      unpaidAmount
       occupancy {
         availableSlots
         occupiedSlots

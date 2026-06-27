@@ -27,7 +27,8 @@ interface StepCategoriesCreateModeProps {
 export function StepCategoriesCreateMode({
   form,
 }: StepCategoriesCreateModeProps) {
-  const { control, formState } = form;
+  const { control, formState, watch } = form;
+  const sport = watch('sport');
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'categories',
@@ -53,7 +54,7 @@ export function StepCategoriesCreateMode({
           variant="outline"
           size="sm"
           iconLeft="add-outline"
-          onClick={() => append(createDefaultCategoryEntry())}
+          onClick={() => append(createDefaultCategoryEntry(sport))}
         >
           Thêm nội dung
         </Button>
@@ -78,6 +79,7 @@ export function StepCategoriesCreateMode({
           <CategoryFormCard
             key={field.id}
             index={index}
+            sport={sport}
             control={control}
             onRemove={() => remove(index)}
             canRemove={fields.length > 1}
@@ -98,7 +100,7 @@ export function StepCategoriesCreateMode({
             size="sm"
             className="mt-3"
             iconLeft="add-outline"
-            onClick={() => append(createDefaultCategoryEntry())}
+            onClick={() => append(createDefaultCategoryEntry(sport))}
           >
             Thêm nội dung đầu tiên
           </Button>

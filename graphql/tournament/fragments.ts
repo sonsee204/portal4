@@ -144,6 +144,8 @@ export const TOURNAMENT_CATEGORY_FRAGMENT = gql`
       maxPoints
       periodsCount
       periodDurationMinutes
+      framesToWin
+      midGameIntervalAt
     }
     createdAt
     updatedAt
@@ -318,6 +320,8 @@ export const SCORECARD_FRAGMENT = gql`
       maxPoints
       periodsCount
       periodDurationMinutes
+      framesToWin
+      midGameIntervalAt
     }
     createdAt
     updatedAt

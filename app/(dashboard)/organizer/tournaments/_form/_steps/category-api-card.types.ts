@@ -14,8 +14,13 @@
 import type {
   TournamentCategory,
   UpdateCategoryInput,
+  ScoringConfigInput,
 } from '@/graphql/generated';
 import { MatchType, TournamentFormat } from '@/graphql/generated';
+import {
+  CUSTOM_SCORING_TEMPLATE_ID,
+  scoringConfigFromGraphql,
+} from '@/lib/scoring/scoring-form-defaults';
 
 import { DEFAULT_PRIZE_DRAFTS } from './step-categories.constants';
 
@@ -40,6 +45,8 @@ export interface EditState {
   groupCount: number;
   advancingPerGroup: number;
   defaultMatchDurationMinutes: number;
+  scoringTemplateId: string;
+  scoringConfig: ScoringConfigInput;
   prizes: PrizeDraft[];
 }
 
@@ -62,6 +69,8 @@ export function categoryToEditState(category: TournamentCategory): EditState {
     defaultMatchDurationMinutes:
       (category as { defaultMatchDurationMinutes?: number })
         .defaultMatchDurationMinutes ?? 30,
+    scoringTemplateId: CUSTOM_SCORING_TEMPLATE_ID,
+    scoringConfig: scoringConfigFromGraphql(category.scoringConfig),
     prizes:
       (category.prizes ?? []).length > 0
         ? (category.prizes ?? []).map((p) => ({
@@ -115,6 +124,7 @@ export function buildCategoryUpdateInput(
       draft.defaultMatchDurationMinutes > 0
         ? draft.defaultMatchDurationMinutes
         : 30,
+    scoringConfig: draft.scoringConfig,
     prizes: draft.prizes
       .filter((p) => p.title)
       .map((p, i) => ({
