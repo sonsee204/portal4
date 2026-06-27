@@ -526,6 +526,7 @@ enum AuditAction {
   TOURNAMENT_FORCE_DRAW_RESET
   TOURNAMENT_LATE_ENTRY_BYE_FILL
   TOURNAMENT_MATCH_ABORTED
+  TOURNAMENT_MATCH_FINISHED_RESET
   TOURNAMENT_MATCH_LIVE_CORRECTED
   TOURNAMENT_MATCH_RESULT_CORRECTED
   TOURNAMENT_MATCH_RESULT_OVERRIDE
@@ -5324,6 +5325,7 @@ enum MatchCorrectionAction {
   ABORT_LIVE
   CORRECT_RESULT
   MANUAL_RESULT
+  RESET_FINISHED
   SET_SNAPSHOT
   UNDO_POINTS
   WALKOVER
@@ -6408,6 +6410,11 @@ type Mutation {
 
   """BTC hiệu chỉnh tỉ số trận đang LIVE"""
   organizerCorrectLiveScore(input: OrganizerCorrectLiveScoreInput!): MatchScorecard!
+
+  """
+  BTC reset trận đã kết thúc về NOT_STARTED để đấu lại (vòng sau chưa đấu)
+  """
+  organizerResetFinishedMatch(input: OrganizerResetFinishedMatchInput!): TournamentMatch!
 
   """Pause a promotion"""
   pausePromotion(promotionId: ID!): Promotion!
@@ -7736,6 +7743,15 @@ input OrganizerCorrectLiveScoreInput {
 enum OrganizerCorrectLiveScoreMode {
   SET_SNAPSHOT
   UNDO_POINTS
+}
+
+input OrganizerResetFinishedMatchInput {
+  """Optimistic concurrency guard"""
+  expectedMatchUpdatedAt: String
+  matchId: ID!
+
+  """Lý do reset trận (audit bắt buộc)"""
+  reason: String!
 }
 
 """Transport channel used to deliver an OTP"""
