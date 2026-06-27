@@ -21,9 +21,12 @@ describe('fetchAllConnectionPages', () => {
       pageInfo: { hasNextPage: true, endCursor: 'c1' },
     }));
 
-    const all = await fetchAllConnectionPages<{ id: string }>({ fetchPage });
+    const { nodes, stoppedReason } = await fetchAllConnectionPages<{ id: string }>(
+      { fetchPage },
+    );
 
-    expect(all).toHaveLength(1);
+    expect(nodes).toHaveLength(1);
+    expect(stoppedReason).toBe('cursor_stuck');
     expect(fetchPage).toHaveBeenCalledTimes(2);
   });
 
@@ -42,9 +45,40 @@ describe('fetchAllConnectionPages', () => {
         pageInfo: { hasNextPage: false, endCursor: 'c3' },
       });
 
-    const all = await fetchAllConnectionPages<{ id: string }>({ fetchPage });
+    const { nodes, stoppedReason } = await fetchAllConnectionPages<{ id: string }>(
+      { fetchPage },
+    );
 
-    expect(all.map((n) => n.id)).toEqual(['1', '2', '3']);
+    expect(nodes.map((n) => n.id)).toEqual(['1', '2', '3']);
+    expect(stoppedReason).toBe('complete');
     expect(fetchPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('continues when hasNextPage is false but loaded count is below expectedTotal', async () => {
+    const fetchPage = vi
+      .fn()
+      .mockResolvedValueOnce({
+        edges: [{ cursor: 'c1', node: { id: '1' } }],
+        pageInfo: { hasNextPage: true, endCursor: 'c1' },
+      })
+      .mockResolvedValueOnce({
+        edges: [{ cursor: 'c2', node: { id: '2' } }],
+        pageInfo: { hasNextPage: false, endCursor: 'c2' },
+      })
+      .mockResolvedValueOnce({
+        edges: [{ cursor: 'c3', node: { id: '3' } }],
+        pageInfo: { hasNextPage: false, endCursor: 'c3' },
+      });
+
+    const { nodes, stoppedReason } = await fetchAllConnectionPages<{ id: string }>(
+      {
+        expectedTotal: 3,
+        fetchPage,
+      },
+    );
+
+    expect(nodes.map((n) => n.id)).toEqual(['1', '2', '3']);
+    expect(stoppedReason).toBe('complete');
+    expect(fetchPage).toHaveBeenCalledTimes(3);
   });
 });

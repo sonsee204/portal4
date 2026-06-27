@@ -19,12 +19,11 @@ import { Select } from '@/components/atoms/Select';
 import { MatchStatus } from '@/graphql/generated';
 import { ScheduleAutoRepackBanner } from '../_components/ScheduleAutoRepackBanner';
 import { ScheduleDriftBanner } from '../_components/ScheduleDriftBanner';
+import { ScheduleIncompleteLoadBanner } from '../_components/ScheduleIncompleteLoadBanner';
 import { ScheduleDndLayout } from '../_components/ScheduleDndLayout';
 import { ScheduleGrid } from '../_components/ScheduleGrid';
 import { ScheduleRepackAfterDropBanner } from '../_components/ScheduleRepackAfterDropBanner';
-import {
-  CORRECTABLE_STATUSES,
-} from '../_hooks/schedule-page.constants';
+import { CORRECTABLE_STATUSES } from '../_hooks/schedule-page.constants';
 import { selectedGridDateTime } from '../_hooks/schedule-page.derived';
 import type { SchedulePageActions } from '../_hooks/useScheduleActions';
 import type { SchedulePageData } from '../_hooks/useScheduleData';
@@ -58,6 +57,12 @@ export function ScheduleGridSection({
     dismissDriftBanner,
     repackAfterDropHint,
     setRepackAfterDropHint,
+    matchesLoadComplete,
+    loadedMatchCount,
+    expectedMatchCount,
+    incompleteLoadBannerDismissed,
+    setIncompleteLoadBannerDismissed,
+    refetchSchedule,
     setScheduleDate,
     setScheduleCourt,
     setCorrectionMatch,
@@ -78,13 +83,13 @@ export function ScheduleGridSection({
         setCorrectionMatch(m);
       }
     },
-    [openScheduleForm, scheduleRawMatches, setCorrectionMatch],
+    [openScheduleForm, scheduleRawMatches, setCorrectionMatch]
   );
 
   const handleEmptyClick = useCallback(
     (courtId: string, time: string) => {
       const unscheduled = scheduleRawMatches.find(
-        (x) => x.status === MatchStatus.NotStarted && !x.scheduledAt,
+        (x) => x.status === MatchStatus.NotStarted && !x.scheduledAt
       );
       if (unscheduled) {
         openScheduleForm(unscheduled._id);
@@ -92,12 +97,7 @@ export function ScheduleGridSection({
         setScheduleCourt(courtId);
       }
     },
-    [
-      openScheduleForm,
-      scheduleRawMatches,
-      setScheduleCourt,
-      setScheduleDate,
-    ],
+    [openScheduleForm, scheduleRawMatches, setScheduleCourt, setScheduleDate]
   );
 
   if (scheduleLoading && scheduleMatchesMapped.length === 0) {
@@ -126,6 +126,15 @@ export function ScheduleGridSection({
         onDismiss={dismissDriftBanner}
       />
 
+      {!matchesLoadComplete && !incompleteLoadBannerDismissed ? (
+        <ScheduleIncompleteLoadBanner
+          loadedTotal={loadedMatchCount}
+          expectedTotal={expectedMatchCount}
+          onRefetch={() => void refetchSchedule()}
+          onDismiss={() => setIncompleteLoadBannerDismissed(true)}
+        />
+      ) : null}
+
       {repackAfterDropHint ? (
         <ScheduleRepackAfterDropBanner
           hint={repackAfterDropHint}
@@ -134,7 +143,7 @@ export function ScheduleGridSection({
           }
           onPreviewRepack={() => {
             const m = scheduleRawMatches.find(
-              (x) => x._id === repackAfterDropHint.anchorMatchId,
+              (x) => x._id === repackAfterDropHint.anchorMatchId
             );
             if (m) openRepack(m);
             setRepackAfterDropHint(null);

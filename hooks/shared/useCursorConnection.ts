@@ -20,6 +20,17 @@ export interface CursorPageInput {
   after?: string | null | undefined;
 }
 
+export type FetchAllConnectionPagesStoppedReason =
+  | 'complete'
+  | 'cursor_stuck'
+  | 'max_pages'
+  | 'empty_page';
+
+export interface FetchAllConnectionPagesResult<TNode> {
+  nodes: TNode[];
+  stoppedReason: FetchAllConnectionPagesStoppedReason;
+}
+
 /** Legacy offset call sites — map page/limit to cursor `first`. */
 export type LegacyPagePagination = {
   first?: number;
@@ -101,6 +112,14 @@ export function useConnectionLoadMore<TData>(config: {
 
 const FETCH_ALL_PAGES_ABSOLUTE_MAX = 500;
 
+function resolveExpectedTotal(config: {
+  expectedTotal?: number;
+  getExpectedTotal?: () => number | undefined;
+}): number | undefined {
+  if (config.expectedTotal != null) return config.expectedTotal;
+  return config.getExpectedTotal?.();
+}
+
 /** Fetch all pages via repeated client.query until hasNextPage is false. */
 export async function fetchAllConnectionPages<TNode>(config: {
   fetchPage: (after?: string | null) => Promise<{
@@ -109,36 +128,81 @@ export async function fetchAllConnectionPages<TNode>(config: {
   }>;
   /** Optional cap — e.g. ceil(totalCount / pageSize) + 1 once totalCount is known. */
   getMaxPages?: () => number;
-}): Promise<TNode[]> {
+  expectedTotal?: number;
+  getExpectedTotal?: () => number | undefined;
+}): Promise<FetchAllConnectionPagesResult<TNode>> {
   const all: TNode[] = [];
   let after: string | null | undefined;
   let hasNextPage = true;
   let pageIndex = 0;
   const seenEndCursors = new Set<string>();
+  let stoppedReason: FetchAllConnectionPagesStoppedReason = 'complete';
 
-  while (hasNextPage) {
+  const needsMore = () => {
+    const expected = resolveExpectedTotal(config);
+    return expected != null && all.length < expected;
+  };
+
+  while (hasNextPage || needsMore()) {
     pageIndex += 1;
     const maxPages = config.getMaxPages?.() ?? FETCH_ALL_PAGES_ABSOLUTE_MAX;
-    if (pageIndex > maxPages) break;
+    if (pageIndex > maxPages) {
+      stoppedReason = 'max_pages';
+      break;
+    }
 
     const requestAfter = after ?? null;
     const page = await config.fetchPage(requestAfter);
     const nodes = connectionNodes(page.edges);
-    if (nodes.length === 0) break;
+    if (nodes.length === 0) {
+      stoppedReason = 'empty_page';
+      break;
+    }
 
     hasNextPage = page.pageInfo.hasNextPage;
     const nextCursor = page.pageInfo.endCursor ?? null;
 
-    if (requestAfter !== null && nextCursor === requestAfter) break;
+    if (requestAfter !== null && nextCursor === requestAfter) {
+      stoppedReason = 'cursor_stuck';
+      break;
+    }
 
     all.push(...nodes);
 
-    if (!hasNextPage) break;
-    if (!nextCursor) break;
-    if (seenEndCursors.has(nextCursor)) break;
+    const expected = resolveExpectedTotal(config);
+    const reachedExpected =
+      expected == null || all.length >= expected;
+
+    if (reachedExpected && !hasNextPage) {
+      stoppedReason = 'complete';
+      break;
+    }
+
+    if (!nextCursor) {
+      stoppedReason = needsMore() ? 'cursor_stuck' : 'complete';
+      break;
+    }
+
+    if (seenEndCursors.has(nextCursor)) {
+      stoppedReason = 'cursor_stuck';
+      break;
+    }
     seenEndCursors.add(nextCursor);
     after = nextCursor;
+
+    if (!hasNextPage && !reachedExpected) {
+      continue;
+    }
+
+    if (!hasNextPage) {
+      stoppedReason = 'complete';
+      break;
+    }
   }
 
-  return all;
+  if (stoppedReason === 'complete' && needsMore()) {
+    stoppedReason = 'cursor_stuck';
+  }
+
+  return { nodes: all, stoppedReason };
 }

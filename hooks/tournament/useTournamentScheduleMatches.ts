@@ -18,45 +18,44 @@ import { useApolloClient, useQuery } from '@apollo/client/react';
 import { GET_TOURNAMENT_MATCHES } from '@/graphql/tournament/queries';
 import type {
   GetTournamentMatchesQuery,
-  GetTournamentMatchesQueryVariables,
   MatchFilterInput,
   ScoreSummary,
   TournamentMatch,
 } from '@/graphql/generated';
-import { fetchAllConnectionPages } from '@/hooks/shared/useCursorConnection';
-import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
-
-function dedupeTournamentMatchesById(
-  matches: TournamentMatch[],
-): TournamentMatch[] {
-  if (matches.length <= 1) return matches;
-  const byId = new Map<string, TournamentMatch>();
-  for (const m of matches) {
-    byId.set(m._id, m);
-  }
-  return byId.size === matches.length ? matches : [...byId.values()];
-}
+import { loadScheduleMatchesForHook } from './tournament-schedule-matches.client-load';
 
 interface UseTournamentScheduleMatchesOptions {
   tournamentId: string;
   skip?: boolean;
   filter?: MatchFilterInput;
+  categoryIds?: string[];
 }
 
 export function useTournamentScheduleMatches(
   options: UseTournamentScheduleMatchesOptions,
 ) {
-  const { tournamentId, skip = false, filter } = options;
+  const { tournamentId, skip = false, filter, categoryIds } = options;
   const filterKey = useMemo(() => JSON.stringify(filter ?? null), [filter]);
   const stableFilter = useMemo(
     () => filter,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable by serialized filter
     [filterKey],
   );
+  const categoryIdsKey = useMemo(
+    () => (categoryIds?.length ? categoryIds.join(',') : ''),
+    [categoryIds],
+  );
+  const stableCategoryIds = useMemo(
+    () => categoryIds ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable by serialized ids
+    [categoryIdsKey],
+  );
 
   const client = useApolloClient();
   const [matches, setMatches] = useState<TournamentMatch[]>([]);
   const [total, setTotal] = useState(0);
+  const [expectedTotal, setExpectedTotal] = useState(0);
+  const [isComplete, setIsComplete] = useState(true);
   const [initialLoading, setInitialLoading] = useState(!skip && !!tournamentId);
   const [error, setError] = useState<Error | undefined>();
 
@@ -88,42 +87,12 @@ export function useTournamentScheduleMatches(
     if (!hasLoadedRef.current) setInitialLoading(true);
 
     try {
-      let totalCount = 0;
-      const all = await fetchAllConnectionPages<TournamentMatch>({
-        getMaxPages: () =>
-          totalCount > 0
-            ? Math.ceil(totalCount / CURSOR_PAGE_MAX) + 2
-            : 500,
-        fetchPage: async (after) => {
-          if (
-            !mountedRef.current ||
-            requestEpochRef.current !== epochAtStart
-          ) {
-            return { edges: [], pageInfo: { hasNextPage: false } };
-          }
-
-          const { data } = await client.query<
-            GetTournamentMatchesQuery,
-            GetTournamentMatchesQueryVariables
-          >({
-            query: GET_TOURNAMENT_MATCHES,
-            variables: {
-              tournamentId,
-              filter: stableFilter ?? undefined,
-              pagination: { first: CURSOR_PAGE_MAX, after: after ?? null },
-            },
-            fetchPolicy: 'network-only',
-          });
-          const conn = data?.tournamentMatchesConnection;
-          totalCount = conn?.totalCount ?? totalCount;
-          return {
-            edges: conn?.edges ?? [],
-            pageInfo: {
-              hasNextPage: conn?.pageInfo?.hasNextPage ?? false,
-              endCursor: conn?.pageInfo?.endCursor,
-            },
-          };
-        },
+      const result = await loadScheduleMatchesForHook(client, {
+        tournamentId,
+        filter: stableFilter,
+        categoryIds: stableCategoryIds,
+        isStale: () =>
+          !mountedRef.current || requestEpochRef.current !== epochAtStart,
       });
 
       if (
@@ -133,8 +102,10 @@ export function useTournamentScheduleMatches(
         return;
       }
 
-      setMatches(dedupeTournamentMatchesById(all));
-      setTotal(totalCount || all.length);
+      setMatches(result.matches);
+      setTotal(result.expectedTotal || result.loadedTotal);
+      setExpectedTotal(result.expectedTotal);
+      setIsComplete(result.isComplete);
       hasLoadedRef.current = true;
     } catch (err) {
       if (
@@ -155,7 +126,7 @@ export function useTournamentScheduleMatches(
         inFlightRef.current = false;
       }
     }
-  }, [client, tournamentId, skip, stableFilter]);
+  }, [client, tournamentId, skip, stableFilter, stableCategoryIds]);
 
   const refetch = useCallback(() => {
     hasLoadedRef.current = false;
@@ -187,6 +158,8 @@ export function useTournamentScheduleMatches(
       inFlightRef.current = false;
       setMatches([]);
       setTotal(0);
+      setExpectedTotal(0);
+      setIsComplete(true);
       setInitialLoading(false);
       return;
     }
@@ -199,11 +172,14 @@ export function useTournamentScheduleMatches(
       mountedRef.current = false;
       inFlightRef.current = false;
     };
-  }, [tournamentId, skip, filterKey, loadAll]);
+  }, [tournamentId, skip, filterKey, categoryIdsKey, loadAll]);
 
   return {
     matches,
     total,
+    expectedTotal,
+    loadedTotal: matches.length,
+    isComplete,
     loading: initialLoading,
     error,
     refetch,
