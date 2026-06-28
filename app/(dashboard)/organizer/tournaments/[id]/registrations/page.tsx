@@ -20,6 +20,7 @@ import { RegistrationsDialogsSection } from './_sections/RegistrationsDialogsSec
 import { RegistrationsFiltersSection } from './_sections/RegistrationsFiltersSection';
 import { RegistrationsHeaderSection } from './_sections/RegistrationsHeaderSection';
 import { RegistrationsTableSection } from './_sections/RegistrationsTableSection';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 
 export default function RegistrationsPage({
   params,
@@ -31,11 +32,11 @@ export default function RegistrationsPage({
   const actions = useRegistrationsPageActions(data);
 
   return (
-    <>
+    <TournamentPageSupportShell tournament={data.tournament}>
       <RegistrationsHeaderSection data={data} />
       <RegistrationsDialogsSection data={data} actions={actions} />
       <RegistrationsFiltersSection data={data} actions={actions} />
       <RegistrationsTableSection data={data} actions={actions} />
-    </>
+    </TournamentPageSupportShell>
   );
 }

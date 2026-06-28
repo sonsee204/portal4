@@ -31,6 +31,8 @@ export type StaffAvailabilitySlot = {
   customerName?: string | null;
   customerPhone?: string | null;
   isRecurring?: boolean | null;
+  isUnpaid?: boolean | null;
+  hasPromotion?: boolean | null;
 };
 
 export type StaffAvailabilityCourt = {

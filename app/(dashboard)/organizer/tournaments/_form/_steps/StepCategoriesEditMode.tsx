@@ -61,8 +61,8 @@ export function StepCategoriesEditMode({
   const [saving, setSaving] = useState(false);
 
   const handleAddStaged = useCallback(() => {
-    append(createDefaultCategoryEntry());
-  }, [append]);
+    append(createDefaultCategoryEntry(sport));
+  }, [append, sport]);
 
   const handleSaveStaged = useCallback(
     async (index: number) => {
@@ -120,6 +120,7 @@ export function StepCategoriesEditMode({
           <CategoryApiCard
             key={cat._id}
             category={cat}
+            sport={sport}
             tournamentId={tournamentId}
             onDelete={deleteCategory}
             deleting={deleting}
@@ -144,6 +145,7 @@ export function StepCategoriesEditMode({
             <div key={field.id} className="space-y-2">
               <CategoryFormCard
                 index={i}
+                sport={sport}
                 control={form.control}
                 onRemove={() => remove(i)}
                 canRemove

@@ -13,6 +13,7 @@
 
 import { MatchType, TournamentFormat } from '@/graphql/generated';
 import type { TournamentFormData } from '@/types/tournament-form';
+import { createDefaultScoringForSport } from '@/lib/scoring/scoring-form-defaults';
 
 export const MATCH_LABEL: Record<MatchType, string> = {
   [MatchType.Singles]: 'Đơn',
@@ -65,7 +66,9 @@ export const DEFAULT_PRIZE_DRAFTS = [
   { rank: 'bronze', title: 'Giải Ba', amount: '', perks: [''] },
 ];
 
-export function createDefaultCategoryEntry(): TournamentFormData['categories'][number] {
+export function createDefaultCategoryEntry(
+  sport: TournamentFormData['sport'] = 'badminton',
+): TournamentFormData['categories'][number] {
   return {
     title: '',
     ageLabel: '',
@@ -80,6 +83,7 @@ export function createDefaultCategoryEntry(): TournamentFormData['categories'][n
     groupCount: 4,
     advancingPerGroup: 2,
     defaultMatchDurationMinutes: 30,
+    ...createDefaultScoringForSport(sport),
     prizes: DEFAULT_PRIZE_DRAFTS.map((p) => ({
       ...p,
       perks: [...p.perks],

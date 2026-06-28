@@ -526,6 +526,7 @@ enum AuditAction {
   TOURNAMENT_FORCE_DRAW_RESET
   TOURNAMENT_LATE_ENTRY_BYE_FILL
   TOURNAMENT_MATCH_ABORTED
+  TOURNAMENT_MATCH_FINISHED_RESET
   TOURNAMENT_MATCH_LIVE_CORRECTED
   TOURNAMENT_MATCH_RESULT_CORRECTED
   TOURNAMENT_MATCH_RESULT_OVERRIDE
@@ -796,8 +797,8 @@ type BadmintonMatchStateGql {
   endsSwapped: Boolean!
   format: BadmintonFormat!
   gameNumber: Int!
-  intervalTakenAt11: Boolean!
   lastServiceOverAt: String
+  midGameIntervalTaken: Boolean!
   receiverPlayerIndex: Int
   receiverSide: Int!
   rotationIndex: Int
@@ -5324,6 +5325,7 @@ enum MatchCorrectionAction {
   ABORT_LIVE
   CORRECT_RESULT
   MANUAL_RESULT
+  RESET_FINISHED
   SET_SNAPSHOT
   UNDO_POINTS
   WALKOVER
@@ -5458,6 +5460,9 @@ enum MatchSetupMethod {
 }
 
 type MatchSetupSnapshot {
+  """Category default pointsPerSet after sanitize at match start"""
+  categoryPointsPerSet: Int
+
   """What the toss winner chose"""
   coinTossChoice: CoinTossChoice
 
@@ -5466,6 +5471,9 @@ type MatchSetupSnapshot {
 
   """ISO timestamp when setup was finalized"""
   decidedAt: String!
+
+  """Referee override pointsPerSet when different from category"""
+  pointsPerSetOverride: Int
   setupMethod: MatchSetupMethod!
 }
 
@@ -6402,6 +6410,11 @@ type Mutation {
 
   """BTC hiệu chỉnh tỉ số trận đang LIVE"""
   organizerCorrectLiveScore(input: OrganizerCorrectLiveScoreInput!): MatchScorecard!
+
+  """
+  BTC reset trận đã kết thúc về NOT_STARTED để đấu lại (vòng sau chưa đấu)
+  """
+  organizerResetFinishedMatch(input: OrganizerResetFinishedMatchInput!): TournamentMatch!
 
   """Pause a promotion"""
   pausePromotion(promotionId: ID!): Promotion!
@@ -7730,6 +7743,15 @@ input OrganizerCorrectLiveScoreInput {
 enum OrganizerCorrectLiveScoreMode {
   SET_SNAPSHOT
   UNDO_POINTS
+}
+
+input OrganizerResetFinishedMatchInput {
+  """Optimistic concurrency guard"""
+  expectedMatchUpdatedAt: String
+  matchId: ID!
+
+  """Lý do reset trận (audit bắt buộc)"""
+  reason: String!
 }
 
 """Transport channel used to deliver an OTP"""
@@ -10673,6 +10695,9 @@ type Query {
   """Lấy danh sách kèo giao lưu (cursor)"""
   pickupGamesConnection(filter: PickupGameFilterInput, pagination: CursorPageInput): PickupGameConnection!
 
+  """Cursor-paginated all tournaments (platform owner only)"""
+  platformTournamentsConnection(filter: TournamentFilterInput, pagination: CursorPageInput): TournamentConnection!
+
   """Get popular/featured sports"""
   popularSports: [Sport!]!
 
@@ -10760,6 +10785,9 @@ type Query {
 
   """List scoreboard sessions for hub tabs (cursor)"""
   scoreboardSessionsConnection(filter: ScoreboardSessionsFilterInput!, pagination: CursorPageInput): ScoreboardSessionConnection!
+
+  """Scoring rule templates for a sport (organizer picker)"""
+  scoringTemplates(sportType: SportType!): [ScoringTemplate!]!
 
   """Search messages in a conversation (cursor)"""
   searchMessagesConnection(input: SearchMessagesInput!, pagination: CursorPageInput): MessageConnection!
@@ -12115,6 +12143,11 @@ type ScoringConfig {
   """Max points per set (0 = unlimited, win by margin)"""
   maxPoints: Int!
 
+  """
+  Score at which mid-game interval triggers (0 = disabled). Badminton: typically ceil(pointsPerSet/2)
+  """
+  midGameIntervalAt: Int
+
   """Period duration in minutes (timed sports)"""
   periodDurationMinutes: Int!
 
@@ -12150,6 +12183,7 @@ input ScoringConfigInput {
   deuceEnabled: Boolean! = false
   framesToWin: Int
   maxPoints: Int! = 0
+  midGameIntervalAt: Int
   periodDurationMinutes: Int! = 0
   periodsCount: Int! = 0
   pointsPerSet: Int!
@@ -12169,6 +12203,21 @@ enum ScoringSystem {
   SETS_AND_POINTS
   TIMED_GOALS
   TIMED_POINTS
+}
+
+"""Named scoring rule template for a sport"""
+type ScoringTemplate {
+  """Full scoring configuration"""
+  config: ScoringConfig!
+
+  """Short description of the rules"""
+  description: String!
+
+  """Stable template identifier"""
+  id: String!
+
+  """Display label for organizers"""
+  label: String!
 }
 
 input SearchMessagesInput {
@@ -12630,6 +12679,9 @@ input StartMatchInput {
   leftSidePlayer: Int
   matchId: ID!
 
+  """Referee override: điểm chạm/set (chỉ cầu lông, trước khi có scorecard)"""
+  pointsPerSetOverride: Int
+
   """Initial serving player: 1 or 2"""
   servingPlayer: Int
 
@@ -13010,6 +13062,11 @@ type TimeSlotAvailability {
   """Has active booking pass for this slot"""
   hasActivePass: Boolean
 
+  """
+  Booking document has a real discount (not inherited from recurring master)
+  """
+  hasPromotion: Boolean
+
   """Booking ID of the hold"""
   holdBookingId: String
 
@@ -13039,6 +13096,9 @@ type TimeSlotAvailability {
 
   """Whether the booking is a recurring (fixed) schedule"""
   isRecurring: Boolean
+
+  """Booking order linked to this slot still has unpaid balance"""
+  isUnpaid: Boolean
 
   """Booking ID if slot is user hold active booking"""
   myHoldActiveBookingId: ID
@@ -13342,6 +13402,9 @@ input TournamentFeeInput {
 input TournamentFilterInput {
   dateFrom: String
   dateTo: String
+
+  """Filter by organizer user ID (platform owner list)"""
+  organizerId: ID
   searchQuery: String
   sortBy: TournamentSortBy = CREATED_AT
   sortOrder: TournamentSortOrder = DESC
@@ -15677,6 +15740,9 @@ type VenueOperationsReport {
   """
   scheduleCoverageTrend: [ScheduleCoveragePoint!]!
   totalBookings: Int!
+
+  """Unpaid balance on booking orders linked to schedule bookings in period"""
+  unpaidAmount: Int!
 }
 
 type VenueOrderTypeConfig {

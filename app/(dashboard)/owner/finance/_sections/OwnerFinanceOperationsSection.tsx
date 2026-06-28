@@ -96,7 +96,7 @@ export function OwnerFinanceOperationsSection({
       onRetry={() => void data.refetchOperations()}
     >
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             icon="grid-outline"
             iconColor="text-emerald-400"
@@ -122,6 +122,22 @@ export function OwnerFinanceOperationsSection({
             value={formatCurrency(operations?.courtRevenue ?? 0)}
             signedValue={operations?.courtRevenue ?? 0}
             hint="Tổng kỳ theo ngày lịch — biểu đồ bên dưới là chi tiết từng ngày"
+          />
+          <StatCard
+            icon="wallet-outline"
+            iconColor={
+              (operations?.unpaidAmount ?? 0) > 0
+                ? 'text-red-400'
+                : 'text-slate-400'
+            }
+            label="Chưa thanh toán"
+            value={formatCurrency(operations?.unpaidAmount ?? 0)}
+            valueClassName={
+              (operations?.unpaidAmount ?? 0) > 0
+                ? 'text-red-400'
+                : 'text-heading'
+            }
+            hint="Số dư đơn đặt sân còn lại (theo lịch trong kỳ)"
           />
         </div>
 

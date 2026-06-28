@@ -18,17 +18,8 @@ import { TabGroup } from '@/components/molecules/TabGroup';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { DateRangePicker } from '@/components/molecules/DateRangePicker';
 import { QueryState } from '@/components/molecules/QueryState';
-import { DataTable } from '@/components/organisms/DataTable';
 import type { ConnectionInfiniteScrollProps } from '@/components/molecules/ConnectionInfiniteScroll';
-import { Badge } from '@/components/atoms/Badge';
 import { Input } from '@/components/atoms/Input';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
-import {
-  ORDER_PAYMENT_STATUS_LABEL,
-  ORDER_PAYMENT_STATUS_VARIANT,
-  ORDER_STATUS_LABEL,
-  ORDER_STATUS_VARIANT,
-} from '@/lib/constants/order-status';
 import type { VenueOrderNode } from '@/hooks/owner';
 import {
   ORDER_PAYMENT_STATUS_CHIPS,
@@ -37,115 +28,11 @@ import {
 } from '../_hooks/owner-orders-page.constants';
 import type { OwnerOrdersPageActions } from '../_hooks/useOwnerOrdersPageActions';
 import type { OwnerOrdersPageData } from '../_hooks/useOwnerOrdersPageData';
-import { OrderRowActions } from '../_components/OrderRowActions';
-import { OrderItemsCell } from '../_components/OrderItemsCell';
+import { OwnerAllOrdersTable } from '../_components/OwnerAllOrdersTable';
 
 interface OwnerOrdersTableSectionProps {
   data: OwnerOrdersPageData;
   actions: OwnerOrdersPageActions;
-}
-
-function AllOrdersTable({
-  orders,
-  actions,
-  infiniteScroll,
-  sortField,
-  sortDir,
-  onSort,
-  sortLoading,
-  emptyTitle,
-}: {
-  orders: VenueOrderNode[];
-  actions: OwnerOrdersPageActions;
-  infiniteScroll?: ConnectionInfiniteScrollProps;
-  sortField: string;
-  sortDir: 'asc' | 'desc';
-  onSort: (field: string) => void;
-  sortLoading?: boolean;
-  emptyTitle: string;
-}) {
-  return (
-    <DataTable
-      columns={[
-        { key: 'code', label: 'Mã đơn' },
-        { key: 'customer', label: 'Khách' },
-        { key: 'items', label: 'Sản phẩm' },
-        {
-          key: 'status',
-          label: 'Trạng thái',
-          align: 'center',
-          sortable: true,
-        },
-        { key: 'payment', label: 'Thanh toán', align: 'center' },
-        {
-          key: 'created',
-          label: 'Ngày tạo',
-          sortable: true,
-          sortField: 'createdAt',
-        },
-        {
-          key: 'total',
-          label: 'Số tiền',
-          align: 'right',
-          sortable: true,
-          sortField: 'totalAmount',
-        },
-        { key: 'actions', label: 'Thao tác', align: 'right' },
-      ]}
-      stickyHeader
-      className="max-h-[min(70vh,calc(100dvh-15rem))] min-h-[240px]"
-      data={orders}
-      emptyTitle={emptyTitle}
-      infiniteScroll={infiniteScroll}
-      sortKey={sortField}
-      sortDir={sortDir}
-      onSort={onSort}
-      sortLoading={sortLoading}
-      renderRow={(order) => (
-        <tr
-          key={order._id}
-          className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-        >
-          <td className="text-body px-4 py-3 font-mono text-sm">
-            {order.orderCode}
-          </td>
-          <td className="text-body px-4 py-3 text-sm">
-            <div>{order.customerName ?? '—'}</div>
-            {order.customerPhone && (
-              <div className="text-faint text-xs">{order.customerPhone}</div>
-            )}
-          </td>
-          <td className="px-4 py-3">
-            <OrderItemsCell order={order} />
-          </td>
-          <td className="px-4 py-3 text-center">
-            <Badge variant={ORDER_STATUS_VARIANT[order.status] ?? 'neutral'}>
-              {ORDER_STATUS_LABEL[order.status] ?? order.status}
-            </Badge>
-          </td>
-          <td className="px-4 py-3 text-center">
-            <Badge
-              variant={
-                ORDER_PAYMENT_STATUS_VARIANT[order.paymentStatus] ?? 'neutral'
-              }
-            >
-              {ORDER_PAYMENT_STATUS_LABEL[order.paymentStatus] ??
-                order.paymentStatus}
-            </Badge>
-          </td>
-          <td className="text-faint px-4 py-3 text-xs">
-            {formatDateTime(order.createdAt)}
-          </td>
-          <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
-            {formatCurrency(order.totalAmount)}
-          </td>
-          <td className="px-4 py-3 text-right">
-            <OrderRowActions order={order} actions={actions} />
-          </td>
-        </tr>
-      )}
-    />
-  );
 }
 
 export function OwnerOrdersTableSection({
@@ -248,7 +135,7 @@ export function OwnerOrdersTableSection({
         emptyMessage="Chọn cơ sở để xem đơn hàng."
         onRetry={() => void refetch()}
       >
-        <AllOrdersTable
+        <OwnerAllOrdersTable
           orders={orders as VenueOrderNode[]}
           actions={actions}
           infiniteScroll={infiniteScroll}

@@ -20,6 +20,7 @@ import {
   useOrganizerCorrectLiveScore,
   useOrganizerAbortLiveMatch,
   useCorrectFinishedMatchResult,
+  useOrganizerResetFinishedMatch,
 } from '@/hooks/tournament';
 import type { TournamentMatch } from '@/graphql/generated';
 import {
@@ -32,6 +33,12 @@ const ENDED = new Set([
   MatchStatus.Walkover,
   MatchStatus.Retirement,
   MatchStatus.Cancelled,
+]);
+
+const RESET_ELIGIBLE = new Set([
+  MatchStatus.Finished,
+  MatchStatus.Walkover,
+  MatchStatus.Retirement,
 ]);
 
 interface MatchCorrectionModalProps {
@@ -48,11 +55,13 @@ export function MatchCorrectionModal({
   const [reason, setReason] = useState('');
   const [setLines, setSetLines] = useState('');
   const [winner, setWinner] = useState<1 | 2>(1);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const refresh = () => {
     onSuccess();
     onClose();
     setReason('');
+    setConfirmReset(false);
   };
 
   const { correctLiveScore, loading: correcting } =
@@ -62,14 +71,17 @@ export function MatchCorrectionModal({
   });
   const { correctFinishedResult, loading: fixing } =
     useCorrectFinishedMatchResult({ onSuccess: refresh });
+  const { resetFinishedMatch, loading: resetting } =
+    useOrganizerResetFinishedMatch({ onSuccess: refresh });
 
-  const loading = correcting || aborting || fixing;
+  const loading = correcting || aborting || fixing || resetting;
   const reasonOk = reason.trim().length >= 10;
 
   if (!match) return null;
 
   const isLive = match.status === MatchStatus.Live;
   const isEnded = ENDED.has(match.status);
+  const canReset = RESET_ELIGIBLE.has(match.status);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -124,6 +136,9 @@ export function MatchCorrectionModal({
 
         {isEnded && (
           <div className="space-y-3">
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+              Chỉ thao tác được khi trận vòng sau chưa bắt đầu.
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {([1, 2] as const).map((p) => (
                 <button
@@ -150,6 +165,7 @@ export function MatchCorrectionModal({
             <Button
               size="sm"
               variant="primary"
+              className="w-full"
               disabled={loading || !reasonOk}
               onClick={() => {
                 const setScores = setLines
@@ -176,6 +192,55 @@ export function MatchCorrectionModal({
             >
               Sửa kết quả
             </Button>
+
+            {canReset && (
+              <div className="space-y-2 border-t border-red-500/20 pt-3">
+                {!confirmReset ? (
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    className="w-full"
+                    disabled={loading}
+                    onClick={() => setConfirmReset(true)}
+                  >
+                    Reset trận — đấu lại từ đầu
+                  </Button>
+                ) : (
+                  <div className="space-y-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                    <p className="text-xs leading-relaxed text-red-600 dark:text-red-400">
+                      Trận sẽ về chưa bắt đầu, bảng điểm bị xoá và VĐV được gỡ
+                      khỏi vòng sau. Không thể hoàn tác.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1"
+                        disabled={loading}
+                        onClick={() => setConfirmReset(false)}
+                      >
+                        Huỷ
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="flex-1"
+                        disabled={loading || !reasonOk}
+                        onClick={() =>
+                          void resetFinishedMatch({
+                            matchId: match._id,
+                            reason: reason.trim(),
+                            expectedMatchUpdatedAt: match.updatedAt,
+                          })
+                        }
+                      >
+                        Xác nhận reset
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

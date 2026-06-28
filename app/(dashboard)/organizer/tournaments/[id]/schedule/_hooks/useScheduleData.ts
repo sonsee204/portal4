@@ -63,13 +63,23 @@ export function useScheduleData(tournamentId: string) {
 
   const { tournament } = useTournament(tournamentId);
   const { categories } = useTournamentCategories(tournamentId);
+  const categoryIds = useMemo(
+    () => categories.map((category) => category._id),
+    [categories],
+  );
 
   const {
     matches: scheduleRawMatches,
     loading: scheduleLoading,
+    isComplete: matchesLoadComplete,
+    expectedTotal: expectedMatchCount,
+    loadedTotal: loadedMatchCount,
     refetch: refetchSchedule,
     subscribeToMore,
-  } = useTournamentScheduleMatches({ tournamentId });
+  } = useTournamentScheduleMatches({ tournamentId, categoryIds });
+
+  const [incompleteLoadBannerDismissed, setIncompleteLoadBannerDismissed] =
+    useState(false);
 
   const scheduleMatchesMapped = useMemo(
     () => mapMatchesToSchedule(scheduleRawMatches, categories),
@@ -168,6 +178,11 @@ export function useScheduleData(tournamentId: string) {
     displayMatches,
     scheduleLoading,
     refetchSchedule,
+    matchesLoadComplete,
+    expectedMatchCount,
+    loadedMatchCount,
+    incompleteLoadBannerDismissed,
+    setIncompleteLoadBannerDismissed,
     courtOptions,
     ...ui,
     ...grid,

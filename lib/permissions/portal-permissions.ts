@@ -107,6 +107,12 @@ export const CAPABILITY_PERMISSIONS: Record<
   TOURNAMENT_ORGANIZER: ['organizer.dashboard', 'tournaments.organize', 'profile.edit'],
 };
 
+/** Extra organizer workspace permissions when user matches OWNER_PHONE. */
+export const PLATFORM_OWNER_ORGANIZER_PERMISSIONS: PortalPermission[] = [
+  'organizer.dashboard',
+  'tournaments.organize',
+];
+
 export const ROLE_PERMISSIONS: Record<UserRole, PortalPermission[]> = {
   SUPER_ADMIN: SUPER_ADMIN_PERMISSIONS,
   ADMIN: ADMIN_PERMISSIONS,

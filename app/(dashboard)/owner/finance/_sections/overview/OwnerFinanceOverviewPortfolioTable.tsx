@@ -23,6 +23,7 @@ import {
   FINANCE_TABLE_SCROLL_CLASS,
 } from '@/lib/finance/finance-table';
 import { cn, formatCurrency } from '@/lib/utils';
+import { buildAmountSummariesFromRows } from '@/lib/data-table/amount-summary';
 import { getSignedValueClassName } from '@/lib/finance/stat-card-trend';
 import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type { OwnerFinancePageData } from '../../_hooks/useOwnerFinancePageData';
@@ -99,6 +100,23 @@ export function OwnerFinanceOverviewPortfolioTable({
     return venues;
   }, [data.portfolio?.venues, sort.sortDir, sort.sortField]);
 
+  const amountSummaries = useMemo(
+    () =>
+      buildAmountSummariesFromRows(rows, [
+        {
+          columnKey: 'grossRevenue',
+          getValue: (row) => row.grossRevenue.value,
+          tone: 'signed',
+        },
+        {
+          columnKey: 'netProfit',
+          getValue: (row) => row.netProfit.value,
+          tone: 'signed',
+        },
+      ]),
+    [rows]
+  );
+
   return (
     <GlassPanel card className="space-y-4">
       <div>
@@ -145,6 +163,7 @@ export function OwnerFinanceOverviewPortfolioTable({
         sortKey={sort.sortField}
         sortDir={sort.sortDir}
         onSort={sort.handleSort}
+        amountSummaries={amountSummaries}
         renderRow={(row) => (
           <tr key={row.venueId} className={FINANCE_TABLE_ROW_CLASS}>
             <td className="text-body px-4 py-3 text-sm font-medium">

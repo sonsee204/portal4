@@ -16,11 +16,7 @@
 import type { ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import type { UserRole } from '@/types';
-import {
-  can,
-  canAny,
-  type PortalPermission,
-} from '@/lib/permissions';
+import { can, canAny, type PortalPermission } from '@/lib/permissions';
 import { canAccess, canAccessAny, type PortalFeature } from '@/lib/permissions';
 
 interface PermissionGateProps {
@@ -98,15 +94,28 @@ export function PermissionGate({ children, fallback = null, ...props }: Props) {
   const userRole = useAuthStore((s) => s.user?.role ?? null);
   const capabilities = useAuthStore((s) => s.user?.portalCapabilities ?? []);
   const hasVenueAccess = useAuthStore((s) => s.user?.hasVenueAccess ?? false);
+  const isPlatformOwner = useAuthStore((s) => s.user?.isOwner ?? false);
 
   let hasAccess = false;
 
   if ('roles' in props && props.roles) {
     hasAccess = userRole !== null && props.roles.includes(userRole);
   } else if ('permission' in props && props.permission) {
-    hasAccess = can(userRole, props.permission, capabilities, hasVenueAccess);
+    hasAccess = can(
+      userRole,
+      props.permission,
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner
+    );
   } else if ('permissions' in props && props.permissions) {
-    hasAccess = canAny(userRole, props.permissions, capabilities, hasVenueAccess);
+    hasAccess = canAny(
+      userRole,
+      props.permissions,
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner
+    );
   } else if ('feature' in props && props.feature) {
     hasAccess = canAccess(userRole, props.feature);
   } else if ('features' in props && props.features) {

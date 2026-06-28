@@ -14,6 +14,7 @@
 import type { UserRole } from '@/types';
 import {
   CAPABILITY_PERMISSIONS,
+  PLATFORM_OWNER_ORGANIZER_PERMISSIONS,
   ROLE_HOME_PATH,
   ROLE_PERMISSIONS,
   VENUE_STAFF_PORTAL_PERMISSIONS,
@@ -38,6 +39,7 @@ export function getEffectivePermissions(
   role: UserRole | null | undefined,
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): PortalPermission[] {
   if (!role) return [];
   const base = ROLE_PERMISSIONS[role] ?? [];
@@ -48,7 +50,17 @@ export function getEffectivePermissions(
     hasVenueAccess && role !== 'FACILITY_OWNER'
       ? VENUE_STAFF_PORTAL_PERMISSIONS
       : [];
-  return [...new Set([...base, ...fromCapabilities, ...venuePermissions])];
+  const platformOwnerPermissions = isPlatformOwner
+    ? PLATFORM_OWNER_ORGANIZER_PERMISSIONS
+    : [];
+  return [
+    ...new Set([
+      ...base,
+      ...fromCapabilities,
+      ...venuePermissions,
+      ...platformOwnerPermissions,
+    ]),
+  ];
 }
 
 export function can(
@@ -56,10 +68,14 @@ export function can(
   permission: PortalPermission,
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): boolean {
-  return getEffectivePermissions(role, capabilities, hasVenueAccess).includes(
-    permission,
-  );
+  return getEffectivePermissions(
+    role,
+    capabilities,
+    hasVenueAccess,
+    isPlatformOwner,
+  ).includes(permission);
 }
 
 export function canWithCapabilities(
@@ -67,8 +83,9 @@ export function canWithCapabilities(
   capabilities: PortalCapability[],
   permission: PortalPermission,
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): boolean {
-  return can(role, permission, capabilities, hasVenueAccess);
+  return can(role, permission, capabilities, hasVenueAccess, isPlatformOwner);
 }
 
 export function canAny(
@@ -76,9 +93,12 @@ export function canAny(
   permissions: PortalPermission[],
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): boolean {
   if (!role) return false;
-  return permissions.some((p) => can(role, p, capabilities, hasVenueAccess));
+  return permissions.some((p) =>
+    can(role, p, capabilities, hasVenueAccess, isPlatformOwner),
+  );
 }
 
 export function canAll(
@@ -86,17 +106,26 @@ export function canAll(
   permissions: PortalPermission[],
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): boolean {
   if (!role) return false;
-  return permissions.every((p) => can(role, p, capabilities, hasVenueAccess));
+  return permissions.every((p) =>
+    can(role, p, capabilities, hasVenueAccess, isPlatformOwner),
+  );
 }
 
 export function getPermissionsForRole(
   role: UserRole | null | undefined,
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): PortalPermission[] {
-  return getEffectivePermissions(role, capabilities, hasVenueAccess);
+  return getEffectivePermissions(
+    role,
+    capabilities,
+    hasVenueAccess,
+    isPlatformOwner,
+  );
 }
 
 export function hasOrganizerCapability(
@@ -121,12 +150,15 @@ export function canAccessWorkspace(
   workspace: PortalWorkspace,
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): boolean {
   if (!role) return false;
 
   if (workspace === 'organizer') {
     return (
-      isAdminRole(role) || hasOrganizerCapability(capabilities)
+      isPlatformOwner ||
+      isAdminRole(role) ||
+      hasOrganizerCapability(capabilities)
     );
   }
 
@@ -146,17 +178,30 @@ export function getAccessibleWorkspaces(
   role: UserRole | null | undefined,
   capabilities: PortalCapability[] = [],
   hasVenueAccess = false,
+  isPlatformOwner = false,
 ): PortalWorkspace[] {
   if (!role) return [];
   const workspaces: PortalWorkspace[] = [];
 
-  if (canAccessWorkspace(role, 'admin', capabilities, hasVenueAccess)) {
+  if (
+    canAccessWorkspace(role, 'admin', capabilities, hasVenueAccess, isPlatformOwner)
+  ) {
     workspaces.push('admin');
   }
-  if (canAccessWorkspace(role, 'owner', capabilities, hasVenueAccess)) {
+  if (
+    canAccessWorkspace(role, 'owner', capabilities, hasVenueAccess, isPlatformOwner)
+  ) {
     workspaces.push('owner');
   }
-  if (canAccessWorkspace(role, 'organizer', capabilities, hasVenueAccess)) {
+  if (
+    canAccessWorkspace(
+      role,
+      'organizer',
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner,
+    )
+  ) {
     workspaces.push('organizer');
   }
 
@@ -213,7 +258,13 @@ export function canAccessRoute(
     }
   }
   if (
-    !canAccessWorkspace(role, entry.workspace, capabilities, hasVenueAccess)
+    !canAccessWorkspace(
+      role,
+      entry.workspace,
+      capabilities,
+      hasVenueAccess,
+      isPlatformOwner,
+    )
   ) {
     return false;
   }
@@ -223,7 +274,13 @@ export function canAccessRoute(
   ) {
     return true;
   }
-  return can(role, entry.permission, capabilities, hasVenueAccess);
+  return can(
+    role,
+    entry.permission,
+    capabilities,
+    hasVenueAccess,
+    isPlatformOwner,
+  );
 }
 
 export function getRouteManifestEntry(

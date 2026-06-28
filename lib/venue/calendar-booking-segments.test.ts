@@ -22,6 +22,11 @@ import {
   segmentPositionInHourGrid,
   VENUE_CALENDAR_VISIBLE_STATUSES,
 } from './calendar-booking-segments';
+import { computeCalendarScrollLeftToNow } from './calendar-scroll';
+import {
+  buildAvailabilityPriceTiers,
+  getCalendarPriceTier,
+} from './calendar-price-tiers';
 
 describe('VENUE_CALENDAR_VISIBLE_STATUSES', () => {
   it('includes only confirmed and completed bookings', () => {
@@ -110,9 +115,21 @@ describe('buildCalendarBookingSegments', () => {
     ]);
 
     expect(segments[0]?.isRecurring).toBe(true);
-    expect(getBookingSlotColorScheme('child-1', 'CONFIRMED', true).variant).toBe(
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: true,
+    }).variant).toBe(
       'recurring',
     );
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: false,
+    }).variant).toBe('single');
+    expect(getBookingSlotColorScheme({
+      bookingStatus: 'CONFIRMED',
+      isRecurring: false,
+      isUnpaid: true,
+    }).variant).toBe('unpaid');
   });
 });
 
@@ -169,5 +186,111 @@ describe('segmentPositionInHourGrid', () => {
     );
 
     expect(first.left + first.width).toBeLessThanOrEqual(second.left);
+  });
+});
+
+describe('calendar price tiers', () => {
+  it('builds unique prices from availability courts', () => {
+    const tiers = buildAvailabilityPriceTiers([
+      {
+        courtId: '1',
+        courtName: 'Sân 1',
+        slots: [
+          {
+            startTime: '08:00',
+            endTime: '08:30',
+            price: 70_000,
+            isPeakHour: false,
+            isAvailable: true,
+            isPast: false,
+          },
+          {
+            startTime: '08:30',
+            endTime: '09:00',
+            price: 90_000,
+            isPeakHour: true,
+            isAvailable: true,
+            isPast: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(tiers.uniquePrices).toEqual([70_000, 90_000]);
+    expect(getCalendarPriceTier(70_000, tiers)).toBe('low');
+    expect(getCalendarPriceTier(90_000, tiers)).toBe('high');
+  });
+
+  it('excludes past slots when building tiers like mobile', () => {
+    const tiers = buildAvailabilityPriceTiers([
+      {
+        courtId: '1',
+        courtName: 'Sân 1',
+        slots: [
+          {
+            startTime: '08:00',
+            endTime: '08:30',
+            price: 50_000,
+            isPeakHour: false,
+            isAvailable: false,
+            isPast: true,
+          },
+          {
+            startTime: '09:00',
+            endTime: '09:30',
+            price: 70_000,
+            isPeakHour: false,
+            isAvailable: true,
+            isPast: false,
+          },
+        ],
+      },
+    ]);
+
+    expect(tiers.uniquePrices).toEqual([70_000]);
+  });
+});
+
+describe('computeCalendarScrollLeftToNow', () => {
+  const hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+  const base = {
+    courtLabelWidth: 120,
+    hourCellWidth: 144,
+    viewportWidth: 600,
+  };
+
+  it('scrolls to start when current time is before opening hours', () => {
+    expect(
+      computeCalendarScrollLeftToNow(hours, {
+        ...base,
+        now: new Date(2026, 5, 27, 6, 30),
+      }),
+    ).toBe(0);
+  });
+
+  it('scrolls near the current hour during operating hours', () => {
+    const scrollLeft = computeCalendarScrollLeftToNow(hours, {
+      ...base,
+      now: new Date(2026, 5, 27, 14, 30),
+    });
+
+    expect(scrollLeft).toBeGreaterThan(0);
+    expect(scrollLeft).toBeLessThan(
+      base.courtLabelWidth + hours.length * base.hourCellWidth,
+    );
+  });
+
+  it('scrolls to the end when current time is after closing hours', () => {
+    const maxScroll =
+      base.courtLabelWidth +
+      hours.length * base.hourCellWidth -
+      base.viewportWidth;
+
+    expect(
+      computeCalendarScrollLeftToNow(hours, {
+        ...base,
+        now: new Date(2026, 5, 27, 22, 0),
+      }),
+    ).toBe(maxScroll);
   });
 });

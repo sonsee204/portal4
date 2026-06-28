@@ -9,6 +9,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Badge } from '@/components/atoms/Badge';
@@ -22,6 +23,7 @@ import {
 import type { ProductReportRowNode } from '@/hooks/owner';
 import type { OwnerProductStatsPageData } from '../_hooks/useOwnerProductStatsPageData';
 import type { OwnerProductStatsPageActions } from '../_hooks/useOwnerProductStatsPageActions';
+import type { DataTableAmountSummary } from '@/lib/data-table/amount-summary';
 
 interface OwnerProductStatsTableSectionProps {
   data: OwnerProductStatsPageData;
@@ -36,6 +38,31 @@ export function OwnerProductStatsTableSection({
   actions,
 }: OwnerProductStatsTableSectionProps) {
   const showVenueColumn = data.allVenues;
+
+  const amountSummaries = useMemo((): DataTableAmountSummary[] | undefined => {
+    const summary = data.report?.summary;
+    if (!summary) return undefined;
+
+    return [
+      {
+        columnKey: 'cogs',
+        total: summary.totalCogs,
+        scope: 'full',
+      },
+      {
+        columnKey: 'revenue',
+        total: summary.totalRevenue,
+        tone: 'positive',
+        scope: 'full',
+      },
+      {
+        columnKey: 'grossProfit',
+        total: summary.grossProfit,
+        tone: 'signed',
+        scope: 'full',
+      },
+    ];
+  }, [data.report?.summary]);
 
   return (
     <GlassPanel card>
@@ -96,6 +123,7 @@ export function OwnerProductStatsTableSection({
           sortKey={data.tableSort.sortField}
           sortDir={data.tableSort.sortDir}
           onSort={data.tableSort.handleSort}
+          amountSummaries={amountSummaries}
           infiniteScroll={{
             loadedCount: data.tableRows.length,
             totalCount: data.tableTotalCount,

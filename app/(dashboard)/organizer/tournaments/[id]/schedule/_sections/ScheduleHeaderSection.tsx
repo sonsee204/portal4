@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
 import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
+import { webTournamentManageUrl } from '@/lib/tournaments/web-urls';
 import { TOURNAMENT } from '@/lib/strings';
 
 interface ScheduleHeaderSectionProps {
@@ -38,6 +39,20 @@ export function ScheduleHeaderSection({
       description={`${matchCount} trận đấu`}
     >
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          iconLeft="open-outline"
+          onClick={() => {
+            window.open(
+              webTournamentManageUrl(tournamentId, 'schedule'),
+              '_blank',
+              'noopener,noreferrer'
+            );
+          }}
+        >
+          Mở lịch Web
+        </Button>
         <Link href={routes.edit(tournamentId)}>
           <Button variant="outline" size="sm" iconLeft="grid-outline">
             {TOURNAMENT.LABEL_ADD_COURTS_LINK}

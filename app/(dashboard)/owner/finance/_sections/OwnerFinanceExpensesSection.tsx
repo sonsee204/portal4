@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
@@ -20,6 +21,7 @@ import { Button } from '@/components/atoms/Button';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { VenueAction } from '@/graphql/generated';
 import { formatCurrency } from '@/lib/utils';
+import { buildAmountSummariesFromRows } from '@/lib/data-table/amount-summary';
 import { formatCoverageLabel } from '@/lib/finance/expense-coverage';
 import {
   FINANCE_TABLE_ROW_CLASS,
@@ -39,6 +41,22 @@ export function OwnerFinanceExpensesSection({
   data,
   actions,
 }: OwnerFinanceExpensesSectionProps) {
+  const amountSummaries = useMemo(
+    () =>
+      buildAmountSummariesFromRows(data.expenses, [
+        {
+          columnKey: 'amount',
+          getValue: (row) => row.amount,
+          tone: 'positive',
+        },
+        {
+          columnKey: 'allocated',
+          getValue: (row) => row.allocatedAmountInPeriod ?? row.amount,
+        },
+      ]),
+    [data.expenses]
+  );
+
   if (data.allVenues) {
     return (
       <GlassPanel card>
@@ -96,6 +114,7 @@ export function OwnerFinanceExpensesSection({
           sortDir={data.expenseSortDir}
           onSort={data.handleExpenseSort}
           sortLoading={data.expenseSortLoading}
+          amountSummaries={amountSummaries}
           infiniteScroll={{
             loadedCount: data.expenses.length,
             totalCount: data.expenseCount,

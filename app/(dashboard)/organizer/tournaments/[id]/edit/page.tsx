@@ -20,6 +20,7 @@ import { Button } from '@/components/atoms/Button';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { useTournament } from '@/hooks/tournament';
 import { useTournamentRoutes } from '@/hooks/tournament/useTournamentRoutes';
+import { TournamentPageSupportShell } from '@/components/molecules/TournamentPageSupportShell';
 import { TournamentFormWizard } from '../../_form/TournamentFormWizard';
 import { mapTournamentToFormData } from '../../_form/_utils/mapFormToInput';
 import { TOURNAMENT } from '@/lib/strings';
@@ -84,7 +85,7 @@ export default function EditTournamentPage({
     : 'Cập nhật thông tin giải đấu hiện có.';
 
   return (
-    <>
+    <TournamentPageSupportShell tournament={tournament}>
       <PageHeader title={pageTitle} description={pageDescription}>
         <Button
           variant="ghost"
@@ -122,6 +123,6 @@ export default function EditTournamentPage({
           />
         )}
       </div>
-    </>
+    </TournamentPageSupportShell>
   );
 }
