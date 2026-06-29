@@ -37,6 +37,7 @@ export type PortalPermission =
   | 'analytics.venue'
   | 'orders.venue'
   | 'products.venue'
+  | 'promotions.venue'
   | 'staff.venue'
   | 'venues.manage'
   | 'tournaments.platform'
@@ -88,7 +89,14 @@ export const FACILITY_OWNER_PERMISSIONS: PortalPermission[] = [
   'analytics.venue',
   'orders.venue',
   'products.venue',
+  'promotions.venue',
   'staff.venue',
+  'profile.edit',
+];
+
+/** Minimal portal perms for venue staff (PLAYER etc.) — route access via VenueRouteGuard. */
+export const VENUE_STAFF_PORTAL_PERMISSIONS: PortalPermission[] = [
+  'owner.dashboard',
   'profile.edit',
 ];
 

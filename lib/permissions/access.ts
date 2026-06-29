@@ -14,15 +14,25 @@
 import type { UserRole } from '@/types';
 import {
   CAPABILITY_PERMISSIONS,
-  FACILITY_OWNER_PERMISSIONS,
   ROLE_HOME_PATH,
   ROLE_PERMISSIONS,
+  VENUE_STAFF_PORTAL_PERMISSIONS,
   WORKSPACE_ROLES,
   type PortalCapability,
   type PortalPermission,
   type PortalWorkspace,
 } from './portal-permissions';
 import { matchRouteManifest, type RouteManifestEntry } from './route-manifest';
+
+const STAFF_PORTAL_ROLES: UserRole[] = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'FACILITY_OWNER',
+];
+
+function isOwnerWorkspaceRoute(pathname: string): boolean {
+  return pathname === '/owner' || pathname.startsWith('/owner/');
+}
 
 export function getEffectivePermissions(
   role: UserRole | null | undefined,
@@ -36,7 +46,7 @@ export function getEffectivePermissions(
   );
   const venuePermissions =
     hasVenueAccess && role !== 'FACILITY_OWNER'
-      ? FACILITY_OWNER_PERMISSIONS
+      ? VENUE_STAFF_PORTAL_PERMISSIONS
       : [];
   return [...new Set([...base, ...fromCapabilities, ...venuePermissions])];
 }
@@ -95,6 +105,17 @@ export function hasOrganizerCapability(
   return capabilities.includes('TOURNAMENT_ORGANIZER');
 }
 
+export function canAccessPortal(
+  role: UserRole,
+  capabilities: PortalCapability[] = [],
+  hasVenueAccess = false,
+): boolean {
+  if (STAFF_PORTAL_ROLES.includes(role)) return true;
+  if (role === 'PLAYER' && hasOrganizerCapability(capabilities)) return true;
+  if (hasVenueAccess) return true;
+  return false;
+}
+
 export function canAccessWorkspace(
   role: UserRole | null | undefined,
   workspace: PortalWorkspace,
@@ -145,11 +166,16 @@ export function getAccessibleWorkspaces(
 export function getHomePath(
   role: UserRole | null | undefined,
   capabilities: PortalCapability[] = [],
+  hasVenueAccess = false,
 ): string {
   if (!role) return '/login';
 
   if (role === 'PLAYER' && hasOrganizerCapability(capabilities)) {
     return '/organizer';
+  }
+
+  if (role === 'PLAYER' && hasVenueAccess) {
+    return '/owner';
   }
 
   if (role === 'FACILITY_OWNER' && hasOrganizerCapability(capabilities)) {
@@ -159,26 +185,43 @@ export function getHomePath(
   return ROLE_HOME_PATH[role] ?? '/login';
 }
 
-/** @deprecated Use getHomePath(role, capabilities) */
+/** @deprecated Use getHomePath(role, capabilities, hasVenueAccess) */
 export function getHomePathForRole(role: UserRole | null | undefined): string {
   return getHomePath(role);
 }
 
+/**
+ * Coarse portal route admission. Fine-grained owner routes use VenueRouteGuard.
+ * @param isPlatformOwner - User.isOwner (platform super-admin phone match), NOT venue owner.
+ */
 export function canAccessRoute(
   role: UserRole | null | undefined,
   pathname: string,
   capabilities: PortalCapability[] = [],
-  isOwner = false,
+  isPlatformOwner = false,
   hasVenueAccess = false,
 ): boolean {
   const entry = matchRouteManifest(pathname);
   if (!entry) return true;
   if (!role) return false;
-  if (entry.ownerOnly && !isOwner) return false;
+  if (entry.platformOwnerOnly && !isPlatformOwner) return false;
+  if (entry.ownerOnly && !entry.venueOwnerOnly) {
+    if (pathname.startsWith('/owner/')) {
+      // venueOwnerOnly on /owner/* is enforced by VenueRouteGuard (selected venue).
+    } else if (!isPlatformOwner && !isSuperAdminRole(role)) {
+      return false;
+    }
+  }
   if (
     !canAccessWorkspace(role, entry.workspace, capabilities, hasVenueAccess)
   ) {
     return false;
+  }
+  if (
+    isOwnerWorkspaceRoute(pathname) &&
+    (hasVenueAccess || role === 'FACILITY_OWNER')
+  ) {
+    return true;
   }
   return can(role, entry.permission, capabilities, hasVenueAccess);
 }

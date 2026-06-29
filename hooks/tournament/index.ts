@@ -54,6 +54,10 @@ export {
   useSeedPlayers,
 } from './useBracketDraw';
 export {
+  usePreviewManualKnockoutDraw,
+  useGenerateManualDraw,
+} from './useManualDraw';
+export {
   useTournamentMatches,
   useRefereeMatches,
   useScheduleMatch,

@@ -191,6 +191,7 @@ const ME_QUERY = `
         }
       }
       portalCapabilities
+      hasVenuePortalAccess
       isOwner
     }
   }

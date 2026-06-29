@@ -20,13 +20,14 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { cn, formatDateTime } from '@/lib/utils';
 import { ReportDetail } from '../_components/ReportDetail';
+import { POST_FILTER_CHIPS } from '../_hooks/moderation-page.constants';
 import {
-  POST_FILTER_CHIPS,
-} from '../_hooks/moderation-page.constants';
-import { shortDisplayId, truncateText } from '../_hooks/moderation-page.derived';
+  shortDisplayId,
+  truncateText,
+} from '../_hooks/moderation-page.derived';
 import type { ModerationPageActions } from '../_hooks/useModerationPageActions';
 import type { ModerationPageData } from '../_hooks/useModerationPageData';
 import {
@@ -55,9 +56,13 @@ export function PostReportsTabSection({
     postTotalCount,
     postHasNextPage,
     loadMorePostReports,
+    postIsLoadingMore,
     setSelectedId,
     effectiveId,
     selectedReport,
+    postSortField,
+    postSortDir,
+    handlePostSort,
   } = data;
   const {
     handleStatusFilterChange,
@@ -96,17 +101,18 @@ export function PostReportsTabSection({
               { key: 'content', label: 'Nội dung' },
               { key: 'author', label: 'Tác giả' },
               { key: 'reporter', label: 'Người báo cáo' },
-              { key: 'status', label: 'Trạng thái' },
-              { key: 'createdAt', label: 'Ngày tạo' },
+              { key: 'status', label: 'Trạng thái', sortable: true },
+              { key: 'createdAt', label: 'Ngày tạo', sortable: true },
             ]}
             data={reports}
+            sortKey={postSortField}
+            sortDir={postSortDir}
+            onSort={handlePostSort}
             emptyTitle="Không có báo cáo nào"
             renderRow={(r: ModerationReport) => {
               const isActive = r._id === effectiveId;
               const authorName =
-                r.post?.author?.displayName ||
-                r.post?.author?.userName ||
-                '—';
+                r.post?.author?.displayName || r.post?.author?.userName || '—';
               const reporterName =
                 r.reporter?.displayName || r.reporter?.userName || 'Ẩn danh';
               const content = r.post?.content || r.description || '';
@@ -116,7 +122,7 @@ export function PostReportsTabSection({
                   onClick={() => setSelectedId(r._id)}
                   className={cn(
                     'border-surface-border cursor-pointer border-b transition-colors',
-                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover',
+                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover'
                   )}
                 >
                   <td className="text-faint px-4 py-3 font-mono text-xs">
@@ -159,15 +165,13 @@ export function PostReportsTabSection({
             }}
           />
         </QueryState>
-        <ConnectionPager
+        <ConnectionInfiniteScroll
           loadedCount={reports.length}
           totalCount={postTotalCount ?? postTotal}
           hasNextPage={postHasNextPage}
-          onNext={() => {
-            void loadMorePostReports();
-            setSelectedId(null);
-          }}
-          loading={reportsLoading}
+          onLoadMore={() => void loadMorePostReports()}
+          loading={reportsLoading && reports.length === 0}
+          loadingMore={postIsLoadingMore}
         />
       </GlassPanel>
 

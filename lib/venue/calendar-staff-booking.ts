@@ -28,6 +28,9 @@ export type StaffAvailabilitySlot = {
   holdBookingId?: string | null;
   bookingId?: string | null;
   bookingStatus?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  isRecurring?: boolean | null;
 };
 
 export type StaffAvailabilityCourt = {

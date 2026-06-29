@@ -5,19 +5,36 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
- *
- * This source code is the intellectual property of Lê Trung Hiếu.
- * Unauthorized copying, modification, distribution, or use of this code
- * is strictly prohibited without prior written consent.
  */
 
 'use client';
 
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Button } from '@/components/atoms/Button';
+import type { OwnerFinancePageTab } from '../_hooks/owner-finance-page.constants';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 import type { OwnerFinancePageActions } from '../_hooks/useOwnerFinancePageActions';
 import { FinanceExportButton } from '../_components/FinanceExportButton';
+
+const PAGE_META: Record<
+  OwnerFinancePageTab,
+  { title: string; description: string }
+> = {
+  portfolio: {
+    title: 'Tổng quan',
+    description: 'KPI, insight và xu hướng theo sân đang chọn.',
+  },
+  finance: {
+    title: 'Thống kê tài chính',
+    description:
+      'Báo cáo P&L, giao dịch và chi phí. Chọn sân hoặc Tất cả sân trên thanh header. Doanh thu ghi nhận khi đơn hoàn thành.',
+  },
+  operations: {
+    title: 'Thống kê sân',
+    description:
+      'Báo cáo vận hành sân theo sân đang chọn trên thanh chọn sân. Doanh thu ghi nhận khi đơn hoàn thành.',
+  },
+};
 
 interface OwnerFinanceHeaderSectionProps {
   data: OwnerFinancePageData;
@@ -28,19 +45,25 @@ export function OwnerFinanceHeaderSection({
   data,
   actions,
 }: OwnerFinanceHeaderSectionProps) {
+  const meta = PAGE_META[data.pageTab];
   const scopeLabel =
+    data.pageTab === 'operations'
+      ? (data.selectedVenue?.name ?? 'Chọn sân')
+      : data.allVenues
+        ? 'Tất cả sân'
+        : (data.selectedVenue?.name ?? 'Chọn sân');
+
+  const description =
     data.pageTab === 'portfolio'
-      ? 'Tất cả cơ sở'
-      : data.pageTab === 'operations'
-        ? (data.selectedVenue?.name ?? 'Chọn sân')
-        : data.allVenues
-          ? 'Tất cả sân'
-          : (data.selectedVenue?.name ?? 'Chọn sân');
+      ? data.allVenues
+        ? 'So sánh danh mục · Tất cả sân'
+        : scopeLabel
+      : `${meta.description} · ${scopeLabel}`;
 
   return (
     <PageHeader
-      title="Thống kê & Tài chính"
-      description={`Báo cáo P&L, danh mục cơ sở và vận hành sân cho ${scopeLabel}. Doanh thu ghi nhận khi đơn hoàn thành.`}
+      title={meta.title}
+      description={description}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <FinanceExportButton data={data} />

@@ -28,7 +28,8 @@ interface OrderDetailFooterActionsProps {
     | 'handleConfirm'
     | 'handleMarkPreparing'
     | 'handleMarkReady'
-    | 'handleComplete'
+    | 'handleMarkDelivered'
+    | 'openCompleteModal'
     | 'openCancelModal'
   >;
 }
@@ -42,7 +43,8 @@ export function OrderDetailFooterActions({
     handleConfirm,
     handleMarkPreparing,
     handleMarkReady,
-    handleComplete,
+    handleMarkDelivered,
+    openCompleteModal,
     openCancelModal,
   } = actions;
 
@@ -56,6 +58,18 @@ export function OrderDetailFooterActions({
 
   return (
     <div className="flex flex-wrap justify-end gap-2">
+      <VenueActionGate action={VenueAction.CancelOrder}>
+        <Button
+          variant="danger"
+          size="sm"
+          iconLeft="trash-outline"
+          disabled={actionLoading}
+          onClick={() => openCancelModal(order)}
+        >
+          Hủy
+        </Button>
+      </VenueActionGate>
+
       {status === 'PENDING' && (
         <VenueActionGate action={VenueAction.CreateOrder}>
           <Button
@@ -85,7 +99,7 @@ export function OrderDetailFooterActions({
               size="sm"
               iconLeft="flag-outline"
               disabled={actionLoading}
-              onClick={() => void handleComplete(order._id)}
+              onClick={() => openCompleteModal(order._id)}
             >
               Hoàn thành
             </Button>
@@ -108,28 +122,40 @@ export function OrderDetailFooterActions({
 
       {status === 'READY' && (
         <VenueActionGate action={VenueAction.CreateOrder}>
+          {isFnB ? (
+            <Button
+              size="sm"
+              iconLeft="bicycle-outline"
+              disabled={actionLoading}
+              onClick={() => void handleMarkDelivered(order._id)}
+            >
+              Đã giao khách
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              iconLeft="flag-outline"
+              disabled={actionLoading}
+              onClick={() => openCompleteModal(order._id)}
+            >
+              Hoàn thành
+            </Button>
+          )}
+        </VenueActionGate>
+      )}
+
+      {status === 'DELIVERED' && (
+        <VenueActionGate action={VenueAction.CreateOrder}>
           <Button
             size="sm"
             iconLeft="flag-outline"
             disabled={actionLoading}
-            onClick={() => void handleComplete(order._id)}
+            onClick={() => openCompleteModal(order._id)}
           >
-            Hoàn thành
+            Hoàn thành đơn
           </Button>
         </VenueActionGate>
       )}
-
-      <VenueActionGate action={VenueAction.CancelOrder}>
-        <Button
-          variant="danger"
-          size="sm"
-          iconLeft="trash-outline"
-          disabled={actionLoading}
-          onClick={() => openCancelModal(order)}
-        >
-          Hủy
-        </Button>
-      </VenueActionGate>
     </div>
   );
 }

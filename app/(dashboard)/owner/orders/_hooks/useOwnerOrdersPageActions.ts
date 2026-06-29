@@ -15,6 +15,7 @@
 
 import { useCallback, useState } from 'react';
 import { useOwnerOrderMutations, type VenueOrderNode } from '@/hooks/owner';
+import type { OrderViewTab } from './owner-orders-page.constants';
 import type { OwnerOrdersPageData } from './useOwnerOrdersPageData';
 
 export interface CancelModalState {
@@ -22,21 +23,77 @@ export interface CancelModalState {
   useRefund: boolean;
 }
 
+export interface CompleteModalState {
+  orderId: string;
+}
+
+export type OrderQuickAction =
+  | 'confirm'
+  | 'markPreparing'
+  | 'markReady'
+  | 'markDelivered';
+
+export interface OrderQuickActionDialogState {
+  action: OrderQuickAction;
+  orderId: string;
+}
+
+const ORDER_QUICK_ACTION_COPY: Record<
+  OrderQuickAction,
+  {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: 'danger' | 'warning' | 'default';
+  }
+> = {
+  confirm: {
+    title: 'Xác nhận đơn',
+    description: 'Xác nhận đơn hàng này?',
+    confirmLabel: 'Xác nhận',
+    variant: 'default',
+  },
+  markPreparing: {
+    title: 'Chuẩn bị đơn',
+    description: 'Chuyển đơn sang trạng thái đang chuẩn bị?',
+    confirmLabel: 'Chuẩn bị',
+    variant: 'default',
+  },
+  markReady: {
+    title: 'Đơn sẵn sàng',
+    description: 'Đánh dấu đơn đã sẵn sàng giao cho khách?',
+    confirmLabel: 'Sẵn sàng',
+    variant: 'default',
+  },
+  markDelivered: {
+    title: 'Đã giao khách',
+    description: 'Xác nhận đơn đã giao cho khách?',
+    confirmLabel: 'Đã giao',
+    variant: 'default',
+  },
+};
+
 export function useOwnerOrdersPageActions(data: OwnerOrdersPageData) {
   const {
     setViewTab,
     setStatusFilter,
+    setPaymentStatusFilter,
     loadMore,
     refetchAll,
   } = data;
 
   const mutations = useOwnerOrderMutations();
   const [cancelModal, setCancelModal] = useState<CancelModalState | null>(null);
+  const [completeModal, setCompleteModal] = useState<CompleteModalState | null>(
+    null,
+  );
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
+  const [quickActionDialog, setQuickActionDialog] =
+    useState<OrderQuickActionDialogState | null>(null);
 
   const handleViewTabChange = useCallback(
     (value: string) => {
-      setViewTab(value as 'all' | 'pending_refund');
+      setViewTab(value as OrderViewTab);
     },
     [setViewTab],
   );
@@ -46,6 +103,13 @@ export function useOwnerOrdersPageActions(data: OwnerOrdersPageData) {
       setStatusFilter(value);
     },
     [setStatusFilter],
+  );
+
+  const handlePaymentStatusFilterChange = useCallback(
+    (value: string) => {
+      setPaymentStatusFilter(value);
+    },
+    [setPaymentStatusFilter],
   );
 
   const handleLoadMore = useCallback(() => {
@@ -76,13 +140,71 @@ export function useOwnerOrdersPageActions(data: OwnerOrdersPageData) {
     [mutations, refetchAll],
   );
 
-  const handleComplete = useCallback(
+  const handleMarkDelivered = useCallback(
     async (orderId: string) => {
-      await mutations.completeOrder(orderId);
+      await mutations.markDelivered(orderId);
       refetchAll();
     },
     [mutations, refetchAll],
   );
+
+  const openQuickActionDialog = useCallback(
+    (action: OrderQuickAction, orderId: string) => {
+      setQuickActionDialog({ action, orderId });
+    },
+    [],
+  );
+
+  const closeQuickActionDialog = useCallback(() => {
+    if (mutations.actionLoading) return;
+    setQuickActionDialog(null);
+  }, [mutations.actionLoading]);
+
+  const handleQuickActionConfirm = useCallback(async () => {
+    if (!quickActionDialog) return;
+
+    const { action, orderId } = quickActionDialog;
+    switch (action) {
+      case 'confirm':
+        await handleConfirm(orderId);
+        break;
+      case 'markPreparing':
+        await handleMarkPreparing(orderId);
+        break;
+      case 'markReady':
+        await handleMarkReady(orderId);
+        break;
+      case 'markDelivered':
+        await handleMarkDelivered(orderId);
+        break;
+    }
+    setQuickActionDialog(null);
+  }, [
+    handleConfirm,
+    handleMarkDelivered,
+    handleMarkPreparing,
+    handleMarkReady,
+    quickActionDialog,
+  ]);
+
+  const quickActionDialogCopy = quickActionDialog
+    ? ORDER_QUICK_ACTION_COPY[quickActionDialog.action]
+    : null;
+
+  const openCompleteModal = useCallback((orderId: string) => {
+    setCompleteModal({ orderId });
+  }, []);
+
+  const closeCompleteModal = useCallback(() => {
+    setCompleteModal(null);
+  }, []);
+
+  const handleCompleteSubmit = useCallback(async () => {
+    if (!completeModal) return;
+    await mutations.completeOrder(completeModal.orderId);
+    closeCompleteModal();
+    refetchAll();
+  }, [completeModal, closeCompleteModal, mutations, refetchAll]);
 
   const openCancelModal = useCallback((order: VenueOrderNode) => {
     const useRefund = order.status !== 'PENDING';
@@ -130,19 +252,29 @@ export function useOwnerOrdersPageActions(data: OwnerOrdersPageData) {
   return {
     ...mutations,
     cancelModal,
+    completeModal,
     openCancelModal,
     closeCancelModal,
+    openCompleteModal,
+    closeCompleteModal,
     detailOrderId,
     openOrderDetail,
     closeOrderDetail,
     handleCancelSubmit,
+    handleCompleteSubmit,
     handleViewTabChange,
     handleStatusFilterChange,
+    handlePaymentStatusFilterChange,
     handleLoadMore,
     handleConfirm,
     handleMarkPreparing,
     handleMarkReady,
-    handleComplete,
+    handleMarkDelivered,
+    quickActionDialog,
+    quickActionDialogCopy,
+    openQuickActionDialog,
+    closeQuickActionDialog,
+    handleQuickActionConfirm,
   };
 }
 

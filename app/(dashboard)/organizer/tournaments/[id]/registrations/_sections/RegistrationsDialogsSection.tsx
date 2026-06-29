@@ -44,15 +44,24 @@ export function RegistrationsDialogsSection({
     categoryMatchTypeMap,
     rejectingReg,
     setRejectingReg,
+    approvingReg,
+    setApprovingReg,
     deletingReg,
     setDeletingReg,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
+    selectedIds,
   } = data;
   const {
     onSuccess,
+    handleApproveConfirm,
     handleRejectConfirm,
     handleDeleteConfirm,
+    handleBulkDeleteConfirm,
     rejecting,
+    approving,
     deleting,
+    bulkLoading,
   } = actions;
 
   return (
@@ -96,6 +105,20 @@ export function RegistrationsDialogsSection({
       />
 
       <ConfirmDialog
+        open={!!approvingReg}
+        onClose={() => setApprovingReg(null)}
+        onConfirm={handleApproveConfirm}
+        title="Duyệt đăng ký"
+        description={
+          approvingReg ? `Duyệt đăng ký của ${approvingReg.athleteName}?` : ''
+        }
+        confirmLabel="Duyệt"
+        cancelLabel="Huỷ"
+        variant="default"
+        loading={approving}
+      />
+
+      <ConfirmDialog
         open={!!deletingReg}
         onClose={() => setDeletingReg(null)}
         onConfirm={handleDeleteConfirm}
@@ -109,6 +132,22 @@ export function RegistrationsDialogsSection({
         cancelLabel="Huỷ"
         variant="danger"
         loading={deleting}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title="Xoá đăng ký hàng loạt"
+        description={
+          selectedIds.size > 0
+            ? `Bạn có chắc muốn xoá ${selectedIds.size} đăng ký đã chọn? Hành động này không thể hoàn tác.`
+            : ''
+        }
+        confirmLabel="Xoá tất cả"
+        cancelLabel="Huỷ"
+        variant="danger"
+        loading={bulkLoading}
       />
     </>
   );

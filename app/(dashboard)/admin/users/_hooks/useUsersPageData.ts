@@ -13,14 +13,36 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAdminUsers } from '@/hooks/admin';
+import {
+  toSortByOrder,
+} from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import { PAGE_SIZE } from './users-page.constants';
+
+export const ADMIN_USERS_SORT_FIELDS = [
+  'fullName',
+  'createdAt',
+  'lastLoginAt',
+  'role',
+] as const;
 
 export function useUsersPageData() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showProvisionDialog, setShowProvisionDialog] = useState(false);
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: ADMIN_USERS_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const {
     users,
@@ -28,12 +50,14 @@ export function useUsersPageData() {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
   } = useAdminUsers({
     searchQuery,
     pagination: { limit: PAGE_SIZE },
+    sort,
   });
 
   return {
@@ -43,11 +67,15 @@ export function useUsersPageData() {
     setShowCreateDialog,
     showProvisionDialog,
     setShowProvisionDialog,
+    sortField,
+    sortDir,
+    handleSort,
     users,
     total,
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

@@ -17,7 +17,7 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { VenueAction } from '@/graphql/generated';
 import { formatCurrency } from '@/lib/utils';
@@ -35,7 +35,18 @@ interface VenueCourtsSectionProps {
 }
 
 export function VenueCourtsSection({ data, actions }: VenueCourtsSectionProps) {
-  const { courts, totalCount, hasNextPage, loadMore, loading } = data;
+  const {
+    courts,
+    totalCount,
+    hasNextPage,
+    loadMore,
+    isLoadingMore,
+    loading,
+    sortField,
+    sortDir,
+    handleSort,
+    sortLoading,
+  } = data;
   const { openCreateCourt, openEditCourt, openDeleteCourt } = actions;
 
   return (
@@ -56,7 +67,7 @@ export function VenueCourtsSection({ data, actions }: VenueCourtsSectionProps) {
 
       <DataTable
         columns={[
-          { key: 'name', label: 'Tên' },
+          { key: 'name', label: 'Tên', sortable: true, sortField: 'name' },
           { key: 'sport', label: 'Môn' },
           { key: 'price', label: 'Giá mặc định' },
           { key: 'peak', label: 'Giá cao điểm' },
@@ -64,6 +75,10 @@ export function VenueCourtsSection({ data, actions }: VenueCourtsSectionProps) {
           { key: 'actions', label: '', align: 'right' },
         ]}
         data={courts}
+        sortKey={sortField}
+        sortDir={sortDir}
+        onSort={handleSort}
+        sortLoading={sortLoading}
         renderRow={(court) => (
           <tr
             key={court._id}
@@ -112,12 +127,13 @@ export function VenueCourtsSection({ data, actions }: VenueCourtsSectionProps) {
         )}
       />
 
-      <ConnectionPager
+      <ConnectionInfiniteScroll
         loadedCount={courts.length}
         totalCount={totalCount}
         hasNextPage={hasNextPage}
-        onNext={() => void loadMore()}
-        loading={loading}
+        onLoadMore={() => void loadMore()}
+        loading={loading && courts.length === 0}
+        loadingMore={isLoadingMore}
       />
     </GlassPanel>
   );

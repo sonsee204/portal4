@@ -28,12 +28,14 @@ import {
   PRODUCT_VIEW_TABS,
 } from './_hooks/owner-products-page.constants';
 import { ImportStockModal } from './_components/ImportStockModal';
+import { TransferProductsModal } from './_components/TransferProductsModal';
 import { ProductFormModal } from './_components/ProductFormModal';
 import { CategoryFormModal } from './_components/CategoryFormModal';
 import { DeleteConfirmModals } from './_components/DeleteConfirmModals';
 import { OwnerProductsHeaderSection } from './_sections/OwnerProductsHeaderSection';
 import { OwnerProductsStatsSection } from './_sections/OwnerProductsStatsSection';
 import { OwnerProductsTableSection } from './_sections/OwnerProductsTableSection';
+import { OwnerProductsSelectionBarSection } from './_sections/OwnerProductsSelectionBarSection';
 import { OwnerCategoriesSection } from './_sections/OwnerCategoriesSection';
 
 export default function OwnerProductsPage() {
@@ -84,19 +86,30 @@ export default function OwnerProductsPage() {
                 onChange={(event) => data.setCategoryFilter(event.target.value)}
               />
               <VenueActionGate action={VenueAction.ManageProducts}>
-                <Button
-                  variant="secondary"
-                  iconLeft="archive-outline"
-                  onClick={() => actions.openImportStock()}
-                >
-                  Nhập kho
-                </Button>
-                <Button
-                  iconLeft="add-outline"
-                  onClick={actions.openCreateProduct}
-                >
-                  Thêm sản phẩm
-                </Button>
+                {!actions.selectionMode ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      iconLeft="swap-horizontal-outline"
+                      onClick={actions.enterSelectionMode}
+                    >
+                      Lưu chuyển
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      iconLeft="archive-outline"
+                      onClick={() => actions.openImportStock()}
+                    >
+                      Nhập kho
+                    </Button>
+                    <Button
+                      iconLeft="add-outline"
+                      onClick={actions.openCreateProduct}
+                    >
+                      Thêm sản phẩm
+                    </Button>
+                  </>
+                ) : null}
               </VenueActionGate>
             </div>
           ) : (
@@ -119,6 +132,10 @@ export default function OwnerProductsPage() {
           />
         )}
 
+        {isProductsTab && actions.selectionMode && (
+          <OwnerProductsSelectionBarSection actions={actions} />
+        )}
+
         {isProductsTab ? (
           <OwnerProductsTableSection data={data} actions={actions} />
         ) : (
@@ -128,6 +145,7 @@ export default function OwnerProductsPage() {
 
       <ProductFormModal data={data} actions={actions} />
       <ImportStockModal data={data} actions={actions} />
+      <TransferProductsModal data={data} actions={actions} />
       <CategoryFormModal actions={actions} />
       <DeleteConfirmModals actions={actions} />
     </>

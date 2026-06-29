@@ -20,11 +20,13 @@ import {
   type VenueCategoryNode,
   type VenueProductNode,
 } from '@/hooks/owner';
+import { ProductStatus } from '@/graphql/generated';
 import {
   EMPTY_CATEGORY_FORM,
   EMPTY_IMPORT_STOCK_FORM,
   EMPTY_PRODUCT_FORM,
 } from './owner-products-page.constants';
+import { useOwnerProductsSelectionActions } from './useOwnerProductsSelectionActions';
 import type { OwnerProductsPageData } from './useOwnerProductsPageData';
 
 export type ProductFormState = typeof EMPTY_PRODUCT_FORM;
@@ -38,9 +40,16 @@ export interface ImportStockMarginAnalysis {
   quantity: number;
 }
 
+export interface ProductStatusToggleTarget {
+  productId: string;
+  productName: string;
+  action: 'publish' | 'unpublish';
+}
+
 export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
   const {
     venueId,
+    products,
     setViewTab,
     setStatusFilter,
     setSearchQuery,
@@ -48,6 +57,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     categoriesLoadMore,
     refetchAll,
   } = data;
+
+  const selectionActions = useOwnerProductsSelectionActions(venueId, products);
 
   const productMutations = useOwnerProductMutations();
   const categoryMutations = useOwnerCategoryMutations();
@@ -69,6 +80,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
 
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [statusToggleTarget, setStatusToggleTarget] =
+    useState<ProductStatusToggleTarget | null>(null);
 
   const [importStockModalOpen, setImportStockModalOpen] = useState(false);
   const [importStockTarget, setImportStockTarget] =
@@ -80,13 +93,21 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
   const [importMarginAnalysis, setImportMarginAnalysis] =
     useState<ImportStockMarginAnalysis | null>(null);
 
+  const handleTransferSuccess = useCallback(() => {
+    selectionActions.exitSelectionMode();
+    void refetchAll();
+  }, [selectionActions, refetchAll]);
+
   const handleViewTabChange = useCallback(
     (value: string) => {
+      if (value === 'categories') {
+        selectionActions.exitSelectionMode();
+      }
       setViewTab(value as 'products' | 'categories');
       setStatusFilter('ALL');
       setSearchQuery('');
     },
-    [setViewTab, setStatusFilter, setSearchQuery],
+    [selectionActions, setViewTab, setStatusFilter, setSearchQuery],
   );
 
   const handleStatusFilterChange = useCallback(
@@ -185,6 +206,31 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     },
     [productMutations, refetchAll],
   );
+
+  const openStatusToggleDialog = useCallback((product: VenueProductNode) => {
+    setStatusToggleTarget({
+      productId: product._id,
+      productName: product.name,
+      action:
+        product.status === ProductStatus.Active ? 'unpublish' : 'publish',
+    });
+  }, []);
+
+  const closeStatusToggleDialog = useCallback(() => {
+    if (productMutations.mutationLoading) return;
+    setStatusToggleTarget(null);
+  }, [productMutations.mutationLoading]);
+
+  const handleStatusToggleConfirm = useCallback(async () => {
+    if (!statusToggleTarget) return;
+
+    if (statusToggleTarget.action === 'publish') {
+      await handlePublishProduct(statusToggleTarget.productId);
+    } else {
+      await handleUnpublishProduct(statusToggleTarget.productId);
+    }
+    setStatusToggleTarget(null);
+  }, [handlePublishProduct, handleUnpublishProduct, statusToggleTarget]);
 
   const openImportStock = useCallback((product?: VenueProductNode) => {
     setImportStockTarget(product ?? null);
@@ -300,6 +346,10 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     handleDeleteProduct,
     handlePublishProduct,
     handleUnpublishProduct,
+    statusToggleTarget,
+    openStatusToggleDialog,
+    closeStatusToggleDialog,
+    handleStatusToggleConfirm,
     importStockModalOpen,
     importStockTarget,
     importStockForm,
@@ -322,6 +372,8 @@ export function useOwnerProductsPageActions(data: OwnerProductsPageData) {
     deleteCategoryId,
     setDeleteCategoryId,
     handleDeleteCategory,
+    ...selectionActions,
+    handleTransferSuccess,
   };
 }
 

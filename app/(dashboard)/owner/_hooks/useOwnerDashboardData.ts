@@ -13,6 +13,7 @@
 
 'use client';
 
+import { VenueAction } from '@/graphql/generated';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
 import {
   useMyVenuesStats,
@@ -23,13 +24,7 @@ import {
 
 export function useOwnerDashboardData() {
   const {
-    stats,
-    loading: statsLoading,
-    error: statsError,
-    refetch: refetchStats,
-  } = useMyVenuesStats();
-
-  const {
+    canVenue,
     venues,
     selectedVenue,
     selectedVenueId,
@@ -38,32 +33,51 @@ export function useOwnerDashboardData() {
     refetchVenues,
   } = useVenueContext();
 
+  const canViewBookings = canVenue(VenueAction.ViewBookings);
+  const canViewOrders = canVenue(VenueAction.ViewOrders);
+  const canManageProducts = canVenue(VenueAction.ManageProducts);
+
+  const {
+    stats,
+    loading: statsLoading,
+    error: statsError,
+    refetch: refetchStats,
+  } = useMyVenuesStats();
+
   const {
     stats: bookingStats,
     loading: bookingLoading,
     error: bookingError,
     refetch: refetchBookingStats,
-  } = useBookingStats(selectedVenueId);
+  } = useBookingStats(selectedVenueId, undefined, undefined, {
+    skip: !canViewBookings,
+  });
 
   const {
     stats: orderStats,
     loading: orderLoading,
     error: orderError,
     refetch: refetchOrderStats,
-  } = useOrderStats(selectedVenueId);
+  } = useOrderStats(selectedVenueId, undefined, undefined, {
+    skip: !canViewOrders,
+  });
 
   const {
     products: lowStockProducts,
     loading: lowStockLoading,
     error: lowStockError,
     refetch: refetchLowStock,
-  } = useLowStockProducts(selectedVenueId);
+  } = useLowStockProducts(selectedVenueId, {
+    skip: !canManageProducts,
+  });
 
   const loading =
     statsLoading ||
     venuesLoading ||
     (Boolean(selectedVenueId) &&
-      (bookingLoading || orderLoading || lowStockLoading));
+      ((canViewBookings && bookingLoading) ||
+        (canViewOrders && orderLoading) ||
+        (canManageProducts && lowStockLoading)));
 
   const error =
     statsError ?? venuesError ?? bookingError ?? orderError ?? lowStockError;
@@ -72,9 +86,9 @@ export function useOwnerDashboardData() {
     void refetchStats();
     refetchVenues();
     if (selectedVenueId) {
-      void refetchBookingStats();
-      void refetchOrderStats();
-      void refetchLowStock();
+      if (canViewBookings) void refetchBookingStats();
+      if (canViewOrders) void refetchOrderStats();
+      if (canManageProducts) void refetchLowStock();
     }
   };
 
@@ -86,6 +100,9 @@ export function useOwnerDashboardData() {
     bookingStats,
     orderStats,
     lowStockProducts,
+    canViewBookings,
+    canViewOrders,
+    canManageProducts,
     loading,
     error,
     refetchAll,

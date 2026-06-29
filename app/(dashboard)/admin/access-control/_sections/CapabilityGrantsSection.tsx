@@ -25,6 +25,7 @@ import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
 import { showError, showSuccess } from '@/lib/toast';
 import { formatMutationError } from '@/hooks/shared';
+import { formatDateTime } from '@/lib/utils';
 import {
   fetchPortalCapabilityGrants,
   grantPortalCapability,
@@ -32,6 +33,7 @@ import {
   type PortalCapabilityGrant,
 } from '@/lib/api/portal-access';
 import { PortalCapability } from '@/graphql/generated';
+import type { AccessControlData } from '../_hooks/useAccessControlData';
 
 const grantSchema = z.object({
   userId: z.string().min(1, 'Nhập user ID'),
@@ -40,7 +42,15 @@ const grantSchema = z.object({
 
 type GrantForm = z.infer<typeof grantSchema>;
 
-export function CapabilityGrantsSection() {
+interface CapabilityGrantsSectionProps {
+  data: AccessControlData;
+}
+
+export function CapabilityGrantsSection({
+  data,
+}: CapabilityGrantsSectionProps) {
+  const { grantSortField, grantSortDir, handleGrantSort, grantSort } = data;
+
   const [grants, setGrants] = useState<PortalCapabilityGrant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();
@@ -56,14 +66,17 @@ export function CapabilityGrantsSection() {
     setLoading(true);
     setError(undefined);
     try {
-      const items = await fetchPortalCapabilityGrants({ limit: 50 });
+      const items = await fetchPortalCapabilityGrants({
+        limit: 50,
+        sort: grantSort,
+      });
       setGrants(items);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Không tải được grants'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [grantSort]);
 
   useEffect(() => {
     void loadGrants();
@@ -164,9 +177,18 @@ export function CapabilityGrantsSection() {
             { key: 'capability', label: 'Quyền' },
             { key: 'status', label: 'Trạng thái' },
             { key: 'reason', label: 'Lý do' },
+            { key: 'createdAt', label: 'Tạo lúc', sortable: true },
+            {
+              key: 'grantedAt',
+              label: 'Cấp lúc',
+              sortable: true,
+            },
             { key: 'actions', label: '', align: 'right' },
           ]}
           data={grants}
+          sortKey={grantSortField}
+          sortDir={grantSortDir}
+          onSort={handleGrantSort}
           renderRow={(row: PortalCapabilityGrant) => (
             <tr
               key={row._id}
@@ -185,6 +207,12 @@ export function CapabilityGrantsSection() {
                 </Badge>
               </td>
               <td className="text-muted px-4 py-3 text-xs">{row.reason}</td>
+              <td className="text-muted px-4 py-3 text-xs">
+                {formatDateTime(row.createdAt)}
+              </td>
+              <td className="text-muted px-4 py-3 text-xs">
+                {row.grantedAt ? formatDateTime(row.grantedAt) : '—'}
+              </td>
               <td className="px-4 py-3 text-right">
                 {row.enabled ? (
                   <div className="flex justify-end">

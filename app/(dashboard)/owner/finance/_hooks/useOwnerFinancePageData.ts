@@ -16,6 +16,9 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerDateRange } from '@/components/providers/OwnerDateRangeProvider';
+import { toFinanceSortVariables, toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import {
   useFinanceTransactions,
   useOwnerFinancePortfolio,
@@ -25,42 +28,75 @@ import {
 } from '@/hooks/owner';
 import {
   BookingScheduleType,
-  FinanceCompareMode,
   FinanceGranularity,
   FinanceOrderTypeCategory,
   PaymentMethod,
-  type VenuePromotionsForFilterQuery,
+  type VenuePromotionsConnectionQuery,
 } from '@/graphql/generated';
 import { VENUE_PROMOTIONS_FOR_FILTER } from '@/graphql/owner/finance/queries';
-import type { DateRangePreset } from '@/lib/finance/stat-card-trend';
-import { resolveDateRangePreset } from '@/lib/finance/stat-card-trend';
 import {
   FINANCE_PAGE_SIZE,
   type OwnerFinancePageTab,
 } from './owner-finance-page.constants';
 
-export function useOwnerFinancePageData() {
+const TRANSACTION_SORT_FIELDS = [
+  'completedAt',
+  'orderCode',
+  'grossAmount',
+  'netAmount',
+  'profitAmount',
+] as const;
+
+const EXPENSE_SORT_FIELDS = ['date', 'amount'] as const;
+
+export function useOwnerFinancePageData(pageTab: OwnerFinancePageTab) {
   const {
     selectedVenueId,
     selectedVenue,
     venues,
     setSelectedVenueId,
+    financeAllVenues,
+    setFinanceAllVenues,
   } = useVenueContext();
-  const [pageTab, setPageTab] = useState<OwnerFinancePageTab>('portfolio');
-  const [allVenues, setAllVenues] = useState(false);
-  const [datePreset, setDatePreset] = useState<DateRangePreset>('month');
-  const [dateRange, setDateRange] = useState(() =>
-    resolveDateRangePreset('month'),
-  );
-  const [compareMode, setCompareMode] = useState<FinanceCompareMode>(
-    FinanceCompareMode.PreviousPeriod,
-  );
+  const allVenues = financeAllVenues;
+  const {
+    datePreset,
+    setDatePreset,
+    dateRange,
+    setDateRange,
+    compareMode,
+    setCompareMode,
+  } = useOwnerDateRange();
   const [orderTypeFilter, setOrderTypeFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [scheduleTypeFilter, setScheduleTypeFilter] = useState('');
   const [promotionIdFilter, setPromotionIdFilter] = useState('');
-  const [sortField, setSortField] = useState('completedAt');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const transactionSort = useDataTableSortUrl({
+    allowedFields: TRANSACTION_SORT_FIELDS,
+    defaultField: 'completedAt',
+    defaultDir: 'desc',
+    syncUrl: pageTab === 'finance',
+  });
+
+  const expenseSort = useDataTableSortUrl({
+    allowedFields: EXPENSE_SORT_FIELDS,
+    defaultField: 'date',
+    defaultDir: 'desc',
+    sortParam: 'expSort',
+    dirParam: 'expDir',
+    syncUrl: pageTab === 'finance',
+  });
+
+  const transactionSortInput = useMemo(
+    () => toFinanceSortVariables(transactionSort.sortField, transactionSort.sortDir),
+    [transactionSort.sortField, transactionSort.sortDir],
+  );
+
+  const expenseSortInput = useMemo(
+    () => toSortByOrder(expenseSort.sortField, expenseSort.sortDir),
+    [expenseSort.sortField, expenseSort.sortDir],
+  );
 
   const venueIds = useMemo(() => {
     if (allVenues) return undefined;
@@ -107,7 +143,12 @@ export function useOwnerFinancePageData() {
 
   const portfolioFilter = useMemo(() => {
     if (!dateRange.from || !dateRange.to) return null;
+    if (!allVenues && !selectedVenueId) return null;
+
     return {
+      ...(allVenues || !selectedVenueId
+        ? {}
+        : { venueIds: [selectedVenueId] }),
       from: dateRange.from,
       to: dateRange.to,
       granularity: FinanceGranularity.Day,
@@ -115,7 +156,13 @@ export function useOwnerFinancePageData() {
       compareMode,
       timezone: 'Asia/Ho_Chi_Minh',
     };
-  }, [compareMode, dateRange.from, dateRange.to]);
+  }, [
+    allVenues,
+    compareMode,
+    dateRange.from,
+    dateRange.to,
+    selectedVenueId,
+  ]);
 
   const operationsFilter = useMemo(() => {
     if (!dateRange.from || !dateRange.to) return null;
@@ -142,10 +189,13 @@ export function useOwnerFinancePageData() {
     selectedVenueId,
   ]);
 
-  const { data: promotionsData } = useQuery<VenuePromotionsForFilterQuery>(
+  const { data: promotionsData } = useQuery<VenuePromotionsConnectionQuery>(
     VENUE_PROMOTIONS_FOR_FILTER,
     {
-      variables: { venueId: selectedVenueId ?? '' },
+      variables: {
+        venueId: selectedVenueId ?? '',
+        pagination: { first: 50 },
+      },
       skip: !selectedVenueId || allVenues,
     },
   );
@@ -188,13 +238,16 @@ export function useOwnerFinancePageData() {
     };
   }, [allVenues, dateRange.from, dateRange.to, selectedVenueId]);
 
+  const loadSingleVenueOverviewDetail =
+    pageTab === 'portfolio' && !allVenues && !!selectedVenueId;
+
   const {
     report,
     loading: reportLoading,
     error: reportError,
     refetch: refetchReport,
   } = useVenueFinanceReport(financeFilter, {
-    skip: pageTab !== 'finance',
+    skip: pageTab !== 'finance' && !loadSingleVenueOverviewDetail,
   });
 
   const {
@@ -212,7 +265,7 @@ export function useOwnerFinancePageData() {
     error: operationsError,
     refetch: refetchOperations,
   } = useOwnerOperationsReport(operationsFilter, {
-    skip: pageTab !== 'operations',
+    skip: pageTab !== 'operations' && !loadSingleVenueOverviewDetail,
   });
 
   const {
@@ -223,9 +276,10 @@ export function useOwnerFinancePageData() {
     refetch: refetchTransactions,
     loadMore: loadMoreTransactions,
     hasNextPage: hasMoreTransactions,
+    isLoadingMore: isLoadingMoreTransactions,
   } = useFinanceTransactions(
     transactionFilter,
-    { field: sortField, order: sortDir },
+    transactionSortInput,
     { limit: FINANCE_PAGE_SIZE },
     { skip: pageTab !== 'finance' },
   );
@@ -238,20 +292,13 @@ export function useOwnerFinancePageData() {
     refetch: refetchExpenses,
     loadMore: loadMoreExpenses,
     hasNextPage: hasMoreExpenses,
+    isLoadingMore: isLoadingMoreExpenses,
   } = useVenueExpenses(
     expenseFilter,
+    expenseSortInput,
     { limit: FINANCE_PAGE_SIZE },
     { skip: allVenues || pageTab !== 'finance' },
   );
-
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-    setSortField(field);
-    setSortDir('desc');
-  };
 
   return {
     venues,
@@ -259,9 +306,8 @@ export function useOwnerFinancePageData() {
     selectedVenueId,
     setSelectedVenueId,
     pageTab,
-    setPageTab,
     allVenues,
-    setAllVenues,
+    setFinanceAllVenues,
     datePreset,
     setDatePreset,
     dateRange,
@@ -296,6 +342,7 @@ export function useOwnerFinancePageData() {
     refetchTransactions,
     loadMoreTransactions,
     hasMoreTransactions,
+    isLoadingMoreTransactions,
     expenses,
     expenseCount,
     expensesLoading,
@@ -303,9 +350,16 @@ export function useOwnerFinancePageData() {
     refetchExpenses,
     loadMoreExpenses,
     hasMoreExpenses,
-    sortField,
-    sortDir,
-    handleSort,
+    isLoadingMoreExpenses,
+    sortField: transactionSort.sortField,
+    sortDir: transactionSort.sortDir,
+    handleSort: transactionSort.handleSort,
+    transactionSortLoading:
+      transactionsLoading && transactions.length > 0,
+    expenseSortField: expenseSort.sortField,
+    expenseSortDir: expenseSort.sortDir,
+    handleExpenseSort: expenseSort.handleSort,
+    expenseSortLoading: expensesLoading && expenses.length > 0,
     financeFilter,
   };
 }

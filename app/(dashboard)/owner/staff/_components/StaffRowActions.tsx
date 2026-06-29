@@ -16,6 +16,7 @@
 import { IconButton } from '@/components/atoms/IconButton';
 import { DATA_TABLE_ACTIONS_INNER_CLASS } from '@/components/organisms/DataTable';
 import type { VenueStaffNode } from '@/hooks/owner';
+import { getStaffRowActionMode } from '@/lib/venue/staff-row-actions';
 import { cn } from '@/lib/utils';
 
 interface StaffRowActionsProps {
@@ -36,26 +37,38 @@ export function StaffRowActions({
   onEdit,
   onRemove,
 }: StaffRowActionsProps) {
+  const mode = getStaffRowActionMode(member);
+
+  if (mode === 'none') {
+    return <span className="text-faint px-2 text-xs">—</span>;
+  }
+
   return (
     <div className={DATA_TABLE_ACTIONS_INNER_CLASS}>
-      <IconButton
-        icon="create-outline"
-        size="sm"
-        tooltip="Sửa quyền"
-        aria-label="Sửa quyền"
-        disabled={disabled}
-        className={toneClassName.primary}
-        onClick={() => onEdit(member)}
-      />
-      <IconButton
-        icon="trash-outline"
-        size="sm"
-        tooltip="Xóa"
-        aria-label="Xóa"
-        disabled={disabled}
-        className={cn(toneClassName.danger)}
-        onClick={() => onRemove(member)}
-      />
+      {mode === 'edit' ? (
+        <IconButton
+          icon="create-outline"
+          size="sm"
+          tooltip="Sửa quyền"
+          aria-label="Sửa quyền"
+          disabled={disabled}
+          className={toneClassName.primary}
+          onClick={() => onEdit(member)}
+        />
+      ) : null}
+      {mode === 'edit' || mode === 'cancelInvite' ? (
+        <IconButton
+          icon={
+            mode === 'cancelInvite' ? 'close-circle-outline' : 'trash-outline'
+          }
+          size="sm"
+          tooltip={mode === 'cancelInvite' ? 'Hủy lời mời' : 'Xóa'}
+          aria-label={mode === 'cancelInvite' ? 'Hủy lời mời' : 'Xóa'}
+          disabled={disabled}
+          className={cn(toneClassName.danger)}
+          onClick={() => onRemove(member)}
+        />
+      ) : null}
     </div>
   );
 }

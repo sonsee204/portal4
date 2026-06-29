@@ -17,10 +17,13 @@ import { IonIcon } from '@/components/atoms/IonIcon';
 import { Button } from '@/components/atoms/Button';
 import type { DrawPageActions } from '../_hooks/useDrawActions';
 import type { DrawPageData } from '../_hooks/useDrawData';
+import type { ManualDrawState } from '../_hooks/useManualDrawState';
+import { ManualDrawModeToggle } from '../_components/manual-draw/ManualDrawModeToggle';
 
 interface DrawToolbarSectionProps {
   data: DrawPageData;
   actions: DrawPageActions;
+  manual: ManualDrawState;
 }
 
 export function DrawStatsSection({ data }: { data: DrawPageData }) {
@@ -111,7 +114,7 @@ export function DrawPendingWarningSection({ data }: { data: DrawPageData }) {
   );
 }
 
-export function DrawToolbarSection({ data, actions }: DrawToolbarSectionProps) {
+export function DrawToolbarSection({ data, actions, manual }: DrawToolbarSectionProps) {
   const {
     activeCategoryId,
     matches,
@@ -129,11 +132,21 @@ export function DrawToolbarSection({ data, actions }: DrawToolbarSectionProps) {
     handleReset,
   } = actions;
 
+  const showModeToggle = manual.canManualDraw && matches.length === 0;
+  const hideAutoGenerate = showModeToggle && manual.drawMode === 'manual';
+
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3">
+    <div className="mt-4 space-y-3">
+      {showModeToggle && (
+        <ManualDrawModeToggle
+          mode={manual.drawMode}
+          onChange={manual.setDrawMode}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-3">
       <Button
         size="sm"
-        disabled={isLoading || !activeCategoryId || matches.length > 0}
+        disabled={isLoading || !activeCategoryId || matches.length > 0 || hideAutoGenerate}
         onClick={handleGenerateBracket}
       >
         {generating
@@ -175,6 +188,7 @@ export function DrawToolbarSection({ data, actions }: DrawToolbarSectionProps) {
               : 'Xoá nhánh đấu'}
         </Button>
       )}
+      </div>
     </div>
   );
 }

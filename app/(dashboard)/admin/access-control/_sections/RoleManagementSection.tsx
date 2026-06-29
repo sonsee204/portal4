@@ -14,7 +14,7 @@
 'use client';
 
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { UserCell } from '@/components/molecules/UserCell';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
@@ -44,6 +44,7 @@ export function RoleManagementSection({ data }: RoleManagementSectionProps) {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -52,6 +53,9 @@ export function RoleManagementSection({ data }: RoleManagementSectionProps) {
     roleFilter,
     setRoleFilter,
     setChangeRoleUser,
+    sortField,
+    sortDir,
+    handleSort,
   } = data;
 
   return (
@@ -85,12 +89,20 @@ export function RoleManagementSection({ data }: RoleManagementSectionProps) {
       >
         <DataTable
           columns={[
-            { key: 'name', label: 'Người dùng' },
-            { key: 'role', label: 'Vai trò' },
+            {
+              key: 'name',
+              label: 'Người dùng',
+              sortable: true,
+              sortField: 'fullName',
+            },
+            { key: 'role', label: 'Vai trò', sortable: true },
             { key: 'phone', label: 'Số điện thoại' },
             { key: 'actions', label: '', align: 'right' },
           ]}
           data={users}
+          sortKey={sortField}
+          sortDir={sortDir}
+          onSort={handleSort}
           renderRow={(u: User & { isOwner?: boolean }) => {
             const isOwnerAccount = u.isOwner === true;
             return (
@@ -137,12 +149,13 @@ export function RoleManagementSection({ data }: RoleManagementSectionProps) {
             );
           }}
         />
-        <ConnectionPager
+        <ConnectionInfiniteScroll
           loadedCount={users.length}
           totalCount={totalCount}
           hasNextPage={hasNextPage}
-          onNext={() => void loadMore()}
-          loading={loading}
+          onLoadMore={() => void loadMore()}
+          loading={loading && users.length === 0}
+          loadingMore={isLoadingMore}
         />
       </QueryState>
     </div>

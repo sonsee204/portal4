@@ -16,7 +16,7 @@
 import { StatCard } from '@/components/molecules/StatCard';
 import { QueryState } from '@/components/molecules/QueryState';
 import { formatCurrency } from '@/lib/utils';
-import { toStatCardTrend } from '@/lib/finance/stat-card-trend';
+import { toStatCardTrendFromMetric } from '@/lib/finance/stat-card-trend';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 
 interface OwnerFinanceKpiSectionProps {
@@ -72,7 +72,8 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           label="Đã thu"
           hint="Tiền thực nhận trong kỳ"
           value={formatCurrency(pnl?.collected.value ?? 0)}
-          trend={toStatCardTrend(pnl?.collected.changePercent)}
+          signedValue={pnl?.collected.value ?? 0}
+          trend={toStatCardTrendFromMetric(pnl?.collected)}
         />
         <StatCard
           icon="hourglass-outline"
@@ -80,7 +81,8 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           label="Còn phải thu"
           hint="Phần chưa thu của đơn đang xử lý"
           value={formatCurrency(pnl?.outstanding.value ?? 0)}
-          trend={toStatCardTrend(pnl?.outstanding.changePercent)}
+          signedValue={pnl?.outstanding.value ?? 0}
+          trend={toStatCardTrendFromMetric(pnl?.outstanding)}
         />
         <StatCard
           icon="bar-chart-outline"
@@ -88,14 +90,16 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           label="Doanh thu gộp"
           hint="Tổng đơn hoàn thành trong kỳ"
           value={formatCurrency(pnl?.grossRevenue.value ?? 0)}
-          trend={toStatCardTrend(pnl?.grossRevenue.changePercent)}
+          signedValue={pnl?.grossRevenue.value ?? 0}
+          trend={toStatCardTrendFromMetric(pnl?.grossRevenue)}
         />
         <StatCard
           icon="return-down-back-outline"
           iconColor="text-red-400"
           label="Hoàn tiền"
           value={formatCurrency(pnl?.refunds.value ?? 0)}
-          trend={toStatCardTrend(pnl?.refunds.changePercent)}
+          signedValue={pnl?.refunds.value ?? 0}
+          trend={toStatCardTrendFromMetric(pnl?.refunds)}
         />
         <StatCard
           icon="receipt-outline"
@@ -110,6 +114,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
           label="TB/đơn hoàn thành"
           hint="Doanh thu gộp ÷ số đơn hoàn thành"
           value={formatCurrency(report?.averageOrderValue ?? 0)}
+          signedValue={report?.averageOrderValue ?? 0}
         />
       </div>
 
@@ -121,6 +126,7 @@ export function OwnerFinanceKpiSection({ data }: OwnerFinanceKpiSectionProps) {
             label="Doanh thu dự kiến (lịch chờ)"
             hint="Lịch chưa tạo đơn hàng"
             value={formatCurrency(report?.pendingBookingRevenue ?? 0)}
+            signedValue={report?.pendingBookingRevenue ?? 0}
             className="max-w-sm"
           />
         </div>

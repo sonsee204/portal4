@@ -20,12 +20,10 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { SearchInput } from '@/components/molecules/SearchInput';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { cn, formatDateTime } from '@/lib/utils';
 import { UserReportDetail } from '../_components/UserReportDetail';
-import {
-  USER_FILTER_CHIPS,
-} from '../_hooks/moderation-page.constants';
+import { USER_FILTER_CHIPS } from '../_hooks/moderation-page.constants';
 import { shortDisplayId } from '../_hooks/moderation-page.derived';
 import type { ModerationPageActions } from '../_hooks/useModerationPageActions';
 import type { ModerationPageData } from '../_hooks/useModerationPageData';
@@ -55,9 +53,13 @@ export function UserReportsTabSection({
     userTotalCount,
     userHasNextPage,
     loadMoreUserReports,
+    userIsLoadingMore,
     setSelectedUserReportId,
     effectiveUserReportId,
     selectedUserReport,
+    userSortField,
+    userSortDir,
+    handleUserSort,
   } = data;
   const {
     handleUserStatusFilterChange,
@@ -82,9 +84,7 @@ export function UserReportsTabSection({
           loading={userReportsLoading && userReports.length === 0}
           error={userReportsError}
           empty={
-            !userReportsLoading &&
-            !userReportsError &&
-            userReports.length === 0
+            !userReportsLoading && !userReportsError && userReports.length === 0
           }
           emptyMessage="Không có báo cáo người dùng nào."
           onRetry={() => {
@@ -97,17 +97,18 @@ export function UserReportsTabSection({
               { key: 'reason', label: 'Lý do' },
               { key: 'reportedUser', label: 'Người bị báo cáo' },
               { key: 'reporter', label: 'Người báo cáo' },
-              { key: 'status', label: 'Trạng thái' },
-              { key: 'createdAt', label: 'Ngày tạo' },
+              { key: 'status', label: 'Trạng thái', sortable: true },
+              { key: 'createdAt', label: 'Ngày tạo', sortable: true },
             ]}
             data={userReports}
+            sortKey={userSortField}
+            sortDir={userSortDir}
+            onSort={handleUserSort}
             emptyTitle="Không có báo cáo người dùng nào"
             renderRow={(r: UserModerationReport) => {
               const isActive = r._id === effectiveUserReportId;
               const reportedName =
-                r.reportedUser?.displayName ||
-                r.reportedUser?.userName ||
-                '—';
+                r.reportedUser?.displayName || r.reportedUser?.userName || '—';
               const reporterName =
                 r.reporter?.displayName || r.reporter?.userName || 'Ẩn danh';
               return (
@@ -116,7 +117,7 @@ export function UserReportsTabSection({
                   onClick={() => setSelectedUserReportId(r._id)}
                   className={cn(
                     'border-surface-border cursor-pointer border-b transition-colors',
-                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover',
+                    isActive ? 'bg-primary/10' : 'hover:bg-surface-hover'
                   )}
                 >
                   <td className="text-faint px-4 py-3 font-mono text-xs">
@@ -158,15 +159,13 @@ export function UserReportsTabSection({
             }}
           />
         </QueryState>
-        <ConnectionPager
+        <ConnectionInfiniteScroll
           loadedCount={userReports.length}
           totalCount={userTotalCount ?? userTotal}
           hasNextPage={userHasNextPage}
-          onNext={() => {
-            void loadMoreUserReports();
-            setSelectedUserReportId(null);
-          }}
-          loading={userReportsLoading}
+          onLoadMore={() => void loadMoreUserReports()}
+          loading={userReportsLoading && userReports.length === 0}
+          loadingMore={userIsLoadingMore}
         />
       </GlassPanel>
 

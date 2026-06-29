@@ -13,6 +13,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
@@ -20,6 +21,8 @@ import {
   DataTable,
   type DataTableColumn,
 } from '@/components/organisms/DataTable';
+import { sortClientRows } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import type { BadgeVariant } from '@/config/theme';
 import type { PartnerLeaderboardItem } from '@/types';
 
@@ -92,11 +95,13 @@ const columns: DataTableColumn[] = [
   { key: 'source', label: 'Nguồn / Đối tác' },
   { key: 'role', label: 'Vai trò' },
   { key: 'referral', label: 'Mã giới thiệu' },
-  { key: 'signups', label: 'Đăng ký', align: 'right' },
-  { key: 'activation', label: 'Kích hoạt' },
-  { key: 'revenue', label: 'Doanh thu (VND)', align: 'right' },
+  { key: 'signups', label: 'Đăng ký', align: 'right', sortable: true },
+  { key: 'activation', label: 'Kích hoạt', sortable: true },
+  { key: 'revenue', label: 'Doanh thu (VND)', align: 'right', sortable: true },
   { key: 'trend', label: 'Xu hướng', align: 'center' },
 ];
+
+const PARTNER_SORT_FIELDS = ['signups', 'activation', 'revenue'] as const;
 
 /* ------------------------------------------------------------------ */
 /* Sub-components                                                      */
@@ -139,6 +144,29 @@ export function PartnerLeaderboard({
   totalCodes,
   loading,
 }: PartnerLeaderboardProps) {
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: PARTNER_SORT_FIELDS,
+    defaultField: 'signups',
+    defaultDir: 'desc',
+    sortParam: 'partnerSort',
+    dirParam: 'partnerDir',
+  });
+
+  const data = useMemo(() => (items ? mapToPartnerRows(items) : []), [items]);
+
+  const sortedData = useMemo(
+    () =>
+      sortClientRows(data, sortField, sortDir, (row, field) => {
+        if (field === 'signups') return row.signups;
+        if (field === 'activation') return row.activationRate;
+        if (field === 'revenue') {
+          return Number(row.revenue.replace(/\./g, '')) || 0;
+        }
+        return null;
+      }),
+    [data, sortField, sortDir]
+  );
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -156,8 +184,6 @@ export function PartnerLeaderboard({
       </div>
     );
   }
-
-  const data = items ? mapToPartnerRows(items) : [];
 
   const renderRow = (row: PartnerRow, index: number) => {
     const isGold = row.isTopPerformer;
@@ -290,7 +316,10 @@ export function PartnerLeaderboard({
       <div className="bg-surface border-surface-border overflow-hidden rounded-xl border shadow-sm">
         <DataTable<PartnerRow>
           columns={columns}
-          data={data}
+          data={sortedData}
+          sortKey={sortField}
+          sortDir={sortDir}
+          onSort={handleSort}
           renderRow={renderRow}
           emptyTitle="Chưa có dữ liệu partner"
         />
@@ -298,7 +327,8 @@ export function PartnerLeaderboard({
         {/* Footer */}
         <div className="border-surface-border text-faint flex items-center justify-between border-t px-6 py-4 text-xs">
           <span>
-            Đang hiển thị {data.length} trong tổng {totalCodes} mã giới thiệu
+            Đang hiển thị {sortedData.length} trong tổng {totalCodes} mã giới
+            thiệu
           </span>
           <button
             type="button"

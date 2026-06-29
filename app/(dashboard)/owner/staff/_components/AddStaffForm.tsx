@@ -14,17 +14,29 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from '@/components/atoms/Input';
 import { Button } from '@/components/atoms/Button';
+import { Input } from '@/components/atoms/Input';
+import {
+  UserPhoneLookupField,
+  type UserPhoneLookupResult,
+} from '@/components/molecules/UserPhoneLookupField';
 import type { VenueAction } from '@/graphql/generated';
 import { mergeVenuePermissions } from '@/lib/venue/venue-action-labels';
 import { StaffPermissionsForm } from './StaffPermissionsForm';
+
+const CUSTOM_TITLE_MAX_LENGTH = 50;
+
+export type AddStaffSubmitInput = {
+  userId: string;
+  permissions: VenueAction[];
+  customTitle?: string;
+};
 
 interface AddStaffFormProps {
   loading?: boolean;
   formId?: string;
   showSubmit?: boolean;
-  onSubmit: (userId: string, permissions: VenueAction[]) => Promise<boolean>;
+  onSubmit: (input: AddStaffSubmitInput) => Promise<boolean>;
 }
 
 export function AddStaffForm({
@@ -33,19 +45,31 @@ export function AddStaffForm({
   showSubmit = true,
   onSubmit,
 }: AddStaffFormProps) {
-  const [userId, setUserId] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedUser, setSelectedUser] =
+    useState<UserPhoneLookupResult | null>(null);
   const [permissions, setPermissions] = useState<VenueAction[]>([]);
+  const [customTitle, setCustomTitle] = useState('');
+
+  const resetForm = () => {
+    setPhone('');
+    setSelectedUser(null);
+    setPermissions([]);
+    setCustomTitle('');
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!userId.trim()) return;
-    const ok = await onSubmit(
-      userId.trim(),
-      mergeVenuePermissions(permissions)
-    );
+    if (!selectedUser?._id) return;
+
+    const trimmedTitle = customTitle.trim();
+    const ok = await onSubmit({
+      userId: selectedUser._id,
+      permissions: mergeVenuePermissions(permissions),
+      ...(trimmedTitle ? { customTitle: trimmedTitle } : {}),
+    });
     if (ok) {
-      setUserId('');
-      setPermissions([]);
+      resetForm();
     }
   };
 
@@ -55,14 +79,35 @@ export function AddStaffForm({
       onSubmit={(e) => void handleSubmit(e)}
       className="space-y-4"
     >
-      <Input
-        label="ID người dùng"
-        placeholder="Nhập userId để thêm nhân viên"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-        leftIcon="person-outline"
-        required
+      <input type="hidden" value={selectedUser?._id ?? ''} required readOnly />
+
+      <UserPhoneLookupField
+        phone={phone}
+        onPhoneChange={(value) => {
+          setPhone(value);
+          setSelectedUser(null);
+        }}
+        selectedUser={selectedUser}
+        onUserChange={setSelectedUser}
+        phoneLabel="Số điện thoại"
+        phonePlaceholder="0901234567"
+        requireRegisteredUser
+        autoApply
       />
+
+      <div>
+        <Input
+          label="Chức danh"
+          placeholder="VD: Lễ tân, Thu ngân"
+          value={customTitle}
+          onChange={(event) => setCustomTitle(event.target.value)}
+          maxLength={CUSTOM_TITLE_MAX_LENGTH}
+        />
+        <p className="text-faint mt-1 text-xs">
+          Tùy chọn — hiển thị bên cạnh tên nhân viên.
+        </p>
+      </div>
+
       <div>
         <p className="text-body mb-2 text-sm font-medium">Quyền truy cập</p>
         <StaffPermissionsForm
@@ -70,11 +115,12 @@ export function AddStaffForm({
           onChange={setPermissions}
         />
       </div>
+
       {showSubmit ? (
         <Button
           type="submit"
           iconLeft="person-add-outline"
-          disabled={!userId.trim() || loading}
+          disabled={!selectedUser?._id || loading}
         >
           {loading ? 'Đang thêm...' : 'Thêm nhân viên'}
         </Button>

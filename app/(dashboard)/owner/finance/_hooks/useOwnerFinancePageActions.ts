@@ -14,8 +14,14 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useExpenseMutations, type VenueExpenseNode } from '@/hooks/owner';
+import { useRouter } from 'next/navigation';
+import {
+  useExpenseMutations,
+  type VenueExpenseNode,
+  type VenueFinancePortfolioRow,
+} from '@/hooks/owner';
 import { showSuccess } from '@/lib/toast';
+import { FINANCE_PAGE_TAB_ROUTES } from './owner-finance-page.constants';
 import type {
   CreateVenueExpenseInput,
   ExpenseCategory,
@@ -24,6 +30,7 @@ import type {
 import type { OwnerFinancePageData } from './useOwnerFinancePageData';
 
 export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
+  const router = useRouter();
   const { createExpense, updateExpense, deleteExpense, creating, updating, deleting } =
     useExpenseMutations();
 
@@ -31,6 +38,15 @@ export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
   const [editingExpense, setEditingExpense] = useState<VenueExpenseNode | null>(
     null,
   );
+  const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
+
+  const openOrderDetail = useCallback((orderId: string) => {
+    setDetailOrderId(orderId);
+  }, []);
+
+  const closeOrderDetail = useCallback(() => {
+    setDetailOrderId(null);
+  }, []);
 
   const openCreateExpense = useCallback(() => {
     setEditingExpense(null);
@@ -91,15 +107,37 @@ export function useOwnerFinancePageActions(data: OwnerFinancePageData) {
     void data.refetchExpenses();
   }, [data]);
 
+  const handlePortfolioDrillDown = useCallback(
+    (row: VenueFinancePortfolioRow) => {
+      data.setFinanceAllVenues(false);
+      data.setSelectedVenueId(row.venueId);
+    },
+    [data],
+  );
+
+  const handlePortfolioFinanceDetail = useCallback(
+    (row: VenueFinancePortfolioRow) => {
+      data.setFinanceAllVenues(false);
+      data.setSelectedVenueId(row.venueId);
+      router.push(FINANCE_PAGE_TAB_ROUTES.finance);
+    },
+    [data, router],
+  );
+
   return {
     expenseModalOpen,
     editingExpense,
+    detailOrderId,
+    openOrderDetail,
+    closeOrderDetail,
     openCreateExpense,
     openEditExpense,
     closeExpenseModal,
     handleSaveExpense,
     handleDeleteExpense,
     handleRetryAll,
+    handlePortfolioDrillDown,
+    handlePortfolioFinanceDetail,
     savingExpense: creating || updating,
     deletingExpense: deleting,
   };

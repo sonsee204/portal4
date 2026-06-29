@@ -17,6 +17,7 @@ import { IconButton } from '@/components/atoms/IconButton';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { VenueAction } from '@/graphql/generated';
 import { cn } from '@/lib/utils';
+import { getBookingCustomerDisplayName } from '@/lib/booking/booking-customer-label';
 import { getBookingActionAvailability } from '../types';
 import type { OwnerBookingsPageActions } from '../_hooks/useOwnerBookingsPageActions';
 import { BOOKING_ACTION_BUTTONS } from './booking-action-config';
@@ -25,7 +26,9 @@ export interface BookingRowActionsBooking {
   _id: string;
   status: string;
   date: string;
+  customerDisplayName?: string | null;
   customer?: { displayName?: string | null } | null;
+  customerInfo?: { name?: string | null } | null;
   slots?: Array<{ endTime?: string }>;
 }
 
@@ -45,7 +48,7 @@ export function BookingRowActions({
 }: BookingRowActionsProps) {
   const { handleQuickAction, handleViewDetail, processingId, isMutating } =
     actions;
-  const customerName = booking.customer?.displayName ?? 'Khách';
+  const customerName = getBookingCustomerDisplayName(booking, 'Khách');
   const isProcessing = processingId === booking._id || isMutating;
   const availability = getBookingActionAvailability(
     booking.status,

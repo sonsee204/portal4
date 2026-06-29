@@ -27,6 +27,7 @@ import type {
   CreateVenueExpenseInput,
   CreateVenueExpenseMutation,
   CreateVenueExpenseMutationVariables,
+  CursorSortInput,
   DeleteVenueExpenseMutation,
   DeleteVenueExpenseMutationVariables,
   ExpenseFilterInput,
@@ -43,10 +44,13 @@ import type {
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 
 export type FinanceReport = NonNullable<
   VenueFinanceReportQuery['venueFinanceReport']
@@ -85,34 +89,32 @@ export function useFinanceTransactions(
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { filter: filter! };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueFinanceTransactionsConnectionQuery>(
       VENUE_FINANCE_TRANSACTIONS_CONNECTION,
       {
-        variables: {
-          filter: filter!,
+        variables: buildSortedConnectionVariables(
+          baseVariables,
           sort,
-          pagination: { first },
-        },
+          pagination,
+        ),
         skip: !filter || options?.skip,
-        fetchPolicy: 'cache-and-network',
+        fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
       },
     );
 
   const connection = data?.venueFinanceTransactionsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      filter: filter!,
-      sort,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueFinanceTransactionsConnection: {
@@ -131,6 +133,7 @@ export function useFinanceTransactions(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -139,32 +142,33 @@ export function useFinanceTransactions(
 
 export function useVenueExpenses(
   filter: ExpenseFilterInput | null,
+  sort?: CursorSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const baseVariables = { filter: filter! };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueExpensesConnectionQuery>(VENUE_EXPENSES_CONNECTION, {
-      variables: {
-        filter: filter!,
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !filter?.venueId || options?.skip,
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueExpensesConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      filter: filter!,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueExpensesConnection: {
@@ -182,6 +186,7 @@ export function useVenueExpenses(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

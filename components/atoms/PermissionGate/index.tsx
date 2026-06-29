@@ -96,15 +96,17 @@ type Props =
  */
 export function PermissionGate({ children, fallback = null, ...props }: Props) {
   const userRole = useAuthStore((s) => s.user?.role ?? null);
+  const capabilities = useAuthStore((s) => s.user?.portalCapabilities ?? []);
+  const hasVenueAccess = useAuthStore((s) => s.user?.hasVenueAccess ?? false);
 
   let hasAccess = false;
 
   if ('roles' in props && props.roles) {
     hasAccess = userRole !== null && props.roles.includes(userRole);
   } else if ('permission' in props && props.permission) {
-    hasAccess = can(userRole, props.permission);
+    hasAccess = can(userRole, props.permission, capabilities, hasVenueAccess);
   } else if ('permissions' in props && props.permissions) {
-    hasAccess = canAny(userRole, props.permissions);
+    hasAccess = canAny(userRole, props.permissions, capabilities, hasVenueAccess);
   } else if ('feature' in props && props.feature) {
     hasAccess = canAccess(userRole, props.feature);
   } else if ('features' in props && props.features) {

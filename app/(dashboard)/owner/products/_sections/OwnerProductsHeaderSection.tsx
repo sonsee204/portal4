@@ -5,21 +5,31 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
- *
- * This source code is the intellectual property of Lê Trung Hiếu.
- * Unauthorized copying, modification, distribution, or use of this code
- * is strictly prohibited without prior written consent.
  */
 
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/organisms/PageHeader';
+import { Button } from '@/components/atoms/Button';
 
 export function OwnerProductsHeaderSection() {
+  const router = useRouter();
+
   return (
     <PageHeader
       title="Sản phẩm & F&B"
       description="Quản lý menu, tồn kho và danh mục sản phẩm theo từng cơ sở."
+      actions={
+        <Button
+          variant="secondary"
+          size="sm"
+          iconLeft="swap-vertical-outline"
+          onClick={() => router.push('/owner/inventory/history')}
+        >
+          Lịch sử kho
+        </Button>
+      }
     />
   );
 }

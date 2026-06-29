@@ -749,6 +749,8 @@ enum AuditAction {
   USER_UNSUSPEND
   VENUE_APPROVE
   VENUE_REJECT
+  VENUE_STAFF_ACCEPTED
+  VENUE_STAFF_REMOVED
   VENUE_SUSPEND
 }
 
@@ -1251,6 +1253,16 @@ type Booking {
   Customer user
   """
   customer: User
+
+  """
+  Resolved customer name for lists/calendar (user, walk-in snapshot, recurring parent fallback)
+  """
+  customerDisplayName: String
+
+  """
+  Resolved customer phone for lists/calendar
+  """
+  customerDisplayPhone: String
 
   """
   Customer user ID (null for walk-in)
@@ -5390,6 +5402,18 @@ input CursorPageInput {
   last: Int
 }
 
+input CursorSortInput {
+  """
+  Mongo field to sort by (domain whitelist)
+  """
+  sortBy: String
+
+  """
+  Sort direction
+  """
+  sortOrder: String
+}
+
 type CustomLocation {
   """
   Địa chỉ
@@ -6116,6 +6140,10 @@ type FinancePnlSummary {
 }
 
 type FinanceTransaction {
+  """
+  Giá vốn hàng bán (COGS) gắn với đơn
+  """
+  cogsAmount: Int!
   completedAt: DateTime
   courtLabel: String
   createdAt: DateTime!
@@ -6129,6 +6157,16 @@ type FinanceTransaction {
   paidAt: DateTime
   paymentMethod: PaymentMethod
   paymentStatus: OrderPaymentStatus!
+
+  """
+  Lợi nhuận gộp = doanh thu gộp − giá vốn
+  """
+  profitAmount: Int!
+
+  """
+  Biên lợi nhuận gộp = lãi / doanh thu gộp × 100
+  """
+  profitMarginPercent: Float!
   refundAmount: Int!
   status: OrderStatus!
   venueId: ID!
@@ -6571,6 +6609,18 @@ enum GenderRestriction {
 
 input GenerateBracketInput {
   categoryId: ID!
+}
+
+"""
+Manual draw layout for single elimination
+"""
+input GenerateManualDrawInput {
+  categoryId: ID!
+
+  """
+  Single elimination winners bracket slots
+  """
+  knockoutSlots: [ManualBracketSlotInput!]!
 }
 
 input GrantPortalCapabilityInput {
@@ -7684,6 +7734,56 @@ type LotAllocationRecord {
   unitCost: Float!
 }
 
+input ManualBracketSlotInput {
+  """
+  Registration ID; null/omit = BYE
+  """
+  registrationId: ID
+
+  """
+  Bracket slot index (0-based)
+  """
+  slotIndex: Int!
+}
+
+type ManualKnockoutDrawPreview {
+  bracketSize: Int!
+  errors: [ManualKnockoutPreviewError!]!
+  layoutHints: ManualKnockoutLayoutHints!
+  matchupRows: [ManualKnockoutMatchupPreviewRow!]!
+  maxR1TvT: Int!
+  r1TvTCount: Int!
+  totalByes: Int!
+  valid: Boolean!
+}
+
+type ManualKnockoutLayoutHints {
+  approvedCount: Int!
+  minR1TvT: Int!
+  r1PairCount: Int!
+  r1TvTCount: Int!
+  r1WalkoverCount: Int!
+  r2TvTCount: Int!
+  r2WalkoverCount: Int!
+  structuralEmptyPairs: Int!
+}
+
+type ManualKnockoutMatchupPreviewRow {
+  isR1ByeWalkover: Boolean!
+  meetingRound: Int!
+  meetingRoundLabel: String!
+  player1Name: String!
+  player2Name: String!
+  r1PairIndex: Int
+}
+
+type ManualKnockoutPreviewError {
+  code: String!
+  message: String!
+  pairIndex: Int
+  slotIndex: Int
+}
+
 input ManualMatchResultInput {
   matchId: ID!
 
@@ -8635,6 +8735,11 @@ type Mutation {
   bulkDeleteProducts(input: BulkDeleteProductsInput!): BulkOperationResult!
 
   """
+  Bulk delete registrations
+  """
+  bulkDeleteRegistrations(input: BulkRegistrationActionInput!): Int!
+
+  """
   Bulk import registrations from file (organizer only)
   """
   bulkImportRegistrations(
@@ -9228,6 +9333,11 @@ type Mutation {
   Generate bracket for category
   """
   generateBracket(input: GenerateBracketInput!): [TournamentMatch!]!
+
+  """
+  Generate bracket from manual slot assignments (Single Elimination)
+  """
+  generateManualDraw(input: GenerateManualDrawInput!): [TournamentMatch!]!
 
   """
   Grant portal capability to user (SUPER_ADMIN only)
@@ -10656,6 +10766,11 @@ input OperationsFilterInput {
   Start date (YYYY-MM-DD) in filter timezone
   """
   from: String!
+
+  """
+  Trend bucket size; auto-inferred from date range when omitted (day ≤31d, week ≤90d, else month)
+  """
+  granularity: FinanceGranularity
 
   """
   Filter bookings that used this promotion
@@ -13267,6 +13382,11 @@ type PreviewBulkImportResult {
   adjustmentsNeeded: [BracketSizeAdjustment!]!
 }
 
+input PreviewManualKnockoutDrawInput {
+  categoryId: ID!
+  knockoutSlots: [ManualBracketSlotInput!]!
+}
+
 type PriceRange {
   """
   Currency (VND, USD, etc.)
@@ -13998,6 +14118,47 @@ type ProductPerformance {
   unitPrice: Int!
 }
 
+type ProductPerformanceReport {
+  importHistory: [StockMovement!]!
+  period: ProductReportPeriodInfo!
+  product: ProductPerformanceSnapshot!
+  recentMovements: [StockMovement!]!
+  summary: ProductPerformanceReportSummary!
+  trend: [ProductSalesDataPoint!]!
+}
+
+type ProductPerformanceReportSummary {
+  cogs: Int!
+  grossProfit: Int!
+  orderCount: Int!
+  previousRevenue: Int!
+  previousSoldQuantity: Int!
+  profitMargin: Float!
+  rank: Int
+  revenue: Int!
+  revenuePercentage: Float!
+  soldQuantity: Int!
+}
+
+type ProductPerformanceSnapshot {
+  averageCost: Int
+  categoryId: String!
+  categoryName: String!
+  hasVariants: Boolean!
+  imageUrl: String
+  productId: String!
+  productName: String!
+  sku: String
+  status: ProductStatus!
+  stockQuantity: Int!
+  trackInventory: Boolean!
+  unit: String!
+  unitPrice: Int!
+  variantCount: Int!
+  venueId: String
+  venueName: String
+}
+
 type ProductProfitItem {
   """
   Cost of goods sold
@@ -14025,6 +14186,160 @@ type ProductProfitItem {
   Total quantity sold
   """
   soldQuantity: Int!
+}
+
+input ProductReportFilterInput {
+  categoryId: ID
+  compareMode: FinanceCompareMode = PREVIOUS_PERIOD
+
+  """
+  Include period-to-date comparison with previous period
+  """
+  compareToPrevious: Boolean = true
+
+  """
+  Start date (YYYY-MM-DD) in filter timezone
+  """
+  from: String!
+
+  """
+  Only low-stock or out-of-stock products
+  """
+  lowStockOnly: Boolean
+
+  """
+  Search product name or SKU
+  """
+  searchQuery: String
+
+  """
+  Only products with sales in the selected period
+  """
+  soldInPeriodOnly: Boolean
+  status: ProductStatus
+
+  """
+  Pagination for the products table section
+  """
+  tablePagination: CursorPageInput
+
+  """
+  IANA timezone for date boundaries
+  """
+  timezone: String = "Asia/Ho_Chi_Minh"
+
+  """
+  End date (YYYY-MM-DD) in filter timezone
+  """
+  to: String!
+
+  """
+  Venue IDs to include. Empty/null = all venues user can view analytics for.
+  """
+  venueIds: [ID!]
+}
+
+type ProductReportPeriodInfo {
+  from: String!
+  timezone: String!
+  to: String!
+}
+
+type ProductReportRow {
+  averageCost: Int
+  categoryId: String!
+  categoryName: String!
+  cogs: Int!
+  grossProfit: Int!
+  imageUrl: String
+  previousRevenue: Int!
+  previousSoldQuantity: Int!
+  productId: String!
+  productName: String!
+  profitMargin: Float!
+  rank: Int
+  revenue: Int!
+  revenueGrowth: Float!
+  revenuePercentage: Float!
+  sku: String
+  soldQuantity: Int!
+  status: ProductStatus!
+  stockQuantity: Int!
+  trackInventory: Boolean!
+  unitPrice: Int!
+  venueId: String
+  venueName: String
+}
+
+"""
+A Relay-style connection for ProductReportRow items.
+"""
+type ProductReportRowConnection {
+  """
+  List of edges (each contains a node + cursor).
+  """
+  edges: [ProductReportRowEdge!]!
+
+  """
+  Pagination metadata (next/prev page, start/end cursor).
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
+  """
+  totalCount: Int!
+}
+
+"""
+An edge in the ProductReportRowConnection.
+"""
+type ProductReportRowEdge {
+  """
+  Opaque cursor pointing to this node.
+  """
+  cursor: String!
+
+  """
+  The item at the end of the edge.
+  """
+  node: ProductReportRow!
+}
+
+type ProductReportScope {
+  mode: ProductReportScopeMode!
+  venueCount: Int!
+  venueIds: [String!]
+  venueNames: [String!]!
+}
+
+enum ProductReportScopeMode {
+  PORTFOLIO
+  SINGLE
+}
+
+type ProductReportSummary {
+  bestSellingCategory: String!
+  bestSellingProduct: String!
+  grossProfit: Int!
+  grossProfitChangePercent: Float!
+  grossProfitMarginPercent: Float!
+  itemsChangePercent: Float!
+  ordersChangePercent: Float!
+  peakDay: String!
+  peakHour: String!
+  previousCogs: Int!
+  previousGrossProfit: Int!
+  previousItemsSold: Int!
+  previousOrders: Int!
+  previousRevenue: Int!
+  previousUniqueProductsSold: Int!
+  revenueChangePercent: Float!
+  totalCogs: Int!
+  totalItemsSold: Int!
+  totalOrders: Int!
+  totalRevenue: Int!
+  uniqueProductsSold: Int!
 }
 
 type ProductSalesAnalytics {
@@ -16036,6 +16351,13 @@ type Query {
   previewLateEntryPlacement(categoryId: ID!): LateEntryPlacementPreview!
 
   """
+  Preview manual knockout draw layout before saving (organizer only)
+  """
+  previewManualKnockoutDraw(
+    input: PreviewManualKnockoutDrawInput!
+  ): ManualKnockoutDrawPreview!
+
+  """
   Preview drag-move without persisting
   """
   previewMoveMatch(input: MoveMatchInput!): MoveMatchPreviewResult!
@@ -16056,6 +16378,14 @@ type Query {
   Get product by slug
   """
   productBySlug(shopId: ID, slug: String!, venueId: ID): Product
+
+  """
+  Single-product performance drill-down report
+  """
+  productPerformanceReport(
+    filter: ProductReportFilterInput!
+    productId: ID!
+  ): ProductPerformanceReport!
 
   """
   Get comprehensive product sales analytics for a venue
@@ -16386,6 +16716,41 @@ type Query {
   ): CourtConnection!
 
   """
+  Cursor-paginated venue operating expenses
+  """
+  venueExpensesConnection(
+    filter: ExpenseFilterInput!
+    pagination: CursorPageInput
+  ): VenueExpenseConnection!
+
+  """
+  Export finance report as CSV content
+  """
+  venueFinanceExport(
+    filter: FinanceFilterInput!
+    format: FinanceExportFormat!
+  ): VenueFinanceExportResult!
+
+  """
+  Multi-venue P&L portfolio summary
+  """
+  venueFinancePortfolio(filter: FinanceFilterInput!): VenueFinancePortfolio!
+
+  """
+  Unified P&L finance report for one or more venues
+  """
+  venueFinanceReport(filter: FinanceFilterInput!): VenueFinanceReport!
+
+  """
+  Cursor-paginated financial transactions (completed orders)
+  """
+  venueFinanceTransactionsConnection(
+    filter: FinanceTransactionFilterInput!
+    pagination: CursorPageInput
+    sort: FinanceTransactionSortInput
+  ): FinanceTransactionConnection!
+
+  """
   Cursor-paginated hold bookings for a venue (staff)
   """
   venueHoldBookingsConnection(
@@ -16407,6 +16772,11 @@ type Query {
   Get pending invitations for a venue (owner only)
   """
   venuePendingInvitations(venueId: ID!): [VenueStaff!]!
+
+  """
+  Unified venue product analytics report
+  """
+  venueProductReport(filter: ProductReportFilterInput!): VenueProductReport!
 
   """
   Get venue products (menu, cursor)
@@ -16573,6 +16943,16 @@ type RecurringAvailabilityCheck {
   allDates: [String!]!
 
   """
+  Applied auto-promotion breakdown (staff preview)
+  """
+  appliedPromotions: [AppliedPromotion!]
+
+  """
+  Total auto-promo discount (staff preview)
+  """
+  autoPromoDiscount: Int
+
+  """
   List of available dates
   """
   availableDates: [String!]!
@@ -16598,9 +16978,29 @@ type RecurringAvailabilityCheck {
   discountPercent: Int!
 
   """
+  Effective sessions after staff exclude dates
+  """
+  effectiveSessions: Int
+
+  """
+  Number of excluded sessions in staff preview
+  """
+  excludedSessionCount: Int
+
+  """
   Final amount after discount
   """
   finalAmount: Int!
+
+  """
+  Package final amount plus auto promo (staff preview)
+  """
+  finalAmountWithPromo: Int
+
+  """
+  Minimum sessions required for RECURRING category promo
+  """
+  minRecurringPromoSessions: Int
 
   """
   Average price per session (for display, actual may vary by day)
@@ -16608,9 +17008,19 @@ type RecurringAvailabilityCheck {
   pricePerSession: Int!
 
   """
+  RECURRING category auto-promo discount amount
+  """
+  recurringCategoryDiscount: Int
+
+  """
   Is recurring booking enabled for this venue
   """
   recurringEnabled: Boolean!
+
+  """
+  Whether RECURRING category promo applies at effectiveSessions
+  """
+  recurringPromoEligible: Boolean
 
   """
   Sessions per week (number of days booked)
@@ -17694,6 +18104,42 @@ input ScheduleConfigInput {
   Khoảng nghỉ trong ngày (HH:mm). Tự động xếp lịch bỏ qua, không đặt trận trùng.
   """
   restBreakWindows: [ScheduleRestBreakWindowInput!]
+}
+
+type ScheduleCoveragePoint {
+  availableSlots: Int!
+  bookingCount: Int!
+
+  """
+  Bucket start date (YYYY-MM-DD)
+  """
+  date: String!
+
+  """
+  Display label for chart axis
+  """
+  label: String!
+
+  """
+  Occupancy rate 0–100
+  """
+  occupancyRate: Float!
+  occupiedSlots: Int!
+
+  """
+  Occupancy rate in the aligned previous-period bucket
+  """
+  previousOccupancyRate: Float
+
+  """
+  Revenue in the aligned previous-period bucket
+  """
+  previousRevenue: Int
+
+  """
+  Court revenue on schedule date(s) in bucket
+  """
+  revenue: Int!
 }
 
 input ScheduleMatchInput {
@@ -19039,6 +19485,18 @@ input StockMovementFilterInput {
   Filter by movement types
   """
   types: [StockMovementType!]
+}
+
+input StockMovementSortInput {
+  """
+  Sort by field
+  """
+  sortBy: String
+
+  """
+  Sort order
+  """
+  sortOrder: String
 }
 
 """
@@ -21872,6 +22330,11 @@ type User {
   followingCount: Float!
   fullName: String!
   gender: Gender
+
+  """
+  Whether user can access portal owner workspace (active venue staff or owned venues)
+  """
+  hasVenuePortalAccess: Boolean!
   isActive: Boolean!
   isOwner: Boolean!
 
@@ -22213,6 +22676,11 @@ input ValidatePromoCodeInput {
   Court IDs being booked (for scope validation)
   """
   courtIds: [ID!]
+
+  """
+  Effective session count after staff exclude dates (for RECURRING promo validation)
+  """
+  effectiveSessionCount: Int
 
   """
   Is first booking at this venue
@@ -22676,6 +23144,10 @@ type VenueAnalytics {
   venueName: String!
 }
 
+type VenueAnalyticsPreview {
+  venueAnalytics: VenueAnalytics!
+}
+
 type VenueAvailability {
   """
   Court availabilities
@@ -22835,6 +23307,28 @@ type VenueConnection {
   Total number of items matching the filter (across all pages). Optional — implementations may return 0 if computing the count is too expensive.
   """
   totalCount: Int!
+}
+
+type VenueDashboardSummary {
+  """
+  Analytics preview when staff has VIEW_ANALYTICS
+  """
+  analyticsPreview: VenueAnalyticsPreview
+
+  """
+  Counts when staff has VIEW_BOOKINGS and/or VIEW_ORDERS
+  """
+  operational: VenueOperationalStats
+
+  """
+  Revenue when staff has VIEW_SENSITIVE_DATA
+  """
+  sensitive: VenueSensitiveStats
+
+  """
+  Venue with myPermissions
+  """
+  venue: Venue!
 }
 
 """
@@ -23154,6 +23648,11 @@ type VenueMarginThresholds {
   warningMargin: Float!
 }
 
+type VenueOperationalStats {
+  bookingStats: BookingStats!
+  orderStats: OrderStats!
+}
+
 type VenueOperationsReport {
   """
   Breakdown by venue promotion in the selected period
@@ -23176,6 +23675,11 @@ type VenueOperationsReport {
   heatMapData: [HeatMapCell!]!
   occupancy: OperationsOccupancySummary!
   period: FinancePeriodInfo!
+
+  """
+  Daily/weekly/monthly court revenue and occupancy by schedule date (booking.date)
+  """
+  scheduleCoverageTrend: [ScheduleCoveragePoint!]!
   totalBookings: Int!
 }
 
@@ -23241,6 +23745,24 @@ input VenueOrderTypeConfigInput {
   Order type enum value
   """
   orderType: OrderType!
+}
+
+type VenueProductReport {
+  comparePeriod: ProductReportPeriodInfo
+  decliningProducts: [ProductPerformance!]!
+  hourlySales: [ProductHourlySales!]!
+  inventory: InventoryReport!
+  inventoryStatus: InventoryStatus!
+  period: ProductReportPeriodInfo!
+  productsTable: ProductReportRowConnection!
+  profitByProduct: [ProductProfitItem!]!
+  salesByCategory: [CategorySalesPerformance!]!
+  salesTrend: [ProductSalesDataPoint!]!
+  scope: ProductReportScope!
+  stockAlerts: [StockAlertProduct!]!
+  summary: ProductReportSummary!
+  topProducts: [ProductPerformance!]!
+  trend: [ProductSalesDataPoint!]!
 }
 
 """
@@ -23739,6 +24261,10 @@ type VenueReviewEdge {
   The review at the end of the edge.
   """
   node: VenueReview!
+}
+
+type VenueSensitiveStats {
+  revenueStats: VenueRevenueStats!
 }
 
 input VenueSortInput {

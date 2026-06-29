@@ -23,8 +23,9 @@ import {
   CREATE_OTP_TEST_USER_GRANT,
   REVOKE_OTP_TEST_USER_GRANT,
 } from '@/graphql/otp-test-user-grant/mutations';
-import type { GetOtpTestUserGrantsQuery } from '@/graphql/generated';
+import type { GetOtpTestUserGrantsQuery, CursorSortInput } from '@/graphql/generated';
 import { connectionNodes } from '@/hooks/shared/useCursorConnection';
+import { buildSortedConnectionVariables } from '@/hooks/shared/useSortedConnectionQuery';
 import { CURSOR_PAGE_MAX } from '@/lib/constants/pagination';
 
 export type OtpTestUserGrantPurpose = 'SIGN_IN_PHONE';
@@ -65,22 +66,23 @@ export async function fetchOtpTestUserGrants(options?: {
   search?: string;
   enabled?: boolean;
   userId?: string;
+  sort?: CursorSortInput;
 }): Promise<OtpTestUserGrantList> {
   const limit = Math.min(options?.limit ?? CURSOR_PAGE_MAX, CURSOR_PAGE_MAX);
   const client = getApolloClient();
   const result = await client.query<GetOtpTestUserGrantsQuery>({
     query: GET_OTP_TEST_USER_GRANTS,
-    variables: {
-      pagination: {
-        first: limit,
-        after: null,
+    variables: buildSortedConnectionVariables(
+      {
+        filter: {
+          search: options?.search,
+          enabled: options?.enabled,
+          userId: options?.userId,
+        },
       },
-      filter: {
-        search: options?.search,
-        enabled: options?.enabled,
-        userId: options?.userId,
-      },
-    },
+      options?.sort,
+      { limit },
+    ),
     fetchPolicy: 'network-only',
   });
   const conn = result.data?.otpTestUserGrantsConnection;

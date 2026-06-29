@@ -28,6 +28,7 @@ import {
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
+import { formatCompactCurrency } from '@/lib/charts/format-currency';
 import { formatCurrency } from '@/lib/utils';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 
@@ -135,8 +136,10 @@ export function OwnerFinanceWaterfallSection({
                   tick={{ fill: CHART_THEME.axis, fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
-                  width={64}
-                  tickFormatter={(value) => formatCurrency(Number(value))}
+                  width={52}
+                  tickFormatter={(value) =>
+                    formatCompactCurrency(Number(value))
+                  }
                 />
                 <ReferenceLine y={0} stroke={CHART_THEME.grid} />
                 <Tooltip

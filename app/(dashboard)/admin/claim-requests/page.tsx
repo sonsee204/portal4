@@ -13,7 +13,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation } from '@apollo/client/react';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
@@ -22,7 +22,7 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 import { StatCard } from '@/components/molecules/StatCard';
 import { QueryState } from '@/components/molecules/QueryState';
 import { DataTable } from '@/components/organisms/DataTable';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
+import { ConnectionInfiniteScroll } from '@/components/molecules/ConnectionInfiniteScroll';
 import { Badge } from '@/components/atoms/Badge';
 import { ClaimRequestDetail } from './_components/ClaimRequestDetail';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -33,6 +33,8 @@ import {
 import { REVIEW_CLAIM_REQUEST } from '@/graphql/claim-request/mutations';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
 import { useClaimRequests, useClaimRequestStats } from '@/hooks/admin';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import {
   CLAIM_REQUEST_STATUS_LABELS,
   type ClaimRequestItem,
@@ -40,6 +42,7 @@ import {
 } from './types';
 
 const PAGE_SIZE = 20;
+const CLAIM_REQUEST_SORT_FIELDS = ['createdAt', 'status'] as const;
 
 const FILTER_CHIPS = [
   { label: 'Chờ duyệt', value: 'PENDING' },
@@ -51,6 +54,17 @@ const FILTER_CHIPS = [
 export default function ClaimRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('PENDING');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: CLAIM_REQUEST_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const filterVar =
     statusFilter === 'ALL'
@@ -65,10 +79,11 @@ export default function ClaimRequestsPage() {
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading: requestsLoading,
     error: requestsError,
     refetch: refetchRequests,
-  } = useClaimRequests(filterVar, paginationVar);
+  } = useClaimRequests(filterVar, paginationVar, sort);
 
   const { stats } = useClaimRequestStats();
 
@@ -94,7 +109,7 @@ export default function ClaimRequestsPage() {
   const refetchAll = [
     {
       query: GET_CLAIM_REQUESTS,
-      variables: { filter: filterVar, pagination: paginationVar },
+      variables: { filter: filterVar, pagination: paginationVar, sort },
     },
     { query: GET_CLAIM_REQUEST_STATS },
   ];
@@ -175,10 +190,17 @@ export default function ClaimRequestsPage() {
                 { key: 'venueAddress', label: 'Địa chỉ' },
                 { key: 'claimant', label: 'Người yêu cầu' },
                 { key: 'phone', label: 'SĐT' },
-                { key: 'status', label: 'Trạng thái' },
-                { key: 'createdAt', label: 'Ngày gửi' },
+                { key: 'status', label: 'Trạng thái', sortable: true },
+                {
+                  key: 'createdAt',
+                  label: 'Ngày gửi',
+                  sortable: true,
+                },
               ]}
               data={requests}
+              sortKey={sortField}
+              sortDir={sortDir}
+              onSort={handleSort}
               emptyTitle="Không có yêu cầu nhận sân nào"
               renderRow={(r: ClaimRequestItem) => {
                 const isActive = r._id === effectiveId;
@@ -232,15 +254,13 @@ export default function ClaimRequestsPage() {
               }}
             />
           </QueryState>
-          <ConnectionPager
+          <ConnectionInfiniteScroll
             loadedCount={requests.length}
             totalCount={totalCount ?? total}
             hasNextPage={hasNextPage}
-            onNext={() => {
-              void loadMore();
-              setSelectedId(null);
-            }}
-            loading={requestsLoading}
+            onLoadMore={() => void loadMore()}
+            loading={requestsLoading && requests.length === 0}
+            loadingMore={isLoadingMore}
           />
         </GlassPanel>
 

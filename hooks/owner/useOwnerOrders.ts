@@ -23,6 +23,7 @@ import {
   CREATE_STAFF_ORDER,
   MARK_ORDER_PREPARING,
   MARK_ORDER_READY,
+  MARK_ORDER_DELIVERED,
 } from '@/graphql/owner/mutations';
 import {
   LOOKUP_CUSTOMER_BY_PHONE,
@@ -30,8 +31,13 @@ import {
   VENUE_ORDERS_CONNECTION,
 } from '@/graphql/owner/queries';
 import type {
+  CreateOrderInput,
+  CreateStaffOrderMutation,
+  OrderPaymentStatus,
   OrdersPendingRefundConnectionQuery,
+  OrderSortInput,
   OrderStatus,
+  OrderType,
   VenueOrdersConnectionQuery,
 } from '@/graphql/generated';
 import {
@@ -42,6 +48,10 @@ import {
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
 import { createMutationOptions } from '@/hooks/shared/mutation-helpers';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 
 const ORDER_MUTATION_REFETCH_QUERIES = [
   'VenueOrdersConnection',
@@ -62,44 +72,57 @@ export type PendingRefundOrderNode = NonNullable<
 
 export function useVenueOrders(
   venueId: string | null,
-  filter?: { statuses?: OrderStatus[]; searchQuery?: string },
+  filter?: {
+    statuses?: OrderStatus[];
+    paymentStatuses?: OrderPaymentStatus[];
+    fromDate?: string;
+    toDate?: string;
+    searchQuery?: string;
+    orderType?: OrderType;
+    orderTypes?: OrderType[];
+  },
+  sort?: OrderSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
+  const graphFilter = filter
+    ? {
+      statuses: filter.statuses,
+      paymentStatuses: filter.paymentStatuses,
+      fromDate: filter.fromDate,
+      toDate: filter.toDate,
+      searchQuery: filter.searchQuery,
+      orderType: filter.orderType,
+      orderTypes: filter.orderTypes,
+    }
+    : undefined;
+
+  const baseVariables = {
+    venueId: venueId ?? '',
+    filter: graphFilter,
+  };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueOrdersConnectionQuery>(VENUE_ORDERS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        filter: filter
-          ? {
-            statuses: filter.statuses,
-            searchQuery: filter.searchQuery,
-          }
-          : undefined,
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueOrdersConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      filter: filter
-        ? {
-          statuses: filter.statuses,
-          searchQuery: filter.searchQuery,
-        }
-        : undefined,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueOrdersConnection: {
@@ -117,6 +140,7 @@ export function useVenueOrders(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -144,7 +168,7 @@ export function useOrdersPendingRefund(
   const connection = data?.ordersPendingRefundConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
@@ -171,6 +195,7 @@ export function useOrdersPendingRefund(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
@@ -191,6 +216,11 @@ export function useOwnerOrderMutations() {
   const [markReadyMutation, { loading: markingReady }] = useMutation(
     MARK_ORDER_READY,
     createMutationOptions('MarkOrderReady', 'Đã đánh dấu sẵn sàng'),
+  );
+
+  const [markDeliveredMutation, { loading: markingDelivered }] = useMutation(
+    MARK_ORDER_DELIVERED,
+    createMutationOptions('MarkOrderDelivered', 'Đã đánh dấu đã giao'),
   );
 
   const [completeOrderMutation, { loading: completing }] = useMutation(
@@ -239,6 +269,16 @@ export function useOwnerOrderMutations() {
     [markReadyMutation],
   );
 
+  const markDelivered = useCallback(
+    async (orderId: string) => {
+      await markDeliveredMutation({
+        variables: { orderId },
+        refetchQueries: [...ORDER_MUTATION_REFETCH_QUERIES],
+      });
+    },
+    [markDeliveredMutation],
+  );
+
   const completeOrder = useCallback(
     async (orderId: string) => {
       await completeOrderMutation({
@@ -283,12 +323,14 @@ export function useOwnerOrderMutations() {
     confirmOrder,
     markPreparing,
     markReady,
+    markDelivered,
     completeOrder,
     cancelOrder,
     cancelOrderWithRefund,
     confirming,
     markingPreparing,
     markingReady,
+    markingDelivered,
     completing,
     cancelling,
     cancellingWithRefund,
@@ -296,6 +338,7 @@ export function useOwnerOrderMutations() {
       confirming ||
       markingPreparing ||
       markingReady ||
+      markingDelivered ||
       completing ||
       cancelling ||
       cancellingWithRefund,
@@ -328,15 +371,15 @@ export function useLookupCustomerByPhone() {
 
 export function useCreateStaffOrder() {
   const [mutate, { loading, error }] = useMutation<
-    { createStaffOrder: { _id: string; orderCode: string; status: string } },
-    { input: Record<string, unknown> }
+    CreateStaffOrderMutation,
+    { input: CreateOrderInput }
   >(
     CREATE_STAFF_ORDER,
     createMutationOptions('CreateStaffOrder', 'Đã tạo đơn hàng'),
   );
 
   const createStaffOrder = useCallback(
-    async (input: Record<string, unknown>) => {
+    async (input: CreateOrderInput) => {
       const result = await mutate({
         variables: { input },
         refetchQueries: ['VenueOrdersConnection'],

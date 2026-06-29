@@ -15,7 +15,6 @@
 
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { DataTable } from '@/components/organisms/DataTable';
 import { Button } from '@/components/atoms/Button';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
@@ -84,15 +83,27 @@ export function OwnerFinanceExpensesSection({
           className={FINANCE_TABLE_SCROLL_CLASS}
           emptyTitle="Không có chi phí ảnh hưởng kỳ này"
           columns={[
-            { key: 'date', label: 'Ngày TT' },
+            { key: 'date', label: 'Ngày TT', sortable: true },
             { key: 'coverage', label: 'Kỳ chi phí' },
-            { key: 'amount', label: 'Số tiền', align: 'right' },
+            { key: 'amount', label: 'Số tiền', align: 'right', sortable: true },
             { key: 'allocated', label: 'Trong kỳ', align: 'right' },
             { key: 'category', label: 'Nhóm' },
             { key: 'note', label: 'Ghi chú' },
             { key: 'actions', label: '', align: 'right' },
           ]}
           data={data.expenses}
+          sortKey={data.expenseSortField}
+          sortDir={data.expenseSortDir}
+          onSort={data.handleExpenseSort}
+          sortLoading={data.expenseSortLoading}
+          infiniteScroll={{
+            loadedCount: data.expenses.length,
+            totalCount: data.expenseCount,
+            hasNextPage: data.hasMoreExpenses,
+            onLoadMore: () => void data.loadMoreExpenses(),
+            loading: data.expensesLoading && data.expenses.length === 0,
+            loadingMore: data.isLoadingMoreExpenses,
+          }}
           renderRow={(row: VenueExpenseNode) => {
             const coverageFrom = row.coverageFrom ?? row.date;
             const coverageTo = row.coverageTo ?? row.date;
@@ -141,14 +152,6 @@ export function OwnerFinanceExpensesSection({
               </tr>
             );
           }}
-        />
-
-        <ConnectionPager
-          loadedCount={data.expenses.length}
-          totalCount={data.expenseCount}
-          hasNextPage={data.hasMoreExpenses}
-          onNext={() => void data.loadMoreExpenses()}
-          loading={data.expensesLoading}
         />
       </QueryState>
     </GlassPanel>

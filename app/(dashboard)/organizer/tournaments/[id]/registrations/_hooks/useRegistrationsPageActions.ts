@@ -37,13 +37,15 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     registrations,
     refetch,
     setStatusFilter,
-    setPage,
     setSelectedIds,
     selectedIds,
     setRejectingReg,
     rejectingReg,
     deletingReg,
+    approvingReg,
+    setApprovingReg,
     setDeletingReg,
+    setBulkDeleteOpen,
     setEditingBibId,
     bibInputValue,
     setBibInputValue,
@@ -55,7 +57,10 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   }, [refetch, setSelectedIds]);
 
   const { approve, loading: approving } = useApproveRegistration(tournamentId, {
-    onSuccess,
+    onSuccess: () => {
+      setApprovingReg(null);
+      onSuccess();
+    },
   });
   const { reject, loading: rejecting } = useRejectRegistration(tournamentId, {
     onSuccess: () => {
@@ -75,8 +80,14 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   const {
     bulkApprove,
     bulkReject,
+    bulkDelete,
     loading: bulkLoading,
-  } = useBulkRegistrationActions(tournamentId, { onSuccess });
+  } = useBulkRegistrationActions(tournamentId, {
+    onSuccess: () => {
+      setBulkDeleteOpen(false);
+      onSuccess();
+    },
+  });
   const { updatePayment, loading: paymentUpdating } = useUpdatePaymentStatus(
     tournamentId,
     { onSuccess },
@@ -95,17 +106,9 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
   const handleStatusFilterChange = useCallback(
     (value: StatusFilterValue) => {
       setStatusFilter(value);
-      setPage(1);
-    },
-    [setPage, setStatusFilter],
-  );
-
-  const handlePageChange = useCallback(
-    (newPage: number) => {
-      setPage(newPage);
       setSelectedIds(new Set());
     },
-    [setPage, setSelectedIds],
+    [setSelectedIds, setStatusFilter],
   );
 
   const handleBibEdit = useCallback(
@@ -154,6 +157,19 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     [setRejectingReg],
   );
 
+  const handleApprove = useCallback(
+    (reg: TournamentRegistration) => {
+      setApprovingReg(reg);
+    },
+    [setApprovingReg],
+  );
+
+  const handleApproveConfirm = useCallback(() => {
+    if (approvingReg) {
+      void approve(approvingReg._id);
+    }
+  }, [approve, approvingReg]);
+
   const handleRejectConfirm = useCallback(
     (reason?: string) => {
       if (rejectingReg) {
@@ -176,6 +192,16 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     }
   }, [deleteRegistration, deletingReg]);
 
+  const handleBulkDeleteOpen = useCallback(() => {
+    setBulkDeleteOpen(true);
+  }, [setBulkDeleteOpen]);
+
+  const handleBulkDeleteConfirm = useCallback(() => {
+    if (selectedIds.size > 0) {
+      void bulkDelete([...selectedIds]);
+    }
+  }, [bulkDelete, selectedIds]);
+
   const handlePaymentUpdate = useCallback(
     (regId: string, status: TournamentPaymentStatus) => {
       void updatePayment(regId, status);
@@ -188,23 +214,28 @@ export function useRegistrationsPageActions(data: RegistrationsPageData) {
     approving,
     rejecting,
     deleting,
+    bulkLoading,
     bibUpdating,
     onSuccess,
     handleStatusFilterChange,
-    handlePageChange,
     handleBibEdit,
     handleBibSave,
     handleBibCancel,
     toggleSelect,
     toggleSelectAll,
     handleReject,
+    handleApprove,
+    handleApproveConfirm,
     handleRejectConfirm,
     handleDelete,
     handleDeleteConfirm,
+    handleBulkDeleteOpen,
+    handleBulkDeleteConfirm,
     handlePaymentUpdate,
     approve,
     bulkApprove,
     bulkReject,
+    bulkDelete,
   };
 }
 

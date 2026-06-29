@@ -47,6 +47,22 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+export function isDateInRange(date: Date, from: Date, to: Date): boolean {
+  const day = startOfDay(date).getTime();
+  const start = startOfDay(from).getTime();
+  const end = startOfDay(to).getTime();
+  const min = Math.min(start, end);
+  const max = Math.max(start, end);
+  return day >= min && day <= max;
+}
+
+export function normalizeDateRange(
+  from: Date,
+  to: Date,
+): { from: Date; to: Date } {
+  return from <= to ? { from, to } : { from: to, to: from };
+}
+
 export function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }

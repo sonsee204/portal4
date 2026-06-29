@@ -36,10 +36,8 @@ export function OrderRowActions({ order, actions }: OrderRowActionsProps) {
   const {
     actionLoading,
     openOrderDetail,
-    handleConfirm,
-    handleMarkPreparing,
-    handleMarkReady,
-    handleComplete,
+    openQuickActionDialog,
+    openCompleteModal,
     openCancelModal,
   } = actions;
 
@@ -66,7 +64,7 @@ export function OrderRowActions({ order, actions }: OrderRowActionsProps) {
                 aria-label="Xác nhận"
                 disabled={actionLoading}
                 className={toneClassName.primary}
-                onClick={() => void handleConfirm(order._id)}
+                onClick={() => openQuickActionDialog('confirm', order._id)}
               />
             </VenueActionGate>
           )}
@@ -81,7 +79,9 @@ export function OrderRowActions({ order, actions }: OrderRowActionsProps) {
                   aria-label="Chuẩn bị"
                   disabled={actionLoading}
                   className={toneClassName.primary}
-                  onClick={() => void handleMarkPreparing(order._id)}
+                  onClick={() =>
+                    openQuickActionDialog('markPreparing', order._id)
+                  }
                 />
               ) : (
                 <IconButton
@@ -91,7 +91,7 @@ export function OrderRowActions({ order, actions }: OrderRowActionsProps) {
                   aria-label="Hoàn thành"
                   disabled={actionLoading}
                   className={toneClassName.primary}
-                  onClick={() => void handleComplete(order._id)}
+                  onClick={() => openCompleteModal(order._id)}
                 />
               )}
             </VenueActionGate>
@@ -106,21 +106,49 @@ export function OrderRowActions({ order, actions }: OrderRowActionsProps) {
                 aria-label="Sẵn sàng"
                 disabled={actionLoading}
                 className={toneClassName.primary}
-                onClick={() => void handleMarkReady(order._id)}
+                onClick={() => openQuickActionDialog('markReady', order._id)}
               />
             </VenueActionGate>
           )}
 
           {status === 'READY' && (
             <VenueActionGate action={VenueAction.CreateOrder}>
+              {isFnB ? (
+                <IconButton
+                  icon="bicycle-outline"
+                  size="sm"
+                  tooltip="Đã giao khách"
+                  aria-label="Đã giao khách"
+                  disabled={actionLoading}
+                  className={toneClassName.primary}
+                  onClick={() =>
+                    openQuickActionDialog('markDelivered', order._id)
+                  }
+                />
+              ) : (
+                <IconButton
+                  icon="flag-outline"
+                  size="sm"
+                  tooltip="Hoàn thành"
+                  aria-label="Hoàn thành"
+                  disabled={actionLoading}
+                  className={toneClassName.primary}
+                  onClick={() => openCompleteModal(order._id)}
+                />
+              )}
+            </VenueActionGate>
+          )}
+
+          {status === 'DELIVERED' && (
+            <VenueActionGate action={VenueAction.CreateOrder}>
               <IconButton
                 icon="flag-outline"
                 size="sm"
-                tooltip="Hoàn thành"
-                aria-label="Hoàn thành"
+                tooltip="Hoàn thành đơn"
+                aria-label="Hoàn thành đơn"
                 disabled={actionLoading}
                 className={toneClassName.primary}
-                onClick={() => void handleComplete(order._id)}
+                onClick={() => openCompleteModal(order._id)}
               />
             </VenueActionGate>
           )}

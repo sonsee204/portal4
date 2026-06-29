@@ -15,14 +15,20 @@
 
 import { useQuery } from '@apollo/client/react';
 import { VENUE_BOOKINGS_CONNECTION } from '@/graphql/owner/queries';
-import type { VenueBookingsConnectionQuery } from '@/graphql/generated';
+import type {
+  BookingSortInput,
+  VenueBookingsConnectionQuery,
+} from '@/graphql/generated';
 import {
   connectionNodes,
   mergeConnectionEdges,
-  resolveConnectionFirst,
   useConnectionLoadMore,
   type LegacyPagePagination,
 } from '@/hooks/shared/useCursorConnection';
+import {
+  buildSortedConnectionVariables,
+  SORTED_CONNECTION_FETCH_POLICY,
+} from '@/hooks/shared/useSortedConnectionQuery';
 import type { VenueBookingNode } from './owner-venue.types';
 
 export function useVenueBookings(
@@ -34,10 +40,10 @@ export function useVenueBookings(
     bookingType?: string;
     searchQuery?: string;
   },
+  sort?: BookingSortInput,
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
-  const first = resolveConnectionFirst(pagination);
   const graphFilter = filter
     ? {
         statuses: filter.statuses,
@@ -48,29 +54,32 @@ export function useVenueBookings(
       }
     : undefined;
 
+  const baseVariables = {
+    venueId: venueId ?? '',
+    filter: graphFilter,
+  };
+
   const { data, loading, error, refetch, fetchMore } =
     useQuery<VenueBookingsConnectionQuery>(VENUE_BOOKINGS_CONNECTION, {
-      variables: {
-        venueId: venueId ?? '',
-        filter: graphFilter,
-        pagination: { first },
-      },
+      variables: buildSortedConnectionVariables(
+        baseVariables,
+        sort,
+        pagination,
+      ),
       skip: !venueId || options?.skip,
+      fetchPolicy: SORTED_CONNECTION_FETCH_POLICY,
     });
 
   const connection = data?.venueBookingsConnection;
   const hasNextPage = connection?.pageInfo?.hasNextPage ?? false;
 
-  const { loadMore } = useConnectionLoadMore({
+  const { loadMore, isLoadingMore } = useConnectionLoadMore({
     data,
     hasNextPage,
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
-    buildVariables: (after) => ({
-      venueId: venueId ?? '',
-      filter: graphFilter,
-      pagination: { first, after },
-    }),
+    buildVariables: (after) =>
+      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueBookingsConnection: {
@@ -88,6 +97,7 @@ export function useVenueBookings(
     totalCount: connection?.totalCount ?? 0,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,

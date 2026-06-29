@@ -16,11 +16,9 @@
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { Select } from '@/components/atoms/Select';
 import { DateRangePicker } from '@/components/molecules/DateRangePicker';
-import { TabGroup } from '@/components/molecules/TabGroup';
 import { FinanceCompareMode } from '@/graphql/generated';
 import {
   COMPARE_MODE_OPTIONS,
-  FINANCE_PAGE_TABS,
   ORDER_TYPE_FILTER_OPTIONS,
   type OrderTypeCategoryFilter,
   PAYMENT_METHOD_FILTER_OPTIONS,
@@ -35,7 +33,7 @@ interface OwnerFinanceFiltersSectionProps {
 export function OwnerFinanceFiltersSection({
   data,
 }: OwnerFinanceFiltersSectionProps) {
-  const showFinanceScope = data.pageTab === 'finance';
+  const showFinanceFilters = data.pageTab === 'finance';
   const showScheduleFilter =
     data.pageTab === 'operations' || data.pageTab === 'finance';
   const showPromotionFilter =
@@ -45,49 +43,40 @@ export function OwnerFinanceFiltersSection({
 
   return (
     <GlassPanel card className="space-y-4">
-      <TabGroup
-        tabs={[...FINANCE_PAGE_TABS]}
-        active={data.pageTab}
-        onChange={(tabId) =>
-          data.setPageTab(tabId as OwnerFinancePageData['pageTab'])
-        }
-      />
-
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        {showFinanceScope ? (
-          <TabGroup
-            tabs={[
-              { value: 'single', label: 'Theo sân' },
-              { value: 'all', label: 'Tất cả sân' },
-            ]}
-            active={data.allVenues ? 'all' : 'single'}
-            onChange={(tabId) => data.setAllVenues(tabId === 'all')}
-          />
-        ) : (
-          <p className="text-muted text-sm">
-            {data.pageTab === 'portfolio'
+      {data.pageTab !== 'finance' ? (
+        <p className="text-muted text-sm">
+          {data.pageTab === 'portfolio'
+            ? data.allVenues
               ? 'Tổng quan tất cả cơ sở trong danh mục.'
-              : 'Vận hành theo sân đang chọn trên thanh chọn sân.'}
-          </p>
-        )}
+              : 'Tổng quan cơ sở đang chọn trên thanh chọn sân.'
+            : 'Vận hành theo sân đang chọn trên thanh chọn sân.'}
+        </p>
+      ) : null}
 
-        <DateRangePicker
-          value={data.dateRange}
-          onChange={data.setDateRange}
-          preset={data.datePreset}
-          onPresetChange={data.setDatePreset}
-        />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <Select
           label="So sánh kỳ"
+          className="w-full sm:max-w-xs"
           options={COMPARE_MODE_OPTIONS}
           value={data.compareMode}
           onChange={(event) =>
             data.setCompareMode(event.target.value as FinanceCompareMode)
           }
         />
+        <DateRangePicker
+          className="w-full sm:w-auto sm:shrink-0"
+          value={data.dateRange}
+          onChange={data.setDateRange}
+          preset={data.datePreset}
+          onPresetChange={(preset) => {
+            if (preset !== 'all') {
+              data.setDatePreset(preset);
+            }
+          }}
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {showScheduleFilter ? (
           <Select
             label="Loại lịch đặt sân"
@@ -104,7 +93,7 @@ export function OwnerFinanceFiltersSection({
             onChange={(event) => data.setPromotionIdFilter(event.target.value)}
           />
         ) : null}
-        {showFinanceScope ? (
+        {showFinanceFilters ? (
           <>
             <Select
               label="Loại đơn"

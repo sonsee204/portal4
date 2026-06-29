@@ -26,7 +26,6 @@ import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { FilterChips } from '@/components/molecules/FilterChips';
 import { QueryState } from '@/components/molecules/QueryState';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import { VenueActionGate } from '@/components/atoms/VenueActionGate';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
@@ -36,17 +35,23 @@ import {
   type VenueStaffNode,
 } from '@/hooks/owner';
 import { VenueStaffStatus } from '@/graphql/generated';
-import { formatVenuePermissions } from '@/lib/venue/venue-action-labels';
+import { formatVenuePermissionSummary } from '@/lib/venue/venue-action-labels';
+import { getStaffRemoveDialogCopy } from '@/lib/venue/staff-row-actions';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
 import {
   STAFF_STATUS_CHIPS,
   type StaffStatusFilterValue,
 } from './_hooks/owner-staff-page.constants';
 import { AddStaffModal } from './_components/AddStaffModal';
-import { EditStaffPermissionsModal } from './_components/EditStaffPermissionsModal';
+import { EditStaffModal } from './_components/EditStaffModal';
+import { PendingInvitationsPanel } from './_components/PendingInvitationsPanel';
 import { StaffRowActions } from './_components/StaffRowActions';
 
 const TABLE_SCROLL_CLASS_NAME =
   'max-h-[min(70vh,calc(100dvh-15rem))] min-h-[240px]';
+
+const STAFF_SORT_FIELDS = ['joinedAt', 'isOwner', 'createdAt'] as const;
 
 const STATUS_LABEL: Record<VenueStaffStatus, string> = {
   [VenueStaffStatus.Active]: 'Đang hoạt động',
@@ -65,21 +70,35 @@ const STATUS_VARIANT: Record<
 
 export default function OwnerStaffPage() {
   const { selectedVenueId, loading: venueLoading } = useVenueContext();
+
+  const sort = useDataTableSortUrl({
+    allowedFields: STAFF_SORT_FIELDS,
+    defaultField: 'joinedAt',
+    defaultDir: 'asc',
+  });
+
+  const sortInput = useMemo(
+    () => toSortByOrder(sort.sortField, sort.sortDir),
+    [sort.sortField, sort.sortDir]
+  );
+
   const {
     staff,
     totalCount,
     hasNextPage,
     loadMore,
+    isLoadingMore,
     loading,
     error,
     refetch,
     addStaff,
-    updatePermissions,
+    updateStaff,
     removeStaff,
     adding,
     updatingPermissions,
+    updatingTitle,
     removing,
-  } = useOwnerStaff(selectedVenueId, { limit: 20 });
+  } = useOwnerStaff(selectedVenueId, sortInput, { limit: 20 });
 
   const {
     invitations,
@@ -94,14 +113,16 @@ export default function OwnerStaffPage() {
   const [editTarget, setEditTarget] = useState<VenueStaffNode | null>(null);
   const [removeTarget, setRemoveTarget] = useState<VenueStaffNode | null>(null);
 
-  const allStaffRows = useMemo(() => {
-    const activeStaff = staff.filter((member) => !member.isOwner);
-    const pendingOnly = invitations.filter(
-      (invitation) =>
-        !activeStaff.some((member) => member._id === invitation._id)
-    );
-    return [...activeStaff, ...pendingOnly];
-  }, [invitations, staff]);
+  const ownerMember = useMemo(
+    () => staff.find((member) => member.isOwner) ?? null,
+    [staff]
+  );
+
+  const tableStaff = useMemo(() => {
+    const nonOwners = staff.filter((member) => !member.isOwner);
+    if (!ownerMember) return nonOwners;
+    return [ownerMember, ...nonOwners];
+  }, [ownerMember, staff]);
 
   const statusChips = useMemo(
     () =>
@@ -109,15 +130,15 @@ export default function OwnerStaffPage() {
         ...chip,
         count:
           chip.value === 'ALL'
-            ? allStaffRows.length
-            : allStaffRows.filter((member) => member.status === chip.value)
+            ? tableStaff.length
+            : tableStaff.filter((member) => member.status === chip.value)
                 .length,
       })),
-    [allStaffRows]
+    [tableStaff]
   );
 
   const staffRows = useMemo(() => {
-    let rows = allStaffRows;
+    let rows = tableStaff;
 
     if (statusFilter !== 'ALL') {
       rows = rows.filter((member) => member.status === statusFilter);
@@ -132,10 +153,14 @@ export default function OwnerStaffPage() {
     }
 
     return rows;
-  }, [allStaffRows, searchQuery, statusFilter]);
+  }, [tableStaff, searchQuery, statusFilter]);
 
   const trimmedSearch = searchQuery.trim();
   const hasClientFilters = trimmedSearch.length > 0 || statusFilter !== 'ALL';
+  const rowActionsDisabled = updatingPermissions || updatingTitle || removing;
+  const removeDialogCopy = removeTarget
+    ? getStaffRemoveDialogCopy(removeTarget)
+    : null;
 
   const handleRemove = async () => {
     if (!removeTarget?.user?._id) return;
@@ -146,7 +171,12 @@ export default function OwnerStaffPage() {
     }
   };
 
-  const rowActionsDisabled = updatingPermissions || removing;
+  const showEmptyStaff =
+    tableStaff.length === 0 &&
+    invitations.length === 0 &&
+    !!selectedVenueId &&
+    !loading &&
+    !invitationsLoading;
 
   return (
     <VenueActionGate
@@ -173,133 +203,172 @@ export default function OwnerStaffPage() {
         }
       />
 
-      <GlassPanel card className="mt-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <FilterChips
-            chips={statusChips}
-            active={statusFilter}
-            onChange={(value) =>
-              setStatusFilter(value as StaffStatusFilterValue)
-            }
-          />
-          <Input
-            className="max-w-xs shrink-0"
-            placeholder="Tìm tên nhân viên..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            leftIcon="search-outline"
-            disabled={!selectedVenueId}
-          />
-        </div>
+      <div className="mt-6 space-y-4">
+        <PendingInvitationsPanel
+          invitations={invitations}
+          disabled={rowActionsDisabled}
+          onCancel={setRemoveTarget}
+        />
 
-        <QueryState
-          loading={
-            (loading || venueLoading || invitationsLoading) &&
-            allStaffRows.length === 0 &&
-            !!selectedVenueId
-          }
-          error={error}
-          empty={!selectedVenueId}
-          emptyMessage="Chọn cơ sở để xem danh sách nhân viên."
-          onRetry={() => void Promise.all([refetch(), refetchInvitations()])}
-        >
-          <DataTable
-            columns={[
-              { key: 'name', label: 'Nhân viên' },
-              { key: 'contact', label: 'Liên hệ' },
-              { key: 'permissions', label: 'Quyền' },
-              { key: 'status', label: 'Trạng thái', align: 'center' },
-              DATA_TABLE_ACTIONS_COLUMN,
-            ]}
-            stickyHeader
-            className={TABLE_SCROLL_CLASS_NAME}
-            data={staffRows}
-            emptyTitle={
-              hasClientFilters
-                ? 'Không tìm thấy nhân viên'
-                : 'Chưa có nhân viên'
+        <GlassPanel card className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <FilterChips
+              chips={statusChips}
+              active={statusFilter}
+              onChange={(value) =>
+                setStatusFilter(value as StaffStatusFilterValue)
+              }
+            />
+            <Input
+              className="max-w-xs shrink-0"
+              placeholder="Tìm tên nhân viên..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              leftIcon="search-outline"
+              disabled={!selectedVenueId}
+            />
+          </div>
+
+          <QueryState
+            loading={
+              (loading || venueLoading || invitationsLoading) &&
+              tableStaff.length === 0 &&
+              invitations.length === 0 &&
+              !!selectedVenueId
             }
-            emptyDescription={
-              hasClientFilters
-                ? 'Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.'
-                : 'Thêm nhân viên để phân quyền quản lý cơ sở.'
-            }
-            renderRow={(member) => (
-              <tr
-                key={member._id}
-                className="border-surface-border hover:bg-surface-hover border-b transition-colors"
-              >
-                <td className="text-body px-4 py-3 text-sm">
-                  <div className="font-medium">
-                    {member.user?.displayName ?? '—'}
-                  </div>
-                  {member.customTitle && (
-                    <div className="text-faint text-xs">
-                      {member.customTitle}
+            error={error}
+            empty={!selectedVenueId}
+            emptyMessage="Chọn cơ sở để xem danh sách nhân viên."
+            onRetry={() => void Promise.all([refetch(), refetchInvitations()])}
+          >
+            <DataTable
+              columns={[
+                {
+                  key: 'name',
+                  label: 'Nhân viên',
+                  sortable: true,
+                  sortField: 'joinedAt',
+                },
+                { key: 'contact', label: 'Liên hệ' },
+                { key: 'permissions', label: 'Quyền' },
+                { key: 'status', label: 'Trạng thái', align: 'center' },
+                DATA_TABLE_ACTIONS_COLUMN,
+              ]}
+              stickyHeader
+              className={TABLE_SCROLL_CLASS_NAME}
+              data={staffRows}
+              sortKey={sort.sortField}
+              sortDir={sort.sortDir}
+              onSort={sort.handleSort}
+              sortLoading={
+                loading && tableStaff.length > 0 && !hasClientFilters
+              }
+              emptyTitle={
+                hasClientFilters
+                  ? 'Không tìm thấy nhân viên'
+                  : showEmptyStaff
+                    ? 'Chưa có nhân viên'
+                    : 'Không tìm thấy nhân viên'
+              }
+              emptyDescription={
+                hasClientFilters
+                  ? 'Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.'
+                  : showEmptyStaff
+                    ? 'Thêm nhân viên để phân quyền quản lý cơ sở.'
+                    : 'Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.'
+              }
+              infiniteScroll={
+                hasClientFilters
+                  ? undefined
+                  : {
+                      loadedCount: tableStaff.length,
+                      totalCount,
+                      hasNextPage,
+                      onLoadMore: () => void loadMore(),
+                      loading: loading && tableStaff.length === 0,
+                      loadingMore: isLoadingMore,
+                    }
+              }
+              renderRow={(member) => (
+                <tr
+                  key={member._id}
+                  className="border-surface-border hover:bg-surface-hover border-b transition-colors"
+                >
+                  <td className="text-body px-4 py-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">
+                        {member.user?.displayName ?? '—'}
+                      </span>
+                      {member.isOwner ? (
+                        <Badge variant="info">Chủ sân</Badge>
+                      ) : null}
                     </div>
-                  )}
-                </td>
-                <td className="text-muted px-4 py-3 text-xs">
-                  <div>{member.user?.phone ?? '—'}</div>
-                  <div>{member.user?.email ?? '—'}</div>
-                </td>
-                <td className="text-muted max-w-xs px-4 py-3 text-xs">
-                  {formatVenuePermissions(member.permissions)}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <Badge variant={STATUS_VARIANT[member.status]}>
-                    {STATUS_LABEL[member.status]}
-                  </Badge>
-                </td>
-                <td className={DATA_TABLE_ACTIONS_CELL_CLASS}>
-                  <StaffRowActions
-                    member={member}
-                    disabled={rowActionsDisabled}
-                    onEdit={setEditTarget}
-                    onRemove={setRemoveTarget}
-                  />
-                </td>
-              </tr>
-            )}
-          />
-        </QueryState>
-        {!hasClientFilters ? (
-          <ConnectionPager
-            loadedCount={allStaffRows.length}
-            totalCount={totalCount}
-            hasNextPage={hasNextPage}
-            onNext={() => void loadMore()}
-            loading={loading}
-          />
-        ) : null}
-      </GlassPanel>
+                    {member.customTitle && !member.isOwner ? (
+                      <div className="text-faint text-xs">
+                        {member.customTitle}
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="text-muted px-4 py-3 text-xs">
+                    <div>{member.user?.phone ?? '—'}</div>
+                    <div>{member.user?.email ?? '—'}</div>
+                  </td>
+                  <td className="text-muted max-w-xs px-4 py-3 text-xs">
+                    {member.isOwner
+                      ? 'Toàn bộ quyền'
+                      : formatVenuePermissionSummary(member.permissions)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge variant={STATUS_VARIANT[member.status]}>
+                      {STATUS_LABEL[member.status]}
+                    </Badge>
+                  </td>
+                  <td className={DATA_TABLE_ACTIONS_CELL_CLASS}>
+                    <StaffRowActions
+                      member={member}
+                      disabled={rowActionsDisabled}
+                      onEdit={setEditTarget}
+                      onRemove={setRemoveTarget}
+                    />
+                  </td>
+                </tr>
+              )}
+            />
+          </QueryState>
+        </GlassPanel>
+      </div>
 
       <AddStaffModal
         open={addStaffOpen}
         loading={adding}
         onClose={() => setAddStaffOpen(false)}
-        onSubmit={async (userId, permissions) => {
-          const ok = await addStaff(userId, permissions);
+        onSubmit={async ({ userId, permissions, customTitle }) => {
+          const ok = await addStaff(userId, permissions, customTitle);
           if (ok) await refetchInvitations();
           return ok;
         }}
       />
 
-      <EditStaffPermissionsModal
+      <EditStaffModal
         staff={editTarget}
         open={Boolean(editTarget)}
-        loading={updatingPermissions}
+        loading={updatingPermissions || updatingTitle}
         onClose={() => setEditTarget(null)}
-        onSave={updatePermissions}
+        onSave={async (userId, input, current) => {
+          return updateStaff(userId, input, current);
+        }}
       />
 
       <ConfirmDialog
         open={Boolean(removeTarget)}
         onClose={() => setRemoveTarget(null)}
         onConfirm={() => void handleRemove()}
-        title="Xóa nhân viên"
-        description={`Bạn có chắc muốn xóa ${removeTarget?.user?.displayName ?? 'nhân viên này'} khỏi sân?`}
-        confirmLabel="Xóa nhân viên"
+        title={removeDialogCopy?.title ?? 'Xóa nhân viên'}
+        description={
+          removeDialogCopy?.description ??
+          'Bạn có chắc muốn thực hiện thao tác này?'
+        }
+        confirmLabel={removeDialogCopy?.confirmLabel ?? 'Xác nhận'}
         variant="danger"
         loading={removing}
       />

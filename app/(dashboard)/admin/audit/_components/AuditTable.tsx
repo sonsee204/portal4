@@ -26,6 +26,9 @@ interface AuditTableProps {
   logs: AuditLogEntry[];
   loading: boolean;
   onViewDetail: (log: AuditLogEntry) => void;
+  sortKey?: string;
+  sortDir?: 'asc' | 'desc';
+  onSort?: (key: string) => void;
 }
 
 const ACTION_LABELS: Record<AuditAction, string> = AUDIT.ACTIONS;
@@ -66,16 +69,28 @@ function getInitials(name?: string | null): string {
 
 const columns = [
   { key: 'admin', label: AUDIT.COLUMNS.ADMIN },
-  { key: 'category', label: AUDIT.COLUMNS.CATEGORY },
-  { key: 'action', label: AUDIT.COLUMNS.ACTION },
+  { key: 'category', label: AUDIT.COLUMNS.CATEGORY, sortable: true },
+  { key: 'action', label: AUDIT.COLUMNS.ACTION, sortable: true },
   { key: 'target', label: AUDIT.COLUMNS.TARGET },
   { key: 'ip', label: AUDIT.COLUMNS.IP },
-  { key: 'timestamp', label: AUDIT.COLUMNS.TIMESTAMP, sortable: true },
+  {
+    key: 'timestamp',
+    label: AUDIT.COLUMNS.TIMESTAMP,
+    sortable: true,
+    sortField: 'createdAt',
+  },
   { key: 'status', label: AUDIT.COLUMNS.STATUS },
   { key: 'actions', label: '', align: 'right' as const },
 ];
 
-export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
+export function AuditTable({
+  logs,
+  loading,
+  onViewDetail,
+  sortKey,
+  sortDir,
+  onSort,
+}: AuditTableProps) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -93,6 +108,9 @@ export function AuditTable({ logs, loading, onViewDetail }: AuditTableProps) {
     <DataTable
       columns={columns}
       data={logs}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={onSort}
       emptyTitle={AUDIT.EMPTY.TITLE}
       emptyDescription={AUDIT.EMPTY.DESCRIPTION}
       renderRow={(log) => (

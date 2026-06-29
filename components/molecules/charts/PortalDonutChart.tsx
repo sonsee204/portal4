@@ -19,6 +19,7 @@ import { CHART_COLORS, CHART_THEME } from '@/lib/charts/theme';
 import { cn, formatCurrency } from '@/lib/utils';
 
 export interface PortalDonutChartDatum {
+  id?: string;
   label: string;
   value: number;
   percentage?: number;
@@ -104,7 +105,7 @@ export function PortalDonutChart({
             >
               {segments.map((entry, index) => (
                 <Cell
-                  key={entry.label}
+                  key={entry.id ?? `${entry.label}-${index}`}
                   fill={CHART_COLORS[index % CHART_COLORS.length]}
                 />
               ))}
@@ -115,7 +116,10 @@ export function PortalDonutChart({
 
       <ul className="text-muted mt-2 flex shrink-0 flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
         {segments.map((entry, index) => (
-          <li key={entry.label} className="flex items-center gap-1.5">
+          <li
+            key={entry.id ?? `${entry.label}-${index}`}
+            className="flex items-center gap-1.5"
+          >
             <span
               className="inline-block size-2.5 shrink-0 rounded-full"
               style={{

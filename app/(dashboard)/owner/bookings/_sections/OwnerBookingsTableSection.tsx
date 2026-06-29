@@ -15,9 +15,8 @@
 
 import { Badge } from '@/components/atoms/Badge';
 import { Input } from '@/components/atoms/Input';
-import { ConnectionPager } from '@/components/molecules/ConnectionPager';
-import { FilterChips } from '@/components/molecules/FilterChips';
 import { GlassPanel } from '@/components/molecules/GlassPanel';
+import { FilterChips } from '@/components/molecules/FilterChips';
 import { QueryState } from '@/components/molecules/QueryState';
 import { TabGroup } from '@/components/molecules/TabGroup';
 import { DataTable } from '@/components/organisms/DataTable';
@@ -26,6 +25,7 @@ import {
   BOOKING_STATUS_VARIANT,
 } from '@/lib/constants/booking-status';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
+import { getBookingCustomerDisplayName } from '@/lib/booking/booking-customer-label';
 import type {
   OwnerBookingNode,
   OwnerRecurringBookingNode,
@@ -75,6 +75,10 @@ export function OwnerBookingsTableSection({
     searchQuery,
     setSearchQuery,
     activeData,
+    sortField,
+    sortDir,
+    handleSort,
+    sortLoading,
   } = data;
   const {
     handleTabChange,
@@ -84,8 +88,15 @@ export function OwnerBookingsTableSection({
     detailBookingId,
   } = actions;
 
-  const { bookings, loading, error, refetch, totalCount, hasNextPage } =
-    activeData;
+  const {
+    bookings,
+    loading,
+    error,
+    refetch,
+    totalCount,
+    hasNextPage,
+    isLoadingMore,
+  } = activeData;
 
   const tableBookings = bookings as BookingsTableRow[];
 
@@ -95,6 +106,15 @@ export function OwnerBookingsTableSection({
 
   const tableScrollClassName =
     'max-h-[min(70vh,calc(100dvh-15rem))] min-h-[240px]';
+
+  const infiniteScroll = {
+    loadedCount: bookings.length,
+    totalCount,
+    hasNextPage,
+    onLoadMore: handleLoadMore,
+    loading: loading && bookings.length === 0,
+    loadingMore: isLoadingMore,
+  };
 
   return (
     <>
@@ -135,17 +155,33 @@ export function OwnerBookingsTableSection({
           {activeTab === 'all' && (
             <DataTable
               columns={[
-                { key: 'date', label: 'Ngày' },
+                { key: 'date', label: 'Ngày', sortable: true },
                 { key: 'slots', label: 'Khung giờ' },
                 { key: 'customer', label: 'Khách' },
-                { key: 'status', label: 'Trạng thái', align: 'center' },
-                { key: 'amount', label: 'Số tiền', align: 'right' },
+                {
+                  key: 'status',
+                  label: 'Trạng thái',
+                  align: 'center',
+                  sortable: true,
+                },
+                {
+                  key: 'amount',
+                  label: 'Số tiền',
+                  align: 'right',
+                  sortable: true,
+                  sortField: 'totalPrice',
+                },
                 { key: 'actions', label: 'Thao tác', align: 'right' },
               ]}
               stickyHeader
               className={tableScrollClassName}
               data={tableBookings}
               emptyTitle="Không có đặt sân"
+              infiniteScroll={infiniteScroll}
+              sortKey={sortField}
+              sortDir={sortDir}
+              onSort={handleSort}
+              sortLoading={sortLoading}
               renderRow={(booking) => (
                 <tr
                   key={booking._id}
@@ -160,7 +196,7 @@ export function OwnerBookingsTableSection({
                     />
                   </td>
                   <td className="text-body px-4 py-3 text-sm">
-                    {booking.customer?.displayName ?? '—'}
+                    {getBookingCustomerDisplayName(booking)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <StatusBadge status={booking.status} />
@@ -179,17 +215,32 @@ export function OwnerBookingsTableSection({
           {activeTab === 'hold' && (
             <DataTable
               columns={[
-                { key: 'date', label: 'Ngày' },
+                { key: 'date', label: 'Ngày', sortable: true },
                 { key: 'slots', label: 'Khung giờ' },
                 { key: 'customer', label: 'Khách' },
-                { key: 'expires', label: 'Hết hạn giữ chỗ' },
-                { key: 'status', label: 'Trạng thái', align: 'center' },
+                {
+                  key: 'expires',
+                  label: 'Hết hạn giữ chỗ',
+                  sortable: true,
+                  sortField: 'holdExpiresAt',
+                },
+                {
+                  key: 'status',
+                  label: 'Trạng thái',
+                  align: 'center',
+                  sortable: true,
+                },
                 { key: 'actions', label: 'Thao tác', align: 'right' },
               ]}
               stickyHeader
               className={tableScrollClassName}
               data={tableBookings}
               emptyTitle="Không có giữ chỗ"
+              infiniteScroll={infiniteScroll}
+              sortKey={sortField}
+              sortDir={sortDir}
+              onSort={handleSort}
+              sortLoading={sortLoading}
               renderRow={(booking) => (
                 <tr
                   key={booking._id}
@@ -204,7 +255,7 @@ export function OwnerBookingsTableSection({
                     />
                   </td>
                   <td className="text-body px-4 py-3 text-sm">
-                    {booking.customer?.displayName ?? '—'}
+                    {getBookingCustomerDisplayName(booking)}
                   </td>
                   <td className="text-faint px-4 py-3 text-xs">
                     {'holdExpiresAt' in booking && booking.holdExpiresAt
@@ -225,18 +276,28 @@ export function OwnerBookingsTableSection({
           {activeTab === 'recurring' && (
             <DataTable
               columns={[
-                { key: 'date', label: 'Bắt đầu' },
+                { key: 'date', label: 'Bắt đầu', sortable: true },
                 { key: 'customer', label: 'Khách' },
                 { key: 'frequency', label: 'Tần suất' },
                 { key: 'sessions', label: 'Buổi' },
                 { key: 'endDate', label: 'Kết thúc' },
-                { key: 'status', label: 'Trạng thái', align: 'center' },
+                {
+                  key: 'status',
+                  label: 'Trạng thái',
+                  align: 'center',
+                  sortable: true,
+                },
                 { key: 'actions', label: 'Thao tác', align: 'right' },
               ]}
               stickyHeader
               className={tableScrollClassName}
               data={tableBookings}
               emptyTitle="Không có đặt cố định"
+              infiniteScroll={infiniteScroll}
+              sortKey={sortField}
+              sortDir={sortDir}
+              onSort={handleSort}
+              sortLoading={sortLoading}
               renderRow={(booking) => (
                 <tr
                   key={booking._id}
@@ -246,7 +307,7 @@ export function OwnerBookingsTableSection({
                     {formatDate(booking.date)}
                   </td>
                   <td className="text-body px-4 py-3 text-sm">
-                    {booking.customer?.displayName ?? '—'}
+                    {getBookingCustomerDisplayName(booking)}
                   </td>
                   <td className="text-muted px-4 py-3 text-sm">
                     {RECURRING_FREQUENCY_LABEL[
@@ -274,14 +335,6 @@ export function OwnerBookingsTableSection({
             />
           )}
         </QueryState>
-
-        <ConnectionPager
-          loadedCount={bookings.length}
-          totalCount={totalCount}
-          hasNextPage={hasNextPage}
-          onNext={handleLoadMore}
-          loading={loading}
-        />
       </GlassPanel>
 
       <BookingActionConfirmDialog actions={actions} />

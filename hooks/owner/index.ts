@@ -20,7 +20,7 @@ export type {
   VenueDetailNode,
 } from './owner-venue.types';
 
-export { useMyVenues, useMyVenuesStats } from './useOwnerMyVenues';
+export { useMyVenues, useMyVenuesStats, useOwnerManagedVenues } from './useOwnerMyVenues';
 export { useVenueBookings } from './useOwnerVenueBookingsConnection';
 export {
   useBookingStats,
@@ -51,6 +51,20 @@ export {
 } from './useOwnerOrders';
 
 export {
+  useVenueEnabledOrderTypes,
+  type VenueEnabledOrderTypeConfig,
+} from './useVenueOrderTypes';
+export { useValidateOrderPromoCode } from './useValidateOrderPromoCode';
+
+export {
+  useVenuePromotions,
+  type VenuePromotionNode,
+} from './useVenuePromotions';
+export { usePromotionStats } from './usePromotionStats';
+export { usePromotion, type PromotionDetailNode } from './usePromotion';
+export { usePromotionMutations } from './usePromotionMutations';
+
+export {
   useVenueProducts,
   useVenueCategories,
   useProductStats,
@@ -62,6 +76,8 @@ export {
   type VenueProductNode,
   type VenueCategoryNode,
 } from './useOwnerProducts';
+
+export { useMoveProductsToVenue } from './useMoveProductsToVenue';
 
 export { useOwnerStaff, useVenuePendingInvitations } from './useOwnerStaff';
 export type { VenueStaffNode } from './useOwnerStaff';
@@ -87,6 +103,25 @@ export {
   useMyVenueAvailability,
   useCreateStaffBooking,
 } from './useVenueStaffBooking';
+export { useValidatePromoCode } from './useValidatePromoCode';
+export { useCalculateBookingDiscount } from './useCalculateBookingDiscount';
+export { useAvailablePromotionsForBooking } from './useAvailablePromotionsForBooking';
+export { useCheckRecurringAvailability } from './useCheckRecurringAvailability';
+export { useCreateStaffRecurringBooking } from './useCreateStaffRecurringBooking';
+
+export {
+  useVenueProductReport,
+  useProductPerformanceReport,
+  type VenueProductReportData,
+  type ProductReportRowNode,
+  type ProductPerformanceReportData,
+} from './useOwnerProductStats';
+
+export {
+  useStockMovementsConnection,
+  STOCK_MOVEMENTS_PAGE_SIZE,
+  type StockMovementNode,
+} from './useStockMovementsConnection';
 
 export {
   useVenueFinanceReport,

@@ -18,15 +18,14 @@ import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
 import { StatCard } from '@/components/molecules/StatCard';
 import { PortalBarChart } from '@/components/molecules/charts';
-import { cn, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
+import { OwnerFinanceOperationsHeatmapSection } from './OwnerFinanceOperationsHeatmapSection';
+import { OwnerFinanceScheduleCoverageSection } from './OwnerFinanceScheduleCoverageSection';
 
 interface OwnerFinanceOperationsSectionProps {
   data: OwnerFinancePageData;
 }
-
-const HEATMAP_DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-const HEATMAP_HOURS = ['06', '08', '10', '12', '14', '16', '18', '20'];
 
 export function OwnerFinanceOperationsSection({
   data,
@@ -73,20 +72,20 @@ export function OwnerFinanceOperationsSection({
     [operations?.byScheduleType]
   );
 
-  const heatmapGrid = useMemo(() => {
-    const cells = operations?.heatMapData ?? [];
-    const lookup = new Map(
-      cells.map((cell) => [`${cell.day}-${cell.hour}`, cell.intensity])
-    );
-
-    return HEATMAP_DAYS.map((dayLabel) => ({
-      dayLabel,
-      cells: HEATMAP_HOURS.map((hour) => ({
-        hour,
-        intensity: lookup.get(`${dayLabel}-${hour}`) ?? 0,
+  const scheduleCoverageTrend = useMemo(
+    () =>
+      (operations?.scheduleCoverageTrend ?? []).map((point) => ({
+        label: point.label,
+        revenue: point.revenue,
+        bookingCount: point.bookingCount,
+        occupiedSlots: point.occupiedSlots,
+        availableSlots: point.availableSlots,
+        occupancyRate: point.occupancyRate,
+        previousRevenue: point.previousRevenue,
+        previousOccupancyRate: point.previousOccupancyRate,
       })),
-    }));
-  }, [operations?.heatMapData]);
+    [operations?.scheduleCoverageTrend]
+  );
 
   return (
     <QueryState
@@ -121,9 +120,12 @@ export function OwnerFinanceOperationsSection({
             iconColor="text-amber-400"
             label="Doanh thu sân (lịch)"
             value={formatCurrency(operations?.courtRevenue ?? 0)}
-            hint="Theo ngày lịch đặt sân"
+            signedValue={operations?.courtRevenue ?? 0}
+            hint="Tổng kỳ theo ngày lịch — biểu đồ bên dưới là chi tiết từng ngày"
           />
         </div>
+
+        <OwnerFinanceScheduleCoverageSection data={scheduleCoverageTrend} />
 
         <div className="grid gap-6 xl:grid-cols-2">
           <GlassPanel card>
@@ -143,6 +145,7 @@ export function OwnerFinanceOperationsSection({
             <PortalBarChart
               data={bookingsByScheduleType}
               valueFormatter={(value) => String(value)}
+              axisTickFormatter={(value) => String(value)}
             />
           </GlassPanel>
         </div>
@@ -172,6 +175,7 @@ export function OwnerFinanceOperationsSection({
               <PortalBarChart
                 data={bookingsByPromotion}
                 valueFormatter={(value) => String(value)}
+                axisTickFormatter={(value) => String(value)}
               />
             ) : (
               <div className="text-muted flex h-40 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm">
@@ -181,67 +185,9 @@ export function OwnerFinanceOperationsSection({
           </GlassPanel>
         </div>
 
-        <GlassPanel card>
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-heading text-sm font-bold">
-                Biểu đồ nhiệt công suất
-              </h3>
-              <p className="text-muted mt-1 text-xs">
-                Mật độ lịch đặt theo ngày trong tuần và khung giờ.
-              </p>
-            </div>
-          </div>
-
-          {heatmapGrid.some((row) =>
-            row.cells.some((cell) => cell.intensity > 0)
-          ) ? (
-            <div className="overflow-x-auto">
-              <div className="min-w-[480px]">
-                <div className="text-muted mb-2 grid grid-cols-[40px_repeat(8,minmax(0,1fr))] gap-1 text-[10px]">
-                  <span />
-                  {HEATMAP_HOURS.map((hour) => (
-                    <span key={hour} className="text-center">
-                      {hour}h
-                    </span>
-                  ))}
-                </div>
-                {heatmapGrid.map((row) => (
-                  <div
-                    key={row.dayLabel}
-                    className="mb-1 grid grid-cols-[40px_repeat(8,minmax(0,1fr))] gap-1"
-                  >
-                    <span className="text-muted flex items-center text-xs font-medium">
-                      {row.dayLabel}
-                    </span>
-                    {row.cells.map((cell) => (
-                      <div
-                        key={`${row.dayLabel}-${cell.hour}`}
-                        title={`${row.dayLabel} ${cell.hour}:00 — ${Math.round(cell.intensity * 100)}%`}
-                        className={cn(
-                          'aspect-square rounded-sm border border-white/5',
-                          cell.intensity >= 0.75
-                            ? 'bg-emerald-500/70'
-                            : cell.intensity >= 0.5
-                              ? 'bg-emerald-500/45'
-                              : cell.intensity >= 0.25
-                                ? 'bg-amber-500/35'
-                                : cell.intensity > 0
-                                  ? 'bg-sky-500/25'
-                                  : 'bg-surface-hover/40'
-                        )}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-muted flex h-40 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm">
-              Chưa có dữ liệu biểu đồ nhiệt trong kỳ đã chọn.
-            </div>
-          )}
-        </GlassPanel>
+        <OwnerFinanceOperationsHeatmapSection
+          heatMapData={operations?.heatMapData}
+        />
       </div>
     </QueryState>
   );

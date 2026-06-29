@@ -45,7 +45,7 @@ export default function AccessControlPage() {
         {tab === 'roles' && (
           <RoleManagementSection data={data} actions={actions} />
         )}
-        {tab === 'capabilities' && <CapabilityGrantsSection />}
+        {tab === 'capabilities' && <CapabilityGrantsSection data={data} />}
       </div>
 
       <ChangeRoleDialog

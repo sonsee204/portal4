@@ -13,13 +13,14 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/atoms/Button';
 import { Badge } from '@/components/atoms/Badge';
 import { IonIcon } from '@/components/atoms/IonIcon';
 import { Input } from '@/components/atoms/Input';
+import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import {
   DataTable,
   type DataTableColumn,
@@ -29,6 +30,8 @@ import {
   useCreateReferralCode,
   useToggleReferralCode,
 } from '@/hooks/referral';
+import { sortClientRows } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import { showSuccess } from '@/lib/toast';
 import { GROWTH } from '@/lib/strings';
 import {
@@ -41,14 +44,36 @@ const columns: DataTableColumn[] = [
   { key: 'code', label: GROWTH.REFERRAL.COLUMNS.CODE },
   { key: 'owner', label: GROWTH.REFERRAL.COLUMNS.OWNER },
   { key: 'status', label: GROWTH.REFERRAL.COLUMNS.STATUS },
-  { key: 'usage', label: GROWTH.REFERRAL.COLUMNS.USAGE, align: 'right' },
-  { key: 'signups', label: GROWTH.REFERRAL.COLUMNS.SIGNUPS, align: 'right' },
-  { key: 'revenue', label: GROWTH.REFERRAL.COLUMNS.REVENUE, align: 'right' },
+  {
+    key: 'usage',
+    label: GROWTH.REFERRAL.COLUMNS.USAGE,
+    align: 'right',
+    sortable: true,
+  },
+  {
+    key: 'signups',
+    label: GROWTH.REFERRAL.COLUMNS.SIGNUPS,
+    align: 'right',
+    sortable: true,
+  },
+  {
+    key: 'revenue',
+    label: GROWTH.REFERRAL.COLUMNS.REVENUE,
+    align: 'right',
+    sortable: true,
+  },
   { key: 'actions', label: '', align: 'right' },
 ];
 
+const REFERRAL_METRIC_SORT_FIELDS = ['usage', 'signups', 'revenue'] as const;
+
 export function ReferralCodeManager() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<{
+    id: string;
+    code: string;
+    isActive: boolean;
+  } | null>(null);
 
   const {
     control,
@@ -68,6 +93,25 @@ export function ReferralCodeManager() {
 
   const { codes, loading, refetch } = useReferralCodes();
 
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: REFERRAL_METRIC_SORT_FIELDS,
+    defaultField: 'signups',
+    defaultDir: 'desc',
+    sortParam: 'refSort',
+    dirParam: 'refDir',
+  });
+
+  const sortedCodes = useMemo(
+    () =>
+      sortClientRows(codes, sortField, sortDir, (row, field) => {
+        if (field === 'usage') return row.currentUses;
+        if (field === 'signups') return row.totalSignups;
+        if (field === 'revenue') return row.totalRevenue;
+        return null;
+      }),
+    [codes, sortField, sortDir]
+  );
+
   const { createCode, loading: creating } = useCreateReferralCode({
     onSuccess: () => {
       reset();
@@ -76,8 +120,9 @@ export function ReferralCodeManager() {
     },
   });
 
-  const { toggleCode } = useToggleReferralCode({
+  const { toggleCode, loading: toggling } = useToggleReferralCode({
     onSuccess: () => {
+      setToggleTarget(null);
       void refetch();
     },
   });
@@ -92,12 +137,10 @@ export function ReferralCodeManager() {
     });
   };
 
-  const handleToggle = useCallback(
-    (id: string, isActive: boolean) => {
-      toggleCode(id, isActive);
-    },
-    [toggleCode]
-  );
+  const handleToggleConfirm = useCallback(() => {
+    if (!toggleTarget) return;
+    toggleCode(toggleTarget.id, toggleTarget.isActive);
+  }, [toggleCode, toggleTarget]);
 
   const handleCopyCode = useCallback((code: string) => {
     void navigator.clipboard.writeText(code);
@@ -170,7 +213,13 @@ export function ReferralCodeManager() {
           </button>
           <button
             type="button"
-            onClick={() => handleToggle(code._id, code.isActive)}
+            onClick={() =>
+              setToggleTarget({
+                id: code._id,
+                code: code.code,
+                isActive: code.isActive,
+              })
+            }
             className={`rounded p-1.5 transition-colors ${
               code.isActive
                 ? 'text-red-400 hover:text-red-500'
@@ -317,7 +366,10 @@ export function ReferralCodeManager() {
         ) : (
           <DataTable<ReferralCode>
             columns={columns}
-            data={codes}
+            data={sortedCodes}
+            sortKey={sortField}
+            sortDir={sortDir}
+            onSort={handleSort}
             renderRow={renderRow}
             emptyTitle={GROWTH.REFERRAL.EMPTY_TITLE}
             emptyDescription={GROWTH.REFERRAL.EMPTY_DESCRIPTION}
@@ -329,6 +381,31 @@ export function ReferralCodeManager() {
           {GROWTH.REFERRAL.TOTAL_CODES(codes.length)}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!toggleTarget}
+        onClose={() => setToggleTarget(null)}
+        onConfirm={handleToggleConfirm}
+        title={
+          toggleTarget?.isActive
+            ? GROWTH.REFERRAL.ACTION_DEACTIVATE
+            : GROWTH.REFERRAL.ACTION_ACTIVATE
+        }
+        description={
+          toggleTarget
+            ? toggleTarget.isActive
+              ? `Vô hiệu hóa mã giới thiệu "${toggleTarget.code}"?`
+              : `Kích hoạt lại mã giới thiệu "${toggleTarget.code}"?`
+            : ''
+        }
+        confirmLabel={
+          toggleTarget?.isActive
+            ? GROWTH.REFERRAL.ACTION_DEACTIVATE
+            : GROWTH.REFERRAL.ACTION_ACTIVATE
+        }
+        variant={toggleTarget?.isActive ? 'warning' : 'default'}
+        loading={toggling}
+      />
     </div>
   );
 }

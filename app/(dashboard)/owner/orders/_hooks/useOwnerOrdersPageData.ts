@@ -3,7 +3,7 @@
  * Nền tảng Công nghệ Hệ sinh thái Thể thao / Sports Ecosystem Technology Platform
  *
  * @copyright 2025-2026 Lê Trung Hiếu
- * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
+ * @author Lê Trung Hiếu <letrunghieu@gmail.com>
  * @license Proprietary - All rights reserved
  *
  * This source code is the intellectual property of Lê Trung Hiếu.
@@ -13,50 +13,85 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useVenueContext } from '@/components/providers/VenueContextProvider';
+import { useOwnerDateRange } from '@/components/providers/OwnerDateRangeProvider';
+import type { DateRangeValue } from '@/components/molecules/DateRangePicker';
+import { useVenueOrders, type VenueOrderNode } from '@/hooks/owner';
+import { OrderPaymentStatus, OrderStatus, OrderType } from '@/graphql/generated';
+import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 import {
-  useOrdersPendingRefund,
-  useVenueOrders,
-  type PendingRefundOrderNode,
-  type VenueOrderNode,
-} from '@/hooks/owner';
-import { OrderStatus } from '@/graphql/generated';
-import { PAGE_SIZE } from './owner-orders-page.constants';
+  NON_BOOKING_ORDER_TYPES,
+  PAGE_SIZE,
+  type OrderViewTab,
+} from './owner-orders-page.constants';
+
+const ORDER_SORT_FIELDS = ['createdAt', 'totalAmount', 'status'] as const;
 
 export function useOwnerOrdersPageData() {
   const { selectedVenueId, loading: venueLoading } = useVenueContext();
-  const [viewTab, setViewTab] = useState<'all' | 'pending_refund'>('all');
+  const { dateRange, setDateRange } = useOwnerDateRange();
+  const [viewTab, setViewTab] = useState<OrderViewTab>('all');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleDateRangeChange = useCallback(
+    (range: DateRangeValue) => {
+      setDateRange(range);
+    },
+    [setDateRange],
+  );
+
+  const { sortField, sortDir, handleSort } = useDataTableSortUrl({
+    allowedFields: ORDER_SORT_FIELDS,
+    defaultField: 'createdAt',
+    defaultDir: 'desc',
+  });
+
+  const sort = useMemo(
+    () => toSortByOrder(sortField, sortDir),
+    [sortField, sortDir],
+  );
 
   const orderFilter = useMemo(() => {
     const statuses =
       statusFilter === 'ALL' ? undefined : ([statusFilter] as OrderStatus[]);
+    const paymentStatuses =
+      paymentStatusFilter === 'ALL'
+        ? undefined
+        : ([paymentStatusFilter] as OrderPaymentStatus[]);
     const trimmed = searchQuery.trim();
     return {
       statuses,
+      paymentStatuses,
+      fromDate: dateRange.from,
+      toDate: dateRange.to,
       searchQuery: trimmed || undefined,
+      orderType: viewTab === 'booking' ? OrderType.Booking : undefined,
+      orderTypes: viewTab === 'non_booking' ? NON_BOOKING_ORDER_TYPES : undefined,
     };
-  }, [statusFilter, searchQuery]);
+  }, [
+    dateRange.from,
+    dateRange.to,
+    paymentStatusFilter,
+    statusFilter,
+    searchQuery,
+    viewTab,
+  ]);
 
   const pagination = { limit: PAGE_SIZE };
 
-  const allOrdersQuery = useVenueOrders(
+  const ordersQuery = useVenueOrders(
     selectedVenueId,
     orderFilter,
+    sort,
     pagination,
-    { skip: viewTab !== 'all' },
   );
 
-  const pendingRefundQuery = useOrdersPendingRefund(
-    selectedVenueId,
-    pagination,
-    { skip: viewTab !== 'pending_refund' },
-  );
-
-  const activeQuery =
-    viewTab === 'all' ? allOrdersQuery : pendingRefundQuery;
+  const sortLoading =
+    ordersQuery.loading && ordersQuery.orders.length > 0;
 
   return {
     venueId: selectedVenueId,
@@ -65,21 +100,27 @@ export function useOwnerOrdersPageData() {
     setViewTab,
     statusFilter,
     setStatusFilter,
+    paymentStatusFilter,
+    setPaymentStatusFilter,
     searchQuery,
     setSearchQuery,
-    allOrders: allOrdersQuery.orders as VenueOrderNode[],
-    pendingRefundOrders: pendingRefundQuery.orders as PendingRefundOrderNode[],
-    orders: activeQuery.orders,
-    totalCount: activeQuery.totalCount,
-    hasNextPage: activeQuery.hasNextPage,
-    loadMore: activeQuery.loadMore,
-    loading: activeQuery.loading,
-    error: activeQuery.error,
-    refetch: activeQuery.refetch,
+    dateRange,
+    handleDateRangeChange,
+    orders: ordersQuery.orders as VenueOrderNode[],
+    totalCount: ordersQuery.totalCount,
+    hasNextPage: ordersQuery.hasNextPage,
+    loadMore: ordersQuery.loadMore,
+    isLoadingMore: ordersQuery.isLoadingMore,
+    loading: ordersQuery.loading,
+    error: ordersQuery.error,
+    refetch: ordersQuery.refetch,
     refetchAll: () => {
-      void allOrdersQuery.refetch();
-      void pendingRefundQuery.refetch();
+      void ordersQuery.refetch();
     },
+    sortField,
+    sortDir,
+    handleSort,
+    sortLoading,
   };
 }
 

@@ -44,6 +44,8 @@ export type VenueDetailNode = {
   isOwner: boolean;
   isStaff: boolean;
   myPermissions: string[];
+  recurringBookingEnabled: boolean;
+  slotDurationMinutes: number;
   marginThresholds?: {
     warningMargin: number;
     dangerMargin: number;

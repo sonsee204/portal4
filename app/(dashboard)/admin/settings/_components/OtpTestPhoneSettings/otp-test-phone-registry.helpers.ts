@@ -17,12 +17,17 @@ import { OTP_TEST_PHONES } from '@/lib/strings';
 import { PURPOSE_OPTIONS } from './otp-test-phone-registry.schemas';
 
 export const OTP_TEST_PHONE_REGISTRY_COLUMNS: DataTableColumn[] = [
-  { key: 'phone', label: OTP_TEST_PHONES.COLUMNS.PHONE },
+  { key: 'phone', label: OTP_TEST_PHONES.COLUMNS.PHONE, sortable: true },
   { key: 'label', label: OTP_TEST_PHONES.COLUMNS.LABEL },
   { key: 'testCode', label: OTP_TEST_PHONES.COLUMNS.CODE },
   { key: 'purposes', label: OTP_TEST_PHONES.COLUMNS.PURPOSES },
   { key: 'status', label: OTP_TEST_PHONES.COLUMNS.STATUS },
   { key: 'expires', label: OTP_TEST_PHONES.COLUMNS.EXPIRES },
+  {
+    key: 'createdAt',
+    label: 'Tạo lúc',
+    sortable: true,
+  },
   { key: 'actions', label: OTP_TEST_PHONES.COLUMNS.ACTIONS, align: 'right' },
 ];
 

@@ -31,7 +31,6 @@ import {
 export function useRegistrationsPageData(tournamentId: string) {
   const [statusFilter, setStatusFilter] =
     useState<StatusFilterValue>(ALL_STATUS);
-  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
   const [lateEntryOpen, setLateEntryOpen] = useState(false);
@@ -43,6 +42,10 @@ export function useRegistrationsPageData(tournamentId: string) {
   const [deletingReg, setDeletingReg] = useState<TournamentRegistration | null>(
     null,
   );
+  const [approvingReg, setApprovingReg] = useState<TournamentRegistration | null>(
+    null,
+  );
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editingBibId, setEditingBibId] = useState<string | null>(null);
   const [bibInputValue, setBibInputValue] = useState('');
 
@@ -69,15 +72,13 @@ export function useRegistrationsPageData(tournamentId: string) {
       statusFilter === ALL_STATUS
         ? undefined
         : { registrationStatus: statusFilter },
-    pagination: { page, limit: PAGE_SIZE },
+    pagination: { limit: PAGE_SIZE },
   });
 
   return {
     tournamentId,
     statusFilter,
     setStatusFilter,
-    page,
-    setPage,
     selectedIds,
     setSelectedIds,
     importOpen,
@@ -91,6 +92,10 @@ export function useRegistrationsPageData(tournamentId: string) {
     setRejectingReg,
     deletingReg,
     setDeletingReg,
+    approvingReg,
+    setApprovingReg,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
     editingBibId,
     setEditingBibId,
     bibInputValue,
@@ -102,8 +107,9 @@ export function useRegistrationsPageData(tournamentId: string) {
     categoryMatchTypeMap,
     registrations: registrationQuery.registrations,
     total: registrationQuery.total,
-    currentPage: registrationQuery.page,
-    totalPages: registrationQuery.totalPages,
+    hasNextPage: registrationQuery.hasNextPage,
+    loadMore: registrationQuery.loadMore,
+    isLoadingMore: registrationQuery.isLoadingMore,
     loading: registrationQuery.loading,
     refetch: registrationQuery.refetch,
   };

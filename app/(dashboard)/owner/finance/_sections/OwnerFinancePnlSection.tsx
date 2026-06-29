@@ -15,12 +15,16 @@
 
 import { GlassPanel } from '@/components/molecules/GlassPanel';
 import { QueryState } from '@/components/molecules/QueryState';
-import { formatCurrency } from '@/lib/utils';
-import { toStatCardTrend } from '@/lib/finance/stat-card-trend';
+import { cn, formatCurrency } from '@/lib/utils';
+import {
+  toStatCardTrendFromMetric,
+  getSignedValueClassName,
+} from '@/lib/finance/stat-card-trend';
 import type { OwnerFinancePageData } from '../_hooks/useOwnerFinancePageData';
 
 interface OwnerFinancePnlSectionProps {
   data: OwnerFinancePageData;
+  variant?: 'full' | 'compact';
 }
 
 type PnlKey =
@@ -88,17 +92,43 @@ const PROFIT_ROWS: PnlRow[] = [
   },
 ];
 
+const COMPACT_ROWS: PnlRow[] = [
+  {
+    key: 'grossRevenue',
+    label: 'Doanh thu gộp',
+  },
+  {
+    key: 'cogs',
+    label: 'Giá vốn (COGS)',
+  },
+  {
+    key: 'grossProfit',
+    label: 'Lợi nhuận gộp',
+  },
+  {
+    key: 'operatingExpenses',
+    label: 'Chi phí vận hành',
+  },
+  {
+    key: 'netProfit',
+    label: 'Lãi / lỗ ròng',
+    emphasize: true,
+  },
+];
+
 function PnlRowItem({
   row,
-  value,
-  changePercent,
+  metric,
 }: {
   row: PnlRow;
-  value: number;
-  changePercent?: number | null;
+  metric?: {
+    value: number;
+    previousValue?: number;
+    changePercent?: number | null;
+  } | null;
 }) {
-  const trend = toStatCardTrend(changePercent);
-  const isProfitRow = row.key === 'netProfit';
+  const trend = toStatCardTrendFromMetric(metric);
+  const value = metric?.value ?? 0;
 
   return (
     <div className="flex items-start justify-between gap-4 py-3">
@@ -136,15 +166,10 @@ function PnlRowItem({
           </span>
         ) : null}
         <span
-          className={
-            isProfitRow
-              ? value >= 0
-                ? 'text-lg font-bold text-emerald-400'
-                : 'text-lg font-bold text-red-400'
-              : row.emphasize
-                ? 'text-heading text-lg font-bold'
-                : 'text-heading text-base font-semibold'
-          }
+          className={cn(
+            row.emphasize ? 'text-lg font-bold' : 'text-base font-semibold',
+            getSignedValueClassName(value)
+          )}
         >
           {formatCurrency(value)}
         </span>
@@ -153,8 +178,12 @@ function PnlRowItem({
   );
 }
 
-export function OwnerFinancePnlSection({ data }: OwnerFinancePnlSectionProps) {
+export function OwnerFinancePnlSection({
+  data,
+  variant = 'full',
+}: OwnerFinancePnlSectionProps) {
   const pnl = data.report?.pnl;
+  const isCompact = variant === 'compact';
 
   return (
     <GlassPanel card>
@@ -167,8 +196,10 @@ export function OwnerFinancePnlSection({ data }: OwnerFinancePnlSectionProps) {
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-heading text-base font-bold">Báo cáo P&L</h3>
-            {data.report?.period ? (
+            <h3 className="text-heading text-base font-bold">
+              {isCompact ? 'P&L tóm tắt' : 'Báo cáo P&L'}
+            </h3>
+            {!isCompact && data.report?.period ? (
               <p className="text-muted mt-1 text-sm">
                 {data.report.period.from} → {data.report.period.to}
                 {' · '}
@@ -177,49 +208,52 @@ export function OwnerFinancePnlSection({ data }: OwnerFinancePnlSectionProps) {
               </p>
             ) : null}
           </div>
-          {pnl ? (
+          {!isCompact && pnl ? (
             <div className="text-right">
               <p className="text-muted text-xs">Biên lợi nhuận ròng</p>
-              <p className="text-heading text-2xl font-bold">
+              <p
+                className={cn(
+                  'text-2xl font-bold',
+                  getSignedValueClassName(pnl.netMarginPercent.value)
+                )}
+              >
                 {pnl.netMarginPercent.value.toFixed(1)}%
               </p>
             </div>
           ) : null}
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <p className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
-              Dòng tiền
-            </p>
-            <div className="divide-surface-border divide-y">
-              {CASHFLOW_ROWS.map((row) => (
-                <PnlRowItem
-                  key={row.key}
-                  row={row}
-                  value={pnl?.[row.key]?.value ?? 0}
-                  changePercent={pnl?.[row.key]?.changePercent}
-                />
-              ))}
-            </div>
+        {isCompact ? (
+          <div className="divide-surface-border divide-y">
+            {COMPACT_ROWS.map((row) => (
+              <PnlRowItem key={row.key} row={row} metric={pnl?.[row.key]} />
+            ))}
           </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <p className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
+                Dòng tiền
+              </p>
+              <div className="divide-surface-border divide-y">
+                {CASHFLOW_ROWS.map((row) => (
+                  <PnlRowItem key={row.key} row={row} metric={pnl?.[row.key]} />
+                ))}
+              </div>
+            </div>
 
-          <div>
-            <p className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
-              Lợi nhuận
-            </p>
-            <div className="divide-surface-border divide-y">
-              {PROFIT_ROWS.map((row) => (
-                <PnlRowItem
-                  key={row.key}
-                  row={row}
-                  value={pnl?.[row.key]?.value ?? 0}
-                  changePercent={pnl?.[row.key]?.changePercent}
-                />
-              ))}
+            <div>
+              <p className="text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
+                Lợi nhuận
+              </p>
+              <div className="divide-surface-border divide-y">
+                {PROFIT_ROWS.map((row) => (
+                  <PnlRowItem key={row.key} row={row} metric={pnl?.[row.key]} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </QueryState>
     </GlassPanel>
   );

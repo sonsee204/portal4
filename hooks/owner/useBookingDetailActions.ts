@@ -185,19 +185,9 @@ export function useBookingDetailActions(
       bookingId: string,
       customerName: string,
     ) => {
-      if (
-        action === 'confirm' ||
-        action === 'checkIn' ||
-        action === 'complete' ||
-        action === 'approveHold' ||
-        action === 'confirmHold'
-      ) {
-        void runAction(action, bookingId);
-        return;
-      }
       openActionDialog(action, bookingId, customerName);
     },
-    [openActionDialog, runAction],
+    [openActionDialog],
   );
 
   const dialogCopy = dialog ? DIALOG_COPY[dialog.action] : null;

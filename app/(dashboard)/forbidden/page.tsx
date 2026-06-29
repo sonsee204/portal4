@@ -25,9 +25,10 @@ export default function ForbiddenPage() {
   const router = useRouter();
   const role = useAuthStore((s) => s.user?.role ?? null);
   const capabilities = useAuthStore((s) => s.user?.portalCapabilities ?? []);
+  const hasVenueAccess = useAuthStore((s) => s.user?.hasVenueAccess ?? false);
   const { logout, isLoggingOut } = useLogout();
 
-  const homePath = getHomePath(role, capabilities);
+  const homePath = getHomePath(role, capabilities, hasVenueAccess);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
