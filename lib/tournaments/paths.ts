@@ -27,10 +27,12 @@ export interface TournamentRoutePaths {
   schedule: (id: string) => string;
   print: (id: string) => string;
   scoring: (id: string, matchId: string) => string;
+  /** Đường dẫn quản lý Media của giải đấu */
+  media: (id: string) => string;
 }
 
 export function tournamentRoutes(
-  base: string = TOURNAMENT_BASE_PATH,
+  base: string = TOURNAMENT_BASE_PATH
 ): TournamentRoutePaths {
   return {
     list: base,
@@ -41,7 +43,9 @@ export function tournamentRoutes(
     draw: (id: string) => `${base}/${id}/draw`,
     schedule: (id: string) => `${base}/${id}/schedule`,
     print: (id: string) => `${base}/${id}/print`,
-    scoring: (id: string, matchId: string) => `${base}/${id}/scoring/${matchId}`,
+    scoring: (id: string, matchId: string) =>
+      `${base}/${id}/scoring/${matchId}`,
+    media: (id: string) => `${base}/${id}/media`,
   };
 }
 

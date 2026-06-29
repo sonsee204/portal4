@@ -45,7 +45,11 @@ export const TOKEN_EXPIRY = {
 /**
  * Public routes that don't require authentication
  */
-export const PUBLIC_ROUTES = ['/login', '/forgot-password', '/maintenance'] as const;
+export const PUBLIC_ROUTES = [
+  '/login',
+  '/forgot-password',
+  '/maintenance',
+] as const;
 
 /**
  * Routes prefixes to skip in middleware
@@ -70,7 +74,5 @@ export const SKIP_MIDDLEWARE_PREFIXES = [
  * Prefer `GRAPHQL_INTERNAL_URL` (e.g. http://127.0.0.1:4000/graphql) which goes
  * straight to the backend process and bypasses nginx/edge caching entirely.
  */
-export const GRAPHQL_URL =
-  process.env.GRAPHQL_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-  'http://localhost:4000/graphql';
+
+export const GRAPHQL_URL = 'https://staging-api.hitri.vn/graphql';

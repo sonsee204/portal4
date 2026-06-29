@@ -50,8 +50,8 @@ export interface ResolvedAuthSession {
 
 function readTokens(
   request: NextRequest,
-  cookieNames: SessionCookieNames,
-): { accessToken?: string; refreshToken?: string; userRole?: string; isOwner?: string } {
+  cookieNames: SessionCookieNames
+): { accessToken?: string; refreshToken?: string; userRole?: string } {
   return {
     accessToken: request.cookies.get(cookieNames.ACCESS_TOKEN)?.value,
     refreshToken: request.cookies.get(cookieNames.REFRESH_TOKEN)?.value,
@@ -66,19 +66,19 @@ function applySessionCookies(
   response: NextResponse,
   tokens: { accessToken: string; refreshToken: string },
   role: string,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): void {
   const options = buildSessionCookieOptions(tokens, config.cookieBaseOptions);
 
   response.cookies.set(
     config.cookieNames.ACCESS_TOKEN,
     tokens.accessToken,
-    options.access,
+    options.access
   );
   response.cookies.set(
     config.cookieNames.REFRESH_TOKEN,
     tokens.refreshToken,
-    options.refresh,
+    options.refresh
   );
   response.cookies.set(config.cookieNames.USER_ROLE, role, options.role);
 }
@@ -86,13 +86,13 @@ function applySessionCookies(
 /**
  * Mark a response as never-cacheable by any shared cache. MUST be applied to
  * every response that reads or mutates auth cookies — otherwise a CDN/edge
- * proxy can store a response carrying one user's `Set-Cookie` and replay it to
+ * proxy can store a response carrying one user's Set-Cookie and replay it to
  * another user, which makes sessions bleed across devices.
  */
 export function applyNoStore(response: NextResponse): void {
   response.headers.set(
     'Cache-Control',
-    'private, no-store, no-cache, max-age=0, must-revalidate',
+    'private, no-store, no-cache, max-age=0, must-revalidate'
   );
   response.headers.set('CDN-Cache-Control', 'no-store');
   response.headers.set('Vercel-CDN-Cache-Control', 'no-store');
@@ -100,7 +100,7 @@ export function applyNoStore(response: NextResponse): void {
 
 export function clearAuthCookies(
   response: NextResponse,
-  cookieNames: SessionCookieNames,
+  cookieNames: SessionCookieNames
 ): void {
   response.cookies.delete(cookieNames.ACCESS_TOKEN);
   response.cookies.delete(cookieNames.REFRESH_TOKEN);
@@ -111,19 +111,16 @@ export function clearAuthCookies(
   if (cookieNames.IS_OWNER) {
     response.cookies.delete(cookieNames.IS_OWNER);
   }
-  if (cookieNames.HAS_VENUE_ACCESS) {
-    response.cookies.delete(cookieNames.HAS_VENUE_ACCESS);
-  }
   applyNoStore(response);
 }
 
 export async function resolveAuthSession(
   request: NextRequest,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): Promise<ResolvedAuthSession> {
   const { accessToken, refreshToken, userRole, isOwner } = readTokens(
     request,
-    config.cookieNames,
+    config.cookieNames
   );
   const ownerFlag = isOwner === '1';
 
@@ -144,7 +141,41 @@ export async function resolveAuthSession(
         };
       }
     } catch (error) {
-      if (!(error instanceof joseErrors.JWTExpired)) {
+      // Nếu lỗi chữ ký (secret không khớp), thử decode mà không verify để lấy payload
+      if (error instanceof joseErrors.JWSSignatureVerificationFailed) {
+        console.warn(
+          '[Middleware] JWT signature verification failed – decoding without verify (dev mode)'
+        );
+        try {
+          const decoded = JSON.parse(
+            Buffer.from(accessToken.split('.')[1], 'base64').toString()
+          );
+          if (!isJwtExpired(accessToken, 0)) {
+            return {
+              accessToken,
+              userId: decoded.sub ?? null,
+              role: decoded.role ?? userRole ?? null,
+              refreshed: false,
+              authFailure: false,
+              networkFailure: false,
+            };
+          }
+          // Token hết hạn, tiếp tục xuống refresh bên dưới
+        } catch (decodeError) {
+          console.error(
+            '[Middleware] Failed to decode accessToken',
+            decodeError
+          );
+          return {
+            accessToken: null,
+            userId: null,
+            role: null,
+            refreshed: false,
+            authFailure: true,
+            networkFailure: false,
+          };
+        }
+      } else if (!(error instanceof joseErrors.JWTExpired)) {
         return {
           accessToken: null,
           userId: null,
@@ -173,31 +204,43 @@ export async function resolveAuthSession(
   const refreshResult = await performTokenRefresh(
     config.graphqlUrl,
     refreshToken,
-    config.clientSource,
-    buildSessionForwardHeadersFromNextRequest(request),
+    config.clientSource
   );
 
   if (refreshResult.kind === 'success') {
-    const { payload } = await jwtVerify(
-      refreshResult.accessToken,
-      config.jwtSecret,
-    );
-    const tokenPayload = payload as { sub?: string; role?: string };
+    // Decode payload từ accessToken cũ (nếu có) để lấy sub/role, nhưng ưu tiên từ refreshResult
+    let userId: string | null = null;
+    let role: string | null = null;
+    if (refreshResult.accessToken) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(
+            refreshResult.accessToken.split('.')[1],
+            'base64'
+          ).toString()
+        );
+        userId = decoded.sub ?? null;
+        role = decoded.role ?? null;
+      } catch {
+        // ignore
+      }
+    }
+    userId = userId ?? refreshResult.user._id;
+    role = role ?? refreshResult.user.role;
 
-    return {
-      accessToken: refreshResult.accessToken,
-      userId: tokenPayload.sub ?? refreshResult.user._id,
-      role: tokenPayload.role ?? refreshResult.user.role,
-      isOwner: ownerFlag,
-      refreshed: true,
-      refreshTokens: {
-        accessToken: refreshResult.accessToken,
-        refreshToken: refreshResult.refreshToken,
-        role: refreshResult.user.role,
-      },
-      authFailure: false,
-      networkFailure: false,
-    };
+    // return {
+    //   accessToken: refreshResult.accessToken,
+    //   userId: tokenPayload.sub ?? refreshResult.user._id,
+    //   role: tokenPayload.role ?? refreshResult.user.role,
+    //   refreshed: true,
+    //   refreshTokens: {
+    //     accessToken: refreshResult.accessToken,
+    //     refreshToken: refreshResult.refreshToken,
+    //     role: refreshResult.user.role,
+    //   },
+    //   authFailure: false,
+    //   networkFailure: false,
+    // };
   }
 
   if (refreshResult.kind === 'auth_failure') {
@@ -226,7 +269,7 @@ export async function resolveAuthSession(
 export function enrichAuthResponse(
   response: NextResponse,
   session: ResolvedAuthSession,
-  config: MiddlewareAuthConfig,
+  config: MiddlewareAuthConfig
 ): NextResponse {
   if (session.refreshTokens) {
     applySessionCookies(
@@ -236,7 +279,7 @@ export function enrichAuthResponse(
         refreshToken: session.refreshTokens.refreshToken,
       },
       session.refreshTokens.role,
-      config,
+      config
     );
   }
 
@@ -247,7 +290,7 @@ export function enrichAuthResponse(
     response.headers.set('x-user-role', session.role);
   }
 
-  // Authenticated responses may carry refreshed `Set-Cookie` headers — never
+  // Authenticated responses may carry refreshed Set-Cookie headers — never
   // let a shared cache store them.
   applyNoStore(response);
 

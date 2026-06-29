@@ -101,11 +101,7 @@ export function LoginForm() {
         setInitialized(true);
       }
 
-      const destination = result.user
-        ? resolvePostLoginPath(redirectTo, result.user)
-        : '/';
-
-      router.push(destination);
+      router.push(redirectTo || '/');
       router.refresh();
     } else if (result?.error) {
       setBackendError(result.error);

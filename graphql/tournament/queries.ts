@@ -5,10 +5,6 @@
  * @copyright 2025-2026 Lê Trung Hiếu
  * @author Lê Trung Hiếu <letrunghieu.nalee@gmail.com>
  * @license Proprietary - All rights reserved
- *
- * This source code is the intellectual property of Lê Trung Hiếu.
- * Unauthorized copying, modification, distribution, or use of this code
- * is strictly prohibited without prior written consent.
  */
 
 import { gql } from 'graphql-tag';
@@ -19,10 +15,14 @@ import {
   MATCH_CORE_FRAGMENT,
   REGISTRATION_CORE_FRAGMENT,
   SCORECARD_FRAGMENT,
-} from '@/graphql/tournament/fragments';
+  TOURNAMENT_MEDIA_FRAGMENT,
+} from './fragments';
 
 export const GET_MY_TOURNAMENTS = gql`
-  query GetMyTournaments($filter: TournamentFilterInput, $pagination: CursorPageInput) {
+  query GetMyTournaments(
+    $filter: TournamentFilterInput
+    $pagination: CursorPageInput
+  ) {
     myTournamentsConnection(filter: $filter, pagination: $pagination) {
       edges {
         cursor
@@ -70,9 +70,11 @@ export const GET_TOURNAMENT = gql`
   query GetTournament($id: ID!) {
     tournament(id: $id) {
       ...TournamentDetail
+      ...TournamentMedia
     }
   }
   ${TOURNAMENT_DETAIL_FRAGMENT}
+  ${TOURNAMENT_MEDIA_FRAGMENT}
 `;
 
 export const GET_TOURNAMENT_CATEGORIES = gql`
@@ -242,8 +244,14 @@ export const GET_TOURNAMENT_GROUP_RANKINGS = gql`
 `;
 
 export const EXPORT_TOURNAMENT_REGISTRATIONS = gql`
-  query ExportTournamentRegistrations($tournamentId: ID!, $filter: RegistrationFilterInput) {
-    exportTournamentRegistrations(tournamentId: $tournamentId, filter: $filter) {
+  query ExportTournamentRegistrations(
+    $tournamentId: ID!
+    $filter: RegistrationFilterInput
+  ) {
+    exportTournamentRegistrations(
+      tournamentId: $tournamentId
+      filter: $filter
+    ) {
       ...RegistrationCore
       category {
         _id
@@ -274,6 +282,14 @@ export const PREVIEW_REPACK_COURT_SCHEDULE = gql`
         newScheduledAt
       }
       warnings
+    }
+  }
+`;
+
+export const UPLOAD_TOURNAMENT_IMAGE = gql`
+  mutation UploadTournamentImage($input: UploadTournamentImageInput!) {
+    uploadTournamentImage(input: $input) {
+      url
     }
   }
 `;
