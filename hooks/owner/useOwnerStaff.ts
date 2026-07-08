@@ -82,7 +82,7 @@ function permissionsChanged(
 
 export function useOwnerStaff(
   venueId: string | null,
-  sort?: CursorSortInput,
+  
   pagination?: LegacyPagePagination,
 ) {
   const baseVariables = { venueId: venueId ?? '' };
@@ -91,7 +91,7 @@ export function useOwnerStaff(
     useQuery<VenueStaffConnectionQueryResult>(VENUE_STAFF_CONNECTION, {
       variables: buildSortedConnectionVariables(
         baseVariables,
-        sort,
+        undefined,
         pagination,
       ),
       skip: !venueId,
@@ -107,7 +107,7 @@ export function useOwnerStaff(
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
     buildVariables: (after) =>
-      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
+      buildSortedConnectionVariables(baseVariables, undefined, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueStaffConnection: {

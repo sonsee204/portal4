@@ -150,7 +150,7 @@ export function useVenueHoldBookings(
 
 export function useVenueRecurringBookings(
   venueId: string | null,
-  sort?: BookingSortInput,
+ 
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
@@ -160,7 +160,7 @@ export function useVenueRecurringBookings(
     useQuery<RecurringBookingsQueryResult>(VENUE_RECURRING_BOOKINGS_CONNECTION, {
       variables: buildSortedConnectionVariables(
         baseVariables,
-        sort,
+        undefined,
         pagination,
       ),
       skip: !venueId || options?.skip,
@@ -176,7 +176,7 @@ export function useVenueRecurringBookings(
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
     buildVariables: (after) =>
-      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
+      buildSortedConnectionVariables(baseVariables, undefined,  pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueRecurringBookingsConnection: {

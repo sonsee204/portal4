@@ -19,7 +19,7 @@ import {
   useVenueDetail,
   useVenueCourts,
 } from '@/hooks/owner';
-import { toSortByOrder } from '@/hooks/shared/useDataTableSort';
+
 import { useDataTableSortUrl } from '@/hooks/shared/useDataTableSortUrl';
 
 const COURT_SORT_FIELDS = ['displayOrder', 'name'] as const;
@@ -39,11 +39,6 @@ export function useVenueDetailPageData(venueId: string) {
     defaultDir: 'asc',
   });
 
-  const sort = useMemo(
-    () => toSortByOrder(sortField, sortDir),
-    [sortField, sortDir],
-  );
-
   const {
     venue,
     loading: venueLoading,
@@ -60,7 +55,7 @@ export function useVenueDetailPageData(venueId: string) {
     loading: courtsLoading,
     error: courtsError,
     refetch: refetchCourts,
-  } = useVenueCourts(venueId, sort, { limit: 50 });
+  } = useVenueCourts(venueId,{ limit: 50 });
 
   const loading = venueLoading || courtsLoading;
   const error = venueError ?? courtsError;

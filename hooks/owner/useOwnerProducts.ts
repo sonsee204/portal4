@@ -59,6 +59,7 @@ import {
   buildSortedConnectionVariables,
   SORTED_CONNECTION_FETCH_POLICY,
 } from '@/hooks/shared/useSortedConnectionQuery';
+import { UndoIcon } from 'lucide-react';
 
 const PRODUCT_MUTATION_REFETCH_QUERIES = [
   'VenueProductsConnection',
@@ -92,7 +93,7 @@ export function useVenueProducts(
     status?: ProductStatus;
     searchQuery?: string;
   },
-  sort?: ProductSortInput,
+  
   pagination?: LegacyPagePagination,
   options?: { skip?: boolean },
 ) {
@@ -115,7 +116,7 @@ export function useVenueProducts(
     useQuery<VenueProductsConnectionQuery>(VENUE_PRODUCTS_CONNECTION, {
       variables: buildSortedConnectionVariables(
         baseVariables,
-        sort,
+        undefined,
         pagination,
       ),
       skip: !venueId || options?.skip,
@@ -131,7 +132,7 @@ export function useVenueProducts(
     endCursor: connection?.pageInfo?.endCursor,
     fetchMore,
     buildVariables: (after) =>
-      buildSortedConnectionVariables(baseVariables, sort, pagination, after),
+      buildSortedConnectionVariables(baseVariables, undefined, pagination, after),
     mergeResults: (prev, next) => ({
       ...next,
       venueProductsConnection: {

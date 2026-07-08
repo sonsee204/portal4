@@ -82,14 +82,14 @@ export function useOwnerProductsPageData() {
   const productsQuery = useVenueProducts(
     selectedVenueId,
     productsFilter,
-    sort,
+    
     pagination,
     { skip: viewTab !== 'products' },
   );
 
   const categoriesQuery = useVenueCategories(
     selectedVenueId,
-    sort,
+    
     pagination,
     { skip: viewTab !== 'categories' },
   );
@@ -108,7 +108,7 @@ export function useOwnerProductsPageData() {
 
   const categoriesForSelect = useVenueCategories(
     selectedVenueId,
-    { sortBy: 'name', sortOrder: 'asc' },
+    
     { limit: 100 },
   );
 

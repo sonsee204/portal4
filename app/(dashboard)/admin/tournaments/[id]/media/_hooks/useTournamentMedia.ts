@@ -1,8 +1,8 @@
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   GET_TOURNAMENT,
-  UPLOAD_TOURNAMENT_IMAGE,
 } from '@/graphql/tournament/queries';
+import { UPLOAD_TOURNAMENT_IMAGE } from '@/graphql/upload/mutations';
 import { UPDATE_TOURNAMENT } from '@/graphql/tournament/mutations';
 import type {
   GetTournamentQuery,

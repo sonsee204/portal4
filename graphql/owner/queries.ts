@@ -307,12 +307,12 @@ export const GET_BOOKING = gql`
 export const VENUE_HOLD_BOOKINGS_CONNECTION = gql`
   query VenueHoldBookingsConnection(
     $venueId: ID!
-    $sort: BookingSortInput
+   
     $pagination: CursorPageInput
   ) {
     venueHoldBookingsConnection(
       venueId: $venueId
-      sort: $sort
+      
       pagination: $pagination
     ) {
       edges {
@@ -351,12 +351,12 @@ export const VENUE_HOLD_BOOKINGS_CONNECTION = gql`
 export const VENUE_RECURRING_BOOKINGS_CONNECTION = gql`
   query VenueRecurringBookingsConnection(
     $venueId: ID!
-    $sort: BookingSortInput
+    
     $pagination: CursorPageInput
   ) {
     venueRecurringBookingsConnection(
       venueId: $venueId
-      sort: $sort
+      
       pagination: $pagination
     ) {
       edges {
@@ -527,13 +527,13 @@ export const VENUE_PRODUCTS_CONNECTION = gql`
   query VenueProductsConnection(
     $venueId: ID!
     $filter: ProductFilterInput
-    $sort: ProductSortInput
+    
     $pagination: CursorPageInput
   ) {
     venueProductsConnection(
       venueId: $venueId
       filter: $filter
-      sort: $sort
+      
       pagination: $pagination
     ) {
       edges {
@@ -652,12 +652,12 @@ export const VENUE_CATEGORIES_CONNECTION = gql`
 export const VENUE_STAFF_CONNECTION = gql`
   query VenueStaffConnection(
     $venueId: ID!
-    $sort: CursorSortInput
+    
     $pagination: CursorPageInput
   ) {
     venueStaffConnection(
       venueId: $venueId
-      sort: $sort
+      
       pagination: $pagination
     ) {
       edges {
@@ -838,8 +838,8 @@ export const GET_MY_VENUE_AVAILABILITY = gql`
           customerName
           customerPhone
           isRecurring
-          isUnpaid
-          hasPromotion
+          
+          
         }
       }
     }
